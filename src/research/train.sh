@@ -1,0 +1,1 @@
+uv run python -m src.research.train train --malicious_csv malicious.csv --benign_csv benign.csv --epochs 3

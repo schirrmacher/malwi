@@ -1,0 +1,6 @@
+{
+  "python": [ "function_definition", "class_definition" ],
+  "javascript": [ "function_declaration", "generator_function_declaration", "class_declaration" ],
+  "typescript": [ "function_declaration", "generator_function_declaration", "class_declaration" ],
+  "rust": [ ]
+}
