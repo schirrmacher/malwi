@@ -49,20 +49,19 @@ Do you have access to malicious Rust, Go, whatever packages? **Contact me.**
 
 Prerequisites: [uv](https://docs.astral.sh/uv/)
 
-#### Dataset Creation
 
 ```
 # Download and process data
 src/research/download_and_preprocess.sh
-```
 
-```
 # Only process data
 src/research/preprocess.sh
 ```
 
-#### Training
-
 ```
+# Preprocess then start training
+src/research/preprocess_and_train.sh
+
+# Only start training
 src/research/train.sh
 ```
