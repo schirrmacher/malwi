@@ -119,12 +119,22 @@ def create_malwi_nodes_from_file(file_path: str) -> List["MalwiNode"]:
         return []
 
     return create_malwi_nodes_from_bytes(
-        content=source_bytes, file_path=file_path, language=language
+        source_code_bytes=source_bytes, file_path=file_path, language=language
     )
 
 
+def find_functions_recursive(
+    node: Node, source_code_bytes: bytes, functions: List[Node]
+):
+    if node.type == "function_definition":
+        functions.append(node)
+
+    for child in node.children:
+        find_functions_recursive(child, source_code_bytes, functions)
+
+
 def create_malwi_nodes_from_bytes(
-    content: bytes, file_path: str, language: str
+    source_code_bytes: bytes, file_path: str, language: str
 ) -> List["MalwiNode"]:
     parser = get_parser_instance(language)
     if parser is None:
@@ -133,19 +143,20 @@ def create_malwi_nodes_from_bytes(
         )
         return []
     try:
-        tree = parser.parse(content)
+        tree = parser.parse(source_code_bytes)
     except Exception as e:
         logging.warning(f"Parsing error of file {file_path}: {e}")
         return []
 
+    all_functions = []
     root_node = tree.root_node
-    malwi_nodes = []
-    child_nodes = getattr(root_node, "named_children", [])
+    find_functions_recursive(root_node, source_code_bytes, all_functions)
 
-    for child in child_nodes:
-        if child.type in NODE_TARGETS.get(language, []):
-            node = MalwiNode(node=child, language=language, file_path=file_path)
-            malwi_nodes.append(node)
+    malwi_nodes = []
+    for f in all_functions:
+        node = MalwiNode(node=f, language=language, file_path=file_path)
+        malwi_nodes.append(node)
+
     return malwi_nodes
 
 
@@ -364,7 +375,7 @@ def call_node_to_parameters_string(
 ) -> List[str]:
     processed_args: List[str] = []
     arguments_node = call_node.child_by_field_name("arguments")
-    arg_count = 0
+    arg_count = None
     if arguments_node:
         arg_count = len(arguments_node.named_children)
         for arg_node in arguments_node.named_children:
@@ -384,7 +395,7 @@ def function_node_to_string(
     node: Node, language, mapping_table: Dict[str, Dict[str, str]]
 ) -> Tuple[str, bool]:
     postfix = ""
-    param_count = 0
+    param_count = None
     raw_name = ""
     if node.type == "function_definition":
         name_node = node.child_by_field_name("name")
@@ -432,9 +443,11 @@ def function_node_to_string(
     mapped_value = map_identifier(
         identifier=sanitized_name, language=language, mapping_table=mapping_table
     )
+    if not param_count:
+        param_count = ""
     if mapped_value:
         return f"{mapped_value}{param_count} {postfix}", True
-    elif sanitized_name and len(sanitized_name) > 20:
+    elif sanitized_name and len(sanitized_name) > 30:
         return (
             f"{SpecialCases.VERY_LONG_FUNCTION_NAME.value}{param_count} {postfix}",
             False,

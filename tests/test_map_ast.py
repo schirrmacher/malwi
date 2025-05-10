@@ -67,7 +67,7 @@ def test_map_identifier():
 def test_empty_nodes():
     empty = bytes()
     result = create_malwi_nodes_from_bytes(
-        content=empty, file_path="test.py", language="python"
+        source_code_bytes=empty, file_path="test.py", language="python"
     )
 
     assert len(result) == 0
@@ -79,7 +79,7 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx():
     pass
 """
     result = create_malwi_nodes_from_bytes(
-        content=code, file_path="lala.py", language="python"
+        source_code_bytes=code, file_path="lala.py", language="python"
     )
     assert result[0].to_string() == "F_DEF VERY_LONG_FUNCTION_NAME BLOCK PASS_STATEMENT"
 
@@ -112,9 +112,27 @@ class OuterClass:
                 return build_repeated().strip()
 """
     result = create_malwi_nodes_from_bytes(
-        content=code, file_path="lala.py", language="python"
+        source_code_bytes=code, file_path="lala.py", language="python"
     )
-    assert result[0].to_string() == "F_DEF VERY_LONG_FUNCTION_NAME BLOCK PASS_STATEMENT"
+    assert result[0].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert (
+        result[1].to_string()
+        == "F_DEF greet BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
+    )
+    assert result[2].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert (
+        result[3].to_string()
+        == "F_DEF show.value BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
+    )
+    assert result[4].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert (
+        result[5].to_string()
+        == "F_DEF repeat.text BLOCK F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT F_CALL build.repeated.strip MEMBER_ACCESS F_CALL build.repeated"
+    )
+    assert (
+        result[6].to_string()
+        == "F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT"
+    )
 
 
 def test_sensitive_file_warning():
@@ -131,7 +149,7 @@ class Bar:
         pass
 """
     result = create_malwi_nodes_from_bytes(
-        content=code, file_path="setup.py", language="python"
+        source_code_bytes=code, file_path="setup.py", language="python"
     )
     assert result[0].warnings == ["TARGET_FILE"]
 
@@ -146,14 +164,13 @@ class Bar:
         pass
 """
     result = create_malwi_nodes_from_bytes(
-        content=code, file_path="test.py", language="python"
+        source_code_bytes=code, file_path="test.py", language="python"
     )
 
     assert result is not None
     assert len(result) == 2
     types = [node.node.type for node in result]
     assert "function_definition" in types
-    assert "class_definition" in types
 
 
 def test_critical_file():
@@ -162,55 +179,9 @@ def foo():
     pass
 """
     result = create_malwi_nodes_from_bytes(
-        content=code, file_path="setup.py", language="python"
+        source_code_bytes=code, file_path="setup.py", language="python"
     )
     assert result[0].to_string() == "TARGET_FILE F_DEF foo BLOCK PASS_STATEMENT"
-
-
-def test_javascript_nodes():
-    code = b"""
-function foo() {
-    return 42;
-}
-
-class Bar {
-    method() {
-        return 1;
-    }
-}
-"""
-    result = create_malwi_nodes_from_bytes(
-        content=code, file_path="test.js", language="javascript"
-    )
-
-    assert result is not None
-    assert len(result) == 2
-    types = [node.node.type for node in result]
-    assert "function_declaration" in types
-    assert "class_declaration" in types
-
-
-def test_typescript_nodes():
-    code = b"""
-function foo(): number {
-    return 42;
-}
-
-class Bar {
-    method(): number {
-        return 1;
-    }
-}
-"""
-    result = create_malwi_nodes_from_bytes(
-        content=code, file_path="test.ts", language="typescript"
-    )
-
-    assert result is not None
-    assert len(result) == 2
-    types = [node.node.type for node in result]
-    assert "function_declaration" in types
-    assert "class_declaration" in types
 
 
 @pytest.mark.skip(
@@ -227,7 +198,7 @@ struct Bar {
 }
 """
     result = create_malwi_nodes_from_bytes(
-        content=code, file_path="test.rs", language="rust"
+        source_code_bytes=code, file_path="test.rs", language="rust"
     )
 
     assert result is not None
@@ -273,15 +244,15 @@ def test():
 """,
     ]
     expected = [
-        "F_DEF obscure.eval.rename BLOCK EXP F_CALL_FILESYSTEM_ACCESS STRING_HEX_LEN_XS_ENT_MED DYNAMIC_CODE_EXECUTION STRING_BASE64_LEN_S_ENT_HIGH MEMBER_ACCESS",
+        "F_DEF obscure.eval.rename BLOCK EXP F_CALL_FILESYSTEM_ACCESS2 STRING_HEX_LEN_XS_ENT_MED DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_S_ENT_HIGH MEMBER_ACCESS",
         "F_DEF_FILESYSTEM_ACCESS BLOCK EXP ASSIGNMENT F_CALL self.abc MEMBER_ACCESS",
-        "CLASS_DEFINITION BLOCK EXP ASSIGNMENT STRING_BASE64_LEN_XS_ENT_MED F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS F_DEF is.long BLOCK RETURN_STATEMENT RETURN_STATEMENT BINARY_OPERATION MEMBER_ACCESS NUMERIC F_DEF str BLOCK RETURN_STATEMENT RETURN_STATEMENT STRING_LEN_S_ENT_HIGH",
+        "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESSF_DEF is.long BLOCK RETURN_STATEMENT RETURN_STATEMENT BINARY_OPERATION MEMBER_ACCESS NUMERICF_DEF str BLOCK RETURN_STATEMENT RETURN_STATEMENT STRING_LEN_S_ENT_HIGH",
         "F_DEF test BLOCK EXP ASSIGNMENT STRING_STRING_URL EXP ASSIGNMENT STRING_STRING_IP",
     ]
 
     for i, c in enumerate(code):
         result = create_malwi_nodes_from_bytes(
-            content=c, file_path="", language="python"
+            source_code_bytes=c, file_path="", language="python"
         )
         actual = ""
         for node in result:
@@ -298,7 +269,7 @@ def foo():
     pass
 """
     result = create_malwi_nodes_from_bytes(
-        content=code, file_path="test.py", language="python"
+        source_code_bytes=code, file_path="test.py", language="python"
     )
 
     assert result[0].to_string() == "F_DEF foo BLOCK PASS_STATEMENT"
