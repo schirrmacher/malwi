@@ -6,6 +6,8 @@ from pathlib import Path
 from src.research.normalize_data import MalwiNode, create_malwi_nodes_from_file
 from src.cli.predict import initialize_hf_model_components, get_node_text_prediction
 
+logging.basicConfig(format="%(message)s", level=logging.INFO)
+
 
 def process_source_path(
     input_path: str,
@@ -110,9 +112,12 @@ def main():
 
             if prediction_data["status"] == "success":
                 probabilities = prediction_data["probabilities"]
-                print(
-                    f"Prediction: {prediction_data['label']}, Probabilities: Benign={probabilities[0]:.2f}, Malicious={probabilities[1]:.2f}, File: {n.file_path}"
-                )
+                benign = probabilities[0]
+                maliciousness = probabilities[1]
+                if maliciousness > 0.5:
+                    print(f"{n.file_path}: 🛑 malicious {maliciousness:.2f}")
+                else:
+                    print(f"{n.file_path}: 🟢 good {benign:.2f}")
             else:
                 logging.error(
                     f"Prediction error for node in {n.file_path}: {prediction_data['message']}"
