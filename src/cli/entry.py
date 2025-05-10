@@ -116,8 +116,8 @@ def main():
                 maliciousness = probabilities[1]
                 if maliciousness > 0.5:
                     print(f"{n.file_path}: 🛑 malicious {maliciousness:.2f}")
-                else:
-                    print(f"{n.file_path}: 🟢 good {benign:.2f}")
+                # else:
+                #     print(f"{n.file_path}: 🟢 good {benign:.2f}")
             else:
                 logging.error(
                     f"Prediction error for node in {n.file_path}: {prediction_data['message']}"

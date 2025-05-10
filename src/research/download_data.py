@@ -9,6 +9,7 @@ import stat
 
 BENIGN_REPO_URLS = [
     "https://github.com/pallets/flask.git",
+    "https://github.com/aws/serverless-application-model.git",
     "https://github.com/psf/requests.git",
     "https://github.com/aws/aws-cli.git",
     "https://github.com/numpy/numpy.git",
@@ -23,6 +24,13 @@ BENIGN_REPO_URLS = [
     "https://github.com/googleapis/google-api-python-client",
     "https://github.com/python/cpython.git",
     "https://github.com/eliben/pycparser.git",
+    "https://github.com/aio-libs/aiohttp.git",
+    "https://github.com/fastapi/fastapi.git",
+    "https://github.com/boto/boto3.git",
+    "https://github.com/boto/botocore.git",
+    "https://github.com/pypa/setuptools.git",
+    "https://github.com/aws/deep-learning-containers.git",
+    "https://github.com/aws/aws-sam-cli.git",
 ]
 MALICIOUS_REPO_URL = "https://github.com/lxyeternal/pypi_malregistry.git"
 
