@@ -433,14 +433,14 @@ def function_node_to_string(
         identifier=sanitized_name, language=language, mapping_table=mapping_table
     )
     if mapped_value:
-        return f"{mapped_value} {postfix}", True
+        return f"{mapped_value}{param_count} {postfix}", True
     elif sanitized_name and len(sanitized_name) > 20:
         return (
-            f"{SpecialCases.VERY_LONG_FUNCTION_NAME.value} {postfix}",
+            f"{SpecialCases.VERY_LONG_FUNCTION_NAME.value}{param_count} {postfix}",
             False,
         )
     elif sanitized_name:
-        return f"{sanitized_name} {postfix}", False
+        return f"{sanitized_name}{param_count} {postfix}", False
     else:
         return "", False
 
