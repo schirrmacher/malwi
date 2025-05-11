@@ -195,7 +195,7 @@ def run_training(args):
         bpe_trainer_obj.save_model(str(tokenizer_path))
         print(f"BPE components (vocab.json, merges.txt) saved to {tokenizer_path}")
 
-        bpe_model = BPE.from_files(
+        bpe_model = BPE.from_file(
             str(vocab_file_path), str(merges_file_path), unk_token="[UNK]"
         )
         tk = Tokenizer(bpe_model)
