@@ -54,7 +54,7 @@ def main():
     parser.add_argument(
         "--format",
         "-f",
-        choices=["json", "table"],
+        choices=["json", "yaml", "table"],
         default="table",
         help="Specify the output format: 'json' or 'table'.",
     )
@@ -163,6 +163,10 @@ def main():
     output = ""
     if args.format == "json":
         output = MalwiNode.nodes_to_json(
+            malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+        )
+    elif args.format == "yaml":
+        output = MalwiNode.nodes_to_yaml(
             malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
         )
     else:

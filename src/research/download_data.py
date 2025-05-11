@@ -31,6 +31,7 @@ BENIGN_REPO_URLS = [
     "https://github.com/pypa/setuptools.git",
     "https://github.com/aws/deep-learning-containers.git",
     "https://github.com/aws/aws-sam-cli.git",
+    "https://github.com/django/django.git",
 ]
 MALICIOUS_REPO_URL = "https://github.com/lxyeternal/pypi_malregistry.git"
 

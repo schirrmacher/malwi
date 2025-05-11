@@ -1,5 +1,6 @@
 import re
 import json
+import yaml
 import pytest
 
 from research.normalize_data import (
@@ -100,6 +101,34 @@ def hello_world():
 
     base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["tokens"]
     assert base64_encoded_content == "F_DEF hello.world BLOCK PASS_STATEMENT"
+
+
+def test_to_yaml_format():
+    code = b"""
+def hello_world():
+    pass
+"""
+    result = create_malwi_nodes_from_bytes(
+        source_code_bytes=code, file_path="lala.py", language="python"
+    )
+    yaml_output = result[0].to_yaml()
+
+    # Define the expected YAML output as a string
+    expected_yaml = """
+format: 1
+malicious:
+- path: lala.py
+  contents:
+  - type: function
+    score: null
+    base64: ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz
+    tokens: F_DEF hello.world BLOCK PASS_STATEMENT
+    """
+
+    # Compare the generated YAML output to the expected one
+    assert yaml_output.strip() == expected_yaml.strip(), (
+        f"YAML output does not match the expected format.\nGenerated: {yaml_output}\nExpected: {expected_yaml}"
+    )
 
 
 def test_nested_functions():

@@ -2,6 +2,7 @@ import re
 import csv
 import math
 import json
+import yaml
 import base64
 import socket
 import urllib
@@ -579,6 +580,13 @@ class MalwiNode:
             ],
         }
 
+    def to_yaml(self) -> str:
+        malicious_data = {
+            "format": 1,
+            "malicious": [self._to_json_data()],
+        }
+        return yaml.dump(malicious_data, sort_keys=False)
+
     def to_json(self) -> str:
         malicious_data = {
             "format": 1,
@@ -622,6 +630,20 @@ class MalwiNode:
             },
             indent=4,
         )
+
+    @classmethod
+    def nodes_to_yaml(
+        cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
+    ) -> str:
+        malicious_entries = cls._group_nodes(malicious_nodes, score=0.99)
+        benign_entries = cls._group_nodes(benign_nodes, score=0.0)
+
+        data = {
+            "format": 1,
+            "malicious": malicious_entries,
+            "benign": benign_entries,
+        }
+        return yaml.dump(data, sort_keys=False)
 
 
 def process_source_file(
