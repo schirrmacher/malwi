@@ -35,8 +35,8 @@ SPECIAL_TOKENS: Set[str] = read_json_from_file(
 )
 
 DEFAULT_MODEL_NAME = "distilbert-base-uncased"
-DEFAULT_TOKENIZER_CLI_PATH = Path("malwi_tokenizer")
-DEFAULT_MODEL_OUTPUT_CLI_PATH = Path("malwi_model")
+DEFAULT_TOKENIZER_CLI_PATH = Path("malwi_models/tokenizer")
+DEFAULT_MODEL_OUTPUT_CLI_PATH = Path("malwi_models/distilbert")
 DEFAULT_MAX_LENGTH = 512
 DEFAULT_EPOCHS = 3
 DEFAULT_BATCH_SIZE = 16
@@ -184,7 +184,9 @@ def run_training(args):
             "[CLS]",
             "[SEP]",
             "[MASK]",
-        ] + list(SPECIAL_TOKENS)  # Ensure SPECIAL_TOKENS is a list for concatenation
+        ] + list(
+            SPECIAL_TOKENS
+        )  # Ensure SPECIAL_TOKENS is a list for concatenation
 
         bpe_trainer_obj.train_from_iterator(
             distilbert_train_texts,
