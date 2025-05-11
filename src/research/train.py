@@ -97,8 +97,8 @@ def run_training(args):
     else:
         print("--- Starting New Model Training ---")
 
-    benign_ast_strings_raw = load_asts_from_csv(args.benign_csv)
-    malicious_ast_strings_raw = load_asts_from_csv(args.malicious_csv)
+    benign_ast_strings_raw = load_asts_from_csv(args.benign)
+    malicious_ast_strings_raw = load_asts_from_csv(args.malicious)
 
     if not benign_ast_strings_raw and not malicious_ast_strings_raw:
         print("Error: No AST strings loaded. Training cannot proceed.")
@@ -184,9 +184,7 @@ def run_training(args):
             "[CLS]",
             "[SEP]",
             "[MASK]",
-        ] + list(
-            SPECIAL_TOKENS
-        )  # Ensure SPECIAL_TOKENS is a list for concatenation
+        ] + list(SPECIAL_TOKENS)  # Ensure SPECIAL_TOKENS is a list for concatenation
 
         bpe_trainer_obj.train_from_iterator(
             distilbert_train_texts,
@@ -583,13 +581,15 @@ def main():
         "train", help="Train a new DistilBERT AST classifier."
     )
     train_parser.add_argument(
-        "--benign_csv",
+        "--benign",
+        "-b",
         type=str,
         required=True,
         help="Path to CSV file containing benign AST strings.",
     )
     train_parser.add_argument(
-        "--malicious_csv",
+        "--malicious",
+        "-m",
         type=str,
         required=True,
         help="Path to CSV file containing malicious AST strings.",
