@@ -1,5 +1,9 @@
+[build-system]
+requires = ["setuptools>=80.4.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "malware-detection"
+name = "malwi"
 version = "0.0.1"
 description = "malwi - AI Python Malware Scanner"
 readme = "README.md"
@@ -7,11 +11,15 @@ requires-python = ">=3.12"
 license = { text = "MIT" }
 
 authors = [
-    { name = "Marvin Schirrmacher", email = "schirrmacher.io" },
+    { name = "Marvin Schirrmacher", email = "m@schirrmacher.io" },
 ]
+
 dependencies = [
+    "accelerate>=1.6.0",
     "datasets>=3.6.0",
+    "nltk>=3.9.1",
     "pandas>=2.2.3",
+    "pytest>=8.3.5",
     "scikit-learn>=1.6.1",
     "tokenizers>=0.21.1",
     "torch>=2.7.0",
@@ -28,21 +36,14 @@ dependencies = [
 [project.scripts]
 malwi = "cli.entry:main"
 
-dependencies = [
-    "accelerate>=1.6.0",
-    "nltk>=3.9.1",
-    "pandas>=2.2.3",
-    "pytest>=8.3.5",
-    "scikit-learn>=1.6.1",
-    "tokenizers>=0.21.1",
-    "torch>=2.7.0",
-    "transformers>=4.51.3",
-    "tree-sitter>=0.24.0",
-    "tree-sitter-javascript>=0.23.1",
-    "tree-sitter-python>=0.23.6",
-    "tree-sitter-rust>=0.24.0",
-    "tree-sitter-typescript>=0.23.2",
-]
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"research.syntax_mapping" = ["*.json"]
 
 [dependency-groups]
 dev = [
