@@ -3,8 +3,8 @@ import argparse
 from typing import List
 from pathlib import Path
 
-from src.research.normalize_data import MalwiNode, create_malwi_nodes_from_file
-from src.cli.predict import initialize_hf_model_components, get_node_text_prediction
+from research.normalize_data import MalwiNode, create_malwi_nodes_from_file
+from cli.predict import initialize_hf_model_components, get_node_text_prediction
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 

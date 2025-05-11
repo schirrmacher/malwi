@@ -26,7 +26,7 @@ from transformers import (
 from datasets import Dataset, DatasetDict
 from datasets.utils.logging import disable_progress_bar
 
-from src.common.files import read_json_from_file
+from common.files import read_json_from_file
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 

@@ -20,7 +20,7 @@ import tree_sitter_javascript as tsjavascript
 import tree_sitter_typescript as tstypescript
 import tree_sitter_rust as tsrust
 
-from src.common.files import read_json_from_file
+from common.files import read_json_from_file
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 SOURCE_DIR = pathlib.Path(__file__).resolve().parent.parent

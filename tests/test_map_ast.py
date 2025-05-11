@@ -1,7 +1,7 @@
 import re
 import pytest
 
-from src.research.normalize_data import (
+from research.normalize_data import (
     is_hex,
     is_base64,
     is_valid_ip,
