@@ -137,9 +137,11 @@ malicious:
 - path: lala.py
   contents:
   - type: function
+    name: hello_world
     score: null
-    base64: ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz
     tokens: F_DEF hello.world BLOCK PASS_STATEMENT
+    base64: ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz
+    hash: 7e69c52407f8234baf46514c9ec44ec2c4d70d828f0f3b747ca9877a9d700c23
     """
 
     # Compare the generated YAML output to the expected one

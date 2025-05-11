@@ -105,12 +105,10 @@ def create_malwi_nodes_from_file(file_path: str) -> List["MalwiNode"]:
 
     p_file_path = Path(file_path)
     if not p_file_path.is_file():
-        # logging.debug(f"Path provided is not a file: {file_path}")
         return []
 
     extension = p_file_path.suffix.lstrip(".").lower()
     if extension not in extension_mapping:
-        # logging.debug(f"Unsupported extension '{extension}' for file {file_path}")
         return []
 
     language = extension_mapping[extension]
@@ -615,14 +613,20 @@ class MalwiNode:
     def _to_json_data(self) -> dict:
         node_text = self._get_node_text()
         encoded_text = base64.b64encode(node_text).decode("utf-8")
+        name_node = self.node.child_by_field_name("name")
+        if name_node:
+            function_name = name_node.text.decode("utf8")
+
         return {
             "path": self.file_path,
             "contents": [
                 {
                     "type": "function",
+                    "name": function_name if function_name else "<unknown>",
                     "score": self.maliciousness,
-                    "base64": encoded_text,
                     "tokens": self.to_string(),
+                    "base64": encoded_text,
+                    "hash": self.to_string_hash(),
                 }
             ],
         }
