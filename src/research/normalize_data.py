@@ -574,6 +574,7 @@ class MalwiNode:
                     "type": "function",
                     "score": self.maliciousness,
                     "base64": encoded_text,
+                    "tokens": self.to_string(),
                 }
             ],
         }

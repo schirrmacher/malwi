@@ -98,6 +98,9 @@ def hello_world():
     base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["base64"]
     assert base64_encoded_content == "ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz"
 
+    base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["tokens"]
+    assert base64_encoded_content == "F_DEF hello.world BLOCK PASS_STATEMENT"
+
 
 def test_nested_functions():
     code = b"""
