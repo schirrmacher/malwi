@@ -1,7 +1,9 @@
 import re
+import os
 import json
-import yaml
 import pytest
+
+from typing import Dict
 
 from research.normalize_data import (
     is_hex,
@@ -12,6 +14,7 @@ from research.normalize_data import (
     FUNCTION_MAPPING,
     create_malwi_nodes_from_bytes,
     parse_python_string_literal,
+    compress_tokens,
 )
 
 
@@ -84,6 +87,20 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx():
         source_code_bytes=code, file_path="lala.py", language="python"
     )
     assert result[0].to_string() == "F_DEF VERY_LONG_FUNCTION_NAME BLOCK PASS_STATEMENT"
+
+
+def test_compression():
+    code = b"""
+def some_func():
+    a.b.c.d.e()
+"""
+    result = create_malwi_nodes_from_bytes(
+        source_code_bytes=code, file_path="lala.py", language="python"
+    )
+    assert (
+        result[0].to_string(one_line=True, compression=True)
+        == "F_DEF some.func BLOCK EXP F_CALL a.b.c.d.e MEMBER_ACCESS_3 MEMBER_ACCESS"
+    )
 
 
 def test_to_json():
@@ -324,3 +341,170 @@ def foo():
         result[0].to_string_hash()
         == "09ce504e602dfa4a8082d7e5d3cc7f8f14e4e6d318e453838b3c0711acff3601"
     )
+
+
+RULES_FILE_PATH = "test_mapping_rules.json"
+
+
+@pytest.fixture(scope="module")
+def setup_rules_file():
+    dummy_rules = {
+        "python": {
+            "EXP ASSIGNMENT": "EXP_ASSIGNMENT",
+            "F_CALL EXP": "F_CALL_EXP",
+            "BOOLEAN BOOLEAN": "BOOLEAN_2",
+            "BOOLEAN BOOLEAN BOOLEAN": "BOOLEAN_3",
+            "MEMBER_ACCESS MEMBER_ACCESS": "MEMBER_ACCESS_2",
+            "MEMBER_ACCESS MEMBER_ACCESS MEMBER_ACCESS": "MEMBER_ACCESS_3",
+            "NUMERIC NUMERIC": "NUMERIC_2",
+            "NUMERIC NUMERIC NUMERIC": "NUMERIC_3",
+            "EXP_ASSIGNMENT EXP_ASSIGNMENT": "EXP_ASSIGNMENT_2",
+            "EXP_ASSIGNMENT EXP_ASSIGNMENT EXP_ASSIGNMENT": "EXP_ASSIGNMENT_3",
+            "IF LPAREN BOOLEAN_3 RPAREN LBRACE": "IF_CONDITION_BLOCK_3",
+            "IF LPAREN BOOLEAN_2 RPAREN LBRACE": "IF_CONDITION_BLOCK_2",
+        }
+    }
+    with open(RULES_FILE_PATH, "w") as f:
+        json.dump(dummy_rules, f, indent=4)
+
+    yield RULES_FILE_PATH
+
+    os.remove(RULES_FILE_PATH)
+
+
+DUMMY_RULES_DATA: Dict[str, str] = {
+    "EXP ASSIGNMENT": "EXP_ASSIGNMENT",
+    "F_CALL EXP": "F_CALL_EXP",
+    "BOOLEAN BOOLEAN": "BOOLEAN_2",
+    "BOOLEAN BOOLEAN BOOLEAN": "BOOLEAN_3",
+    "MEMBER_ACCESS MEMBER_ACCESS": "MEMBER_ACCESS_2",
+    "MEMBER_ACCESS MEMBER_ACCESS MEMBER_ACCESS": "MEMBER_ACCESS_3",
+    "NUMERIC NUMERIC": "NUMERIC_2",
+    "NUMERIC NUMERIC NUMERIC": "NUMERIC_3",
+    "EXP_ASSIGNMENT EXP_ASSIGNMENT": "EXP_ASSIGNMENT_2",
+    "EXP_ASSIGNMENT EXP_ASSIGNMENT EXP_ASSIGNMENT": "EXP_ASSIGNMENT_3",
+    "IF LPAREN BOOLEAN_3 RPAREN LBRACE": "IF_CONDITION_BLOCK_3",
+    "IF LPAREN BOOLEAN_2 RPAREN LBRACE": "IF_CONDITION_BLOCK_2",
+}
+
+
+@pytest.fixture
+def direct_rules_data() -> Dict[str, str]:
+    # Return a copy to prevent modification across tests
+    return DUMMY_RULES_DATA.copy()
+
+
+# --- Test Functions ---
+
+
+def test_simple_two_token_rule(direct_rules_data: Dict[str, str]):
+    tokens = ["EXP", "ASSIGNMENT", "VALUE"]
+    expected = ["EXP_ASSIGNMENT", "VALUE"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_three_token_rule_precedence(direct_rules_data: Dict[str, str]):
+    tokens = ["BOOLEAN", "BOOLEAN", "BOOLEAN", "AND", "BOOLEAN"]
+    expected = ["BOOLEAN_3", "AND", "BOOLEAN"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_no_applicable_rules(direct_rules_data: Dict[str, str]):
+    tokens = ["UNKNOWN", "TOKEN", "SEQUENCE"]
+    expected = ["UNKNOWN", "TOKEN", "SEQUENCE"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_multiple_rules_applied(direct_rules_data: Dict[str, str]):
+    tokens = [
+        "MEMBER_ACCESS",
+        "MEMBER_ACCESS",
+        "MEMBER_ACCESS",
+        "DOT",
+        "NUMERIC",
+        "NUMERIC",
+    ]
+    expected = ["MEMBER_ACCESS_3", "DOT", "NUMERIC_2"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_overlapping_longer_preferred(direct_rules_data: Dict[str, str]):
+    tokens = ["EXP_ASSIGNMENT", "EXP_ASSIGNMENT", "EXP_ASSIGNMENT"]
+    expected = ["EXP_ASSIGNMENT_3"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_overlapping_shorter_at_end(direct_rules_data: Dict[str, str]):
+    tokens = ["EXP_ASSIGNMENT", "EXP_ASSIGNMENT", "EXP_ASSIGNMENT", "EXP_ASSIGNMENT"]
+    expected = ["EXP_ASSIGNMENT_3", "EXP_ASSIGNMENT"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_longer_composite_rule(direct_rules_data: Dict[str, str]):
+    tokens = [
+        "IF",
+        "LPAREN",
+        "BOOLEAN",
+        "BOOLEAN",
+        "BOOLEAN",
+        "RPAREN",
+        "LBRACE",
+        "RETURN",
+        "TRUE",
+    ]
+    expected = ["IF_CONDITION_BLOCK_3", "RETURN", "TRUE"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_shorter_composite_rule_when_longer_not_match(
+    direct_rules_data: Dict[str, str],
+):
+    tokens = [
+        "IF",
+        "LPAREN",
+        "BOOLEAN",
+        "BOOLEAN",
+        "RPAREN",
+        "LBRACE",
+        "RETURN",
+        "FALSE",
+    ]
+    expected = ["IF_CONDITION_BLOCK_2", "RETURN", "FALSE"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_empty_token_list(direct_rules_data: Dict[str, str]):
+    tokens: List[str] = []
+    expected: List[str] = []
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_tokens_substring_of_rule_keys(direct_rules_data: Dict[str, str]):
+    tokens = ["BOOLEAN", "BOOLEAN", "BOOLEANISH"]
+    expected = ["BOOLEAN_2", "BOOLEANISH"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_sequential_application_three_become_one(direct_rules_data: Dict[str, str]):
+    tokens = ["EXP", "ASSIGNMENT", "EXP", "ASSIGNMENT", "EXP", "ASSIGNMENT"]
+    expected = ["EXP_ASSIGNMENT_3"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_sequential_application_two_pairs_become_one(direct_rules_data: Dict[str, str]):
+    tokens = ["EXP", "ASSIGNMENT", "EXP", "ASSIGNMENT", "VALUE"]
+    expected = ["EXP_ASSIGNMENT_2", "VALUE"]
+    assert compress_tokens(tokens, direct_rules_data) == expected
+
+
+def test_empty_rules_data_dict():
+    tokens = ["SOME", "TOKENS"]
+    expected_tokens = ["SOME", "TOKENS"]  # Expect original tokens back
+    # The function now returns the original tokens if rules are empty, not an error.
+    assert compress_tokens(tokens, {}) == expected_tokens
+
+
+def test_empty_rules_and_empty_tokens():
+    tokens: List[str] = []
+    expected: List[str] = []
+    assert compress_tokens(tokens, {}) == expected

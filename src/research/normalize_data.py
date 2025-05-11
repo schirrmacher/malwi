@@ -521,6 +521,43 @@ def node_to_string_recursive(
     return final_string
 
 
+def compress_tokens(tokens: List[str], mapping_rules: Dict[str, str]) -> List[str]:
+    if not mapping_rules:
+        return list(tokens)
+
+    sorted_rules: List[tuple[str, str]] = sorted(
+        mapping_rules.items(), key=lambda item: len(item[0].split()), reverse=True
+    )
+
+    compressed_tokens_list: List[str] = list(tokens)
+
+    made_change_in_pass: bool = True
+    while made_change_in_pass:
+        made_change_in_pass = False
+        temp_new_tokens: List[str] = []
+        i: int = 0
+        while i < len(compressed_tokens_list):
+            matched: bool = False
+            for rule_key, rule_value in sorted_rules:
+                rule_key_tokens: List[str] = rule_key.split()
+                rule_key_len: int = len(rule_key_tokens)
+
+                if i + rule_key_len <= len(compressed_tokens_list):
+                    # Check if the current slice of tokens matches the rule key
+                    if compressed_tokens_list[i : i + rule_key_len] == rule_key_tokens:
+                        temp_new_tokens.append(rule_value)
+                        i += rule_key_len
+                        matched = True
+                        made_change_in_pass = True
+                        break  # Break from inner loop (rules) once a match is found
+            if not matched:
+                temp_new_tokens.append(compressed_tokens_list[i])
+                i += 1
+        compressed_tokens_list = temp_new_tokens
+
+    return compressed_tokens_list
+
+
 class MalwiNode:
     def __init__(
         self,
@@ -538,15 +575,25 @@ class MalwiNode:
         if Path(file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings = warnings + ["TARGET_FILE"]
 
-    def to_string(self, one_line: bool = True) -> str:
+    def to_string(self, one_line: bool = True, compression: bool = False) -> str:
         if self.node is None:
             return ""
         result = node_to_string_recursive(self.node, language=self.language)
         if self.warnings:
             warnings = "\n".join(self.warnings)
             result = f"{warnings}\n{result}"
+
         if one_line:
-            return re.sub(r"\s+", " ", result).strip()
+            result = re.sub(r"\s+", " ", result).strip()
+
+        if one_line and compression:
+            return " ".join(
+                compress_tokens(
+                    tokens=result.split(" "),
+                    mapping_rules=COMPRESSION_MAPPING.get(self.language, {}),
+                )
+            )
+
         return result
 
     def to_string_hash(self) -> str:
