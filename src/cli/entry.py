@@ -2,6 +2,7 @@ import logging
 import argparse
 from typing import List
 from pathlib import Path
+from tqdm import tqdm  # Progress bar
 
 from research.normalize_data import MalwiNode, create_malwi_nodes_from_file
 from cli.predict import initialize_hf_model_components, get_node_text_prediction
@@ -92,20 +93,26 @@ def main():
         help="Specify the custom model path (directory or file).",
         default=None,
     )
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress logging output and progress bar.",
+    )
 
     args = parser.parse_args()
 
-    if not logging.getLogger().hasHandlers():
-        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
-    logging.info(
-        """
+    if args.quiet:
+        logging.getLogger().setLevel(logging.CRITICAL + 1)
+    else:
+        logging.info(
+            """
                   __          __
   .--------.---.-|  .--.--.--|__|
   |        |  _  |  |  |  |  |  |
   |__|__|__|___._|__|________|__|
      AI Python Malware Scanner\n\n"""
-    )
+        )
 
     if not args.path:
         parser.print_help()
@@ -128,10 +135,14 @@ def main():
     malicious_nodes = []
     benign_nodes = []
 
-    for n in all_collected_nodes:
+    iterable = all_collected_nodes
+    if not args.quiet:
+        iterable = tqdm(all_collected_nodes, desc="Scanning", unit="node")
+
+    for n in iterable:
         node_ast_one_line = n.to_string()
 
-        if args.debug:
+        if args.debug and not args.quiet:
             print(f"\nInput:\n{n.file_path}\n\n{node_ast_one_line}\n\n")
 
         prediction_data = get_node_text_prediction(node_ast_one_line)
@@ -165,7 +176,8 @@ def main():
 
     if args.save:
         Path(args.save).write_text(output)
-        logging.info(f"Output saved to {args.save}")
+        if not args.quiet:
+            logging.info(f"Output saved to {args.save}")
     else:
         print(output)
 
