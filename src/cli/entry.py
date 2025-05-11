@@ -48,7 +48,7 @@ def process_source_path(
 def main():
     parser = argparse.ArgumentParser(description="malwi - AI Python Malware Scanner")
     parser.add_argument(
-        "--path", metavar="PATH", help="Specify the package file or folder path."
+        "path", metavar="PATH", help="Specify the package file or folder path."
     )
     parser.add_argument(
         "--debug",
