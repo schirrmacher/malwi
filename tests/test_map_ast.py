@@ -1,4 +1,5 @@
 import re
+import json
 import pytest
 
 from research.normalize_data import (
@@ -82,6 +83,20 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx():
         source_code_bytes=code, file_path="lala.py", language="python"
     )
     assert result[0].to_string() == "F_DEF VERY_LONG_FUNCTION_NAME BLOCK PASS_STATEMENT"
+
+
+def test_to_json():
+    code = b"""
+def hello_world():
+    pass
+"""
+    result = create_malwi_nodes_from_bytes(
+        source_code_bytes=code, file_path="lala.py", language="python"
+    )
+    json_output = result[0].to_json()
+    parsed_json = json.loads(json_output)
+    base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["base64"]
+    assert base64_encoded_content == "ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz"
 
 
 def test_nested_functions():

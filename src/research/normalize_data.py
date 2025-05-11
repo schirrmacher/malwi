@@ -1,6 +1,8 @@
 import re
 import csv
 import math
+import json
+import base64
 import socket
 import urllib
 import hashlib
@@ -12,6 +14,7 @@ from enum import Enum
 from tqdm import tqdm
 from pathlib import Path
 from tree_sitter import Node
+from collections import defaultdict
 from typing import Set, Optional, Dict, Any, List, Tuple
 
 from tree_sitter import Parser, Language
@@ -524,11 +527,13 @@ class MalwiNode:
         file_path: str,
         language: str = "unknown",
         warnings: List[str] = [],
+        maliciousness: Optional[float] = None,
     ):
         self.node = node
         self.file_path = file_path
         self.language = language
         self.warnings = warnings
+        self.maliciousness = maliciousness
         if Path(file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings = warnings + ["TARGET_FILE"]
 
@@ -549,6 +554,73 @@ class MalwiNode:
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
+
+    def _get_node_text(self) -> bytes:
+        if hasattr(self.node, "text"):
+            node_text = self.node.text
+            if isinstance(node_text, str):
+                return node_text.encode("utf-8")
+            elif isinstance(node_text, bytes):
+                return node_text
+        return b""
+
+    def _to_json_data(self) -> dict:
+        node_text = self._get_node_text()
+        encoded_text = base64.b64encode(node_text).decode("utf-8")
+        return {
+            "path": self.file_path,
+            "contents": [
+                {
+                    "type": "function",
+                    "score": self.maliciousness,
+                    "base64": encoded_text,
+                }
+            ],
+        }
+
+    def to_json(self) -> str:
+        malicious_data = {
+            "format": 1,
+            "malicious": [self._to_json_data()],
+        }
+        return json.dumps(malicious_data, indent=4)
+
+    @classmethod
+    def _group_nodes(cls, nodes: List["MalwiNode"], score: float) -> List[dict]:
+        grouped: dict[str, List["MalwiNode"]] = defaultdict(list)
+        for node in nodes:
+            grouped[node.file_path].append(node)
+
+        entries = []
+        for file_path, node_group in grouped.items():
+            contents = []
+            for node in node_group:
+                contents.extend(node._to_json_data()["contents"])
+
+            entries.append(
+                {
+                    "path": file_path,
+                    "score": score,
+                    "contents": contents,
+                }
+            )
+        return entries
+
+    @classmethod
+    def nodes_to_json(
+        cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
+    ) -> str:
+        malicious_entries = cls._group_nodes(malicious_nodes, score=0.99)
+        benign_entries = cls._group_nodes(benign_nodes, score=0.0)
+
+        return json.dumps(
+            {
+                "format": 1,
+                "malicious": malicious_entries,
+                "benign": benign_entries,
+            },
+            indent=4,
+        )
 
 
 def process_source_file(

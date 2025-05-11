@@ -32,7 +32,7 @@ def process_source_path(
     elif path_obj.is_dir():
         logging.info(f"Processing directory: {input_path}")
         processed_files_in_dir = False
-        for file_path in path_obj.rglob("*"):  # Using rglob for recursive traversal
+        for file_path in path_obj.rglob("*"):
             if file_path.is_file():
                 nodes = create_malwi_nodes_from_file(file_path=str(file_path))
                 if nodes:
@@ -49,6 +49,28 @@ def main():
     parser = argparse.ArgumentParser(description="malwi - AI Python Malware Scanner")
     parser.add_argument(
         "path", metavar="PATH", help="Specify the package file or folder path."
+    )
+    parser.add_argument(
+        "--format",
+        "-f",
+        choices=["json", "table"],
+        default="table",
+        help="Specify the output format: 'json' or 'table'.",
+    )
+    parser.add_argument(
+        "--save",
+        "-s",
+        metavar="FILE",
+        help="Specify a file path to save the output.",
+        default=None,
+    )
+    parser.add_argument(
+        "--maliciousness_threshold",
+        "-mt",
+        metavar="FLOAT",
+        type=float,
+        default=0.5,
+        help="Specify the threshold for classifying nodes as malicious (default: 0.5).",
     )
     parser.add_argument(
         "--debug",
@@ -68,7 +90,7 @@ def main():
         "-m",
         metavar="PATH",
         help="Specify the custom model path (directory or file).",
-        default=None,  # Default to None
+        default=None,
     )
 
     args = parser.parse_args()
@@ -101,27 +123,53 @@ def main():
         logging.info(
             f"No processable AST nodes found for the given path: '{args.path}'."
         )
-    else:
-        for n in all_collected_nodes:
-            node_ast_one_line = n.to_string()
+        return
 
-            if args.debug:
-                print(f"\nInput:\n{n.file_path}\n\n{node_ast_one_line}\n\n")
+    malicious_nodes = []
+    benign_nodes = []
 
-            prediction_data = get_node_text_prediction(node_ast_one_line)
+    for n in all_collected_nodes:
+        node_ast_one_line = n.to_string()
 
-            if prediction_data["status"] == "success":
-                probabilities = prediction_data["probabilities"]
-                benign = probabilities[0]
-                maliciousness = probabilities[1]
-                if maliciousness > 0.5:
-                    print(f"{n.file_path}: 🛑 malicious {maliciousness:.2f}")
-                # else:
-                #     print(f"{n.file_path}: 🟢 good {benign:.2f}")
+        if args.debug:
+            print(f"\nInput:\n{n.file_path}\n\n{node_ast_one_line}\n\n")
+
+        prediction_data = get_node_text_prediction(node_ast_one_line)
+
+        if prediction_data["status"] == "success":
+            probabilities = prediction_data["probabilities"]
+            maliciousness = probabilities[1]
+            n.maliciousness = maliciousness
+            if maliciousness > args.maliciousness_threshold:
+                malicious_nodes.append(n)
             else:
-                logging.error(
-                    f"Prediction error for node in {n.file_path}: {prediction_data['message']}"
-                )
+                benign_nodes.append(n)
+        else:
+            logging.error(
+                f"Prediction error for node in {n.file_path}: {prediction_data['message']}"
+            )
+
+    output = ""
+    if args.format == "json":
+        output = MalwiNode.nodes_to_json(
+            malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+        )
+    else:
+        if len(malicious_nodes) == 0:
+            output = "🟢 No malicious findings"
+        else:
+            output = "\n".join(
+                f"{m.file_path}: 🛑 malicious {m.maliciousness:.2f}"
+                for m in malicious_nodes
+            )
+
+    if args.save:
+        Path(args.save).write_text(output)
+        logging.info(f"Output saved to {args.save}")
+    else:
+        print(output)
+
+    exit(1 if malicious_nodes else 0)
 
 
 if __name__ == "__main__":
