@@ -10,6 +10,18 @@ Open-source software made in Europe.
 Based on open research, open code, open data.
  🇪🇺🤘🕊️
 
+```
+# Install
+pip install --user malwi
+
+# Run
+malwi examples
+
+examples/__init__.py:run        🛑 malicious 0.93
+examples/__init__.py:debug      🛑 malicious 0.99
+examples/__init__.py:runcommand 🛑 malicious 1.00
+```
+
 ## Why malwi?
 
 [The number of _malicious open-source packages_ is growing](https://arxiv.org/pdf/2404.04991). This is not just a threat to your business but also to the open-source community.
@@ -32,7 +44,7 @@ Future iterations will cover malware scanning for more languages (JavaScript, Ru
 ## How does it work?
 
 malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) and Support Vector Machines (SVM) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). 
-Additionally, malwi applies [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) for creating Abstract Syntax Tree (ASTs) which are mapped to a unified and security sensitive syntax used as training input. The Python malware dataset can be found [here](https://github.com/lxyeternal/pypi_malregistry). After 3 epochs of training you will get: Loss: `0.0986`, Accuracy: `0.9669`, F1: `0.9666`.
+Additionally, malwi applies [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) for creating abstract syntax trees (ASTs) which are mapped to a unified and security sensitive syntax used as training input. The Python malware dataset can be found [here](https://github.com/lxyeternal/pypi_malregistry). After 3 epochs of training you will get: Loss: `0.0986`, Accuracy: `0.9669`, F1: `0.9666`.
 
 High-level training pipeline:
 
@@ -44,21 +56,16 @@ High-level training pipeline:
 
 Do you have access to malicious Rust, Go, whatever packages? **Contact me.**
 
-
 ### Develop
 
 Prerequisites: [uv](https://docs.astral.sh/uv/)
-
-
 ```
 # Download and process data
 cmds/download_and_preprocess.sh
 
 # Only process data
 cmds/preprocess.sh
-```
 
-```
 # Preprocess then start training
 cmds/preprocess_and_train.sh
 
