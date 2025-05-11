@@ -10,6 +10,7 @@ authors = [
     { name = "Marvin Schirrmacher", email = "schirrmacher.io" },
 ]
 dependencies = [
+    "datasets>=3.6.0",
     "pandas>=2.2.3",
     "scikit-learn>=1.6.1",
     "tokenizers>=0.21.1",

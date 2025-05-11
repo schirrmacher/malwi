@@ -52,16 +52,16 @@ Prerequisites: [uv](https://docs.astral.sh/uv/)
 
 ```
 # Download and process data
-src/research/download_and_preprocess.sh
+cmds/download_and_preprocess.sh
 
 # Only process data
-src/research/preprocess.sh
+cmds/preprocess.sh
 ```
 
 ```
 # Preprocess then start training
-src/research/preprocess_and_train.sh
+cmds/preprocess_and_train.sh
 
 # Only start training
-src/research/train.sh
+cmds/train.sh
 ```

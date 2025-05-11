@@ -4,6 +4,7 @@ import pathlib
 import argparse
 import numpy as np
 import pandas as pd
+import os
 
 from typing import Set
 from pathlib import Path
@@ -14,7 +15,6 @@ from tokenizers.pre_tokenizers import ByteLevel
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
-
 from transformers import (
     DistilBertConfig,
     DistilBertForSequenceClassification,
@@ -23,6 +23,8 @@ from transformers import (
     TrainingArguments,
 )
 
+from datasets import Dataset, DatasetDict
+from datasets.utils.logging import disable_progress_bar
 
 from src.common.files import read_json_from_file
 
@@ -36,14 +38,16 @@ DEFAULT_MODEL_NAME = "distilbert-base-uncased"
 DEFAULT_TOKENIZER_CLI_PATH = Path("malwi_tokenizer")
 DEFAULT_MODEL_OUTPUT_CLI_PATH = Path("malwi_model")
 DEFAULT_MAX_LENGTH = 512
-DEFAULT_EPOCHS = 3  # Default total epochs if not resuming
+DEFAULT_EPOCHS = 3
 DEFAULT_BATCH_SIZE = 16
 DEFAULT_VOCAB_SIZE = 30522
-DEFAULT_SAVE_STEPS = 0  # Default to epoch-based saving
+DEFAULT_SAVE_STEPS = 0
+DEFAULT_NUM_PROC = (
+    os.cpu_count() if os.cpu_count() is not None and os.cpu_count() > 1 else 2
+)
 
 
 def load_asts_from_csv(csv_file_path: str, ast_column_name: str = "ast") -> list[str]:
-    """Loads AST strings from a specified column in a CSV file."""
     asts = []
     try:
         df = pd.read_csv(csv_file_path)
@@ -72,20 +76,6 @@ def load_asts_from_csv(csv_file_path: str, ast_column_name: str = "ast") -> list
     return asts
 
 
-class ASTDataset(torch.utils.data.Dataset):
-    def __init__(self, encodings, labels):
-        self.encodings = encodings
-        self.labels = labels
-
-    def __getitem__(self, idx):
-        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        item["labels"] = torch.tensor(self.labels[idx])
-        return item
-
-    def __len__(self):
-        return len(self.labels)
-
-
 def compute_metrics(pred):
     labels = pred.label_ids
     preds = pred.predictions.argmax(-1)
@@ -97,7 +87,9 @@ def compute_metrics(pred):
 
 
 def run_training(args):
-    """Handles the model training process."""
+    if args.disable_hf_datasets_progress_bar:
+        disable_progress_bar()
+
     if args.resume_from_checkpoint:
         print(
             f"--- Resuming Model Training from checkpoint: {args.resume_from_checkpoint} ---"
@@ -192,7 +184,7 @@ def run_training(args):
             "[CLS]",
             "[SEP]",
             "[MASK]",
-        ] + SPECIAL_TOKENS
+        ] + list(SPECIAL_TOKENS)  # Ensure SPECIAL_TOKENS is a list for concatenation
 
         bpe_trainer_obj.train_from_iterator(
             distilbert_train_texts,
@@ -203,7 +195,9 @@ def run_training(args):
         bpe_trainer_obj.save_model(str(tokenizer_path))
         print(f"BPE components (vocab.json, merges.txt) saved to {tokenizer_path}")
 
-        bpe_model = BPE(str(vocab_file_path), str(merges_file_path), unk_token="[UNK]")
+        bpe_model = BPE.from_files(
+            str(vocab_file_path), str(merges_file_path), unk_token="[UNK]"
+        )
         tk = Tokenizer(bpe_model)
         tk.normalizer = Sequence([NFKC(), Lowercase()])
         tk.pre_tokenizer = ByteLevel()
@@ -228,22 +222,41 @@ def run_training(args):
             f"\nLoading existing PreTrainedTokenizerFast from {tokenizer_path} (found tokenizer.json)."
         )
         tokenizer = PreTrainedTokenizerFast.from_pretrained(
-            str(tokenizer_path), max_len=args.max_length
+            str(tokenizer_path), model_max_length=args.max_length
         )
 
-    print("\nPreparing Hugging Face datasets...")
-    train_encodings = tokenizer(
-        distilbert_train_texts,
-        truncation=True,
-        padding=True,
-        max_length=args.max_length,
-    )
-    val_encodings = tokenizer(
-        distilbert_val_texts, truncation=True, padding=True, max_length=args.max_length
+    print("\nConverting data to Hugging Face Dataset format...")
+    train_data_dict = {"text": distilbert_train_texts, "label": distilbert_train_labels}
+    val_data_dict = {"text": distilbert_val_texts, "label": distilbert_val_labels}
+
+    train_hf_dataset = Dataset.from_dict(train_data_dict)
+    val_hf_dataset = Dataset.from_dict(val_data_dict)
+
+    raw_datasets = DatasetDict(
+        {"train": train_hf_dataset, "validation": val_hf_dataset}
     )
 
-    train_dataset = ASTDataset(train_encodings, distilbert_train_labels)
-    val_dataset = ASTDataset(val_encodings, distilbert_val_labels)
+    print("Tokenizing datasets using .map()...")
+
+    def tokenize_function(examples):
+        return tokenizer(
+            examples["text"],
+            truncation=True,
+            padding="max_length",
+            max_length=args.max_length,
+        )
+
+    num_proc = (
+        args.num_proc if args.num_proc > 0 else None
+    )  # Use None for datasets to auto-detect or use single process
+
+    tokenized_datasets = raw_datasets.map(
+        tokenize_function, batched=True, num_proc=num_proc, remove_columns=["text"]
+    )
+    print("Tokenization complete.")
+
+    train_dataset_for_trainer = tokenized_datasets["train"]
+    val_dataset_for_trainer = tokenized_datasets["validation"]
 
     model_output_path = Path(args.model_output_path)
 
@@ -267,9 +280,6 @@ def run_training(args):
             f"\nPreparing to resume training. Model will be loaded from checkpoint: {args.resume_from_checkpoint}"
         )
         try:
-            # When resuming, it's often better to load config from where the final model was/will be saved,
-            # or from the checkpoint itself if it contains a config.json.
-            # Here, we prioritize model_output_path for config consistency.
             config_load_path = (
                 model_output_path
                 if model_output_path.exists()
@@ -289,9 +299,7 @@ def run_training(args):
         config.pad_token_id = tokenizer.pad_token_id
         config.cls_token_id = tokenizer.cls_token_id
         config.sep_token_id = tokenizer.sep_token_id
-        # Model instance for Trainer; actual weights loaded from the checkpoint specified in resume_from_checkpoint by the Trainer.
-        # If not resuming from a specific checkpoint dir, or if it's invalid, Trainer might load from model_name.
-        # We initialize with model_output_path to have a consistent structure if resuming generally.
+
         model_load_path_for_resume_init = (
             model_output_path
             if model_output_path.exists()
@@ -306,13 +314,13 @@ def run_training(args):
         )
 
     current_save_strategy = "epoch"
-    current_save_steps = None  # Correctly initialize
-    save_total_limit_val = None  # Correctly initialize
+    current_save_steps = None
+    save_total_limit_val = None
 
     if args.save_steps > 0:
         current_save_strategy = "steps"
         current_save_steps = args.save_steps
-        save_total_limit_val = 5  # Default limit when saving by steps
+        save_total_limit_val = 5
         print(
             f"Configuring to save checkpoints every {current_save_steps} steps. Total checkpoints limit: {save_total_limit_val}"
         )
@@ -320,7 +328,7 @@ def run_training(args):
         print("Configuring to save checkpoints at the end of each epoch.")
 
     training_arguments = TrainingArguments(
-        output_dir=str(model_output_path / "results"),  # Checkpoints will be saved here
+        output_dir=str(model_output_path / "results"),
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
@@ -330,18 +338,18 @@ def run_training(args):
         logging_steps=10,
         eval_strategy="epoch",
         save_strategy=current_save_strategy,
-        save_steps=current_save_steps,  # Pass the actual value
+        save_steps=current_save_steps,
         load_best_model_at_end=True,
         metric_for_best_model="f1",
-        save_total_limit=save_total_limit_val,  # Pass the actual value
+        save_total_limit=save_total_limit_val,
         report_to="none",
     )
 
     trainer = Trainer(
         model=model,
         args=training_arguments,
-        train_dataset=train_dataset,
-        eval_dataset=val_dataset,
+        train_dataset=train_dataset_for_trainer,
+        eval_dataset=val_dataset_for_trainer,
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
     )
@@ -365,15 +373,11 @@ def run_training(args):
         else:
             print(
                 f"Warning: Checkpoint path {args.resume_from_checkpoint} does not seem to be a valid checkpoint directory (missing model weights). "
-                f"Training will proceed based on the model initialized (either new or from --model_output_path if its contents were used)."
+                f"Training will proceed based on the model initialized."
             )
-            # Ensure resume_from_checkpoint is not passed if invalid to avoid Trainer errors
-            args.resume_from_checkpoint = (
-                None  # Clear it so Trainer doesn't try to load from an invalid path
-            )
+            args.resume_from_checkpoint = None
 
-    if train_dataset and len(train_dataset) > 0:
-        # If args.resume_from_checkpoint was valid, it's in train_kwargs. Otherwise, it's a normal train call.
+    if train_dataset_for_trainer and len(train_dataset_for_trainer) > 0:
         trainer.train(**train_kwargs)
         print("\nTraining complete.")
 
@@ -386,7 +390,6 @@ def run_training(args):
             final_eval_results,
         )
 
-        # Save the best model (and tokenizer) to the root of model_output_path
         trainer.save_model(str(model_output_path))
         print(f"Best fine-tuned model and tokenizer saved to {model_output_path}")
 
@@ -396,7 +399,6 @@ def run_training(args):
 
 
 def run_prediction(args):
-    """Handles prediction using a trained model."""
     print("--- Starting Prediction ---")
     model_path = Path(args.model_path)
 
@@ -407,20 +409,28 @@ def run_prediction(args):
         tokenizer_load_path = model_path
         print(f"Using model path for tokenizer: {tokenizer_load_path}")
 
-    # Validate model path for essential model files
     if not model_path.exists() or not (model_path / "config.json").exists():
         print(
             f"Error: Model directory or model configuration (config.json) "
             f"not found at model_path: {model_path}."
         )
         return
-    # training_args.bin is not strictly needed by from_pretrained for the model, but good for context
-    if not (model_path / "training_args.bin").exists():
-        print(
-            f"Warning: training_args.bin not found at model_path: {model_path}. Predictions will proceed without it."
-        )
+    if not (
+        model_path / "training_args.bin"
+    ).exists():  # In new HF versions this might be different
+        has_pytorch_model = (model_path / "pytorch_model.bin").exists() or (
+            model_path / "model.safetensors"
+        ).exists()
+        if not has_pytorch_model:
+            print(
+                f"Warning: Neither pytorch_model.bin, model.safetensors nor training_args.bin found at model_path: {model_path}. "
+                "Predictions will proceed if other model files are present but this is unusual."
+            )
+        else:
+            print(
+                f"Note: training_args.bin not found at model_path: {model_path}, but model weights exist. Predictions will proceed."
+            )
 
-    # Validate tokenizer path for tokenizer.json
     if (
         not tokenizer_load_path.exists()
         or not (tokenizer_load_path / "tokenizer.json").exists()
@@ -436,7 +446,7 @@ def run_prediction(args):
     try:
         model = DistilBertForSequenceClassification.from_pretrained(str(model_path))
         tokenizer = PreTrainedTokenizerFast.from_pretrained(
-            str(tokenizer_load_path), max_len=args.max_length
+            str(tokenizer_load_path), model_max_length=args.max_length
         )
     except Exception as e:
         print(f"Error loading model or tokenizer: {e}")
@@ -456,16 +466,14 @@ def run_prediction(args):
             max_length=args.max_length,
         )
 
-        # Prepare inputs for the model, excluding token_type_ids
         model_inputs = {
             "input_ids": inputs.get("input_ids").to(device),
             "attention_mask": inputs.get("attention_mask").to(device),
         }
-        # Remove None items in case a key was missing, though tokenizer should always provide these for 'pt'
         model_inputs = {k: v for k, v in model_inputs.items() if v is not None}
 
         with torch.no_grad():
-            outputs = model(**model_inputs)  # Pass only expected inputs
+            outputs = model(**model_inputs)
             logits = outputs.logits
             probabilities = torch.softmax(logits, dim=-1).cpu().numpy()[0]
             prediction = np.argmax(probabilities)
@@ -493,7 +501,6 @@ def run_prediction(args):
                 max_length=args.max_length,
             )
 
-            # Prepare inputs for the model, excluding token_type_ids
             model_inputs = {
                 "input_ids": inputs.get("input_ids").to(device),
                 "attention_mask": inputs.get("attention_mask").to(device),
@@ -501,7 +508,7 @@ def run_prediction(args):
             model_inputs = {k: v for k, v in model_inputs.items() if v is not None}
 
             with torch.no_grad():
-                outputs = model(**model_inputs)  # Pass only expected inputs
+                outputs = model(**model_inputs)
                 logits = outputs.logits
                 probabilities = torch.softmax(logits, dim=-1).cpu().numpy()[0]
                 prediction = np.argmax(probabilities)
@@ -538,7 +545,7 @@ def main():
         "--model_name",
         type=str,
         default=DEFAULT_MODEL_NAME,
-        help=f"Base DistilBERT model name (default: {DEFAULT_MODEL_NAME}). Used for initializing a new model in training.",
+        help=f"Base DistilBERT model name (default: {DEFAULT_MODEL_NAME}).",
     )
     parser.add_argument(
         "--max_length",
@@ -550,7 +557,18 @@ def main():
         "--vocab_size",
         type=int,
         default=DEFAULT_VOCAB_SIZE,
-        help=f"BPE tokenizer vocabulary size (default: {DEFAULT_VOCAB_SIZE}). Used during tokenizer training.",
+        help=f"BPE tokenizer vocabulary size (default: {DEFAULT_VOCAB_SIZE}).",
+    )
+    parser.add_argument(
+        "--num_proc",
+        type=int,
+        default=DEFAULT_NUM_PROC,
+        help=f"Number of processes for .map() in datasets (default: {DEFAULT_NUM_PROC}, 0 to disable multiprocessing).",
+    )
+    parser.add_argument(
+        "--disable_hf_datasets_progress_bar",
+        action="store_true",
+        help="Disable progress bars from the Hugging Face datasets library.",
     )
 
     subparsers = parser.add_subparsers(
@@ -578,13 +596,13 @@ def main():
         "--tokenizer_path",
         type=str,
         default=str(DEFAULT_TOKENIZER_CLI_PATH),
-        help=f"Path to save/load tokenizer during training (default: {DEFAULT_TOKENIZER_CLI_PATH}).",
+        help=f"Path to save/load tokenizer (default: {DEFAULT_TOKENIZER_CLI_PATH}).",
     )
     train_parser.add_argument(
         "--model_output_path",
         type=str,
         default=str(DEFAULT_MODEL_OUTPUT_CLI_PATH),
-        help=f"Path to save fine-tuned model and checkpoints (default: {DEFAULT_MODEL_OUTPUT_CLI_PATH}).",
+        help=f"Path to save fine-tuned model (default: {DEFAULT_MODEL_OUTPUT_CLI_PATH}).",
     )
     train_parser.add_argument(
         "--epochs",
@@ -601,19 +619,19 @@ def main():
     train_parser.add_argument(
         "--force_retrain_tokenizer",
         action="store_true",
-        help="Force retraining the tokenizer even if an existing one is found at --tokenizer_path.",
+        help="Force retraining tokenizer even if existing one is found.",
     )
     train_parser.add_argument(
         "--resume_from_checkpoint",
         type=str,
         default=None,
-        help="Path to a specific checkpoint directory (e.g., output_path/results/checkpoint-xxxx) to resume training from.",
+        help="Path to checkpoint directory to resume training from.",
     )
     train_parser.add_argument(
         "--save_steps",
         type=int,
         default=DEFAULT_SAVE_STEPS,
-        help="Save a checkpoint every X steps. If 0, saves at the end of each epoch. (default: 0)",
+        help="Save checkpoint every X steps. If 0, saves per epoch. (default: 0)",
     )
     train_parser.set_defaults(func=run_training)
 
@@ -624,14 +642,13 @@ def main():
         "--model_path",
         type=str,
         required=True,
-        help="Path to the trained model directory (containing config.json, model weights).",
+        help="Path to trained model directory.",
     )
     predict_parser.add_argument(
         "--tokenizer_predict_path",
         type=str,
         default=None,
-        help="Optional: Path to the tokenizer directory (containing tokenizer.json). "
-        "If not provided, tokenizer is expected to be in --model_path.",
+        help="Optional path to tokenizer. If None, uses --model_path.",
     )
     predict_parser.add_argument(
         "--ast_string", type=str, help="A single AST string to classify."
@@ -639,12 +656,12 @@ def main():
     predict_parser.add_argument(
         "--input_csv",
         type=str,
-        help="Path to a CSV file with an 'asts' column for batch prediction.",
+        help="Path to CSV file with 'asts' column for batch prediction.",
     )
     predict_parser.add_argument(
         "--output_csv",
         type=str,
-        help="Path to save CSV prediction results when using --input_csv.",
+        help="Path to save CSV prediction results.",
     )
     predict_parser.set_defaults(func=run_prediction)
 
