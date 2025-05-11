@@ -1,1 +1,1 @@
-uv run python -m src.research.train train --malicious_csv malicious.csv --benign_csv benign.csv --epochs 3
+uv run python -m src.research.train train --malicious_csv malicious_processed.csv --benign_csv benign_processed.csv --epochs 3
