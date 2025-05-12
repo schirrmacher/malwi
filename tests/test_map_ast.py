@@ -99,7 +99,7 @@ def some_func():
     )
     assert (
         result[0].to_string(one_line=True, compression=True)
-        == "F_DEF some.func BLOCK EXP F_CALL a.b.c.d.e MEMBER_ACCESS_3 MEMBER_ACCESS"
+        == "F_DEF BLOCK EXP F_CALL MEMBER_ACCESS_3 MEMBER_ACCESS"
     )
 
 
@@ -117,7 +117,7 @@ def hello_world():
     assert base64_encoded_content == "ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz"
 
     base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["tokens"]
-    assert base64_encoded_content == "F_DEF hello.world BLOCK PASS_STATEMENT"
+    assert base64_encoded_content == "F_DEF BLOCK PASS_STATEMENT"
 
 
 def test_to_yaml_format():
@@ -139,9 +139,9 @@ malicious:
   - type: function
     name: hello_world
     score: null
-    tokens: F_DEF hello.world BLOCK PASS_STATEMENT
+    tokens: F_DEF BLOCK PASS_STATEMENT
     base64: ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz
-    hash: 7e69c52407f8234baf46514c9ec44ec2c4d70d828f0f3b747ca9877a9d700c23
+    hash: 2914b3d1f4063bba3a3fa1d6e1be340633ed74045734fdc34fe0a9a611cff913
     """
 
     # Compare the generated YAML output to the expected one
@@ -180,25 +180,20 @@ class OuterClass:
     result = create_malwi_nodes_from_bytes(
         source_code_bytes=code, file_path="lala.py", language="python"
     )
-    assert result[0].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert result[0].to_string() == "F_DEF BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
     assert (
-        result[1].to_string()
-        == "F_DEF greet BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
+        result[1].to_string() == "F_DEF BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
     )
-    assert result[2].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert result[2].to_string() == "F_DEF BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
     assert (
-        result[3].to_string()
-        == "F_DEF show.value BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
+        result[3].to_string() == "F_DEF BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
     )
-    assert result[4].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert result[4].to_string() == "F_DEF BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
     assert (
         result[5].to_string()
-        == "F_DEF repeat.text BLOCK F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT F_CALL build.repeated.strip MEMBER_ACCESS F_CALL build.repeated"
+        == "F_DEF BLOCK F_DEF BLOCK RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT F_CALL MEMBER_ACCESS F_CALL"
     )
-    assert (
-        result[6].to_string()
-        == "F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT"
-    )
+    assert result[6].to_string() == "F_DEF BLOCK RETURN_STATEMENT RETURN_STATEMENT"
 
 
 def test_sensitive_file_warning():
@@ -247,7 +242,7 @@ def foo():
     result = create_malwi_nodes_from_bytes(
         source_code_bytes=code, file_path="setup.py", language="python"
     )
-    assert result[0].to_string() == "TARGET_FILE F_DEF foo BLOCK PASS_STATEMENT"
+    assert result[0].to_string() == "TARGET_FILE F_DEF BLOCK PASS_STATEMENT"
 
 
 @pytest.mark.skip(
@@ -310,10 +305,10 @@ def test():
 """,
     ]
     expected = [
-        "F_DEF obscure.eval.rename BLOCK EXP F_CALL_FILESYSTEM_ACCESS2 STRING_HEX_LEN_XS_ENT_MED DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_S_ENT_HIGH MEMBER_ACCESS",
-        "F_DEF_FILESYSTEM_ACCESS BLOCK EXP ASSIGNMENT F_CALL self.abc MEMBER_ACCESS",
-        "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESSF_DEF is.long BLOCK RETURN_STATEMENT RETURN_STATEMENT BINARY_OPERATION MEMBER_ACCESS NUMERICF_DEF str BLOCK RETURN_STATEMENT RETURN_STATEMENT STRING_LEN_S_ENT_HIGH",
-        "F_DEF test BLOCK EXP ASSIGNMENT STRING_STRING_URL EXP ASSIGNMENT STRING_STRING_IP",
+        "F_DEF BLOCK EXP F_CALL_FILESYSTEM_ACCESS2 STRING_HEX_LEN_XS_ENT_MED DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_S_ENT_HIGH MEMBER_ACCESS",
+        "F_DEF_FILESYSTEM_ACCESS BLOCK EXP ASSIGNMENT F_CALL MEMBER_ACCESS",
+        "F_DEF BLOCK EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESSF_DEF BLOCK RETURN_STATEMENT RETURN_STATEMENT BINARY_OPERATION MEMBER_ACCESS NUMERICF_DEF BLOCK RETURN_STATEMENT RETURN_STATEMENT STRING_LEN_S_ENT_HIGH",
+        "F_DEF BLOCK EXP ASSIGNMENT STRING_STRING_URL EXP ASSIGNMENT STRING_STRING_IP",
     ]
 
     for i, c in enumerate(code):
@@ -338,10 +333,10 @@ def foo():
         source_code_bytes=code, file_path="test.py", language="python"
     )
 
-    assert result[0].to_string() == "F_DEF foo BLOCK PASS_STATEMENT"
+    assert result[0].to_string() == "F_DEF BLOCK PASS_STATEMENT"
     assert (
         result[0].to_string_hash()
-        == "09ce504e602dfa4a8082d7e5d3cc7f8f14e4e6d318e453838b3c0711acff3601"
+        == "2914b3d1f4063bba3a3fa1d6e1be340633ed74045734fdc34fe0a9a611cff913"
     )
 
 
