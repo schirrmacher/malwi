@@ -394,7 +394,10 @@ def call_node_to_parameters_string(
 
 
 def function_node_to_string(
-    node: Node, language, mapping_table: Dict[str, Dict[str, str]]
+    node: Node,
+    language,
+    mapping_table: Dict[str, Dict[str, str]],
+    disable_function_names: bool = False,
 ) -> Tuple[str, bool]:
     postfix = ""
     param_count = None
@@ -447,6 +450,7 @@ def function_node_to_string(
     )
     if not param_count:
         param_count = ""
+
     if mapped_value:
         return f"{mapped_value}{param_count} {postfix}", True
     elif sanitized_name and len(sanitized_name) > 30:
@@ -455,15 +459,19 @@ def function_node_to_string(
             False,
         )
     elif sanitized_name:
-        return f"{sanitized_name}{param_count} {postfix}", False
-    else:
-        return "", False
+        if disable_function_names:
+            return f"{param_count} {postfix}", False
+        else:
+            return f"{sanitized_name}{param_count} {postfix}", False
+
+    return "", False
 
 
 def node_to_string_recursive(
     node: Optional[Node],
     language: str,
     indent_level: int = 0,
+    disable_function_names: bool = False,
 ) -> str:
     if node is None or node.type is None:
         return ""
@@ -490,7 +498,10 @@ def node_to_string_recursive(
         "wildcard_import",
     ]:
         result, mapped = function_node_to_string(
-            node, language=language, mapping_table=FUNCTION_MAPPING
+            node,
+            language=language,
+            mapping_table=FUNCTION_MAPPING,
+            disable_function_names=disable_function_names,
         )
         if mapped:
             final_string += f"{indent}{node_mapping}_{result}\n"
@@ -499,7 +510,10 @@ def node_to_string_recursive(
 
     elif node.type in ["function_definition", "call", "lambda"]:
         result, mapped = function_node_to_string(
-            node, language=language, mapping_table=FUNCTION_MAPPING
+            node,
+            language=language,
+            mapping_table=FUNCTION_MAPPING,
+            disable_function_names=disable_function_names,
         )
         if mapped:
             final_string += f"{indent}{node_mapping}_{result}\n"
@@ -574,10 +588,19 @@ class MalwiNode:
             self.warnings = warnings + ["TARGET_FILE"]
         self.name = self._get_name()
 
-    def to_string(self, one_line: bool = True, compression: bool = False) -> str:
+    def to_string(
+        self,
+        one_line: bool = True,
+        compression: bool = False,
+        disable_function_names: bool = False,
+    ) -> str:
         if self.node is None:
             return ""
-        result = node_to_string_recursive(self.node, language=self.language)
+        result = node_to_string_recursive(
+            self.node,
+            language=self.language,
+            disable_function_names=disable_function_names,
+        )
         if self.warnings:
             warnings = "\n".join(self.warnings)
             result = f"{warnings}\n{result}"

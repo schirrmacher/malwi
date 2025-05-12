@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import os
+import json
 
 from typing import Set
 from pathlib import Path
@@ -234,6 +235,8 @@ def run_training(args):
     val_dataset_for_trainer = tokenized_datasets["validation"]
 
     model_output_path = Path(args.model_output_path)
+    results_path = model_output_path / "results"
+    logs_path = model_output_path / "logs"
 
     if not args.resume_from_checkpoint:
         print("\nSetting up NEW DistilBERT model for fine-tuning...")
@@ -266,13 +269,13 @@ def run_training(args):
         )
 
     training_arguments = TrainingArguments(
-        output_dir=str(model_output_path / "results"),
+        output_dir=str(results_path),
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         warmup_steps=500,
         weight_decay=0.01,
-        logging_dir=str(model_output_path / "logs"),
+        logging_dir=str(logs_path),
         logging_steps=10,
         eval_strategy="epoch",
         save_strategy="epoch" if args.save_steps == 0 else "steps",

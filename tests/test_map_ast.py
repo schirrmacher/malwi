@@ -250,6 +250,20 @@ def foo():
     assert result[0].to_string() == "TARGET_FILE F_DEF foo BLOCK PASS_STATEMENT"
 
 
+def test_function_name_disabling():
+    code = b"""
+def make_this_invisible():
+    pass
+"""
+    result = create_malwi_nodes_from_bytes(
+        source_code_bytes=code, file_path="setup.py", language="python"
+    )
+    assert (
+        result[0].to_string(disable_function_names=True)
+        == "TARGET_FILE F_DEF BLOCK PASS_STATEMENT"
+    )
+
+
 @pytest.mark.skip(
     reason="Skipping this test temporarily because:  Incompatible Language version 15. Must be between 13 and 14"
 )
