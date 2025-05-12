@@ -455,7 +455,7 @@ def function_node_to_string(
             False,
         )
     elif sanitized_name:
-        return f"{param_count} {postfix}", False
+        return f"{sanitized_name}{param_count} {postfix}", False
     else:
         return "", False
 
