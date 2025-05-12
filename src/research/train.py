@@ -308,8 +308,10 @@ def run_training(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--benign", required=True, help="Path to benign CSV")
-    parser.add_argument("--malicious", required=True, help="Path to malicious CSV")
+    parser.add_argument("--benign", "-b", required=True, help="Path to benign CSV")
+    parser.add_argument(
+        "--malicious", "-m", required=True, help="Path to malicious CSV"
+    )
     parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME)
     parser.add_argument(
         "--tokenizer-path", type=Path, default=DEFAULT_TOKENIZER_CLI_PATH
