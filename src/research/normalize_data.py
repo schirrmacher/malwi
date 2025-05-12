@@ -619,7 +619,8 @@ class MalwiNode:
         return result
 
     def to_string_hash(self) -> str:
-        node_string = self.to_string(one_line=True)
+        # Disable function names for hashing to detect functions with similar structures
+        node_string = self.to_string(one_line=True, disable_function_names=True)
         encoded_string = node_string.encode("utf-8")
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)

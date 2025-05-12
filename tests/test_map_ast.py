@@ -141,13 +141,13 @@ malicious:
     score: null
     tokens: F_DEF hello.world BLOCK PASS_STATEMENT
     base64: ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz
-    hash: 7e69c52407f8234baf46514c9ec44ec2c4d70d828f0f3b747ca9877a9d700c23
+    hash: 2914b3d1f4063bba3a3fa1d6e1be340633ed74045734fdc34fe0a9a611cff913
     """
 
     # Compare the generated YAML output to the expected one
-    assert yaml_output.strip() == expected_yaml.strip(), (
-        f"YAML output does not match the expected format.\nGenerated: {yaml_output}\nExpected: {expected_yaml}"
-    )
+    assert (
+        yaml_output.strip() == expected_yaml.strip()
+    ), f"YAML output does not match the expected format.\nGenerated: {yaml_output}\nExpected: {expected_yaml}"
 
 
 def test_nested_functions():
@@ -338,9 +338,9 @@ def test():
         for node in result:
             actual += node.to_string()
 
-        assert re.sub(r"\s+", " ", actual).strip() == expected[i], (
-            f"Expected at {i}: {expected[i]}"
-        )
+        assert (
+            re.sub(r"\s+", " ", actual).strip() == expected[i]
+        ), f"Expected at {i}: {expected[i]}"
 
 
 def test_node_hashing():
@@ -355,7 +355,7 @@ def foo():
     assert result[0].to_string() == "F_DEF foo BLOCK PASS_STATEMENT"
     assert (
         result[0].to_string_hash()
-        == "09ce504e602dfa4a8082d7e5d3cc7f8f14e4e6d318e453838b3c0711acff3601"
+        == "2914b3d1f4063bba3a3fa1d6e1be340633ed74045734fdc34fe0a9a611cff913"
     )
 
 
