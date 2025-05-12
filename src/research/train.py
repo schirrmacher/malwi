@@ -105,29 +105,17 @@ def run_training(args):
         return
 
     print("\nPreparing AST strings for training...")
-    processed_benign_asts = {
-        ast_string for ast_string in benign_ast_strings_raw if ast_string
-    }
-    processed_malicious_candidate_asts = [
+    benign_asts = [ast_string for ast_string in benign_ast_strings_raw if ast_string]
+
+    malicious_asts = [
         ast_string for ast_string in malicious_ast_strings_raw if ast_string
     ]
 
-    final_malicious_asts_for_training = []
-    for m_ast in processed_malicious_candidate_asts:
-        if m_ast not in processed_benign_asts:
-            final_malicious_asts_for_training.append(m_ast)
+    print(f"Processed benign ASTs for training lookup: {len(benign_asts)}")
+    print(f"Malicious ASTs for training (after filtering): {len(malicious_asts)}")
 
-    print(f"Processed benign ASTs for training lookup: {len(processed_benign_asts)}")
-    print(
-        f"Malicious ASTs for training (after filtering): {len(final_malicious_asts_for_training)}"
-    )
-
-    all_texts_for_training = (
-        list(processed_benign_asts) + final_malicious_asts_for_training
-    )
-    all_labels_for_training = [0] * len(processed_benign_asts) + [1] * len(
-        final_malicious_asts_for_training
-    )
+    all_texts_for_training = benign_asts + malicious_asts
+    all_labels_for_training = [0] * len(benign_asts) + [1] * len(malicious_asts)
 
     if not all_texts_for_training:
         print("Error: No data available for training after filtering.")
