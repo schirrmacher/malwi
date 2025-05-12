@@ -97,21 +97,11 @@ def run_training(args):
     else:
         print("--- Starting New Model Training ---")
 
-    benign_ast_strings_raw = load_asts_from_csv(args.benign, args.ast_column)
-    malicious_ast_strings_raw = load_asts_from_csv(args.malicious, args.ast_column)
-
-    if not benign_ast_strings_raw and not malicious_ast_strings_raw:
-        print("Error: No AST strings loaded. Training cannot proceed.")
-        return
-
-    print("\nPreparing AST strings for training...")
-    benign_asts = [ast_string for ast_string in benign_ast_strings_raw if ast_string]
-    malicious_asts = [
-        ast_string for ast_string in malicious_ast_strings_raw if ast_string
-    ]
+    benign_asts = load_asts_from_csv(args.benign, args.ast_column)
+    malicious_asts = load_asts_from_csv(args.malicious, args.ast_column)
 
     print(f"Processed benign ASTs for training lookup: {len(benign_asts)}")
-    print(f"Malicious ASTs for training (after filtering): {len(malicious_asts)}")
+    print(f"Malicious ASTs for training: {len(malicious_asts)}")
 
     all_texts_for_training = benign_asts + malicious_asts
     all_labels_for_training = [0] * len(benign_asts) + [1] * len(malicious_asts)
