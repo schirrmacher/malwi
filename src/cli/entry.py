@@ -160,7 +160,7 @@ def main():
             probabilities = prediction_data["probabilities"]
             maliciousness = probabilities[1]
             n.maliciousness = maliciousness
-            if maliciousness > args.maliciousness_threshold:
+            if maliciousness > args.threshold:
                 malicious_nodes.append(n)
             elif not args.malicious_only:
                 benign_nodes.append(n)
@@ -186,7 +186,7 @@ def main():
                 {
                     "File": m.file_path,
                     "Name": m.name,
-                    "Score": f"{m.maliciousness:.2f}",
+                    "Malicious": f"{m.maliciousness:.2f}",
                 }
                 for m in malicious_nodes
             ]
