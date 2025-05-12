@@ -1,8 +1,9 @@
 import logging
 import argparse
+from tqdm import tqdm
 from typing import List
 from pathlib import Path
-from tqdm import tqdm  # Progress bar
+from tabulate import tabulate
 
 from research.normalize_data import MalwiNode, create_malwi_nodes_from_file
 from cli.predict import initialize_hf_model_components, get_node_text_prediction
@@ -66,6 +67,17 @@ def main():
         default=None,
     )
     parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress logging output and progress bar.",
+    )
+    parser.add_argument(
+        "--malicious-only",
+        action="store_true",
+        help="Only include malicious findings in the output.",
+    )
+    parser.add_argument(
         "--maliciousness_threshold",
         "-mt",
         metavar="FLOAT",
@@ -92,12 +104,6 @@ def main():
         metavar="PATH",
         help="Specify the custom model path (directory or file).",
         default=None,
-    )
-    parser.add_argument(
-        "--quiet",
-        "-q",
-        action="store_true",
-        help="Suppress logging output and progress bar.",
     )
 
     args = parser.parse_args()
@@ -173,10 +179,15 @@ def main():
         if len(malicious_nodes) == 0:
             output = "🟢 No malicious findings"
         else:
-            output = "\n".join(
-                f"{m.file_path}: 🛑 malicious {m.maliciousness:.2f}"
+            table_data = [
+                {
+                    "File": m.file_path,
+                    "Name": m.name,
+                    "Score": f"{m.maliciousness:.2f}",
+                }
                 for m in malicious_nodes
-            )
+            ]
+            output = tabulate(table_data, headers="keys", tablefmt="github")
 
     if args.save:
         Path(args.save).write_text(output)

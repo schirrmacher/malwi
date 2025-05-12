@@ -572,6 +572,7 @@ class MalwiNode:
         self.maliciousness = maliciousness
         if Path(file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings = warnings + ["TARGET_FILE"]
+        self.name = self._get_name()
 
     def to_string(self, one_line: bool = True, compression: bool = False) -> str:
         if self.node is None:
@@ -610,19 +611,21 @@ class MalwiNode:
                 return node_text
         return b""
 
+    def _get_name(self):
+        name_node = self.node.child_by_field_name("name")
+        if name_node:
+            return name_node.text.decode("utf8")
+        return "<unknown>"
+
     def _to_json_data(self) -> dict:
         node_text = self._get_node_text()
         encoded_text = base64.b64encode(node_text).decode("utf-8")
-        name_node = self.node.child_by_field_name("name")
-        if name_node:
-            function_name = name_node.text.decode("utf8")
-
         return {
             "path": self.file_path,
             "contents": [
                 {
                     "type": "function",
-                    "name": function_name if function_name else "<unknown>",
+                    "name": self._get_name(),
                     "score": self.maliciousness,
                     "tokens": self.to_string(),
                     "base64": encoded_text,
