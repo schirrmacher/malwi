@@ -35,8 +35,8 @@ SPECIAL_TOKENS: Set[str] = read_json_from_file(
 )
 
 DEFAULT_MODEL_NAME = "distilbert-base-uncased"
-DEFAULT_TOKENIZER_CLI_PATH = Path("malwi_models/tokenizer")
-DEFAULT_MODEL_OUTPUT_CLI_PATH = Path("malwi_models/distilbert")
+DEFAULT_TOKENIZER_CLI_PATH = Path("malwi_models")
+DEFAULT_MODEL_OUTPUT_CLI_PATH = Path("malwi_models")
 DEFAULT_MAX_LENGTH = 512
 DEFAULT_EPOCHS = 3
 DEFAULT_BATCH_SIZE = 16
