@@ -15,11 +15,13 @@ Based on open research, open code, open data.
 pip install --user malwi
 
 # Run
-malwi examples
+malwi ./examples
 
-examples/__init__.py:run        🛑 malicious 0.93
-examples/__init__.py:debug      🛑 malicious 0.99
-examples/__init__.py:runcommand 🛑 malicious 1.00
+| File                 | Name       |   Malicious |
+|----------------------|------------|-------------|
+| examples/__init__.py | run        |        0.93 |
+| examples/__init__.py | debug      |        0.99 |
+| examples/__init__.py | runcommand |        1    |
 ```
 
 ## Why malwi?
