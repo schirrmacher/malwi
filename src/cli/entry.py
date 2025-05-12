@@ -79,7 +79,7 @@ def main():
         help="Only include malicious findings in the output.",
     )
     parser.add_argument(
-        "--maliciousness_threshold",
+        "--threshold",
         "-mt",
         metavar="FLOAT",
         type=float,
