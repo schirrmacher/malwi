@@ -2,13 +2,14 @@
 
 ## Best Training Results
 
-Commit `d33f83c3f07df13b43a61d8d8c23e550bf9cd4d7`
+Commit `f24612a985577928b80dcaba9043c7f9ed8fa82f`
 
-- eval_loss: 0.12330903112888336
-- eval_accuracy: 0.9648917299775762
-- eval_f1: 0.9177491440370089
-- eval_precision: 0.9576197229191665
-- eval_recall: 0.8810658905003262
+- eval_loss: 0.11750467866659164
+- eval_accuracy: 0.9661468759877779
+- eval_f1: 0.9231835895474215
+- eval_precision: 0.9633270132721286
+- eval_recall: 0.886252008262566
+- eval_runtime: 159.698
 - epoch: 3.0
 
 Limitations:
@@ -56,4 +57,17 @@ We changed the hashing to discover more similar function structures for removal.
 - eval_f1: 0.8386344941047437
 - eval_precision: 0.9123042505592841
 - eval_recall: 0.7759736141063047
+- epoch: 3.0
+
+## Meta-Data Features
+
+Commit: `aed8d3722ad20a1007171462a40c03aa77c31a64`
+
+Introduction of the file size in bytes with size categories.
+
+- eval_loss: 0.1232079267501831
+- eval_accuracy: 0.965107625372109
+- eval_f1: 0.8406952430737062
+- eval_precision: 0.9221616972477065
+- eval_recall: 0.7724543707973103
 - epoch: 3.0
