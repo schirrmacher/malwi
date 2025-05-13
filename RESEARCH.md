@@ -44,3 +44,16 @@ Removing the function names had severe impact on the model performance. The F1 s
 - epoch: 3.0
 
 We removed the function names because we saw many functions in the test data with similar structures, only differing in a function name. The goal was to remove those, since they seem to be not meaningful.
+
+### Removal for Hash Only
+
+Commit: `23366c5b66a9bd294b20146900404eb8ccaaaeda`
+
+We changed the hashing to discover more similar function structures for removal. This was achieved by removing the function name before hashing a token sequence. However the F1 score dropped by 10%.
+
+- eval_loss: 0.12401288002729416
+- eval_accuracy: 0.9644007561436673
+- eval_f1: 0.8386344941047437
+- eval_precision: 0.9123042505592841
+- eval_recall: 0.7759736141063047
+- epoch: 3.0
