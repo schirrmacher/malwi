@@ -146,7 +146,7 @@ malicious:
     score: null
     tokens: FILE_LEN_XS F_DEF hello.world BLOCK PASS_STATEMENT
     base64: ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz
-    hash: 366042a51fd1111d0c7f0553b1a8589e5890188d8749b1978a108238efd55f99
+    hash: d1804a98a2c26e3dc136cd9a3227510d3a7deaed095e8206eb2ec4f5f45266e4
     """
 
     # Compare the generated YAML output to the expected one
@@ -372,7 +372,7 @@ def foo():
     assert result[0].to_string() == "FILE_LEN_XS F_DEF foo BLOCK PASS_STATEMENT"
     assert (
         result[0].to_string_hash()
-        == "366042a51fd1111d0c7f0553b1a8589e5890188d8749b1978a108238efd55f99"
+        == "13628eb9102cb634225aed763f5dec879d51b980495e2eee4b826a41f8cb709e"
     )
 
 
