@@ -2,19 +2,19 @@
 
 ## Best Training Results
 
-Commit `f24612a985577928b80dcaba9043c7f9ed8fa82f`
+Commit `ffdde6a0c2bdebe8d531f273d42ed6a6d01a4306`
 
-- eval_loss: 0.11750467866659164
-- eval_accuracy: 0.9661468759877779
-- eval_f1: 0.9231835895474215
-- eval_precision: 0.9633270132721286
-- eval_recall: 0.886252008262566
-- eval_runtime: 159.698
+- eval_loss: 0.10081843286752701
+- eval_accuracy: 0.9729129300505462
+- eval_f1: 0.9388684452621895
+- eval_precision: 0.9689532399715167
+- eval_recall: 0.9105955833147445
 - epoch: 3.0
 
 Limitations:
 - There are still very similar functions in the benign and malicious dataset.
-- Those leads to false-positives
+- There are many false-positives when scanning random folders
+- The dataset needs more polishing
 
 ## Importance of Function Names
 
