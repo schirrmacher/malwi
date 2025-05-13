@@ -156,7 +156,12 @@ def create_malwi_nodes_from_bytes(
 
     malwi_nodes = []
     for f in all_functions:
-        node = MalwiNode(node=f, language=language, file_path=file_path)
+        node = MalwiNode(
+            node=f,
+            language=language,
+            file_byte_size=len(source_code_bytes),
+            file_path=file_path,
+        )
         malwi_nodes.append(node)
 
     return malwi_nodes
@@ -209,6 +214,21 @@ def map_string_length_to_token(str_len: int):
         return "LEN_XL"
     else:
         return "LEN_XXL"
+
+
+def map_file_site_to_token(str_len: int):
+    if str_len <= 100:
+        return "FILE_LEN_XS"
+    elif str_len <= 1000:
+        return "FILE_LEN_S"
+    elif str_len <= 10000:
+        return "FILE_LEN_M"
+    elif str_len <= 100000:
+        return "FILE_LEN_L"
+    elif str_len <= 1000000:
+        return "FILE_LEN_XL"
+    else:
+        return "FILE_LEN_XXL"
 
 
 def calculate_shannon_entropy(data: bytes) -> float:
@@ -575,12 +595,14 @@ class MalwiNode:
         self,
         node: Optional[Node],
         file_path: str,
+        file_byte_size: int,
         language: str = "unknown",
         warnings: List[str] = [],
         maliciousness: Optional[float] = None,
     ):
         self.node = node
         self.file_path = file_path
+        self.file_byte_size = file_byte_size
         self.language = language
         self.warnings = warnings
         self.maliciousness = maliciousness
@@ -616,7 +638,7 @@ class MalwiNode:
                 )
             )
 
-        return result
+        return f"{map_file_site_to_token(self.file_byte_size)} {result}"
 
     def to_string_hash(self) -> str:
         # Disable function names for hashing to detect functions with similar structures
@@ -625,6 +647,9 @@ class MalwiNode:
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
+
+    def _map_file_site_to_string(size: int):
+        return ""
 
     def _get_node_text(self) -> bytes:
         if hasattr(self.node, "text"):

@@ -1,4 +1,10 @@
 [
+  "FILE_LEN_XS",
+  "FILE_LEN_S",
+  "FILE_LEN_M",
+  "FILE_LEN_L",
+  "FILE_LEN_XL",
+  "FILE_LEN_XXL",
   "3connect1",
   "A0",
   "A1",

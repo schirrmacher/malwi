@@ -86,7 +86,10 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx():
     result = create_malwi_nodes_from_bytes(
         source_code_bytes=code, file_path="lala.py", language="python"
     )
-    assert result[0].to_string() == "F_DEF VERY_LONG_FUNCTION_NAME BLOCK PASS_STATEMENT"
+    assert (
+        result[0].to_string()
+        == "FILE_LEN_XS F_DEF VERY_LONG_FUNCTION_NAME BLOCK PASS_STATEMENT"
+    )
 
 
 def test_compression():
@@ -117,7 +120,9 @@ def hello_world():
     assert base64_encoded_content == "ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz"
 
     base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["tokens"]
-    assert base64_encoded_content == "F_DEF hello.world BLOCK PASS_STATEMENT"
+    assert (
+        base64_encoded_content == "FILE_LEN_XS F_DEF hello.world BLOCK PASS_STATEMENT"
+    )
 
 
 def test_to_yaml_format():
@@ -139,15 +144,15 @@ malicious:
   - type: function
     name: hello_world
     score: null
-    tokens: F_DEF hello.world BLOCK PASS_STATEMENT
+    tokens: FILE_LEN_XS F_DEF hello.world BLOCK PASS_STATEMENT
     base64: ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz
-    hash: 2914b3d1f4063bba3a3fa1d6e1be340633ed74045734fdc34fe0a9a611cff913
+    hash: 366042a51fd1111d0c7f0553b1a8589e5890188d8749b1978a108238efd55f99
     """
 
     # Compare the generated YAML output to the expected one
-    assert (
-        yaml_output.strip() == expected_yaml.strip()
-    ), f"YAML output does not match the expected format.\nGenerated: {yaml_output}\nExpected: {expected_yaml}"
+    assert yaml_output.strip() == expected_yaml.strip(), (
+        f"YAML output does not match the expected format.\nGenerated: {yaml_output}\nExpected: {expected_yaml}"
+    )
 
 
 def test_nested_functions():
@@ -180,24 +185,33 @@ class OuterClass:
     result = create_malwi_nodes_from_bytes(
         source_code_bytes=code, file_path="lala.py", language="python"
     )
-    assert result[0].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert (
+        result[0].to_string()
+        == "FILE_LEN_S F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    )
     assert (
         result[1].to_string()
-        == "F_DEF greet BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
+        == "FILE_LEN_S F_DEF greet BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
     )
-    assert result[2].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert (
+        result[2].to_string()
+        == "FILE_LEN_S F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    )
     assert (
         result[3].to_string()
-        == "F_DEF show.value BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
+        == "FILE_LEN_S F_DEF show.value BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
     )
-    assert result[4].to_string() == "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    assert (
+        result[4].to_string()
+        == "FILE_LEN_S F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
+    )
     assert (
         result[5].to_string()
-        == "F_DEF repeat.text BLOCK F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT F_CALL build.repeated.strip MEMBER_ACCESS F_CALL build.repeated"
+        == "FILE_LEN_S F_DEF repeat.text BLOCK F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT F_CALL build.repeated.strip MEMBER_ACCESS F_CALL build.repeated"
     )
     assert (
         result[6].to_string()
-        == "F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT"
+        == "FILE_LEN_S F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT"
     )
 
 
@@ -247,7 +261,10 @@ def foo():
     result = create_malwi_nodes_from_bytes(
         source_code_bytes=code, file_path="setup.py", language="python"
     )
-    assert result[0].to_string() == "TARGET_FILE F_DEF foo BLOCK PASS_STATEMENT"
+    assert (
+        result[0].to_string()
+        == "FILE_LEN_XS TARGET_FILE F_DEF foo BLOCK PASS_STATEMENT"
+    )
 
 
 def test_function_name_disabling():
@@ -260,7 +277,7 @@ def make_this_invisible():
     )
     assert (
         result[0].to_string(disable_function_names=True)
-        == "TARGET_FILE F_DEF BLOCK PASS_STATEMENT"
+        == "FILE_LEN_XS TARGET_FILE F_DEF BLOCK PASS_STATEMENT"
     )
 
 
@@ -324,10 +341,10 @@ def test():
 """,
     ]
     expected = [
-        "F_DEF obscure.eval.rename BLOCK EXP F_CALL_FILESYSTEM_ACCESS2 STRING_HEX_LEN_XS_ENT_MED DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_S_ENT_HIGH MEMBER_ACCESS",
-        "F_DEF_FILESYSTEM_ACCESS BLOCK EXP ASSIGNMENT F_CALL self.abc MEMBER_ACCESS",
-        "F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESSF_DEF is.long BLOCK RETURN_STATEMENT RETURN_STATEMENT BINARY_OPERATION MEMBER_ACCESS NUMERICF_DEF str BLOCK RETURN_STATEMENT RETURN_STATEMENT STRING_LEN_S_ENT_HIGH",
-        "F_DEF test BLOCK EXP ASSIGNMENT STRING_STRING_URL EXP ASSIGNMENT STRING_STRING_IP",
+        "FILE_LEN_XS F_DEF obscure.eval.rename BLOCK EXP F_CALL_FILESYSTEM_ACCESS2 STRING_HEX_LEN_XS_ENT_MED DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_S_ENT_HIGH MEMBER_ACCESS",
+        "FILE_LEN_XS F_DEF_FILESYSTEM_ACCESS BLOCK EXP ASSIGNMENT F_CALL self.abc MEMBER_ACCESS",
+        "FILE_LEN_S F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESSFILE_LEN_S F_DEF is.long BLOCK RETURN_STATEMENT RETURN_STATEMENT BINARY_OPERATION MEMBER_ACCESS NUMERICFILE_LEN_S F_DEF str BLOCK RETURN_STATEMENT RETURN_STATEMENT STRING_LEN_S_ENT_HIGH",
+        "FILE_LEN_XS F_DEF test BLOCK EXP ASSIGNMENT STRING_STRING_URL EXP ASSIGNMENT STRING_STRING_IP",
     ]
 
     for i, c in enumerate(code):
@@ -338,9 +355,9 @@ def test():
         for node in result:
             actual += node.to_string()
 
-        assert (
-            re.sub(r"\s+", " ", actual).strip() == expected[i]
-        ), f"Expected at {i}: {expected[i]}"
+        assert re.sub(r"\s+", " ", actual).strip() == expected[i], (
+            f"Expected at {i}: {expected[i]}"
+        )
 
 
 def test_node_hashing():
@@ -352,10 +369,10 @@ def foo():
         source_code_bytes=code, file_path="test.py", language="python"
     )
 
-    assert result[0].to_string() == "F_DEF foo BLOCK PASS_STATEMENT"
+    assert result[0].to_string() == "FILE_LEN_XS F_DEF foo BLOCK PASS_STATEMENT"
     assert (
         result[0].to_string_hash()
-        == "2914b3d1f4063bba3a3fa1d6e1be340633ed74045734fdc34fe0a9a611cff913"
+        == "366042a51fd1111d0c7f0553b1a8589e5890188d8749b1978a108238efd55f99"
     )
 
 
