@@ -343,7 +343,7 @@ def test():
     expected = [
         "FILE_LEN_XS F_DEF obscure.eval.rename BLOCK EXP F_CALL_FILESYSTEM_ACCESS2 STRING_HEX_LEN_XS_ENT_MED DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_S_ENT_HIGH MEMBER_ACCESS",
         "FILE_LEN_XS F_DEF_FILESYSTEM_ACCESS BLOCK EXP ASSIGNMENT F_CALL self.abc MEMBER_ACCESS",
-        "FILE_LEN_S F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESSFILE_LEN_S F_DEF is.long BLOCK RETURN_STATEMENT RETURN_STATEMENT BINARY_OPERATION MEMBER_ACCESS NUMERICFILE_LEN_S F_DEF str BLOCK RETURN_STATEMENT RETURN_STATEMENT STRING_LEN_S_ENT_HIGH",
+        "FILE_LEN_S TYPING F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESS EXP ASSIGNMENT MEMBER_ACCESSFILE_LEN_S TYPING F_DEF is.long BLOCK RETURN_STATEMENT RETURN_STATEMENT BINARY_OPERATION MEMBER_ACCESS NUMERICFILE_LEN_S TYPING F_DEF str BLOCK RETURN_STATEMENT RETURN_STATEMENT STRING_LEN_S_ENT_HIGH",
         "FILE_LEN_XS F_DEF test BLOCK EXP ASSIGNMENT STRING_STRING_URL EXP ASSIGNMENT STRING_STRING_IP",
     ]
 
@@ -374,6 +374,111 @@ def foo():
         result[0].to_string_hash()
         == "13628eb9102cb634225aed763f5dec879d51b980495e2eee4b826a41f8cb709e"
     )
+
+
+def test_no_import_names():
+    code = b"""
+import unknown_lib_a
+import unknown_lib_b
+import unknown_lib_c
+def foo():
+    pass
+"""
+    result = create_malwi_nodes_from_bytes(
+        source_code_bytes=code, file_path="test.py", language="python"
+    )
+
+    assert (
+        result[0].to_string(disable_import_names=True)
+        == "FILE_LEN_XS F_DEF foo BLOCK PASS_STATEMENT"
+    )
+
+
+def test_duplicate_import_names():
+    code = b"""
+import os
+import os
+def foo():
+    pass
+"""
+    result = create_malwi_nodes_from_bytes(
+        source_code_bytes=code, file_path="test.py", language="python"
+    )
+
+    assert (
+        result[0].to_string(disable_import_names=True)
+        == "FILE_LEN_XS SYSTEM_INTERACTION F_DEF foo BLOCK PASS_STATEMENT"
+    )
+
+
+def test_python_import_cases():
+    import_statements = [
+        b"import ccc\nimport aaa\nimport bbb\ndef dummy():\npass",
+        b"import module as alias\ndef dummy():\npass",
+        b"import package.module\ndef dummy():\npass",
+        b"import package.module as alias\ndef dummy():\npass",
+        b"from module import platform\ndef dummy():\npass",
+        b"from module import name as alias\ndef dummy():\npass",
+        b"from module import name1, name2\ndef dummy():\npass",
+        b"from module import name1 as alias1, name2 as alias2\ndef dummy():\npass",
+        b"from package.module import name\ndef dummy():\npass",
+        b"from package.module import name as alias\ndef dummy():\npass",
+        b"from package.module import name1, name2\ndef dummy():\npass",
+        b"from package.module import name1 as alias1, name2 as alias2\ndef dummy():\npass",
+        b"from module import *\ndef dummy():\npass",
+        b"from package.module import *\ndef dummy():\npass",
+        b"from . import name\ndef dummy():\npass",
+        b"from .. import name\ndef dummy():\npass",
+        b"from .module import name\ndef dummy():\npass",
+        b"from ..module import name\ndef dummy():\npass",
+        b"from ...module import name\ndef dummy():\npass",
+        b"from .module import name as alias\ndef dummy():\npass",
+        b"from ..module import name1, name2 as alias2\ndef dummy():\npass",
+        b"import module1, os\ndef dummy():\npass",
+        b"import module1 as m1, module2 as m2\ndef dummy():\npass",
+        b"from module import (name1,\n name2)\ndef dummy():\npass",
+        b"from module import xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\ndef dummy():\npass",
+    ]
+    expected = [
+        "FILE_LEN_XS aaa bbb ccc F_DEF dummy BLOCK",
+        "FILE_LEN_XS module F_DEF dummy BLOCK",
+        "FILE_LEN_XS package.module F_DEF dummy BLOCK",
+        "FILE_LEN_XS package.module F_DEF dummy BLOCK",
+        "FILE_LEN_XS module SYSTEM_INTERACTION F_DEF dummy BLOCK",
+        "FILE_LEN_XS module name F_DEF dummy BLOCK",
+        "FILE_LEN_XS module name1 F_DEF dummy BLOCK",
+        "FILE_LEN_XS module name1 F_DEF dummy BLOCK",
+        "FILE_LEN_XS package.module name F_DEF dummy BLOCK",
+        "FILE_LEN_XS package.module name F_DEF dummy BLOCK",
+        "FILE_LEN_XS package.module name1 F_DEF dummy BLOCK",
+        "FILE_LEN_XS package.module name1 F_DEF dummy BLOCK",
+        "FILE_LEN_XS module F_DEF dummy BLOCK",
+        "FILE_LEN_XS package.module F_DEF dummy BLOCK",
+        "FILE_LEN_XS name F_DEF dummy BLOCK",
+        "FILE_LEN_XS name F_DEF dummy BLOCK",
+        "FILE_LEN_XS name F_DEF dummy BLOCK",
+        "FILE_LEN_XS name F_DEF dummy BLOCK",
+        "FILE_LEN_XS name F_DEF dummy BLOCK",
+        "FILE_LEN_XS name F_DEF dummy BLOCK",
+        "FILE_LEN_XS name1 F_DEF dummy BLOCK",
+        "FILE_LEN_XS module1 SYSTEM_INTERACTION F_DEF dummy BLOCK",
+        "FILE_LEN_XS module1 module2 F_DEF dummy BLOCK",
+        "FILE_LEN_XS module name1 F_DEF dummy BLOCK",
+        "FILE_LEN_XS module VERY_LONG_IMPORT_NAME F_DEF dummy BLOCK",
+    ]
+
+    for i, c in enumerate(import_statements):
+        result = create_malwi_nodes_from_bytes(
+            source_code_bytes=c, file_path="", language="python"
+        )
+        actual = ""
+        for node in result:
+            actual += node.to_string(include_imports=True, disable_import_names=False)
+
+        assert len(node.imports) > 0
+        assert re.sub(r"\s+", " ", actual).strip() == expected[i], (
+            f"Expected at {i}: {expected[i]}"
+        )
 
 
 RULES_FILE_PATH = "test_mapping_rules.json"

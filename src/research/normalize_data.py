@@ -76,6 +76,7 @@ class SpecialCases(Enum):
     STRING_BASE64 = "STRING_BASE64"
     STRING_HEX = "STRING_HEX"
     VERY_LONG_FUNCTION_NAME = "VERY_LONG_FUNCTION_NAME"
+    VERY_LONG_IMPORT_NAME = "VERY_LONG_IMPORT_NAME"
     MALFORMED_FILE = "MALFORMED_FILE"
 
 
@@ -135,6 +136,23 @@ def find_functions_recursive(
         find_functions_recursive(child, source_code_bytes, functions)
 
 
+def find_imports_recursive(node: Node, source_code_bytes: bytes, imports: List[Node]):
+    if node.type in [
+        "import_statement",
+        "import_from_statement",
+        "future_import_statement",
+        "import_prefix",
+        "relative_import",
+        "dotted_name",
+        "aliased_import",
+        "wildcard_import",
+    ]:
+        imports.append(node)
+
+    for child in node.children:
+        find_imports_recursive(child, source_code_bytes, imports)
+
+
 def create_malwi_nodes_from_bytes(
     source_code_bytes: bytes, file_path: str, language: str
 ) -> List["MalwiNode"]:
@@ -154,6 +172,9 @@ def create_malwi_nodes_from_bytes(
     root_node = tree.root_node
     find_functions_recursive(root_node, source_code_bytes, all_functions)
 
+    all_imports = []
+    find_imports_recursive(root_node, source_code_bytes, all_imports)
+
     malwi_nodes = []
     for f in all_functions:
         node = MalwiNode(
@@ -161,6 +182,7 @@ def create_malwi_nodes_from_bytes(
             language=language,
             file_byte_size=len(source_code_bytes),
             file_path=file_path,
+            imports=all_imports,
         )
         malwi_nodes.append(node)
 
@@ -413,6 +435,144 @@ def call_node_to_parameters_string(
     return processed_args, arg_count
 
 
+def _get_node_text(node: Optional[Node]) -> str:
+    """Safely get text from a node."""
+    if node:
+        return node.text.decode("utf8")
+    return ""
+
+
+def import_node_to_string(
+    node: Node,
+    language: str,
+    mapping_table: Dict[str, Dict[str, str]],
+    disable_import_names: bool = False,
+) -> Tuple[str, bool]:
+    collected_raw_names: List[str] = []
+
+    if node.type == "import_statement":
+        # For "import a, b.c as d":
+        # node.named_children usually gives the sequence of imported items.
+        # These are already the original module names.
+        for item_node in node.named_children:
+            raw_item_name = ""
+            if item_node.type == "aliased_import":
+                original_name_node = item_node.child_by_field_name("name")
+                raw_item_name = _get_node_text(original_name_node)
+            elif item_node.type in ["dotted_name", "identifier"]:
+                raw_item_name = _get_node_text(item_node)
+
+            if raw_item_name:
+                collected_raw_names.append(raw_item_name)
+
+    elif node.type == "import_from_statement":
+        module_name_node = node.child_by_field_name("module_name")
+        raw_module_name = ""
+        # This flag is True if module_name_node.type is 'relative_import'
+        # e.g., for "from . import X" or "from ..sub import Y"
+        is_module_name_explicitly_relative = False
+
+        if module_name_node:
+            raw_module_name = _get_node_text(module_name_node)
+            # The type 'relative_import' is standard in tree-sitter Python grammar
+            # for parts like '.', '..', '.module', '..module'.
+            if module_name_node.type == "relative_import":
+                is_module_name_explicitly_relative = True
+
+        # Use the original robust check for wildcard imports
+        is_wildcard = any(child.type == "wildcard_import" for child in node.children)
+
+        if is_wildcard:
+            # For "from module import *", add "module".
+            # For "from .module import *", add ".module".
+            # For "from . import *" or "from .. import *", raw_module_name would be "." or "..".
+            # We add raw_module_name unless it's purely "." or "..", as these don't usually represent
+            # the kind of "original module name like os, logging" the user is after.
+            if raw_module_name and raw_module_name not in [".", ".."]:
+                collected_raw_names.append(raw_module_name)
+        else:  # Not a wildcard import (e.g., "from module import name1, name2 as alias2")
+            imported_names_structure_node = node.child_by_field_name("name")
+
+            if imported_names_structure_node:
+                items_to_extract_from: List[Node] = []
+                node_type = imported_names_structure_node.type
+
+                # Use your original logic for populating items_to_extract_from,
+                # as it's tailored to your AST structure.
+                if node_type in ["identifier", "dotted_name", "aliased_import"]:
+                    items_to_extract_from.append(imported_names_structure_node)
+                elif node_type == "import_list":
+                    items_to_extract_from.extend(
+                        imported_names_structure_node.named_children
+                    )
+                elif node_type == "parenthesized_import_list":
+                    actual_list_node = imported_names_structure_node
+                    if imported_names_structure_node.named_child_count > 0:
+                        potential_inner_list = (
+                            imported_names_structure_node.named_child(0)
+                        )
+                        if (
+                            potential_inner_list
+                            and potential_inner_list.type == "import_list"
+                        ):
+                            actual_list_node = potential_inner_list
+                    items_to_extract_from.extend(actual_list_node.named_children)
+
+                for item_node in items_to_extract_from:
+                    # Skip non-node elements like commas if they appear in named_children
+                    # (defensive check, depends on specific tree-sitter grammar details)
+                    if item_node.type in [",", "(", ")"]:
+                        continue
+
+                    raw_item_name = ""  # This will be the original imported name, e.g., 'name' from 'name as alias'
+                    if item_node.type == "aliased_import":
+                        original_name_node = item_node.child_by_field_name("name")
+                        raw_item_name = _get_node_text(original_name_node)
+                    elif item_node.type in ["identifier", "dotted_name"]:
+                        raw_item_name = _get_node_text(item_node)
+
+                    if raw_item_name:
+                        # CORE CHANGE: Add the module name first, then the item name,
+                        # but only if the module name was specified (raw_module_name is not empty)
+                        # AND it was not an explicitly relative import (like "from .something ...").
+                        if raw_module_name and not is_module_name_explicitly_relative:
+                            collected_raw_names.append(raw_module_name)
+                        collected_raw_names.append(raw_item_name)
+
+    # Process collected names (sanitization, mapping, handling long names)
+    # This part of your logic remains unchanged.
+    processed_final_names: List[str] = []
+    overall_was_mapped = False
+
+    for rn in collected_raw_names:
+        sanitized_name = sanitize_identifier(rn)  # Your sanitize_identifier
+        if not sanitized_name:
+            continue
+
+        mapped_value = map_identifier(  # Your map_identifier
+            identifier=sanitized_name,
+            language=language,
+            mapping_table=mapping_table,
+        )
+
+        if mapped_value:
+            processed_final_names.append(mapped_value)
+            overall_was_mapped = True
+        elif sanitized_name and not disable_import_names:
+            if (
+                len(sanitized_name) > 30
+                and sanitized_name != "*"
+                and not rn.endswith(".*")
+            ):
+                # Your SpecialCases.VERY_LONG_IMPORT_NAME.value
+                processed_final_names.append(SpecialCases.VERY_LONG_IMPORT_NAME.value)
+            else:
+                processed_final_names.append(sanitized_name)
+
+    final_joined_str = " ".join(processed_final_names)
+    return final_joined_str, overall_was_mapped
+
+
 def function_node_to_string(
     node: Node,
     language,
@@ -491,6 +651,7 @@ def node_to_string_recursive(
     node: Optional[Node],
     language: str,
     indent_level: int = 0,
+    disable_import_names: bool = True,
     disable_function_names: bool = False,
 ) -> str:
     if node is None or node.type is None:
@@ -517,16 +678,13 @@ def node_to_string_recursive(
         "aliased_import",
         "wildcard_import",
     ]:
-        result, mapped = function_node_to_string(
+        result, _ = import_node_to_string(
             node,
             language=language,
-            mapping_table=FUNCTION_MAPPING,
-            disable_function_names=disable_function_names,
+            mapping_table=IMPORT_MAPPING,
+            disable_import_names=disable_import_names,
         )
-        if mapped:
-            final_string += f"{indent}{node_mapping}_{result}\n"
-        else:
-            final_string += f"{indent}{node_mapping} {result}\n"
+        final_string += f"{indent}{node_mapping} {result}\n"
 
     elif node.type in ["function_definition", "call", "lambda"]:
         result, mapped = function_node_to_string(
@@ -599,6 +757,7 @@ class MalwiNode:
         language: str = "unknown",
         warnings: List[str] = [],
         maliciousness: Optional[float] = None,
+        imports: List[Node] = [],
     ):
         self.node = node
         self.file_path = file_path
@@ -609,12 +768,15 @@ class MalwiNode:
         if Path(file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings = warnings + ["TARGET_FILE"]
         self.name = self._get_name()
+        self.imports = imports
 
     def to_string(
         self,
         one_line: bool = True,
         compression: bool = False,
         disable_function_names: bool = False,
+        disable_import_names: bool = True,
+        include_imports: bool = True,
     ) -> str:
         if self.node is None:
             return ""
@@ -630,6 +792,21 @@ class MalwiNode:
         if one_line:
             result = re.sub(r"\s+", " ", result).strip()
 
+        import_tokens = []
+        imports = ""
+        if include_imports:
+            for im in self.imports:
+                token, _ = import_node_to_string(
+                    im,
+                    language=self.language,
+                    mapping_table=IMPORT_MAPPING,
+                    disable_import_names=disable_import_names,
+                )
+                if token and token not in import_tokens:
+                    import_tokens.append(token)
+            import_tokens.sort()
+            imports = " ".join(import_tokens)
+
         if one_line and compression:
             return " ".join(
                 compress_tokens(
@@ -638,7 +815,10 @@ class MalwiNode:
                 )
             )
 
-        return f"{map_file_site_to_token(self.file_byte_size)} {result}"
+        if imports:
+            return f"{map_file_site_to_token(self.file_byte_size)} {imports} {result}"
+        else:
+            return f"{map_file_site_to_token(self.file_byte_size)} {result}"
 
     def to_string_hash(self) -> str:
         # Disable function names for hashing to detect functions with similar structures
@@ -688,7 +868,7 @@ class MalwiNode:
             "format": 1,
             "malicious": [self._to_json_data()],
         }
-        return yaml.dump(malicious_data, sort_keys=False)
+        return yaml.dump(malicious_data, sort_keys=False, width=float("inf"))
 
     def to_json(self) -> str:
         malicious_data = {
