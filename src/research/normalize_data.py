@@ -1,9 +1,9 @@
+import io
 import re
 import csv
 import math
 import json
 import yaml
-import base64
 import socket
 import urllib
 import hashlib
@@ -941,6 +941,29 @@ class MalwiNode:
             ),
             sort_keys=False,
         )
+
+    @classmethod
+    def nodes_to_csv(
+        cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
+    ) -> str:
+        data_dict = cls._nodes_to_dict(
+            malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+        )
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        header = ["files_count", "entities_count", "malicious_percentage"]
+        writer.writerow(header)
+
+        writer.writerow(
+            [
+                data_dict["files_count"],
+                data_dict["entities_count"],
+                f"{data_dict['malicious_percentage']:.6f}",
+            ]
+        )
+        return output.getvalue()
 
 
 def process_source_file(
