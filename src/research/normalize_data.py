@@ -748,6 +748,18 @@ def compress_tokens(tokens: List[str], mapping_rules: Dict[str, str]) -> List[st
     return compressed_tokens_list
 
 
+# Helps to output code in yaml and handling new lines properly
+class LiteralStr(str):
+    pass
+
+
+def literal_str_representer(dumper, data):
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+
+
+yaml.add_representer(LiteralStr, literal_str_representer)
+
+
 class MalwiNode:
     def __init__(
         self,
@@ -822,7 +834,9 @@ class MalwiNode:
 
     def to_string_hash(self) -> str:
         # Disable function names for hashing to detect functions with similar structures
-        node_string = self.to_string(one_line=True, disable_function_names=False)
+        node_string = self.to_string(
+            one_line=True, disable_function_names=False, include_imports=False
+        )
         encoded_string = node_string.encode("utf-8")
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)
@@ -848,7 +862,6 @@ class MalwiNode:
 
     def _to_json_data(self) -> dict:
         node_text = self._get_node_text()
-        encoded_text = base64.b64encode(node_text).decode("utf-8")
         return {
             "path": self.file_path,
             "contents": [
@@ -857,7 +870,7 @@ class MalwiNode:
                     "name": self._get_name(),
                     "score": self.maliciousness,
                     "tokens": self.to_string(),
-                    "base64": encoded_text,
+                    "code": LiteralStr(node_text.decode("utf-8", errors="replace")),
                     "hash": self.to_string_hash(),
                 }
             ],
@@ -868,7 +881,9 @@ class MalwiNode:
             "format": 1,
             "malicious": [self._to_json_data()],
         }
-        return yaml.dump(malicious_data, sort_keys=False, width=float("inf"))
+        return yaml.dump(
+            malicious_data, sort_keys=False, width=float("inf"), default_flow_style=None
+        )
 
     def to_json(self) -> str:
         malicious_data = {

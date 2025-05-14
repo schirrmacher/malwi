@@ -116,8 +116,8 @@ def hello_world():
     )
     json_output = result[0].to_json()
     parsed_json = json.loads(json_output)
-    base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["base64"]
-    assert base64_encoded_content == "ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz"
+    code_content = parsed_json["malicious"][0]["contents"][0]["code"]
+    assert code_content == "def hello_world():\n    pass"
 
     base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["tokens"]
     assert (
@@ -145,7 +145,9 @@ malicious:
     name: hello_world
     score: null
     tokens: FILE_LEN_XS F_DEF hello.world BLOCK PASS_STATEMENT
-    base64: ZGVmIGhlbGxvX3dvcmxkKCk6CiAgICBwYXNz
+    code: |-
+      def hello_world():
+          pass
     hash: d1804a98a2c26e3dc136cd9a3227510d3a7deaed095e8206eb2ec4f5f45266e4
     """
 
