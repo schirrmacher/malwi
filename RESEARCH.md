@@ -2,21 +2,16 @@
 
 ## Best Training Results
 
-Including imports with every functions definition.
+Including imports and import names and function names.
 
-Commit `ffdde6a0c2bdebe8d531f273d42ed6a6d01a4306`
+Commit `30a4c4eefdef6e5a6d5d4c530cc64cf0cc890b0d`
 
-- eval_loss: 0.10081843286752701
-- eval_accuracy: 0.9729129300505462
-- eval_f1: 0.9388684452621895
-- eval_precision: 0.9689532399715167
-- eval_recall: 0.9105955833147445
+- eval_loss: 0.00852914247661829
+- eval_accuracy: 0.9983697061765905
+- eval_f1: 0.9964521851314304
+- eval_precision: 0.9982229402261712
+- eval_recall: 0.9946877012234385
 - epoch: 3.0
-
-Limitations:
-- There are still very similar functions in the benign and malicious dataset.
-- There are many false-positives when scanning random folders
-- The dataset needs more polishing
 
 ## Importance of Function Names
 
