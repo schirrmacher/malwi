@@ -893,39 +893,51 @@ class MalwiNode:
         return json.dumps(malicious_data, indent=4)
 
     @classmethod
-    def _group_nodes(cls, nodes: List["MalwiNode"], score: float) -> List[dict]:
+    def _group_nodes(cls, nodes: List["MalwiNode"]) -> Tuple[List[dict], Set[str]]:
         grouped: dict[str, List["MalwiNode"]] = defaultdict(list)
         for node in nodes:
             grouped[node.file_path].append(node)
 
         entries = []
+        files = set()
         for file_path, node_group in grouped.items():
             contents = []
+            files.add(file_path)
             for node in node_group:
                 contents.extend(node._to_json_data()["contents"])
-
             entries.append(
                 {
                     "path": file_path,
-                    "score": score,
                     "contents": contents,
                 }
             )
-        return entries
+        return entries, files
+
+    @classmethod
+    def _nodes_to_dict(
+        cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
+    ):
+        malicious_entries, malicious_files = cls._group_nodes(malicious_nodes)
+        benign_entries, benign_files = cls._group_nodes(benign_nodes)
+
+        return {
+            "format": 1,
+            "files_count": len(benign_files | malicious_files),
+            "entities_count": len(benign_nodes) + len(malicious_nodes),
+            "malicious_percentage": len(malicious_nodes)
+            / (len(benign_nodes) + len(malicious_nodes)),
+            "malicious": malicious_entries,
+            "benign": benign_entries,
+        }
 
     @classmethod
     def nodes_to_json(
         cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
     ) -> str:
-        malicious_entries = cls._group_nodes(malicious_nodes, score=0.99)
-        benign_entries = cls._group_nodes(benign_nodes, score=0.0)
-
         return json.dumps(
-            {
-                "format": 1,
-                "malicious": malicious_entries,
-                "benign": benign_entries,
-            },
+            cls._nodes_to_dict(
+                malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+            ),
             indent=4,
         )
 
@@ -933,15 +945,12 @@ class MalwiNode:
     def nodes_to_yaml(
         cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
     ) -> str:
-        malicious_entries = cls._group_nodes(malicious_nodes, score=0.99)
-        benign_entries = cls._group_nodes(benign_nodes, score=0.0)
-
-        data = {
-            "format": 1,
-            "malicious": malicious_entries,
-            "benign": benign_entries,
-        }
-        return yaml.dump(data, sort_keys=False)
+        return yaml.dump(
+            cls._nodes_to_dict(
+                malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+            ),
+            sort_keys=False,
+        )
 
 
 def process_source_file(

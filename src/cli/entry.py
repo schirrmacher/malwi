@@ -162,7 +162,7 @@ def main():
             n.maliciousness = maliciousness
             if maliciousness > args.threshold:
                 malicious_nodes.append(n)
-            elif not args.malicious_only:
+            else:
                 benign_nodes.append(n)
         else:
             logging.error(
