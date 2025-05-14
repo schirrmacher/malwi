@@ -788,7 +788,7 @@ class MalwiNode:
         compression: bool = False,
         disable_function_names: bool = False,
         disable_import_names: bool = True,
-        include_imports: bool = True,
+        disable_imports: bool = False,
     ) -> str:
         if self.node is None:
             return ""
@@ -806,7 +806,7 @@ class MalwiNode:
 
         import_tokens = []
         imports = ""
-        if include_imports:
+        if not disable_imports:
             for im in self.imports:
                 token, _ = import_node_to_string(
                     im,
@@ -835,7 +835,10 @@ class MalwiNode:
     def to_string_hash(self) -> str:
         # Disable function names for hashing to detect functions with similar structures
         node_string = self.to_string(
-            one_line=True, disable_function_names=False, include_imports=False
+            one_line=True,
+            disable_function_names=False,
+            disable_import_names=False,
+            disable_imports=False,
         )
         encoded_string = node_string.encode("utf-8")
         sha256_hash = hashlib.sha256()

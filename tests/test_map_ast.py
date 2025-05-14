@@ -475,7 +475,7 @@ def test_python_import_cases():
         )
         actual = ""
         for node in result:
-            actual += node.to_string(include_imports=True, disable_import_names=False)
+            actual += node.to_string(disable_imports=False, disable_import_names=False)
 
         assert len(node.imports) > 0
         assert re.sub(r"\s+", " ", actual).strip() == expected[i], (
