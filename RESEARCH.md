@@ -2,6 +2,8 @@
 
 ## Best Training Results
 
+Including imports with every functions definition.
+
 Commit `ffdde6a0c2bdebe8d531f273d42ed6a6d01a4306`
 
 - eval_loss: 0.10081843286752701
@@ -71,3 +73,26 @@ Introduction of the file size in bytes with size categories.
 - eval_precision: 0.9221616972477065
 - eval_recall: 0.7724543707973103
 - epoch: 3.0
+
+## Combinations
+
+- Including imports and including function names from hashing
+    - eval_loss: 0.10081843286752701
+    - eval_accuracy: 0.9729129300505462
+    - eval_f1: 0.9388684452621895
+    - eval_precision: 0.9689532399715167
+    - eval_recall: 0.9105955833147445
+
+- Including imports and excluding function names from hashing
+    - eval_loss: 0.11095818877220154
+    - eval_accuracy: 0.9707047034103766
+    - eval_f1: 0.8708968955897193
+    - eval_precision: 0.9338085539714868
+    - eval_recall: 0.8159270381492604
+
+- Excluding imports and function names from hashing
+    - eval_loss: 0.10438332706689835
+    - eval_accuracy: 0.9722226197461253
+    - eval_f1: 0.8744745521567613
+    - eval_precision: 0.9477151668068405
+    - eval_recall: 0.8117421058950655
