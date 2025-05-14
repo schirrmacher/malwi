@@ -559,15 +559,7 @@ def import_node_to_string(
             processed_final_names.append(mapped_value)
             overall_was_mapped = True
         elif sanitized_name and not disable_import_names:
-            if (
-                len(sanitized_name) > 30
-                and sanitized_name != "*"
-                and not rn.endswith(".*")
-            ):
-                # Your SpecialCases.VERY_LONG_IMPORT_NAME.value
-                processed_final_names.append(SpecialCases.VERY_LONG_IMPORT_NAME.value)
-            else:
-                processed_final_names.append(sanitized_name)
+            processed_final_names.append(sanitized_name)
 
     final_joined_str = " ".join(processed_final_names)
     return final_joined_str, overall_was_mapped
@@ -633,11 +625,6 @@ def function_node_to_string(
 
     if mapped_value:
         return f"{mapped_value}{param_count} {postfix}", True
-    elif sanitized_name and len(sanitized_name) > 30:
-        return (
-            f"{SpecialCases.VERY_LONG_FUNCTION_NAME.value}{param_count} {postfix}",
-            False,
-        )
     elif sanitized_name:
         if disable_function_names:
             return f"{param_count} {postfix}", False

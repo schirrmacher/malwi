@@ -78,20 +78,6 @@ def test_empty_nodes():
     assert len(result) == 0
 
 
-def test_function_name_too_long():
-    code = b"""
-def xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx():
-    pass
-"""
-    result = create_malwi_nodes_from_bytes(
-        source_code_bytes=code, file_path="lala.py", language="python"
-    )
-    assert (
-        result[0].to_string()
-        == "FILE_LEN_XS F_DEF VERY_LONG_FUNCTION_NAME BLOCK PASS_STATEMENT"
-    )
-
-
 def test_compression():
     code = b"""
 def some_func():
@@ -466,7 +452,7 @@ def test_python_import_cases():
         "FILE_LEN_XS module1 SYSTEM_INTERACTION F_DEF dummy BLOCK",
         "FILE_LEN_XS module1 module2 F_DEF dummy BLOCK",
         "FILE_LEN_XS module name1 F_DEF dummy BLOCK",
-        "FILE_LEN_XS module VERY_LONG_IMPORT_NAME F_DEF dummy BLOCK",
+        "FILE_LEN_XS module xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx F_DEF dummy BLOCK",
     ]
 
     for i, c in enumerate(import_statements):
