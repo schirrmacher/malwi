@@ -774,7 +774,7 @@ class MalwiNode:
         one_line: bool = True,
         compression: bool = False,
         disable_function_names: bool = False,
-        disable_import_names: bool = True,
+        disable_import_names: bool = False,
         disable_imports: bool = False,
     ) -> str:
         if self.node is None:
