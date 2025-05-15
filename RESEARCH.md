@@ -1,17 +1,16 @@
 # Research Notes
 
-## Best Training Results
+## Excluding imports names and function names from hashing
 
-Including imports and import names and function names.
+This iteration focuses more on the AST rather than keywords. I noticed that 
+previous models where over-fitted due to function or import names in the code.
 
-Commit `30a4c4eefdef6e5a6d5d4c530cc64cf0cc890b0d`
-
-- eval_loss: 0.00852914247661829
-- eval_accuracy: 0.9983697061765905
-- eval_f1: 0.9964521851314304
-- eval_precision: 0.9982229402261712
-- eval_recall: 0.9946877012234385
-- epoch: 3.0
+- commit: `ba453ae9502419d1a7a07caa1f5f5e322384c6a6`
+- eval_loss: 0.18635548651218414
+- eval_accuracy: 0.948652613697784
+- eval_f1: 0.9005929543076386
+- eval_precision: 0.9542766631467793
+- eval_recall: 0.8526276063779602
 
 ## Importance of Function Names
 
@@ -91,3 +90,12 @@ Introduction of the file size in bytes with size categories.
     - eval_f1: 0.8744745521567613
     - eval_precision: 0.9477151668068405
     - eval_recall: 0.8117421058950655
+
+- Including imports and import names and function names.
+    - Commit `30a4c4eefdef6e5a6d5d4c530cc64cf0cc890b0d`
+    - eval_loss: 0.00852914247661829
+    - eval_accuracy: 0.9983697061765905
+    - eval_f1: 0.9964521851314304
+    - eval_precision: 0.9982229402261712
+    - eval_recall: 0.9946877012234385
+    - epoch: 3.0
