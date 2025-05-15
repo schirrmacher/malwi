@@ -972,8 +972,38 @@ def process_source_file(
     return create_malwi_nodes_from_file(file_path=str(file_path))
 
 
+DEFAULT_BATCH_SIZE = 1000
+
+
+def write_nodes_to_csv(nodes: List[MalwiNode], csv_file_path: str, write_header: bool):
+    """
+    Writes or appends a list of MalwiNode objects to a CSV file.
+
+    Args:
+        nodes: A list of MalwiNode objects to write.
+        csv_file_path: The path to the CSV file.
+        write_header: Boolean indicating whether to write the CSV header.
+    """
+    if not nodes:
+        return
+
+    mode = "w" if write_header else "a"
+    try:
+        with open(csv_file_path, mode, newline="", encoding="utf-8") as csvfile:
+            csv_writer = csv.writer(csvfile)
+            if write_header:
+                csv_writer.writerow(["ast", "hash", "file"])
+            for n in nodes:
+                csv_writer.writerow([n.to_string(), n.to_string_hash(), n.file_path])
+    except IOError as e:
+        logging.error(f"Error writing to CSV file {csv_file_path}: {e}")
+        # Consider re-raising or implementing more sophisticated error handling if needed
+
+
 def main():
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
     cli_parser = argparse.ArgumentParser(
         description="Parse source code files and output AST node info to a CSV. Remember to download source files first."
@@ -992,6 +1022,13 @@ def main():
         default=None,
         help="Filter by specific file extensions (e.g., py js ts). Processes all supported if not specified.",
     )
+    cli_parser.add_argument(
+        "--batch-size",
+        "-bs",
+        type=int,
+        default=DEFAULT_BATCH_SIZE,
+        help=f"Number of files to process in each batch before writing to CSV (default: {DEFAULT_BATCH_SIZE}).",
+    )
 
     args = cli_parser.parse_args()
 
@@ -1002,92 +1039,146 @@ def main():
         output_csv_file = "malicious.csv"
         input_directory_str = ".repo_cache/malicious_repos"
     else:
-        print("Error: Invalid --option specified. Choose 'benign' or 'malicious'.")
+        # Argparse 'choices' should prevent this, but as a safeguard:
+        logging.error(
+            "Critical Error: Invalid --option specified. This should not happen."
+        )
         return
 
     input_path = Path(input_directory_str)
-    all_collected_nodes: List[MalwiNode] = []
+    batch_size = args.batch_size
 
     user_specified_extensions = None
     if args.extensions is not None:
         user_specified_extensions = [ext.lower().lstrip(".") for ext in args.extensions]
-        if not user_specified_extensions and args.extensions == []:
-            print(
+        if (
+            not user_specified_extensions and args.extensions == []
+        ):  # Check if --extensions was passed with no values
+            logging.warning(
                 "Warning: --extensions flag was used with no specific extensions. No files will be processed based on extension filter."
             )
 
     if not input_path.exists():
-        print(f"Error: Path does not exist: {input_path}")
+        logging.error(f"Error: Input path does not exist: {input_path}")
         return
 
     if not input_path.is_dir():
-        print(f"Error: Expected input path to be a directory: {input_path}")
+        logging.error(f"Error: Expected input path to be a directory: {input_path}")
         return
 
-    print(f"Scanning directory: {input_path}...")
+    logging.info(f"Scanning directory: {input_path}...")
+
+    # Discovering files:
+    # Note: list(input_path.rglob("*")) can be memory-intensive if there are millions of items (files+dirs).
+    # If this step itself becomes a bottleneck, file discovery might need to be streamed or optimized.
+    all_items_in_dir_paths = []
+    try:
+        all_items_in_dir_paths = list(input_path.rglob("*"))
+    except Exception as e:
+        logging.error(f"Error during initial scan of {input_path}: {e}")
+        return
+
+    logging.info(
+        f"Found {len(all_items_in_dir_paths)} total items (files and directories). Filtering for files..."
+    )
+
     files_to_process = []
-    all_items_in_dir = list(input_path.rglob("*"))
-    print(f"Found {len(all_items_in_dir)} items. Filtering files...")
-    for item_path in tqdm(all_items_in_dir, desc="Discovering files", unit="item"):
+    for item_path in tqdm(
+        all_items_in_dir_paths, desc="Discovering files", unit="item"
+    ):
         if item_path.is_file():
             files_to_process.append(item_path)
 
     if not files_to_process:
-        print(f"No files found in the specified directory: {input_path}")
+        logging.warning(f"No files found in the specified directory: {input_path}")
         return
 
-    print(
+    logging.info(
         f"Found {len(files_to_process)} potential files to process from {input_path}."
     )
 
-    processed_files_count = 0
-    for p_file_path in tqdm(
-        files_to_process, desc="Processing source files", unit="file"
+    # Batch processing variables
+    total_nodes_written_to_csv = 0
+    files_yielding_nodes_count = (
+        0  # Counts files that were processed and actually produced nodes
+    )
+    csv_header_written = False
+
+    # Optional: Clean up existing output file before starting a fresh run
+    # import os
+    # if os.path.exists(output_csv_file):
+    #     logging.info(f"Removing existing output file: {output_csv_file}")
+    #     os.remove(output_csv_file)
+
+    supported_extensions_map = {
+        "js": "javascript",
+        "ts": "typescript",
+        "rs": "rust",
+        "py": "python",
+    }
+
+    # Process files in batches
+    for i in tqdm(
+        range(0, len(files_to_process), batch_size),
+        desc="Processing batches",
+        unit="batch",
     ):
-        file_extension = p_file_path.suffix.lstrip(".").lower()
+        current_batch_file_paths = files_to_process[i : i + batch_size]
+        nodes_for_current_batch: List[MalwiNode] = []
 
-        if user_specified_extensions is not None:
-            if file_extension not in user_specified_extensions:
-                continue
+        for p_file_path in (
+            current_batch_file_paths
+        ):  # No inner tqdm here to keep batch progress output cleaner
+            file_extension = p_file_path.suffix.lstrip(".").lower()
 
-        supported_extensions_map = {
-            "js": "javascript",
-            "ts": "typescript",
-            "rs": "rust",
-            "py": "python",
-        }
-        if file_extension not in supported_extensions_map:
-            continue
+            # Apply extension filtering
+            if user_specified_extensions is not None:
+                if file_extension not in user_specified_extensions:
+                    continue  # Skip file if not in user-specified extensions
 
-        nodes = process_source_file(file_path=str(p_file_path))
-        if nodes:
-            all_collected_nodes.extend(nodes)
-            processed_files_count += 1
+            if file_extension not in supported_extensions_map:
+                continue  # Skip file if not a supported extension
 
-    if not all_collected_nodes:
-        print("No processable files found matching criteria or no AST nodes extracted.")
-        if (
-            processed_files_count == 0
-            and user_specified_extensions is not None
-            and files_to_process
-        ):
-            print(
-                f"No files matched the specified extensions: {user_specified_extensions} or were supported for processing."
+            # At this point, the file is relevant for processing
+            try:
+                extracted_nodes = process_source_file(file_path=str(p_file_path))
+                if extracted_nodes:
+                    nodes_for_current_batch.extend(extracted_nodes)
+                    files_yielding_nodes_count += 1
+            except Exception as e:
+                logging.error(f"Error processing file {p_file_path}: {e}")
+                # Decide if you want to skip this file or halt execution based on error severity
+
+        if nodes_for_current_batch:
+            write_nodes_to_csv(
+                nodes_for_current_batch, output_csv_file, not csv_header_written
             )
-        return
+            if (
+                not csv_header_written
+            ):  # Mark header as written after the first successful write
+                csv_header_written = True
+            total_nodes_written_to_csv += len(nodes_for_current_batch)
 
-    try:
-        print(f"Writing {len(all_collected_nodes)} AST nodes to {output_csv_file}...")
-        with open(output_csv_file, "w", newline="", encoding="utf-8") as csvfile:
-            csv_writer = csv.writer(csvfile)
-            csv_writer.writerow(["ast", "hash", "file"])
-            for n in tqdm(all_collected_nodes, desc="Writing CSV", unit="node"):
-                csv_writer.writerow([n.to_string(), n.to_string_hash(), n.file_path])
-        print(
-            f"Successfully wrote AST data from {processed_files_count} file(s) ({len(all_collected_nodes)} nodes) to {output_csv_file}"
+    # Final summary
+    if total_nodes_written_to_csv == 0:
+        logging.warning(
+            "Processing complete. No AST nodes were extracted or matched the criteria."
         )
-    except IOError as e:
-        print(f"Error writing to CSV file {output_csv_file}: {e}")
+        # More detailed reason why no nodes might have been written:
+        if files_yielding_nodes_count == 0 and len(files_to_process) > 0:
+            if user_specified_extensions is not None:
+                logging.warning(
+                    f"This might be because no files matched the specified extensions filter: {user_specified_extensions} AND were of a supported type, or processed files yielded no AST nodes."
+                )
+            else:
+                logging.warning(
+                    "This might be because no processable files (matching supported extensions) were found, or such files yielded no AST nodes."
+                )
+    else:
+        logging.info(
+            f"Successfully wrote AST data from {files_yielding_nodes_count} file(s) "
+            f"({total_nodes_written_to_csv} nodes in total) to {output_csv_file}"
+        )
 
 
 if __name__ == "__main__":
