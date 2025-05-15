@@ -160,17 +160,24 @@ def main():
     )
 
     output = ""
+
     if args.format == "json":
         output = MalwiNode.nodes_to_json(
-            malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+            malicious_nodes=malicious_nodes,
+            benign_nodes=benign_nodes,
+            malicious_only=args.malicious_only,
         )
     elif args.format == "yaml":
         output = MalwiNode.nodes_to_yaml(
-            malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+            malicious_nodes=malicious_nodes,
+            benign_nodes=benign_nodes,
+            malicious_only=args.malicious_only,
         )
     elif args.format == "csv":
         output = MalwiNode.nodes_to_csv(
-            malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+            malicious_nodes=malicious_nodes,
+            benign_nodes=benign_nodes,
+            malicious_only=args.malicious_only,
         )
     else:
         if len(malicious_nodes) == 0:

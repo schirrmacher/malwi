@@ -62,7 +62,7 @@ def mock_malwi_node_class():
             return files_count, entities_count, malicious_percentage
 
         @staticmethod
-        def nodes_to_json(malicious_nodes, benign_nodes):
+        def nodes_to_json(malicious_nodes, benign_nodes, malicious_only):
             files_count, entities_count, malicious_percentage = (
                 MockMalwiNode._get_counts_and_percentage(malicious_nodes, benign_nodes)
             )
@@ -308,14 +308,18 @@ def test_main_json_output(
     ben_node = mock_malwi_node_class(temp_file, "benign_func", 0.01)
     mock_file_or_dir.return_value = ([mal_node], [ben_node])
 
-    expected_json_str = mock_malwi_node_class.nodes_to_json([mal_node], [ben_node])
+    expected_json_str = mock_malwi_node_class.nodes_to_json(
+        [mal_node], [ben_node], mock_args.malicious_only
+    )
     MockedMalwiNodeInEntry.nodes_to_json.return_value = expected_json_str
 
     with pytest.raises(SystemExit) as e:
         main()
     assert e.value.code == 1
     MockedMalwiNodeInEntry.nodes_to_json.assert_called_once_with(
-        malicious_nodes=[mal_node], benign_nodes=[ben_node]
+        malicious_nodes=[mal_node],
+        benign_nodes=[ben_node],
+        malicious_only=mock_args.malicious_only,
     )
     mock_print.assert_called_once_with(expected_json_str)
 
@@ -348,14 +352,18 @@ def test_main_malicious_only_has_no_effect_on_json_call(
     ben_node = mock_malwi_node_class(str(temp_file) + "_b", "ben_func", 0.1)
     mock_file_or_dir.return_value = ([mal_node], [ben_node])
 
-    expected_json_output = mock_malwi_node_class.nodes_to_json([mal_node], [ben_node])
+    expected_json_output = mock_malwi_node_class.nodes_to_json(
+        [mal_node], [ben_node], mock_args.malicious_only
+    )
     MockedMalwiNodeInEntry.nodes_to_json.return_value = expected_json_output
 
     with pytest.raises(SystemExit) as e:
         main()
     assert e.value.code == 1
     MockedMalwiNodeInEntry.nodes_to_json.assert_called_once_with(
-        malicious_nodes=[mal_node], benign_nodes=[ben_node]
+        malicious_nodes=[mal_node],
+        benign_nodes=[ben_node],
+        malicious_only=mock_args.malicious_only,
     )
     printed_output_dict = json.loads(mock_print.call_args[0][0])
     assert "benign" in printed_output_dict and len(printed_output_dict["benign"]) > 0
@@ -392,7 +400,9 @@ def test_main_save_output(
 
     mal_node = mock_malwi_node_class(str(temp_file), "mal_func", 0.9)
     mock_file_or_dir.return_value = ([mal_node], [])
-    expected_json_content = mock_malwi_node_class.nodes_to_json([mal_node], [])
+    expected_json_content = mock_malwi_node_class.nodes_to_json(
+        [mal_node], [], mock_args.malicious_only
+    )
     MockedMalwiNodeInEntry.nodes_to_json.return_value = expected_json_content
     mock_save_path_instance = MagicMock(spec=Path)
 

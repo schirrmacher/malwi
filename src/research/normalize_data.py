@@ -905,7 +905,10 @@ class MalwiNode:
 
     @classmethod
     def nodes_to_dict(
-        cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
+        cls,
+        malicious_nodes: List["MalwiNode"],
+        benign_nodes: List["MalwiNode"],
+        malicious_only: bool = False,
     ):
         malicious_entries, malicious_files = cls._group_nodes(malicious_nodes)
         benign_entries, benign_files = cls._group_nodes(benign_nodes)
@@ -917,37 +920,52 @@ class MalwiNode:
             "malicious_percentage": len(malicious_nodes)
             / (len(benign_nodes) + len(malicious_nodes)),
             "malicious": malicious_entries,
-            "benign": benign_entries,
+            "benign": None if malicious_only else benign_entries,
         }
 
     @classmethod
     def nodes_to_json(
-        cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
+        cls,
+        malicious_nodes: List["MalwiNode"],
+        benign_nodes: List["MalwiNode"],
+        malicious_only: bool = False,
     ) -> str:
         return json.dumps(
             cls.nodes_to_dict(
-                malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+                malicious_nodes=malicious_nodes,
+                benign_nodes=benign_nodes,
+                malicious_only=malicious_only,
             ),
             indent=4,
         )
 
     @classmethod
     def nodes_to_yaml(
-        cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
+        cls,
+        malicious_nodes: List["MalwiNode"],
+        benign_nodes: List["MalwiNode"],
+        malicious_only: bool = False,
     ) -> str:
         return yaml.dump(
             cls.nodes_to_dict(
-                malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+                malicious_nodes=malicious_nodes,
+                benign_nodes=benign_nodes,
+                malicious_only=malicious_only,
             ),
             sort_keys=False,
         )
 
     @classmethod
     def nodes_to_csv(
-        cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
+        cls,
+        malicious_nodes: List["MalwiNode"],
+        benign_nodes: List["MalwiNode"],
+        malicious_only: bool = False,
     ) -> str:
         data_dict = cls.nodes_to_dict(
-            malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+            malicious_nodes=malicious_nodes,
+            benign_nodes=benign_nodes,
+            malicious_only=malicious_only,
         )
 
         output = io.StringIO()
