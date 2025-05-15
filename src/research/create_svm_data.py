@@ -1,251 +1,171 @@
 import os
-import subprocess
-import json
-import argparse
 import csv
+import argparse
+from pathlib import Path
 
+from research.normalize_data import MalwiNode
+from cli.entry import file_or_dir_to_nodes
 
-def run_analysis_on_folder(folder_path):
-    """
-    Runs the analysis command on a given folder and extracts the JSON output.
-    """
-    command = ["uv", "run", "python", "-m", "src.cli.entry", folder_path, "-f", "json"]
-    # This initial print indicates the start of processing for this folder
-    print(f"INFO: Processing folder: {folder_path}")
-    try:
-        process = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
-        stdout, stderr = process.communicate(timeout=300)  # 5-minute timeout
-
-        if process.returncode == 0:
-            try:
-                output_json = json.loads(stdout)
-                if all(
-                    k in output_json
-                    for k in [
-                        "format",
-                        "files_count",
-                        "entities_count",
-                        "malicious_percentage",
-                    ]
-                ):
-                    extracted_data = {
-                        "folder": folder_path,
-                        "format": output_json.get("format"),
-                        "files_count": output_json.get("files_count"),
-                        "entities_count": output_json.get("entities_count"),
-                        "malicious_percentage": output_json.get("malicious_percentage"),
-                        "error": None,
-                    }
-                    # Detailed success log (optional, can be removed if too verbose with the new one-liner)
-                    # print(f"DEBUG: Successfully extracted data for {folder_path}")
-                    return extracted_data
-                else:
-                    missing_keys = [
-                        k
-                        for k in [
-                            "format",
-                            "files_count",
-                            "entities_count",
-                            "malicious_percentage",
-                        ]
-                        if k not in output_json
-                    ]
-                    print(
-                        f"ERROR_DETAIL: Key(s) {missing_keys} not found in JSON output for {folder_path}. Output: {stdout[:200]}..."
-                    )
-                    return {
-                        "folder": folder_path,
-                        "error": f"MissingKeyError: {missing_keys}",
-                        "raw_output": stdout,
-                    }
-
-            except json.JSONDecodeError as e:
-                print(
-                    f"ERROR_DETAIL: Could not decode JSON from output for {folder_path}: {e}. Output: {stdout[:200]}..."
-                )
-                return {
-                    "folder": folder_path,
-                    "error": f"JSONDecodeError: {e}",
-                    "raw_output": stdout,
-                }
-        else:
-            print(
-                f"ERROR_DETAIL: Command failed for {folder_path} with return code {process.returncode}. Stderr: {stderr[:200]}..."
-            )
-            return {
-                "folder": folder_path,
-                "error": f"Command failed with code {process.returncode}",
-                "stderr": stderr,
-            }
-
-    except subprocess.TimeoutExpired:
-        print(f"ERROR_DETAIL: Command timed out for folder: {folder_path}")
-        return {"folder": folder_path, "error": "TimeoutExpired"}
-    except Exception as e:
-        print(
-            f"ERROR_DETAIL: An unexpected error occurred while processing {folder_path}: {e}"
-        )
-        return {"folder": folder_path, "error": str(e)}
+from cli.predict import initialize_models
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run AI training analysis on repository folders and save results to CSV."
+        description="Run AI training analysis on immediate child directories of a parent folder and save results to CSV."
     )
     parser.add_argument(
-        "--benign-dir",
+        "--dir",
+        "-d",
         type=str,
-        default=os.path.join(".repo_cache", "benign_repos"),
-        help="Path to the directory containing benign repositories. Default: .repo_cache/benign_repos",
+        required=True,
+        help="Path to the parent directory containing immediate child directories to scan.",
     )
     parser.add_argument(
-        "--malicious-dir",
+        "--label",
+        "-l",
         type=str,
-        default=os.path.join(".repo_cache", "malicious_repos", "pypi_malregistry"),
-        help="Path to the directory containing malicious repositories. Default: .repo_cache/malicious_repos/pypi_malregistry",
+        required=True,
+        choices=["malicious", "benign"],
+        help="Label (e.g., malicious, benign) to include as a column in the CSV output.",
     )
     parser.add_argument(
-        "--output-file",
+        "--save",
+        "-s",
         type=str,
-        default="analysis_results.csv",
-        help="File path to save the CSV results. Default: analysis_results.csv",
+        metavar="FILENAME",
+        default=None,
+        help="Path to the CSV output file. If provided, results will be saved.",
     )
     parser.add_argument(
-        "--save-results",
-        action="store_true",
-        help="Save the results to the specified CSV output file.",
+        "--threshold",
+        "-mt",
+        metavar="FLOAT",
+        type=float,
+        default=0.5,
+        help="Specify the threshold for classifying nodes as malicious (default: 0.5).",
+    )
+    parser.add_argument(
+        "--tokenizer-path",
+        "-t",
+        metavar="PATH",
+        help="Specify the custom tokenizer directory.",
+        default=None,
+    )
+    parser.add_argument(
+        "--model-path",
+        "-m",
+        metavar="PATH",
+        help="Specify the custom model path directory.",
+        default=None,
     )
 
     args = parser.parse_args()
 
-    target_folders_info = []
-    if os.path.isdir(args.benign_dir):
-        target_folders_info.append({"path": args.benign_dir, "type": "benign"})
-    else:
-        print(f"WARNING: Benign directory not found: {args.benign_dir}. Skipping.")
-
-    if os.path.isdir(args.malicious_dir):
-        target_folders_info.append({"path": args.malicious_dir, "type": "malicious"})
-    else:
-        print(
-            f"WARNING: Malicious directory not found: {args.malicious_dir}. Skipping."
+    try:
+        initialize_models(
+            model_path=args.model_path, tokenizer_path=args.tokenizer_path
         )
+    except Exception as e:
+        print(f"Warning: Could not initialize models: {e}")
 
-    if not target_folders_info:
-        print(
-            "ERROR: No valid benign or malicious directories provided or found. Exiting."
-        )
+    parent_dir_path = args.dir
+
+    if not os.path.isdir(parent_dir_path):
+        print(f"Error: Provided path '{parent_dir_path}' is not a valid directory.")
         return
 
-    all_results = []
+    output_csv_filename = args.save
+    csv_writer = None
+    csv_file_handle = None
 
-    for folder_info in target_folders_info:
-        current_target_path = folder_info["path"]
-        repo_type = folder_info["type"]
-
-        print(
-            f"\nScanning '{repo_type}' repositories in: {current_target_path}\n--------------------------------------------------"
-        )
-
-        for item_name in os.listdir(current_target_path):
-            item_path = os.path.join(current_target_path, item_name)
-            if os.path.isdir(item_path):
-                result = run_analysis_on_folder(item_path)
-                if result:
-                    result["type"] = repo_type  # This is the 'label'
-                    all_results.append(result)
-
-                    # One-line summary print after each scan
-                    if result.get("error"):
-                        error_summary = result["error"]
-                        if isinstance(
-                            error_summary, list
-                        ):  # Handle cases like MissingKeyError
-                            error_summary = ", ".join(str(e) for e in error_summary)
-                        elif (
-                            len(str(error_summary)) > 70
-                        ):  # Truncate long error strings
-                            error_summary = str(error_summary)[:67] + "..."
-                        print(
-                            f"SCAN_RESULT: FAILED '{os.path.basename(item_path)}' (Type: {repo_type}) - Error: {error_summary}"
-                        )
-                    else:
-                        print(
-                            f"SCAN_RESULT: OK '{os.path.basename(item_path)}' (Type: {repo_type}) - Files: {result.get('files_count', 'N/A')}, Entities: {result.get('entities_count', 'N/A')}, Malicious%: {result.get('malicious_percentage', 'N/A')}"
-                        )
-            else:
-                # This print is for non-directory items, not directly related to scan results
-                # print(f"INFO: Skipping non-directory item: {item_path}")
-                pass
-
-    print("\n\n--- Summary of All Results ---")
-    if not all_results:
-        print("No repositories were processed or no results were obtained.")
-        return
-
-    successful_analyses = 0
-    failed_analyses = 0
-
-    # Detailed summary loop (remains unchanged)
-    for result in all_results:
-        if result.get("error"):
-            failed_analyses += 1
-            print(f"\nFolder: {result['folder']} (Type: {result.get('type', 'N/A')})")
-            print(f"  Status: FAILED")
-            print(f"  Error: {result['error']}")
-            if "stderr" in result:
-                print(f"  Stderr: {result['stderr'][:500]}...")
-            if "raw_output" in result:
-                print(f"  Raw Output: {result['raw_output'][:500]}...")
-        else:
-            successful_analyses += 1
-            print(f"\nFolder: {result['folder']} (Type: {result.get('type', 'N/A')})")
-            print(f"  Format: {result['format']}")
-            print(f"  Files Count: {result['files_count']}")
-            print(f"  Entities Count: {result['entities_count']}")
-            print(f"  Malicious Percentage: {result['malicious_percentage']}")
-
-    print("\n--- Overall Statistics ---")
-    print(f"Total repositories processed: {len(all_results)}")
-    print(f"Successful analyses: {successful_analyses}")
-    print(f"Failed analyses: {failed_analyses}")
-
-    if args.save_results and all_results:
-        successful_results_for_csv = [
-            res for res in all_results if not res.get("error")
-        ]
-        if successful_results_for_csv:
-            csv_columns = [
+    if output_csv_filename:
+        try:
+            csv_file_handle = open(output_csv_filename, "w", newline="")
+            csv_writer = csv.writer(csv_file_handle)
+            header = [
                 "files_count",
                 "entities_count",
                 "malicious_percentage",
+                "dir_name",
                 "label",
             ]
+            csv_writer.writerow(header)
+            csv_file_handle.flush()
+            print(f"Results will be saved to: {output_csv_filename}")
+        except IOError as e:
+            print(
+                f"Error: Could not open file '{output_csv_filename}' for writing: {e}"
+            )
+            if csv_file_handle:
+                csv_file_handle.close()
+            csv_file_handle = None
+            csv_writer = None
+
+    print(f"\nScanning immediate subdirectories of: {parent_dir_path}")
+    processed_dirs_count = 0
+
+    for item_name in os.listdir(parent_dir_path):
+        child_dir_path = os.path.join(parent_dir_path, item_name)
+
+        if os.path.isdir(child_dir_path):
+            dir_name = item_name
+            processed_dirs_count += 1
+            print(f"\nProcessing directory: {dir_name} (Path: {child_dir_path})")
+
             try:
-                with open(args.output_file, "w", newline="") as csvfile:
-                    writer = csv.DictWriter(
-                        csvfile, fieldnames=csv_columns, extrasaction="ignore"
+                malicious_nodes, benign_nodes = file_or_dir_to_nodes(
+                    path=Path(child_dir_path), threshold=args.threshold
+                )
+
+                analysis_result_dict = MalwiNode.nodes_to_dict(
+                    malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
+                )
+
+                files_count = analysis_result_dict.get("files_count", 0)
+                entities_count = analysis_result_dict.get("entities_count", 0)
+                malicious_percentage = float(
+                    analysis_result_dict.get("malicious_percentage", 0.0)
+                )
+
+                print(f"  Files Count: {files_count}")
+                print(f"  Entities Count: {entities_count}")
+                print(f"  Malicious Percentage: {malicious_percentage:.2f}%")
+
+                if csv_writer and csv_file_handle:
+                    csv_writer.writerow(
+                        [
+                            files_count,
+                            entities_count,
+                            f"{malicious_percentage:.2f}",
+                            dir_name,
+                            args.label,
+                        ]
                     )
-                    writer.writeheader()
-                    for data in successful_results_for_csv:
-                        row_data = {
-                            "files_count": data.get("files_count"),
-                            "entities_count": data.get("entities_count"),
-                            "malicious_percentage": data.get("malicious_percentage"),
-                            "label": data.get("type"),
-                        }
-                        writer.writerow(row_data)
-                print(f"\nSuccessfully analyzed results saved to {args.output_file}")
-            except IOError as e:
-                print(f"\nERROR: Could not save CSV results to {args.output_file}: {e}")
+                    csv_file_handle.flush()
+
             except Exception as e:
-                print(f"\nERROR: An unexpected error occurred while writing CSV: {e}")
-        else:
-            print("\nNo successful analyses to save to CSV.")
-    elif args.save_results and not all_results:
-        print("\nNo results to save.")
+                print(f"An error occurred while processing directory '{dir_name}': {e}")
+                if csv_writer and csv_file_handle:
+                    csv_writer.writerow(
+                        ["ERROR", "ERROR", "ERROR", dir_name, args.label]
+                    )
+                    csv_file_handle.flush()
+
+    if processed_dirs_count == 0:
+        print(f"\nNo subdirectories found in '{parent_dir_path}'.")
+
+    if csv_file_handle:
+        csv_file_handle.close()
+        if csv_writer:
+            print(f"\nAnalysis complete. Results saved to '{output_csv_filename}'.")
+    elif output_csv_filename:
+        print(
+            f"\nAnalysis complete, but failed to save results to '{output_csv_filename}' (could not be opened/written)."
+        )
+    else:
+        print(
+            "\nAnalysis complete. Results were not saved (use the --save FILENAME option)."
+        )
 
 
 if __name__ == "__main__":
