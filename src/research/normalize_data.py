@@ -773,8 +773,8 @@ class MalwiNode:
         self,
         one_line: bool = True,
         compression: bool = False,
-        disable_function_names: bool = False,
-        disable_import_names: bool = False,
+        disable_function_names: bool = True,
+        disable_import_names: bool = True,
         disable_imports: bool = False,
     ) -> str:
         if self.node is None:
@@ -823,9 +823,9 @@ class MalwiNode:
         # Disable function names for hashing to detect functions with similar structures
         node_string = self.to_string(
             one_line=True,
-            disable_function_names=False,
-            disable_import_names=False,
-            disable_imports=False,
+            disable_function_names=True,
+            disable_import_names=True,
+            disable_imports=True,
         )
         encoded_string = node_string.encode("utf-8")
         sha256_hash = hashlib.sha256()

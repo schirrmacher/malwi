@@ -87,7 +87,9 @@ def some_func():
         source_code_bytes=code, file_path="lala.py", language="python"
     )
     assert (
-        result[0].to_string(one_line=True, compression=True)
+        result[0].to_string(
+            one_line=True, compression=True, disable_function_names=False
+        )
         == "F_DEF some.func BLOCK EXP F_CALL a.b.c.d.e MEMBER_ACCESS_3 MEMBER_ACCESS"
     )
 
@@ -106,9 +108,7 @@ def hello_world():
     assert code_content == "def hello_world():\n    pass"
 
     base64_encoded_content = parsed_json["malicious"][0]["contents"][0]["tokens"]
-    assert (
-        base64_encoded_content == "FILE_LEN_XS F_DEF hello.world BLOCK PASS_STATEMENT"
-    )
+    assert base64_encoded_content == "FILE_LEN_XS F_DEF BLOCK PASS_STATEMENT"
 
 
 def test_to_yaml_format():
@@ -130,11 +130,11 @@ malicious:
   - type: function
     name: hello_world
     score: null
-    tokens: FILE_LEN_XS F_DEF hello.world BLOCK PASS_STATEMENT
+    tokens: FILE_LEN_XS F_DEF BLOCK PASS_STATEMENT
     code: |-
       def hello_world():
           pass
-    hash: d1804a98a2c26e3dc136cd9a3227510d3a7deaed095e8206eb2ec4f5f45266e4
+    hash: 366042a51fd1111d0c7f0553b1a8589e5890188d8749b1978a108238efd55f99
     """
 
     # Compare the generated YAML output to the expected one
@@ -174,31 +174,31 @@ class OuterClass:
         source_code_bytes=code, file_path="lala.py", language="python"
     )
     assert (
-        result[0].to_string()
+        result[0].to_string(disable_function_names=False)
         == "FILE_LEN_S F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
     )
     assert (
-        result[1].to_string()
+        result[1].to_string(disable_function_names=False)
         == "FILE_LEN_S F_DEF greet BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
     )
     assert (
-        result[2].to_string()
+        result[2].to_string(disable_function_names=False)
         == "FILE_LEN_S F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
     )
     assert (
-        result[3].to_string()
+        result[3].to_string(disable_function_names=False)
         == "FILE_LEN_S F_DEF show.value BLOCK EXP F_CALL_USER_IO1 STRING_LEN_S_ENT_HIGH"
     )
     assert (
-        result[4].to_string()
+        result[4].to_string(disable_function_names=False)
         == "FILE_LEN_S F_DEF init BLOCK EXP ASSIGNMENT MEMBER_ACCESS"
     )
     assert (
-        result[5].to_string()
+        result[5].to_string(disable_function_names=False)
         == "FILE_LEN_S F_DEF repeat.text BLOCK F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT RETURN_STATEMENT F_CALL build.repeated.strip MEMBER_ACCESS F_CALL build.repeated"
     )
     assert (
-        result[6].to_string()
+        result[6].to_string(disable_function_names=False)
         == "FILE_LEN_S F_DEF build.repeated BLOCK RETURN_STATEMENT RETURN_STATEMENT"
     )
 
@@ -250,7 +250,7 @@ def foo():
         source_code_bytes=code, file_path="setup.py", language="python"
     )
     assert (
-        result[0].to_string()
+        result[0].to_string(disable_function_names=False)
         == "FILE_LEN_XS TARGET_FILE F_DEF foo BLOCK PASS_STATEMENT"
     )
 
@@ -341,7 +341,9 @@ def test():
         )
         actual = ""
         for node in result:
-            actual += node.to_string()
+            actual += node.to_string(
+                disable_import_names=False, disable_function_names=False
+            )
 
         assert re.sub(r"\s+", " ", actual).strip() == expected[i], (
             f"Expected at {i}: {expected[i]}"
@@ -357,10 +359,10 @@ def foo():
         source_code_bytes=code, file_path="test.py", language="python"
     )
 
-    assert result[0].to_string() == "FILE_LEN_XS F_DEF foo BLOCK PASS_STATEMENT"
+    assert result[0].to_string() == "FILE_LEN_XS F_DEF BLOCK PASS_STATEMENT"
     assert (
         result[0].to_string_hash()
-        == "13628eb9102cb634225aed763f5dec879d51b980495e2eee4b826a41f8cb709e"
+        == "366042a51fd1111d0c7f0553b1a8589e5890188d8749b1978a108238efd55f99"
     )
 
 
@@ -377,7 +379,7 @@ def foo():
     )
 
     assert (
-        result[0].to_string(disable_import_names=True)
+        result[0].to_string(disable_import_names=True, disable_function_names=False)
         == "FILE_LEN_XS F_DEF foo BLOCK PASS_STATEMENT"
     )
 
@@ -394,7 +396,7 @@ def foo():
     )
 
     assert (
-        result[0].to_string(disable_import_names=True)
+        result[0].to_string(disable_import_names=True, disable_function_names=False)
         == "FILE_LEN_XS SYSTEM_INTERACTION F_DEF foo BLOCK PASS_STATEMENT"
     )
 
@@ -461,7 +463,11 @@ def test_python_import_cases():
         )
         actual = ""
         for node in result:
-            actual += node.to_string(disable_imports=False, disable_import_names=False)
+            actual += node.to_string(
+                disable_imports=False,
+                disable_import_names=False,
+                disable_function_names=False,
+            )
 
         assert len(node.imports) > 0
         assert re.sub(r"\s+", " ", actual).strip() == expected[i], (
