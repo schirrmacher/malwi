@@ -1,50 +1,75 @@
 import logging
 import argparse
 from tqdm import tqdm
-from typing import List
 from pathlib import Path
 from tabulate import tabulate
+from typing import List, Tuple
 
 from research.normalize_data import MalwiNode, create_malwi_nodes_from_file
-from cli.predict import initialize_hf_model_components, get_node_text_prediction
+from cli.predict import initialize_models, get_node_text_prediction
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
-def process_source_path(
-    input_path: str,
-) -> List[MalwiNode]:
-    path_obj = Path(input_path)
-    all_nodes: List[MalwiNode] = []
+def file_to_nodes(
+    path: Path, threshold: float
+) -> Tuple[List[MalwiNode], List[MalwiNode]]:
+    path_obj = Path(path)
 
-    if path_obj.is_file():
-        nodes = create_malwi_nodes_from_file(file_path=str(path_obj))
-        if nodes:
-            all_nodes.extend(nodes)
-        elif not any(
-            Path(input_path).suffix.lstrip(".") in ext
-            for ext in ["js", "ts", "rs", "py"]
-        ):
-            logging.info(f"File '{input_path}' is not a supported file type.")
+    malicious_nodes = []
+    benign_nodes = []
+
+    nodes = create_malwi_nodes_from_file(file_path=str(path_obj))
+
+    for n in nodes:
+        node_ast_one_line = n.to_string()
+        prediction_data = get_node_text_prediction(node_ast_one_line)
+
+        if prediction_data["status"] == "success":
+            probabilities = prediction_data["probabilities"]
+            maliciousness = probabilities[1]
+            n.maliciousness = maliciousness
+            if maliciousness > threshold:
+                malicious_nodes.append(n)
+            else:
+                benign_nodes.append(n)
         else:
-            logging.info(
-                f"No processable AST nodes found in '{input_path}' or relevant targets missing/empty in NODE_TARGETS for its language."
+            logging.error(
+                f"Prediction error for node in {n.file_path}: {prediction_data['message']}"
             )
 
-    elif path_obj.is_dir():
-        logging.info(f"Processing directory: {input_path}")
+    return malicious_nodes, benign_nodes
+
+
+def file_or_dir_to_nodes(
+    path: Path,
+    threshold: float,
+) -> Tuple[List[MalwiNode], List[MalwiNode]]:
+    all_malicious_nodes = []
+    all_benign_nodes = []
+
+    if path.is_file():
+        logging.info(f"Processing file: {path}")
+        malicious_nodes, benign_nodes = file_to_nodes(path=path, threshold=threshold)
+        all_malicious_nodes.extend(malicious_nodes)
+        all_benign_nodes.extend(benign_nodes)
+    elif path.is_dir():
+        logging.info(f"Processing directory: {path}")
         processed_files_in_dir = False
-        for file_path in path_obj.rglob("*"):
+        for file_path in path.rglob("*"):
             if file_path.is_file():
-                nodes = create_malwi_nodes_from_file(file_path=str(file_path))
-                if nodes:
-                    all_nodes.extend(nodes)
-                    processed_files_in_dir = True
+                processed_files_in_dir = True
+                malicious_nodes, benign_nodes = file_to_nodes(
+                    path=file_path, threshold=threshold
+                )
+                all_malicious_nodes.extend(malicious_nodes)
+                all_benign_nodes.extend(benign_nodes)
         if not processed_files_in_dir:
-            logging.info(f"No processable files found in directory '{input_path}'.")
+            logging.info(f"No processable files found in directory '{path}'")
     else:
-        logging.error(f"Path '{input_path}' is neither a file nor a directory.")
-    return all_nodes
+        logging.error(f"Path '{path}' is neither a file nor a directory")
+
+    return all_malicious_nodes, all_benign_nodes
 
 
 def main():
@@ -88,6 +113,7 @@ def main():
     )
 
     developer_group = parser.add_argument_group("Developer Options")
+
     developer_group.add_argument(
         "--debug",
         "-d",
@@ -127,47 +153,11 @@ def main():
         parser.print_help()
         return
 
-    initialize_hf_model_components(
-        model_path=args.model_path, tokenizer_path=args.tokenizer_path
+    initialize_models(model_path=args.model_path, tokenizer_path=args.tokenizer_path)
+
+    malicious_nodes, benign_nodes = file_or_dir_to_nodes(
+        Path(args.path), threshold=args.threshold
     )
-
-    all_collected_nodes = process_source_path(
-        input_path=args.path,
-    )
-
-    if not all_collected_nodes:
-        logging.info(
-            f"No processable AST nodes found for the given path: '{args.path}'."
-        )
-        return
-
-    malicious_nodes = []
-    benign_nodes = []
-
-    iterable = all_collected_nodes
-    if not args.quiet:
-        iterable = tqdm(all_collected_nodes, desc="Scanning", unit="node")
-
-    for n in iterable:
-        node_ast_one_line = n.to_string()
-
-        if args.debug and not args.quiet:
-            print(f"\nInput:\n{n.file_path}\n\n{node_ast_one_line}\n\n")
-
-        prediction_data = get_node_text_prediction(node_ast_one_line)
-
-        if prediction_data["status"] == "success":
-            probabilities = prediction_data["probabilities"]
-            maliciousness = probabilities[1]
-            n.maliciousness = maliciousness
-            if maliciousness > args.threshold:
-                malicious_nodes.append(n)
-            else:
-                benign_nodes.append(n)
-        else:
-            logging.error(
-                f"Prediction error for node in {n.file_path}: {prediction_data['message']}"
-            )
 
     output = ""
     if args.format == "json":

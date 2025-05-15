@@ -12,7 +12,7 @@ HF_MODEL_INSTANCE = None
 HF_DEVICE_INSTANCE = None
 
 
-def initialize_hf_model_components(
+def initialize_models(
     model_path: Optional[str] = None, tokenizer_path: Optional[str] = None
 ):
     global \

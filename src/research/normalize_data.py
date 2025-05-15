@@ -904,7 +904,7 @@ class MalwiNode:
         return entries, files
 
     @classmethod
-    def _nodes_to_dict(
+    def nodes_to_dict(
         cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
     ):
         malicious_entries, malicious_files = cls._group_nodes(malicious_nodes)
@@ -925,7 +925,7 @@ class MalwiNode:
         cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
     ) -> str:
         return json.dumps(
-            cls._nodes_to_dict(
+            cls.nodes_to_dict(
                 malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
             ),
             indent=4,
@@ -936,7 +936,7 @@ class MalwiNode:
         cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
     ) -> str:
         return yaml.dump(
-            cls._nodes_to_dict(
+            cls.nodes_to_dict(
                 malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
             ),
             sort_keys=False,
@@ -946,7 +946,7 @@ class MalwiNode:
     def nodes_to_csv(
         cls, malicious_nodes: List["MalwiNode"], benign_nodes: List["MalwiNode"]
     ) -> str:
-        data_dict = cls._nodes_to_dict(
+        data_dict = cls.nodes_to_dict(
             malicious_nodes=malicious_nodes, benign_nodes=benign_nodes
         )
 
