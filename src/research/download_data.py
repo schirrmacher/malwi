@@ -1,11 +1,15 @@
 import os
-import subprocess
-import logging
-from urllib.parse import urlparse
-import argparse
-import shutil
-import tarfile
+import gzip
 import stat
+import shutil
+import logging
+import zipfile
+import tarfile
+import argparse
+import subprocess
+
+from urllib.parse import urlparse
+
 
 # https://github.com/vinta/awesome-python/tree/master
 BENIGN_REPO_URLS = [
@@ -603,13 +607,17 @@ def make_readonly(path):
                 for f_name in files:
                     try:
                         os.chmod(os.path.join(root, f_name), perms_file)
-                    except Exception:
-                        pass
+                    except Exception as e_file:
+                        logging.debug(
+                            f"Readonly failed for file {os.path.join(root, f_name)}: {e_file}"
+                        )
                 for d_name in dirs:
                     try:
                         os.chmod(os.path.join(root, d_name), perms_dir)
-                    except Exception:
-                        pass
+                    except Exception as e_dir:
+                        logging.debug(
+                            f"Readonly failed for dir {os.path.join(root, d_name)}: {e_dir}"
+                        )
             os.chmod(path, perms_dir)
         elif os.path.isfile(path):
             os.chmod(path, perms_file)
@@ -694,79 +702,145 @@ def ensure_writable_for_operation(path_to_check):
         return True
     except Exception as e:
         logging.debug(f"Could not ensure {path_to_check} owner-writable: {e}")
-        if not os.access(path_to_check, os.W_OK):
+        if not os.access(
+            path_to_check, os.W_OK | (os.X_OK if os.path.isdir(path_to_check) else 0)
+        ):
             logging.warning(
-                f"Path {path_to_check} not writable & could not be made owner-writable."
+                f"Path {path_to_check} not writable/executable & could not be made owner-writable."
             )
             return False
         return True
 
 
-def unpack_tar_gz_recursively(directory_to_scan):
+def unpack_archives_recursively(directory_to_scan):
     extracted_package_roots = []
     for root, _, files in os.walk(directory_to_scan, topdown=True):
         if not ensure_writable_for_operation(root):
             logging.warning(
                 f"Cannot make {root} writable, skipping unpacking in this directory."
             )
-            continue
+            continue  # Skip this directory if we can't write to it
+
         for filename in list(files):
+            filepath = os.path.join(root, filename)
+            archive_type = None
+            extract_path_name = None
+
             if filename.endswith(".tar.gz"):
-                filepath = os.path.join(root, filename)
-                logging.debug(f"Attempting to unpack {filepath}")
-                if not ensure_writable_for_operation(filepath):
+                archive_type = "tar.gz"
+                extract_path_name = filename[: -len(".tar.gz")]
+            elif filename.endswith(".whl"):
+                archive_type = "whl"
+                extract_path_name = filename[: -len(".whl")]
+            elif filename.endswith(".zip"):
+                archive_type = "zip"
+                extract_path_name = filename[: -len(".zip")]
+            elif filename.endswith(".gz") and not filename.endswith(
+                ".tar.gz"
+            ):  # Handles .gz but not .tar.gz
+                archive_type = "gz"
+                extract_path_name = filename[: -len(".gz")]
+            else:
+                continue  # Not a supported archive type
+
+            logging.debug(f"Attempting to unpack {filepath} (type: {archive_type})")
+
+            if not ensure_writable_for_operation(
+                filepath
+            ):  # Ensure archive itself is writable (for deletion)
+                logging.warning(
+                    f"Cannot make archive {filepath} writable for potential deletion, skipping."
+                )
+                continue
+
+            extract_full_path = os.path.join(root, extract_path_name)
+
+            try:
+                # Ensure the parent directory of the extraction path is writable to create the extraction dir
+                if not ensure_writable_for_operation(
+                    root
+                ):  # Double check parent dir writability
                     logging.warning(
-                        f"Cannot make archive {filepath} writable for potential deletion, skipping."
+                        f"Parent directory {root} not writable to create {extract_full_path}, skipping."
                     )
                     continue
 
-                extract_path_name = filename[: -len(".tar.gz")]
-                extract_full_path = os.path.join(root, extract_path_name)
+                if not os.path.exists(extract_full_path):
+                    os.makedirs(extract_full_path, exist_ok=True)
+                elif not os.path.isdir(extract_full_path):
+                    logging.warning(
+                        f"Extraction path {extract_full_path} exists but is not a directory, skipping."
+                    )
+                    continue
 
-                try:
-                    if not os.path.exists(extract_full_path):
-                        if ensure_writable_for_operation(root):
-                            os.makedirs(extract_full_path, exist_ok=True)
-                        else:
-                            logging.warning(
-                                f"Parent directory {root} not writable to create {extract_full_path}, skipping."
-                            )
-                            continue
-                    elif not os.path.isdir(extract_full_path):
-                        logging.warning(
-                            f"Extraction path {extract_full_path} exists but is not a directory, skipping."
-                        )
-                        continue
+                # Ensure extraction target directory is writable
+                if not ensure_writable_for_operation(extract_full_path):
+                    logging.warning(
+                        f"Extraction target {extract_full_path} not writable, skipping."
+                    )
+                    continue
 
-                    if not ensure_writable_for_operation(extract_full_path):
-                        logging.warning(
-                            f"Extraction target {extract_full_path} not writable, skipping."
-                        )
-                        continue
-
+                if archive_type == "tar.gz":
                     with tarfile.open(filepath, "r:gz") as tar:
                         tar.extractall(path=extract_full_path)
                     logging.debug(
-                        f"Successfully unpacked {filepath} to {extract_full_path}"
+                        f"Successfully unpacked .tar.gz {filepath} to {extract_full_path}"
                     )
-                    extracted_package_roots.append(extract_full_path)
-                    make_readonly(extract_full_path)
+                elif archive_type in ["whl", "zip"]:
+                    with zipfile.ZipFile(filepath, "r") as zip_ref:
+                        zip_ref.extractall(extract_full_path)
+                    logging.debug(
+                        f"Successfully unpacked .{archive_type} {filepath} to {extract_full_path}"
+                    )
+                elif archive_type == "gz":
+                    # For single .gz files, decompress it into the target directory
+                    # The decompressed file will have the name of extract_path_name
+                    decompressed_file_path = os.path.join(
+                        extract_full_path, os.path.basename(extract_path_name)
+                    )
+                    with gzip.open(filepath, "rb") as f_in:
+                        with open(decompressed_file_path, "wb") as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+                    logging.debug(
+                        f"Successfully decompressed .gz {filepath} to {decompressed_file_path}"
+                    )
 
-                    try:
+                extracted_package_roots.append(extract_full_path)
+                make_readonly(extract_full_path)  # Make extracted content read-only
+
+                try:
+                    if ensure_writable_for_operation(
+                        filepath
+                    ):  # Ensure original archive is writable before deleting
                         os.remove(filepath)
                         logging.debug(f"Successfully removed archive {filepath}")
-                    except OSError as e_remove:
-                        logging.error(
-                            f"Failed to remove archive {filepath} after extraction: {e_remove}"
+                    else:
+                        logging.warning(
+                            f"Could not make {filepath} writable to remove it."
                         )
-
-                except tarfile.ReadError as e_tar:
-                    # Log as DEBUG: these are expected for some files in this dataset
-                    logging.debug(
-                        f"Skipping file {filepath} as it's not a valid tar.gz file or is corrupted: {e_tar}"
+                except OSError as e_remove:
+                    logging.error(
+                        f"Failed to remove archive {filepath} after extraction: {e_remove}"
                     )
-                except Exception as e_unpack:
-                    logging.error(f"Failed to unpack or process {filepath}: {e_unpack}")
+
+            except tarfile.ReadError as e_tar:
+                logging.debug(
+                    f"Skipping file {filepath} as it's not a valid tar.gz file or is corrupted: {e_tar}"
+                )
+            except zipfile.BadZipFile as e_zip:
+                logging.debug(
+                    f"Skipping file {filepath} as it's not a valid .whl/.zip file or is corrupted: {e_zip}"
+                )
+            except gzip.BadGzipFile as e_gzip:  # More specific exception for gzip
+                logging.debug(
+                    f"Skipping file {filepath} as it's not a valid .gz file or is corrupted: {e_gzip}"
+                )
+            except EOFError as e_eof:  # Can occur with corrupted archives
+                logging.debug(
+                    f"Skipping file {filepath} due to EOFError (possibly corrupted): {e_eof}"
+                )
+            except Exception as e_unpack:
+                logging.error(f"Failed to unpack or process {filepath}: {e_unpack}")
     return list(set(extracted_package_roots))
 
 
@@ -779,6 +853,7 @@ def process_benign_repositories(repo_urls):
             cloned_repo_path = get_or_clone_repo(repo_url, BENIGN_REPOS_CACHE_PATH)
             if not cloned_repo_path:
                 continue
+
             processed_paths.append(cloned_repo_path)
             logging.info(f"Processing benign: {repo_name}")
             # Placeholder for actual processing logic
@@ -796,27 +871,28 @@ def process_malicious_repository(repo_url):
         if not cloned_mal_repo_path:
             return []
 
-        make_writable_recursive(cloned_mal_repo_path)
+        make_writable_recursive(cloned_mal_repo_path)  # Make entire repo writable first
         logging.info(f"Unpacking archives in malicious repo: {repo_name}")
-        all_extracted_malicious_package_paths = unpack_tar_gz_recursively(
+        all_extracted_malicious_package_paths = unpack_archives_recursively(
             cloned_mal_repo_path
         )
         make_readonly(cloned_mal_repo_path)
 
         if not all_extracted_malicious_package_paths:
             logging.warning(
-                f"No .tar.gz packages extracted from {cloned_mal_repo_path}."
+                f"No .tar.gz, .whl, .zip, or .gz packages extracted from {cloned_mal_repo_path}."
             )
         else:
             logging.info(
-                f"Found {len(all_extracted_malicious_package_paths)} malicious packages for processing."
+                f"Found {len(all_extracted_malicious_package_paths)} malicious packages/extracted directories for processing."
             )
             for package_path in all_extracted_malicious_package_paths:
+                # The package_path is the directory where files were extracted
                 descriptive_package_name = f"{repo_name}_{os.path.relpath(package_path, cloned_mal_repo_path).replace(os.sep, '_')}"
                 logging.info(
-                    f"Processing malicious package: {descriptive_package_name}"
+                    f"Processing malicious package content at: {package_path} (derived from {descriptive_package_name})"
                 )
-                # Placeholder for actual processing logic
+                # Placeholder for actual processing logic for the *contents* of package_path
                 processed_package_paths.append(package_path)
     except Exception as e:
         logging.error(f"Error processing malicious repo {repo_name}: {e}")
