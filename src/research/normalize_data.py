@@ -420,7 +420,7 @@ def parse_python_string_literal(s: str) -> Optional[Tuple[str, str, str]]:
 
 
 def string_node_to_string(node: Node) -> str:
-    content = parse_python_string_literal(node.text.decode("utf-8", errors="ignore"))
+    content = parse_python_string_literal(_get_node_text(node))
 
     prefix = "STRING"
 
@@ -452,7 +452,7 @@ def string_node_to_string(node: Node) -> str:
 
 def get_recursive_identifier_text(expression_node: Node, language: str) -> str:
     node_type = expression_node.type
-    node_text = expression_node.text.decode("utf8")
+    node_text = _get_node_text(expression_node)
     if language == "python":
         if node_type == "identifier":
             return node_text
@@ -497,8 +497,18 @@ def call_node_to_parameters_string(
 
 def _get_node_text(node: Optional[Node]) -> str:
     """Safely get text from a node."""
-    if node:
-        return node.text.decode("utf8")
+    try:
+        if node:
+            return node.text.decode("utf8")
+    except Exception:
+        return ""
+    return ""
+
+
+def _get_node_name(node: Optional[Node]):
+    name_node = node.child_by_field_name("name")
+    if name_node:
+        return _get_node_text(name_node)
     return ""
 
 
@@ -642,7 +652,7 @@ def function_node_to_string(
                     name_node = child
                     break
         if name_node:
-            raw_name = name_node.text.decode("utf8")
+            raw_name = _get_node_text(name_node)
 
     elif node.type in ["call", "call_expression"]:
         params, param_count = call_node_to_parameters_string(
@@ -665,14 +675,14 @@ def function_node_to_string(
             and parent.type == "assignment"
             and parent.child_by_field_name("left").type == "identifier"
         ):
-            raw_name = parent.child_by_field_name("left").text.decode("utf8")
+            raw_name = _get_node_text(parent.child_by_field_name("left"))
         elif (
             language == "javascript"
             and parent
             and parent.type == "variable_declarator"
             and parent.child_by_field_name("name").type == "identifier"
         ):
-            raw_name = parent.child_by_field_name("name").text.decode("utf8")
+            raw_name = _get_node_text(parent.child_by_field_name("name"))
         else:
             raw_name = ""
 
@@ -826,7 +836,7 @@ class MalwiNode:
         self.maliciousness = maliciousness
         if Path(file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings = warnings + ["TARGET_FILE"]
-        self.name = self._get_name()
+        self.name = _get_node_text(self.node)
         self.imports = imports
 
     def to_string(
@@ -895,32 +905,16 @@ class MalwiNode:
     def _map_file_site_to_string(size: int):
         return ""
 
-    def _get_node_text(self) -> bytes:
-        if hasattr(self.node, "text"):
-            node_text = self.node.text
-            if isinstance(node_text, str):
-                return node_text.encode("utf-8")
-            elif isinstance(node_text, bytes):
-                return node_text
-        return b""
-
-    def _get_name(self):
-        name_node = self.node.child_by_field_name("name")
-        if name_node:
-            return name_node.text.decode("utf8")
-        return "<unknown>"
-
     def _to_json_data(self) -> dict:
-        node_text = self._get_node_text()
         return {
             "path": self.file_path,
             "contents": [
                 {
                     "type": "function",
-                    "name": self._get_name(),
+                    "name": _get_node_name(self.node),
                     "score": self.maliciousness,
                     "tokens": self.to_string(),
-                    "code": LiteralStr(node_text.decode("utf-8", errors="replace")),
+                    "code": LiteralStr(_get_node_text(node=self.node)),
                     "hash": self.to_string_hash(),
                 }
             ],
