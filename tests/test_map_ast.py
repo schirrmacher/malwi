@@ -366,6 +366,29 @@ def foo():
     )
 
 
+def test_global_func_calls():
+    code = b"""
+eval("abcdefg")
+try:
+    eval("abcdefg")
+catch:
+    pass
+"""
+    result = create_malwi_nodes_from_bytes(
+        source_code_bytes=code, file_path="test.py", language="python"
+    )
+
+    assert len(result) == 2
+    assert (
+        result[0].to_string()
+        == "FILE_LEN_XS F_CALL_DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_XS_ENT_HIGH"
+    )
+    assert (
+        result[1].to_string()
+        == "FILE_LEN_XS F_CALL_DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_XS_ENT_HIGH"
+    )
+
+
 def test_no_import_names():
     code = b"""
 import unknown_lib_a

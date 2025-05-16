@@ -126,6 +126,28 @@ def create_malwi_nodes_from_file(file_path: str) -> List["MalwiNode"]:
     )
 
 
+def find_global_scope_function_calls_recursive(
+    node: Node,
+    source_code_bytes: bytes,
+    function_calls_found: List[Node],
+    is_currently_inside_function_def: bool,
+):
+    FUNCTION_CALL_NODE_TYPE = "call"
+    FUNCTION_DEFINITION_NODE_TYPE = "function_definition"
+
+    if node.type == FUNCTION_CALL_NODE_TYPE:
+        if not is_currently_inside_function_def:
+            function_calls_found.append(node)
+    pass_down_status = is_currently_inside_function_def
+    if node.type == FUNCTION_DEFINITION_NODE_TYPE:
+        pass_down_status = True
+
+    for child_node in node.children:
+        find_global_scope_function_calls_recursive(
+            child_node, source_code_bytes, function_calls_found, pass_down_status
+        )
+
+
 def find_functions_recursive(
     node: Node, source_code_bytes: bytes, functions: List[Node]
 ):
@@ -134,6 +156,25 @@ def find_functions_recursive(
 
     for child in node.children:
         find_functions_recursive(child, source_code_bytes, functions)
+
+
+def find_calls_outside_functions_recursive(
+    node: Node, source_code_bytes: bytes, imports: List[Node]
+):
+    if node.type in [
+        "import_statement",
+        "import_from_statement",
+        "future_import_statement",
+        "import_prefix",
+        "relative_import",
+        "dotted_name",
+        "aliased_import",
+        "wildcard_import",
+    ]:
+        imports.append(node)
+
+    for child in node.children:
+        find_imports_recursive(child, source_code_bytes, imports)
 
 
 def find_imports_recursive(node: Node, source_code_bytes: bytes, imports: List[Node]):
@@ -172,10 +213,29 @@ def create_malwi_nodes_from_bytes(
     root_node = tree.root_node
     find_functions_recursive(root_node, source_code_bytes, all_functions)
 
+    all_global_func_calls = []
+    find_global_scope_function_calls_recursive(
+        root_node,
+        source_code_bytes,
+        all_global_func_calls,
+        is_currently_inside_function_def=False,
+    )
+
     all_imports = []
     find_imports_recursive(root_node, source_code_bytes, all_imports)
 
     malwi_nodes = []
+
+    for f in all_global_func_calls:
+        node = MalwiNode(
+            node=f,
+            language=language,
+            file_byte_size=len(source_code_bytes),
+            file_path=file_path,
+            imports=all_imports,
+        )
+        malwi_nodes.append(node)
+
     for f in all_functions:
         node = MalwiNode(
             node=f,
@@ -913,12 +973,19 @@ class MalwiNode:
         malicious_entries, malicious_files = cls._group_nodes(malicious_nodes)
         benign_entries, benign_files = cls._group_nodes(benign_nodes)
 
+        nodes_count = len(benign_nodes) + len(malicious_nodes)
+        if nodes_count == 0:
+            malicious_percentage = 0.0
+        else:
+            malicious_percentage = len(malicious_nodes) / (
+                len(benign_nodes) + len(malicious_nodes)
+            )
+
         return {
             "format": 1,
             "files_count": len(benign_files | malicious_files),
             "entities_count": len(benign_nodes) + len(malicious_nodes),
-            "malicious_percentage": len(malicious_nodes)
-            / (len(benign_nodes) + len(malicious_nodes)),
+            "malicious_percentage": malicious_percentage,
             "malicious": malicious_entries,
             "benign": None if malicious_only else benign_entries,
         }
