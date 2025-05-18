@@ -1,5 +1,6 @@
 import io
 import re
+import sys
 import csv
 import math
 import json
@@ -333,6 +334,8 @@ ALL_PYTHON_IDENTIFIERS = set(
 
 
 def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
+    sys.setrecursionlimit(100000)
+
     if _result_list is None:
         _result_list = []
 
@@ -1408,7 +1411,9 @@ def main():
         current_batch_file_paths = files_to_process[i : i + batch_size]
         nodes_for_current_batch: List[MalwiNode] = []
 
-        for p_file_path in (
+        for (
+            p_file_path
+        ) in (
             current_batch_file_paths
         ):  # No inner tqdm here to keep batch progress output cleaner
             file_extension = p_file_path.suffix.lstrip(".").lower()
