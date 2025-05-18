@@ -80,9 +80,9 @@ def main():
     parser.add_argument(
         "--format",
         "-f",
-        choices=["json", "yaml", "table", "csv"],
+        choices=["json", "yaml", "table", "csv", "tokens"],
         default="table",
-        help="Specify the output format: 'json', 'yaml', or 'table'.",
+        help="Specify the output format.",
     )
     parser.add_argument(
         "--save",

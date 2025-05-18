@@ -4,6 +4,7 @@ import csv
 import math
 import json
 import yaml
+import string
 import socket
 import urllib
 import hashlib
@@ -75,6 +76,7 @@ class SpecialCases(Enum):
     STRING_IP = "STRING_IP"
     STRING_BASE64 = "STRING_BASE64"
     STRING_HEX = "STRING_HEX"
+    STRING_ESCAPED_HEX = "STRING_HEX"
     VERY_LONG_FUNCTION_NAME = "VERY_LONG_FUNCTION_NAME"
     VERY_LONG_IMPORT_NAME = "VERY_LONG_IMPORT_NAME"
     MALFORMED_FILE = "MALFORMED_FILE"
@@ -194,6 +196,241 @@ def find_imports_recursive(node: Node, source_code_bytes: bytes, imports: List[N
         find_imports_recursive(child, source_code_bytes, imports)
 
 
+ALL_PYTHON_IDENTIFIERS = set(
+    [
+        "aliased_import",
+        "argument_list",
+        "as_pattern_target",
+        "as_pattern",
+        "as",
+        "assert_statement",
+        "assignment",
+        "attribute",
+        "augmented_assignment",
+        "await",
+        "binary_operator",
+        "block",
+        "boolean_operator",
+        "break_statement",
+        "call",
+        "case_clause",
+        "case_pattern",
+        "chevron",
+        "class_definition",
+        "class_pattern",
+        "comment",
+        "comparison_operator",
+        "complex_pattern",
+        "concatenated_string",
+        "conditional_expression",
+        "constrained_type",
+        "continue_statement",
+        "decorated_definition",
+        "decorator",
+        "default_parameter",
+        "delete_statement",
+        "dict_pattern",
+        "dictionary_comprehension",
+        "dictionary_splat_pattern",
+        "dictionary_splat",
+        "dictionary",
+        "dotted_name",
+        "elif_clause",
+        "ellipsis",
+        "else_clause",
+        "escape_interpolation",
+        "escape_sequence",
+        "except_clause",
+        "except_group_clause",
+        "exec_statement",
+        "expression_list",
+        "expression_statement",
+        "expression",
+        "false",
+        "finally_clause",
+        "float",
+        "for_in_clause",
+        "for_statement",
+        "format_specifier",
+        "function_definition",
+        "future_import_statement",
+        "generator_expression",
+        "generic_type",
+        "global_statement",
+        "identifier",
+        "if_clause",
+        "if_statement",
+        "import_from_statement",
+        "import_prefix",
+        "import_statement",
+        "integer",
+        "interpolation",
+        "keyword_argument",
+        "keyword_identifier",
+        "keyword_pattern",
+        "keyword_separator",
+        "lambda_parameters",
+        "lambda_within_for_in_clause",
+        "lambda",
+        "line_continuation",
+        "list_comprehension",
+        "list_pattern",
+        "list_splat_pattern",
+        "list_splat",
+        "list",
+        "match_statement",
+        "member_type",
+        "module",
+        "named_expression",
+        "none",
+        "nonlocal_statement",
+        "not_operator",
+        "pair",
+        "parameter",
+        "parameters",
+        "parenthesized_expression",
+        "parenthesized_list_splat",
+        "pass_statement",
+        "pattern_list",
+        "pattern",
+        "positional_separator",
+        "primary_expression",
+        "print_statement",
+        "raise_statement",
+        "relative_import",
+        "return_statement",
+        "set_comprehension",
+        "set",
+        "slice",
+        "splat_pattern",
+        "splat_type",
+        "string_content",
+        "string_end",
+        "string_start",
+        "string",
+        "subscript",
+        "true",
+        "try_statement",
+        "tuple_pattern",
+        "tuple",
+        "type_alias_statement",
+        "type_conversion",
+        "type_parameter",
+        "type",
+        "typed_default_parameter",
+        "typed_parameter",
+        "unary_operator",
+        "union_pattern",
+        "union_type",
+        "while_statement",
+        "wildcard_import",
+        "with_clause",
+        "with_item",
+        "with_statement",
+        "yield",
+    ]
+)
+
+
+def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
+    if _result_list is None:
+        _result_list = []
+
+    allow_list = [
+        "string_content",
+        "integer",
+        "lambda",
+        "lambda_within_for_in_clause",
+        "identifier",
+        "float",
+        "true",
+        "false",
+        "none",
+        "yield",
+    ]
+
+    def process_child(child_node):
+        child_tokens = []
+        syntax_tree_to_tokens(child_node, language=language, _result_list=child_tokens)
+        merged_token = "".join(str(token) for token in child_tokens)
+
+        if len(merged_token) < 43:
+            _result_list.append(merged_token)
+        else:
+            _result_list.extend(child_tokens)
+
+    if node.type == ",":
+        # To make CSV files parsable
+        _result_list.append(";")
+    elif node.type == "call":
+        result, mapped = function_node_to_string(
+            node, language=language, mapping_table=FUNCTION_MAPPING
+        )
+        _result_list.append(result if mapped else "F")
+
+    elif node.type == "identifier":
+        try:
+            token = "V"
+            _result_list.append(token)
+        except AttributeError:
+            _result_list.append(SpecialCases.MALFORMED_FILE)
+        except UnicodeDecodeError:
+            _result_list.append(SpecialCases.MALFORMED_FILE)
+    elif node.type == "string_content":
+        try:
+            token = string_node_to_string(node)
+            _result_list.append(token)
+        except AttributeError:
+            _result_list.append(SpecialCases.MALFORMED_FILE)
+        except UnicodeDecodeError:
+            _result_list.append(SpecialCases.MALFORMED_FILE)
+    elif node.type not in ALL_PYTHON_IDENTIFIERS.difference(allow_list):
+        _result_list.append(node.type)
+
+    children_processed_specially = False
+    if node.type in ["assignment", "pair"] and node.child_count >= 2:
+        left_child = node.child_by_field_name("left")
+        right_child = node.child_by_field_name("right")
+        if left_child and right_child:
+            process_child(left_child)
+            process_child(right_child)
+            children_processed_specially = True
+        else:
+            key_child = node.child_by_field_name("key")
+            value_child = node.child_by_field_name("value")
+            if key_child and value_child:
+                process_child(key_child)
+                process_child(value_child)
+                children_processed_specially = True
+
+    elif node.type == "class_definition":
+        name_node = node.child_by_field_name("name")
+        body_node = node.child_by_field_name("body")
+        if name_node:
+            process_child(name_node)
+        if body_node:
+            process_child(body_node)
+        children_processed_specially = True
+
+    elif node.type == "function_definition":
+        name_node = node.child_by_field_name("name")
+        params_node = node.child_by_field_name("parameters")
+        body_node = node.child_by_field_name("body")
+        if name_node:
+            process_child(name_node)
+        if params_node:
+            process_child(params_node)
+        if body_node:
+            process_child(body_node)
+        children_processed_specially = True
+
+    if not children_processed_specially:
+        for child in node.children:
+            process_child(child)
+
+    return _result_list
+
+
 def create_malwi_nodes_from_bytes(
     source_code_bytes: bytes, file_path: str, language: str
 ) -> List["MalwiNode"]:
@@ -209,8 +446,9 @@ def create_malwi_nodes_from_bytes(
         logging.warning(f"Parsing error of file {file_path}: {e}")
         return []
 
-    all_functions = []
     root_node = tree.root_node
+
+    all_functions = []
     find_functions_recursive(root_node, source_code_bytes, all_functions)
 
     all_global_func_calls = []
@@ -359,6 +597,11 @@ def is_valid_url(content: str) -> bool:
         return False
 
 
+def is_escaped_hex(s: str) -> bool:
+    pattern = re.compile(r"^(?:\\x[0-9a-fA-F]{2})+$")
+    return bool(pattern.match(s))
+
+
 def is_base64(s: str) -> bool:
     base64_char_pattern = re.compile(r"^[A-Za-z0-9+/]*(={0,2})$")
     return bool(base64_char_pattern.match(s))
@@ -425,15 +668,17 @@ def string_node_to_string(node: Node) -> str:
     prefix = "STRING"
 
     if content in SENSITIVE_PATHS:
-        return f"{prefix}_{SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
+        return f"{SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
     elif is_valid_ip(content):
-        return f"{prefix}_{SpecialCases.STRING_IP.value}"
+        return f"{SpecialCases.STRING_IP.value}"
     elif is_valid_url(content):
-        return f"{prefix}_{SpecialCases.STRING_URL.value}"
+        return f"{SpecialCases.STRING_URL.value}"
     elif is_file_path(content):
-        return f"{prefix}_{SpecialCases.STRING_FILE_PATH.value}"
+        return f"{SpecialCases.STRING_FILE_PATH.value}"
     else:
-        if is_hex(content):
+        if is_escaped_hex(_get_node_text(node)):
+            prefix = SpecialCases.STRING_ESCAPED_HEX.value
+        elif is_hex(content):
             prefix = SpecialCases.STRING_HEX.value
         elif is_base64(content):
             prefix = SpecialCases.STRING_BASE64.value
@@ -690,16 +935,14 @@ def function_node_to_string(
     mapped_value = map_identifier(
         identifier=sanitized_name, language=language, mapping_table=mapping_table
     )
-    if not param_count:
-        param_count = ""
 
     if mapped_value:
-        return f"{mapped_value}{param_count} {postfix}", True
+        return f"{mapped_value} {postfix}", True
     elif sanitized_name:
         if disable_function_names:
-            return f"{param_count} {postfix}", False
+            return f"{postfix}", False
         else:
-            return f"{sanitized_name}{param_count} {postfix}", False
+            return f"{sanitized_name} {postfix}", False
 
     return "", False
 
@@ -847,47 +1090,7 @@ class MalwiNode:
         disable_import_names: bool = True,
         disable_imports: bool = False,
     ) -> str:
-        if self.node is None:
-            return ""
-        result = node_to_string_recursive(
-            self.node,
-            language=self.language,
-            disable_function_names=disable_function_names,
-        )
-        if self.warnings:
-            warnings = "\n".join(self.warnings)
-            result = f"{warnings}\n{result}"
-
-        if one_line:
-            result = re.sub(r"\s+", " ", result).strip()
-
-        import_tokens = []
-        imports = ""
-        if not disable_imports:
-            for im in self.imports:
-                token, _ = import_node_to_string(
-                    im,
-                    language=self.language,
-                    mapping_table=IMPORT_MAPPING,
-                    disable_import_names=disable_import_names,
-                )
-                if token and token not in import_tokens:
-                    import_tokens.append(token)
-            import_tokens.sort()
-            imports = " ".join(import_tokens)
-
-        if one_line and compression:
-            return " ".join(
-                compress_tokens(
-                    tokens=result.split(" "),
-                    mapping_rules=COMPRESSION_MAPPING.get(self.language, {}),
-                )
-            )
-
-        if imports:
-            return f"{map_file_site_to_token(self.file_byte_size)} {imports} {result}"
-        else:
-            return f"{map_file_site_to_token(self.file_byte_size)} {result}"
+        return " ".join(syntax_tree_to_tokens(self.node, language=self.language))
 
     def to_string_hash(self) -> str:
         # Disable function names for hashing to detect functions with similar structures

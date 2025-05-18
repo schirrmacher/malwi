@@ -10,6 +10,7 @@ from research.normalize_data import (
     is_base64,
     is_valid_ip,
     is_valid_url,
+    is_escaped_hex,
     map_identifier,
     FUNCTION_MAPPING,
     create_malwi_nodes_from_bytes,
@@ -57,6 +58,11 @@ def test_is_base64():
     assert not is_base64("####")
 
 
+def test_is_escaped_hex():
+    assert is_escaped_hex(r"\xbf\x82\xe6\x05")
+    assert not is_escaped_hex("abc")
+
+
 def test_map_identifier():
     assert "FILESYSTEM_ACCESS" == map_identifier(
         identifier="os.fdopen", language="python", mapping_table=FUNCTION_MAPPING
@@ -91,6 +97,20 @@ def some_func():
             one_line=True, compression=True, disable_function_names=False
         )
         == "F_DEF some.func BLOCK EXP F_CALL a.b.c.d.e MEMBER_ACCESS_3 MEMBER_ACCESS"
+    )
+
+
+def test_complex_code_to_string():
+    code = b"""
+(lambda IILLJIJJLLIJLLLIJ:globals()['\x65\x76\x61\x6c'](globals()['\x63\x6f\x6d\x70\x69\x6c\x65'](globals()['\x73\x74\x72']("\x67\x6c\x6f\x62\x61\x6c\x73\x28\x29\x5b\x27\x5c\x78\x36\x35\x5c\x78\x37\x36\x5c\x78\x36\x31\x5c\x78\x36\x63\x27\x5d(IILLJIJJLLIJLLLIJ)"),filename='\x6c\x49\x49\x49\x6c\x49\x6c\x49\x49\x6c\x49\x6c\x6c\x49\x49\x6c\x6c\x6c\x6c',mode='\x65\x76\x61\x6c')))('\x5f\x5f\x69\x6d\x70\x6f\x72\x74\x5f\x5f\x28\x27\x62\x75\x69\x6c\x74\x69\x6e\x73\x27\x29\x2e\x65\x78\x65\x63')
+"""
+    result = create_malwi_nodes_from_bytes(
+        source_code_bytes=code, file_path="lala.py", language="python"
+    )
+    tokens = result[0].to_string()
+    assert (
+        tokens
+        == "FILE_LEN_S F_CALL_DYNAMIC_CODE_EXECUTION1 PARENTHESIZED_EXPRESSION ANONYMOUS_FUNCTION ANONYMOUS_FUNCTION F_CALL_DYNAMIC_CODE_EXECUTION1 DYNAMIC_CODE_COMPILATION3 globals.str1 STRING_STRING_FILE_PATH INDEX_ACCESS F_CALL_REFLECTION_DYNAMIC_READ STRING_BASE64_LEN_XS_ENT_MED"
     )
 
 
@@ -369,8 +389,9 @@ def foo():
 def test_global_func_calls():
     code = b"""
 eval("abcdefg")
+a.b.c("abcdefg")
 try:
-    eval("abcdefg")
+    d.e("abcdefg")
 catch:
     pass
 """
@@ -378,14 +399,18 @@ catch:
         source_code_bytes=code, file_path="test.py", language="python"
     )
 
-    assert len(result) == 2
+    assert len(result) == 3
     assert (
         result[0].to_string()
         == "FILE_LEN_XS F_CALL_DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_XS_ENT_HIGH"
     )
     assert (
         result[1].to_string()
-        == "FILE_LEN_XS F_CALL_DYNAMIC_CODE_EXECUTION1 STRING_BASE64_LEN_XS_ENT_HIGH"
+        == "FILE_LEN_XS F_CALL 1 STRING_BASE64_LEN_XS_ENT_HIGH MEMBER_ACCESS MEMBER_ACCESS"
+    )
+    assert (
+        result[2].to_string()
+        == "FILE_LEN_XS F_CALL 1 STRING_BASE64_LEN_XS_ENT_HIGH MEMBER_ACCESS"
     )
 
 
