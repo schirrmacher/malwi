@@ -26,7 +26,10 @@ import tree_sitter_javascript as tsjavascript
 import tree_sitter_typescript as tstypescript
 import tree_sitter_rust as tsrust
 
+from cli.predict import get_node_text_prediction, initialize_models
 from common.files import read_json_from_file
+
+sys.setrecursionlimit(100000)
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 SOURCE_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -334,8 +337,6 @@ ALL_PYTHON_IDENTIFIERS = set(
 
 
 def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
-    sys.setrecursionlimit(100000)
-
     if _result_list is None:
         _result_list = []
 
@@ -1085,6 +1086,12 @@ class MalwiNode:
         self.name = _get_node_text(self.node)
         self.imports = imports
 
+    @classmethod
+    def load_models_into_memory(
+        cls, model_path: Optional[str] = None, tokenizer_path: Optional[str] = None
+    ):
+        initialize_models(model_path=model_path, tokenizer_path=tokenizer_path)
+
     def to_string(
         self,
         one_line: bool = True,
@@ -1094,6 +1101,9 @@ class MalwiNode:
         disable_imports: bool = False,
     ) -> str:
         return " ".join(syntax_tree_to_tokens(self.node, language=self.language))
+
+    def predict(self) -> Dict:
+        return get_node_text_prediction(self.to_string())
 
     def to_string_hash(self) -> str:
         # Disable function names for hashing to detect functions with similar structures
@@ -1107,9 +1117,6 @@ class MalwiNode:
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
-
-    def _map_file_site_to_string(size: int):
-        return ""
 
     def _to_json_data(self) -> dict:
         return {
@@ -1249,6 +1256,69 @@ class MalwiNode:
             ]
         )
         return output.getvalue()
+
+    @classmethod
+    def file_to_nodes(
+        cls, path: Path, threshold: float
+    ) -> Tuple[List["MalwiNode"], List["MalwiNode"]]:
+        path_obj = Path(path)
+
+        malicious_nodes = []
+        benign_nodes = []
+
+        nodes = create_malwi_nodes_from_file(file_path=str(path_obj))
+
+        for n in nodes:
+            prediction_data = n.predict()
+
+            if prediction_data["status"] == "success":
+                probabilities = prediction_data["probabilities"]
+                maliciousness = probabilities[1]
+                n.maliciousness = maliciousness
+                if maliciousness > threshold:
+                    malicious_nodes.append(n)
+                else:
+                    benign_nodes.append(n)
+            else:
+                logging.error(
+                    f"Prediction error for node in {n.file_path}: {prediction_data['message']}"
+                )
+
+        return malicious_nodes, benign_nodes
+
+    @classmethod
+    def file_or_dir_to_nodes(
+        cls,
+        path: Path,
+        threshold: float,
+    ) -> Tuple[List["MalwiNode"], List["MalwiNode"]]:
+        all_malicious_nodes = []
+        all_benign_nodes = []
+
+        if path.is_file():
+            logging.info(f"Processing file: {path}")
+            malicious_nodes, benign_nodes = MalwiNode.file_to_nodes(
+                path=path, threshold=threshold
+            )
+            all_malicious_nodes.extend(malicious_nodes)
+            all_benign_nodes.extend(benign_nodes)
+        elif path.is_dir():
+            logging.info(f"Processing directory: {path}")
+            processed_files_in_dir = False
+            for file_path in path.rglob("*"):
+                if file_path.is_file():
+                    processed_files_in_dir = True
+                    malicious_nodes, benign_nodes = MalwiNode.file_to_nodes(
+                        path=file_path, threshold=threshold
+                    )
+                    all_malicious_nodes.extend(malicious_nodes)
+                    all_benign_nodes.extend(benign_nodes)
+            if not processed_files_in_dir:
+                logging.info(f"No processable files found in directory '{path}'")
+        else:
+            logging.error(f"Path '{path}' is neither a file nor a directory")
+
+        return all_malicious_nodes, all_benign_nodes
 
 
 def process_source_file(
@@ -1411,9 +1481,7 @@ def main():
         current_batch_file_paths = files_to_process[i : i + batch_size]
         nodes_for_current_batch: List[MalwiNode] = []
 
-        for (
-            p_file_path
-        ) in (
+        for p_file_path in (
             current_batch_file_paths
         ):  # No inner tqdm here to keep batch progress output cleaner
             file_extension = p_file_path.suffix.lstrip(".").lower()

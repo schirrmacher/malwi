@@ -1,75 +1,11 @@
 import logging
 import argparse
-from tqdm import tqdm
 from pathlib import Path
 from tabulate import tabulate
-from typing import List, Tuple
 
-from research.normalize_data import MalwiNode, create_malwi_nodes_from_file
-from cli.predict import initialize_models, get_node_text_prediction
+from research.normalize_data import MalwiNode
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
-
-
-def file_to_nodes(
-    path: Path, threshold: float
-) -> Tuple[List[MalwiNode], List[MalwiNode]]:
-    path_obj = Path(path)
-
-    malicious_nodes = []
-    benign_nodes = []
-
-    nodes = create_malwi_nodes_from_file(file_path=str(path_obj))
-
-    for n in nodes:
-        node_ast_one_line = n.to_string()
-        prediction_data = get_node_text_prediction(node_ast_one_line)
-
-        if prediction_data["status"] == "success":
-            probabilities = prediction_data["probabilities"]
-            maliciousness = probabilities[1]
-            n.maliciousness = maliciousness
-            if maliciousness > threshold:
-                malicious_nodes.append(n)
-            else:
-                benign_nodes.append(n)
-        else:
-            logging.error(
-                f"Prediction error for node in {n.file_path}: {prediction_data['message']}"
-            )
-
-    return malicious_nodes, benign_nodes
-
-
-def file_or_dir_to_nodes(
-    path: Path,
-    threshold: float,
-) -> Tuple[List[MalwiNode], List[MalwiNode]]:
-    all_malicious_nodes = []
-    all_benign_nodes = []
-
-    if path.is_file():
-        logging.info(f"Processing file: {path}")
-        malicious_nodes, benign_nodes = file_to_nodes(path=path, threshold=threshold)
-        all_malicious_nodes.extend(malicious_nodes)
-        all_benign_nodes.extend(benign_nodes)
-    elif path.is_dir():
-        logging.info(f"Processing directory: {path}")
-        processed_files_in_dir = False
-        for file_path in path.rglob("*"):
-            if file_path.is_file():
-                processed_files_in_dir = True
-                malicious_nodes, benign_nodes = file_to_nodes(
-                    path=file_path, threshold=threshold
-                )
-                all_malicious_nodes.extend(malicious_nodes)
-                all_benign_nodes.extend(benign_nodes)
-        if not processed_files_in_dir:
-            logging.info(f"No processable files found in directory '{path}'")
-    else:
-        logging.error(f"Path '{path}' is neither a file nor a directory")
-
-    return all_malicious_nodes, all_benign_nodes
 
 
 def main():
@@ -153,10 +89,12 @@ def main():
         parser.print_help()
         return
 
-    initialize_models(model_path=args.model_path, tokenizer_path=args.tokenizer_path)
+    MalwiNode.load_models_into_memory(
+        model_path=args.model_path, tokenizer_path=args.tokenizer_path
+    )
 
-    malicious_nodes, benign_nodes = file_or_dir_to_nodes(
-        Path(args.path), threshold=args.threshold
+    malicious_nodes, benign_nodes = MalwiNode.file_or_dir_to_nodes(
+        path=Path(args.path), threshold=args.threshold
     )
 
     output = ""

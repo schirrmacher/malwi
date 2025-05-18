@@ -47,12 +47,27 @@ def initialize_models(
 
 
 def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
+    tokenization_debug_info: Dict[str, Any] = {
+        "tokenization_performed": False,
+        "original_text_snippet": text_input[:200] + "..." if text_input else "",
+        "input_ids": None,
+        "decoded_tokens": None,
+        "unk_token_id": None,
+        "unk_token_count": 0,
+        "total_non_padding_tokens": 0,
+        "oov_rate_percentage": 0.0,
+    }
+
     if (
         HF_MODEL_INSTANCE is None
         or HF_TOKENIZER_INSTANCE is None
         or HF_DEVICE_INSTANCE is None
     ):
-        return {"status": "error", "message": "Model_Not_Loaded"}
+        return {
+            "status": "error",
+            "message": "Model_Not_Loaded",
+            "tokenization_debug": tokenization_debug_info,
+        }
     try:
         inputs = HF_TOKENIZER_INSTANCE(
             text_input,
@@ -61,16 +76,67 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
             truncation=True,
             max_length=512,
         )
+        tokenization_debug_info["tokenization_performed"] = True
+
+        input_ids_tensor = inputs.get("input_ids")
+        if (
+            input_ids_tensor is not None and input_ids_tensor.numel() > 0
+        ):  # Check if tensor is not empty
+            tokenization_debug_info["input_ids"] = input_ids_tensor[0].tolist()
+            # Decode tokens for visualization
+            decoded_tokens = [
+                HF_TOKENIZER_INSTANCE.decode([token_id])
+                for token_id in input_ids_tensor[0].tolist()
+            ]
+            tokenization_debug_info["decoded_tokens"] = decoded_tokens
+
+            # Check for OOV ([UNK]) tokens
+            unk_token_id = HF_TOKENIZER_INSTANCE.unk_token_id
+            tokenization_debug_info["unk_token_id"] = unk_token_id
+            if unk_token_id is not None:
+                unk_token_count = (input_ids_tensor[0] == unk_token_id).sum().item()
+                # Count non-padding tokens for accurate OOV rate
+                if HF_TOKENIZER_INSTANCE.pad_token_id is not None:
+                    total_valid_tokens = (
+                        input_ids_tensor[0]
+                        .ne(HF_TOKENIZER_INSTANCE.pad_token_id)
+                        .sum()
+                        .item()
+                    )
+                else:  # If no pad token ID, count all tokens
+                    total_valid_tokens = len(input_ids_tensor[0])
+
+                tokenization_debug_info["unk_token_count"] = unk_token_count
+                tokenization_debug_info["total_non_padding_tokens"] = total_valid_tokens
+                if total_valid_tokens > 0:
+                    oov_rate = (unk_token_count / total_valid_tokens) * 100
+                    tokenization_debug_info["oov_rate_percentage"] = round(oov_rate, 2)
+            else:
+                # If tokenizer has no unk_token_id, we can't definitively count UNKs this way
+                pass  # UNK count remains 0, OOV rate 0
+        else:
+            # Handle case where tokenization might return empty input_ids for empty or whitespace-only strings
+            tokenization_debug_info["input_ids"] = []
+            tokenization_debug_info["decoded_tokens"] = []
+
         model_inputs = {}
-        if "input_ids" in inputs:
+        if (
+            "input_ids" in inputs and inputs["input_ids"].numel() > 0
+        ):  # Ensure not empty
             model_inputs["input_ids"] = inputs["input_ids"].to(HF_DEVICE_INSTANCE)
-        if "attention_mask" in inputs:
+        if (
+            "attention_mask" in inputs and inputs["input_ids"].numel() > 0
+        ):  # ensure attention mask is also not for empty
             model_inputs["attention_mask"] = inputs["attention_mask"].to(
                 HF_DEVICE_INSTANCE
             )
 
-        if not model_inputs.get("input_ids") is not None:
-            return {"status": "error", "message": "Input_Error"}
+        if model_inputs.get("input_ids") is None:
+            return {
+                "status": "error",
+                "message": "Input_Error_Missing_Input_IDs",
+                "tokenization_debug": tokenization_debug_info,
+            }
 
         with torch.no_grad():
             outputs = HF_MODEL_INSTANCE(**model_inputs)
@@ -80,7 +146,10 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
             probabilities = F.softmax(logits, dim=-1).cpu()
             first_item_probabilities = probabilities[0]
             prediction_idx = torch.argmax(first_item_probabilities).item()
-            label_map = {0: "Benign", 1: "Malicious"}
+            label_map = {
+                0: "Benign",
+                1: "Malicious",
+            }  # Ensure this map matches your model's training
             predicted_label = label_map.get(
                 prediction_idx, f"Unknown_Index_{prediction_idx}"
             )
@@ -89,11 +158,20 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
                 "index": prediction_idx,
                 "label": predicted_label,
                 "probabilities": first_item_probabilities.tolist(),
+                "tokenization_debug": tokenization_debug_info,
             }
-        return {"status": "error", "message": "No_Logits"}
+        return {
+            "status": "error",
+            "message": "No_Logits",
+            "tokenization_debug": tokenization_debug_info,
+        }
     except Exception as e:
-        logging.error(
+        logging.error(  # Keep internal logging for exceptions for easier debugging of the function itself
             f"Exception during model inference for input '{text_input[:100]}...': {e}",
             exc_info=True,
         )
-        return {"status": "error", "message": "Inference_Err"}
+        return {
+            "status": "error",
+            "message": f"Inference_Err: {str(e)}",
+            "tokenization_debug": tokenization_debug_info,
+        }
