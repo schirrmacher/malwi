@@ -13,6 +13,7 @@ def greet(name: str):
     logging.info("Preparing greeting...")
     print(f"Hello, {name}!")
     logging.info("Greeting completed.")
+    xxxx[0]
 
 
 def main():

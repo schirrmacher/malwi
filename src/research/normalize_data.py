@@ -200,177 +200,33 @@ def find_imports_recursive(node: Node, source_code_bytes: bytes, imports: List[N
         find_imports_recursive(child, source_code_bytes, imports)
 
 
-ALL_PYTHON_IDENTIFIERS = set(
-    [
-        "aliased_import",
-        "argument_list",
-        "as_pattern_target",
-        "as_pattern",
-        "as",
-        "assert_statement",
-        "assignment",
-        "attribute",
-        "augmented_assignment",
-        "await",
-        "binary_operator",
-        "block",
-        "boolean_operator",
-        "break_statement",
-        "call",
-        "case_clause",
-        "case_pattern",
-        "chevron",
-        "class_definition",
-        "class_pattern",
-        "comment",
-        "comparison_operator",
-        "complex_pattern",
-        "concatenated_string",
-        "conditional_expression",
-        "constrained_type",
-        "continue_statement",
-        "decorated_definition",
-        "decorator",
-        "default_parameter",
-        "delete_statement",
-        "dict_pattern",
-        "dictionary_comprehension",
-        "dictionary_splat_pattern",
-        "dictionary_splat",
-        "dictionary",
-        "dotted_name",
-        "elif_clause",
-        "ellipsis",
-        "else_clause",
-        "escape_interpolation",
-        "escape_sequence",
-        "except_clause",
-        "except_group_clause",
-        "exec_statement",
-        "expression_list",
-        "expression_statement",
-        "expression",
-        "false",
-        "finally_clause",
-        "float",
-        "for_in_clause",
-        "for_statement",
-        "format_specifier",
-        "function_definition",
-        "future_import_statement",
-        "generator_expression",
-        "generic_type",
-        "global_statement",
-        "identifier",
-        "if_clause",
-        "if_statement",
-        "import_from_statement",
-        "import_prefix",
-        "import_statement",
-        "integer",
-        "interpolation",
-        "keyword_argument",
-        "keyword_identifier",
-        "keyword_pattern",
-        "keyword_separator",
-        "lambda_parameters",
-        "lambda_within_for_in_clause",
-        "lambda",
-        "line_continuation",
-        "list_comprehension",
-        "list_pattern",
-        "list_splat_pattern",
-        "list_splat",
-        "list",
-        "match_statement",
-        "member_type",
-        "module",
-        "named_expression",
-        "none",
-        "nonlocal_statement",
-        "not_operator",
-        "pair",
-        "parameter",
-        "parameters",
-        "parenthesized_expression",
-        "parenthesized_list_splat",
-        "pass_statement",
-        "pattern_list",
-        "pattern",
-        "positional_separator",
-        "primary_expression",
-        "print_statement",
-        "raise_statement",
-        "relative_import",
-        "return_statement",
-        "set_comprehension",
-        "set",
-        "slice",
-        "splat_pattern",
-        "splat_type",
-        "string_content",
-        "string_end",
-        "string_start",
-        "string",
-        "subscript",
-        "true",
-        "try_statement",
-        "tuple_pattern",
-        "tuple",
-        "type_alias_statement",
-        "type_conversion",
-        "type_parameter",
-        "type",
-        "typed_default_parameter",
-        "typed_parameter",
-        "unary_operator",
-        "union_pattern",
-        "union_type",
-        "while_statement",
-        "wildcard_import",
-        "with_clause",
-        "with_item",
-        "with_statement",
-        "yield",
-    ]
-)
-
-
 def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
     if _result_list is None:
         _result_list = []
-
-    allow_list = [
-        "string_content",
-        "integer",
-        "lambda",
-        "lambda_within_for_in_clause",
-        "identifier",
-        "float",
-        "true",
-        "false",
-        "none",
-        "yield",
-    ]
 
     def process_child(child_node):
         child_tokens = []
         syntax_tree_to_tokens(child_node, language=language, _result_list=child_tokens)
         _result_list.extend(child_tokens)
 
-    if node.type == ",":
-        # To make CSV files parsable
-        _result_list.append(";")
+    mapping = NODE_MAPPING.get(language)
+
+    if node.type in mapping:
+        _result_list.append(mapping.get(node.type))
+
     elif node.type == "call":
         result, mapped = function_node_to_string(
             node, language=language, mapping_table=FUNCTION_MAPPING
         )
-        _result_list.append(result if mapped else "")
+        _result_list.append(result if mapped else "FUNCTION")
 
     elif node.type == "identifier":
         try:
-            token = "V"
-            _result_list.append(token)
+            result, mapped = function_node_to_string(
+                node, language=language, mapping_table=FUNCTION_MAPPING
+            )
+            if mapped:
+                _result_list.append(result)
         except AttributeError:
             _result_list.append(SpecialCases.MALFORMED_FILE)
         except UnicodeDecodeError:
@@ -383,8 +239,6 @@ def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
             _result_list.append(SpecialCases.MALFORMED_FILE)
         except UnicodeDecodeError:
             _result_list.append(SpecialCases.MALFORMED_FILE)
-    elif node.type not in ALL_PYTHON_IDENTIFIERS.difference(allow_list):
-        _result_list.append(node.type)
 
     children_processed_specially = False
     if node.type in ["assignment", "pair"] and node.child_count >= 2:
@@ -1095,7 +949,21 @@ class MalwiNode:
         disable_import_names: bool = True,
         disable_imports: bool = False,
     ) -> str:
-        return " ".join(syntax_tree_to_tokens(self.node, language=self.language))
+        import_tokens = []
+        if not disable_imports:
+            for im in self.imports:
+                token, _ = import_node_to_string(
+                    im,
+                    language=self.language,
+                    mapping_table=IMPORT_MAPPING,
+                    disable_import_names=disable_import_names,
+                )
+                if token and token not in import_tokens:
+                    import_tokens.append(token)
+            import_tokens.sort()
+        return " ".join(
+            import_tokens + syntax_tree_to_tokens(self.node, language=self.language)
+        )
 
     def predict(self) -> Dict:
         return get_node_text_prediction(self.to_string())
@@ -1476,9 +1344,7 @@ def main():
         current_batch_file_paths = files_to_process[i : i + batch_size]
         nodes_for_current_batch: List[MalwiNode] = []
 
-        for (
-            p_file_path
-        ) in (
+        for p_file_path in (
             current_batch_file_paths
         ):  # No inner tqdm here to keep batch progress output cleaner
             file_extension = p_file_path.suffix.lstrip(".").lower()
