@@ -356,12 +356,7 @@ def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
     def process_child(child_node):
         child_tokens = []
         syntax_tree_to_tokens(child_node, language=language, _result_list=child_tokens)
-        merged_token = "".join(str(token) for token in child_tokens)
-
-        if len(merged_token) < 43:
-            _result_list.append(merged_token)
-        else:
-            _result_list.extend(child_tokens)
+        _result_list.extend(child_tokens)
 
     if node.type == ",":
         # To make CSV files parsable
@@ -370,7 +365,7 @@ def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
         result, mapped = function_node_to_string(
             node, language=language, mapping_table=FUNCTION_MAPPING
         )
-        _result_list.append(result if mapped else "F")
+        _result_list.append(result if mapped else "")
 
     elif node.type == "identifier":
         try:
@@ -1481,7 +1476,9 @@ def main():
         current_batch_file_paths = files_to_process[i : i + batch_size]
         nodes_for_current_batch: List[MalwiNode] = []
 
-        for p_file_path in (
+        for (
+            p_file_path
+        ) in (
             current_batch_file_paths
         ):  # No inner tqdm here to keep batch progress output cleaner
             file_extension = p_file_path.suffix.lstrip(".").lower()

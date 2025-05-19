@@ -1,4 +1,5 @@
 [
+  "[", "]", "(", ")", ";", "=", ":", ".",
   "ARCHIVE_COMPRESSION",
   "CLIPBOARD_ACCESS",
   "CONCURRENCY_ASYNC",
