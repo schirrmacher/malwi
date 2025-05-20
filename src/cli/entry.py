@@ -1,10 +1,44 @@
 import logging
 import argparse
+from typing import List
 from pathlib import Path
 
 from research.disassemble_python import process_single_py_file, MalwiFile
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
+
+
+def process_source_path(
+    input_path: str,
+) -> List[MalwiFile]:
+    path_obj = Path(input_path)
+    all_files: List[MalwiFile] = []
+
+    if path_obj.is_file():
+        file = process_single_py_file(path_obj)
+        if file:
+            all_files.extend(file)
+        elif not any(Path(input_path).suffix.lstrip(".") in ext for ext in ["py"]):
+            logging.info(f"File '{input_path}' is not a supported file type.")
+        else:
+            logging.info(
+                f"No processable AST nodes found in '{input_path}' or relevant targets missing/empty in NODE_TARGETS for its language."
+            )
+
+    elif path_obj.is_dir():
+        logging.info(f"Processing directory: {input_path}")
+        processed_files_in_dir = False
+        for file_path in path_obj.rglob("*"):  # Using rglob for recursive traversal
+            if file_path.is_file():
+                file = process_single_py_file(Path(file_path))
+                if file:
+                    all_files.extend(file)
+                    processed_files_in_dir = True
+        if not processed_files_in_dir:
+            logging.info(f"No processable files found in directory '{input_path}'.")
+    else:
+        logging.error(f"Path '{input_path}' is neither a file nor a directory.")
+    return all_files
 
 
 def main():
@@ -92,7 +126,7 @@ def main():
         model_path=args.model_path, tokenizer_path=args.tokenizer_path
     )
 
-    objects = process_single_py_file(Path(args.path))
+    objects = process_source_path(args.path)
 
     if objects:
         for o in objects:
