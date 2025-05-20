@@ -2,8 +2,7 @@ import logging
 import argparse
 from pathlib import Path
 
-from cli.predict import initialize_models
-from research.disasemble_python import process_single_py_file
+from research.disassemble_python import process_single_py_file, MalwiFile
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -89,18 +88,16 @@ def main():
         parser.print_help()
         return
 
-    initialize_models(model_path=args.model_path, tokenizer_path=args.tokenizer_path)
+    MalwiFile.load_models_into_memory(
+        model_path=args.model_path, tokenizer_path=args.tokenizer_path
+    )
 
     objects = process_single_py_file(Path(args.path))
 
     if objects:
         for o in objects:
-            print(o.to_token_string())
-            print()
             prediction = o.predict()
-            print(
-                f"benign: {prediction['probabilities'][0]}, malicious: {prediction['probabilities'][1]}"
-            )
+            print(o.to_yaml())
 
     output = ""
 

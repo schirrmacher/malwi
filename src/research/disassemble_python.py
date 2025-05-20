@@ -5,6 +5,8 @@ import dis
 import sys
 import csv
 import math
+import yaml
+import json
 import types
 import socket
 import urllib
@@ -21,7 +23,7 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Set, Optional, Any, Dict
 
 
-from cli.predict import get_node_text_prediction
+from cli.predict import get_node_text_prediction, initialize_models
 from common.files import read_json_from_file
 
 
@@ -35,31 +37,9 @@ FUNCTION_MAPPING: Dict[str, Any] = read_json_from_file(
 IMPORT_MAPPING: Dict[str, Any] = read_json_from_file(
     SCRIPT_DIR / "syntax_mapping" / "import_mapping.json"
 )
-
-
-@dataclass
-class DisassembledObjectInfo:
-    name: str
-    id_hex: str
-    filename: str
-    firstlineno: int
-    instructions: List[Tuple[str, str]]
-    warnings: List[str] = field(default_factory=list)
-
-    def to_tokens(self) -> List[str]:
-        instructions: List[Tuple[str, str]] = self.instructions
-        all_token_parts: List[str] = []
-        for opname, argrepr_val in instructions:
-            all_token_parts.append(opname)
-            if argrepr_val:
-                all_token_parts.append(argrepr_val)
-        return all_token_parts
-
-    def to_token_string(self) -> str:
-        return " ".join(self.to_tokens())
-
-    def predict(self) -> dict:
-        return get_node_text_prediction(self.to_token_string())
+COMMON_TARGET_FILES: Dict[str, Set[str]] = read_json_from_file(
+    SCRIPT_DIR / "syntax_mapping" / "target_files.json"
+)
 
 
 class SpecialCases(Enum):
@@ -73,6 +53,103 @@ class SpecialCases(Enum):
     MALFORMED_FILE = "MALFORMED_FILE"
     MALFORMED_SYNTAX = "MALFORMED_SYNTAX"
     FILE_READING_ISSUES = "FILE_READING_ISSUES"
+    TARGETED_FILE = "TARGETED_FILE"
+
+
+class LiteralStr(str):
+    pass
+
+
+def literal_str_representer(dumper, data):
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+
+
+yaml.add_representer(LiteralStr, literal_str_representer)
+
+
+@dataclass
+class MalwiFile:
+    name: str
+    id_hex: str
+    file_path: str
+    firstlineno: int
+    instructions: List[Tuple[str, str]]
+    maliciousness: Optional[float] = None
+    warnings: List[str] = field(default_factory=list)
+
+    def __init__(
+        self,
+        name: str,
+        language: str,
+        id_hex: str,
+        filename: str,
+        firstlineno: int,
+        instructions: List[Tuple[str, str]],
+        warnings: List[str] = [],
+    ):
+        self.name = name
+        self.id_hex = id_hex
+        self.file_path = filename
+        self.firstlineno = firstlineno
+        self.instructions = instructions
+        self.warnings = warnings if warnings is not None else []
+        if Path(filename).name in COMMON_TARGET_FILES.get(language, []):
+            self.warnings += [SpecialCases.TARGETED_FILE.value]
+
+    @classmethod
+    def load_models_into_memory(
+        cls, model_path: Optional[str] = None, tokenizer_path: Optional[str] = None
+    ):
+        initialize_models(model_path=model_path, tokenizer_path=tokenizer_path)
+
+    def to_tokens(self) -> List[str]:
+        instructions: List[Tuple[str, str]] = self.instructions
+        all_token_parts: List[str] = []
+        for opname, argrepr_val in instructions:
+            all_token_parts.append(opname)
+            if argrepr_val:
+                all_token_parts.append(argrepr_val)
+        return all_token_parts
+
+    def to_token_string(self) -> str:
+        return " ".join(self.to_tokens())
+
+    def to_string_hash(self) -> str:
+        tokens = self.to_token_string()
+        encoded_string = tokens.encode("utf-8")
+        sha256_hash = hashlib.sha256()
+        sha256_hash.update(encoded_string)
+        return sha256_hash.hexdigest()
+
+    def predict(self) -> dict:
+        prediction = get_node_text_prediction(self.to_token_string())
+        self.maliciousness = prediction["probabilities"][1]
+        return prediction
+
+    def to_dict(self) -> dict:
+        return {
+            "path": self.file_path,
+            "contents": [
+                {
+                    "name": self.name,
+                    "score": self.maliciousness,
+                    "tokens": self.to_token_string(),
+                    "code": "<tbd>",
+                    "hash": self.to_string_hash(),
+                }
+            ],
+        }
+
+    def to_yaml(self) -> str:
+        return yaml.dump(
+            self.to_dict(),
+            sort_keys=False,
+            width=float("inf"),
+            default_flow_style=False,
+        )
+
+    def to_json(self) -> str:
+        return json.dumps(self.to_dict(), indent=4)
 
 
 def sanitize_identifier(identifier: Optional[str]) -> str:
@@ -319,17 +396,19 @@ def map_load_const_number_arg(
     return None
 
 
-def collect_disassembly_recursive(
+def recursively_disassemble_python(
     file_path: str,
+    language: str,
     code_obj: Optional[types.CodeType],
-    all_objects_data: List[DisassembledObjectInfo] = [],
+    all_objects_data: List[MalwiFile] = [],
     visited_code_ids: Optional[Set[int]] = None,
     errors: List[str] = [],
 ) -> None:
     if errors or not code_obj:
         for w in errors:
-            object_data = DisassembledObjectInfo(
+            object_data = MalwiFile(
                 name=w,
+                language=language,
                 id_hex=None,
                 filename=file_path,
                 firstlineno=None,
@@ -373,8 +452,9 @@ def collect_disassembly_recursive(
             arg_representation_to_store = original_argrepr
         current_instructions_data.append((opname, arg_representation_to_store))
 
-    object_data = DisassembledObjectInfo(
+    object_data = MalwiFile(
         name=code_obj.co_name,
+        language=language,
         id_hex=hex(id(code_obj)),
         filename=code_obj.co_filename,
         firstlineno=code_obj.co_firstlineno,
@@ -384,16 +464,17 @@ def collect_disassembly_recursive(
 
     for const in code_obj.co_consts:
         if isinstance(const, types.CodeType):
-            collect_disassembly_recursive(
+            recursively_disassemble_python(
                 file_path=file_path,
+                language=language,
                 code_obj=const,
                 all_objects_data=all_objects_data,
                 visited_code_ids=visited_code_ids,
             )
 
 
-def get_disassembled_data_from_file(file_path_str: str) -> List[DisassembledObjectInfo]:
-    all_disassembled_data: List[DisassembledObjectInfo] = []
+def disassemble_python_file(file_path_str: str) -> List[MalwiFile]:
+    all_disassembled_data: List[MalwiFile] = []
     source_code: str
 
     errors: List[str] = []
@@ -402,7 +483,7 @@ def get_disassembled_data_from_file(file_path_str: str) -> List[DisassembledObje
         with open(file_path_str, "r", encoding="utf-8", errors="replace") as f:
             source_code = f.read()
     except Exception:
-        errors.append(SpecialCases.FILE_READING_ISSUES)
+        errors.append(SpecialCases.FILE_READING_ISSUES.value)
 
     top_level_code_object = None
     try:
@@ -418,53 +499,48 @@ def get_disassembled_data_from_file(file_path_str: str) -> List[DisassembledObje
     except Exception:
         errors.append(SpecialCases.MALFORMED_FILE.value)
 
-    collect_disassembly_recursive(
-        file_path_str, top_level_code_object, all_disassembled_data, errors=errors
+    recursively_disassemble_python(
+        file_path=file_path_str,
+        language="python",
+        code_obj=top_level_code_object,
+        all_objects_data=all_disassembled_data,
+        errors=errors,
     )
     return all_disassembled_data
 
 
-def print_txt_output(
-    all_objects_data: List[DisassembledObjectInfo], output_stream: Any
-) -> None:
+def print_txt_output(all_objects_data: List[MalwiFile], output_stream: Any) -> None:
     for obj_data in all_objects_data:
         print(
-            f"\nDisassembly of <code object {obj_data['name']} at {obj_data['id_hex']}>:",
+            f"\nDisassembly of <code object {obj_data.name} at {obj_data.id_hex}>:",
             file=output_stream,
         )
         print(
-            f'  (file: "{obj_data["filename"]}", line: {obj_data["firstlineno"]})',
+            f'  (file: "{obj_data.file_path}", line: {obj_data.firstlineno})',
             file=output_stream,
         )
         print(f"{'OPNAME':<25} ARGREPR", file=output_stream)
         print(f"{'-' * 25} {'-' * 20}", file=output_stream)
-        for opname, argrepr_val in obj_data["instructions"]:
+        for opname, argrepr_val in obj_data.instructions:
             print(f"{opname:<25} {argrepr_val}", file=output_stream)
 
 
 def write_csv_rows_for_file_data(
-    file_disassembled_data: List[DisassembledObjectInfo], csv_writer_obj: csv.writer
+    file_disassembled_data: List[MalwiFile], csv_writer_obj: csv.writer
 ) -> None:
     """Writes CSV rows for the disassembled data of a single file."""
     if not file_disassembled_data:
         return
     for obj_data in file_disassembled_data:
-        filepath_str: str = obj_data["filename"]
-        instructions: List[Tuple[str, str]] = obj_data["instructions"]
-        all_token_parts: List[str] = []
-        for opname, argrepr_val in instructions:
-            all_token_parts.append(opname)
-            if argrepr_val:
-                all_token_parts.append(argrepr_val)
-        concatenated_tokens_string: str = " ".join(all_token_parts)
-        sha256_hash: str = hashlib.sha256(
-            concatenated_tokens_string.encode("utf-8", errors="replace")
-        ).hexdigest()
-        csv_writer_obj.writerow([concatenated_tokens_string, sha256_hash, filepath_str])
+        concatenated_tokens_string = obj_data.to_token_string()
+        sha256_hash: str = obj_data.to_string_hash()
+        csv_writer_obj.writerow(
+            [concatenated_tokens_string, sha256_hash, obj_data.file_path]
+        )
 
 
 def print_csv_output_to_stdout(
-    all_objects_data: List[DisassembledObjectInfo], output_stream: Any
+    all_objects_data: List[MalwiFile], output_stream: Any
 ) -> None:
     """Prints all collected disassembled data to a CSV stream (typically stdout)."""
     writer = csv.writer(output_stream)
@@ -472,43 +548,35 @@ def print_csv_output_to_stdout(
     if not all_objects_data:
         return
     for obj_data in all_objects_data:
-        filepath_str: str = obj_data["filename"]
-        instructions: List[Tuple[str, str]] = obj_data["instructions"]
-        all_token_parts: List[str] = []
-        for opname, argrepr_val in instructions:
-            all_token_parts.append(opname)
-            if argrepr_val:
-                all_token_parts.append(argrepr_val)
-        concatenated_tokens_string: str = " ".join(all_token_parts)
-        sha256_hash: str = hashlib.sha256(
-            concatenated_tokens_string.encode("utf-8")
-        ).hexdigest()
-        writer.writerow([concatenated_tokens_string, sha256_hash, filepath_str])
+        concatenated_tokens_string = obj_data.to_token_string()
+        sha256_hash: str = obj_data.to_string_hash()
+        writer.writerow([concatenated_tokens_string, sha256_hash, obj_data.file_path])
 
 
-def process_single_py_file(py_file: Path) -> Optional[List[DisassembledObjectInfo]]:
+def process_single_py_file(py_file: Path) -> Optional[List[MalwiFile]]:
     try:
-        disassembled_data: List[DisassembledObjectInfo] = (
-            get_disassembled_data_from_file(str(py_file))
-        )
+        disassembled_data: List[MalwiFile] = disassemble_python_file(str(py_file))
         return disassembled_data if disassembled_data else None
     except Exception as e:
+        import traceback
+
         print(
             f"An unexpected error occurred while processing {py_file}: {e}",
             file=sys.stderr,
         )
+        traceback.print_exc(file=sys.stderr)
     return None
 
 
 def process_input_path(
     input_path: Path, output_format: str, csv_writer_for_file: Optional[csv.writer]
-) -> List[DisassembledObjectInfo]:
+) -> List[MalwiFile]:
     """
     Processes a single Python file or all Python files in a directory.
     If csv_writer_for_file is provided, data is written incrementally.
     Otherwise, data is accumulated and returned.
     """
-    accumulated_data_for_txt_or_stdout_csv: List[DisassembledObjectInfo] = []
+    accumulated_data_for_txt_or_stdout_csv: List[MalwiFile] = []
     files_processed_count = 0
     py_files_list = []
 
@@ -635,7 +703,7 @@ def main() -> None:
             )
             sys.exit(1)
 
-    collected_data_for_final_print: List[DisassembledObjectInfo] = []
+    collected_data_for_final_print: List[MalwiFile] = []
     try:
         collected_data_for_final_print = process_input_path(
             input_path_obj, args.format, csv_writer_instance
