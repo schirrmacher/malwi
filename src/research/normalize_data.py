@@ -200,7 +200,9 @@ def find_imports_recursive(node: Node, source_code_bytes: bytes, imports: List[N
         find_imports_recursive(child, source_code_bytes, imports)
 
 
-def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
+def syntax_tree_to_tokens(
+    node: Node, language=str, disable_function_names: bool = True, _result_list=None
+):
     if _result_list is None:
         _result_list = []
 
@@ -216,9 +218,15 @@ def syntax_tree_to_tokens(node: Node, language=str, _result_list=None):
 
     elif node.type == "call":
         result, mapped = function_node_to_string(
-            node, language=language, mapping_table=FUNCTION_MAPPING
+            node,
+            language=language,
+            mapping_table=FUNCTION_MAPPING,
+            disable_function_names=disable_function_names,
         )
-        _result_list.append(result if mapped else "FUNCTION")
+        if disable_function_names:
+            _result_list.append(result if mapped else "FUNCTION")
+        else:
+            _result_list.append(result if mapped else "FUNCTION")
 
     elif node.type == "identifier":
         try:
@@ -723,14 +731,13 @@ def import_node_to_string(
             mapping_table=mapping_table,
         )
 
-        if mapped_value:
-            processed_final_names.append(mapped_value)
-            overall_was_mapped = True
-        elif sanitized_name and not disable_import_names:
+        if sanitized_name:
             processed_final_names.append(sanitized_name)
 
+    processed_final_names = list(set(processed_final_names))
+    processed_final_names.sort()
     final_joined_str = " ".join(processed_final_names)
-    return final_joined_str, overall_was_mapped
+    return final_joined_str, False
 
 
 def function_node_to_string(
@@ -789,9 +796,9 @@ def function_node_to_string(
         identifier=sanitized_name, language=language, mapping_table=mapping_table
     )
 
-    if mapped_value:
-        return f"{mapped_value} {postfix}", True
-    elif sanitized_name:
+    # if mapped_value:
+    #   return f"{mapped_value} {postfix}", True
+    if sanitized_name:
         if disable_function_names:
             return f"{postfix}", False
         else:
@@ -962,7 +969,11 @@ class MalwiNode:
                     import_tokens.append(token)
             import_tokens.sort()
         return " ".join(
-            import_tokens + syntax_tree_to_tokens(self.node, language=self.language)
+            self.warnings
+            + import_tokens
+            + syntax_tree_to_tokens(
+                self.node, language=self.language, disable_function_names=False
+            )
         )
 
     def predict(self) -> Dict:

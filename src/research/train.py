@@ -48,7 +48,9 @@ DEFAULT_NUM_PROC = (
 )
 
 
-def load_asts_from_csv(csv_file_path: str, ast_column_name: str = "ast") -> list[str]:
+def load_asts_from_csv(
+    csv_file_path: str, ast_column_name: str = "tokens"
+) -> list[str]:
     asts = []
     try:
         df = pd.read_csv(csv_file_path)
@@ -322,7 +324,10 @@ if __name__ == "__main__":
     parser.add_argument("--resume-from-checkpoint", type=str, default=None)
     parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
     parser.add_argument(
-        "--ast-column", type=str, default="ast", help="Name of column to use from CSV"
+        "--ast-column",
+        type=str,
+        default="tokens",
+        help="Name of column to use from CSV",
     )
 
     args = parser.parse_args()
