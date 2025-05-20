@@ -17,9 +17,11 @@ import collections
 from tqdm import tqdm
 from enum import Enum
 from pathlib import Path
-from typing import List, Tuple, Set, Optional, Any, TypedDict, Dict
+from dataclasses import dataclass, field
+from typing import List, Tuple, Set, Optional, Any, Dict
 
 
+from cli.predict import get_node_text_prediction
 from common.files import read_json_from_file
 
 
@@ -35,13 +37,29 @@ IMPORT_MAPPING: Dict[str, Any] = read_json_from_file(
 )
 
 
-class DisassembledObjectInfo(TypedDict):
+@dataclass
+class DisassembledObjectInfo:
     name: str
     id_hex: str
     filename: str
     firstlineno: int
     instructions: List[Tuple[str, str]]
-    warnings: List[str] = []
+    warnings: List[str] = field(default_factory=list)
+
+    def to_tokens(self) -> List[str]:
+        instructions: List[Tuple[str, str]] = self.instructions
+        all_token_parts: List[str] = []
+        for opname, argrepr_val in instructions:
+            all_token_parts.append(opname)
+            if argrepr_val:
+                all_token_parts.append(argrepr_val)
+        return all_token_parts
+
+    def to_token_string(self) -> str:
+        return " ".join(self.to_tokens())
+
+    def predict(self) -> dict:
+        return get_node_text_prediction(self.to_token_string())
 
 
 class SpecialCases(Enum):
@@ -310,13 +328,13 @@ def collect_disassembly_recursive(
 ) -> None:
     if errors or not code_obj:
         for w in errors:
-            object_data: DisassembledObjectInfo = {
-                "name": w,
-                "id_hex": None,
-                "filename": file_path,
-                "firstlineno": None,
-                "instructions": [],
-            }
+            object_data = DisassembledObjectInfo(
+                name=w,
+                id_hex=None,
+                filename=file_path,
+                firstlineno=None,
+                instructions=[],
+            )
             all_objects_data.append(object_data)
         return
 
@@ -355,13 +373,13 @@ def collect_disassembly_recursive(
             arg_representation_to_store = original_argrepr
         current_instructions_data.append((opname, arg_representation_to_store))
 
-    object_data: DisassembledObjectInfo = {
-        "name": code_obj.co_name,
-        "id_hex": hex(id(code_obj)),
-        "filename": code_obj.co_filename,
-        "firstlineno": code_obj.co_firstlineno,
-        "instructions": current_instructions_data,
-    }
+    object_data = DisassembledObjectInfo(
+        name=code_obj.co_name,
+        id_hex=hex(id(code_obj)),
+        filename=code_obj.co_filename,
+        firstlineno=code_obj.co_firstlineno,
+        instructions=current_instructions_data,
+    )
     all_objects_data.append(object_data)
 
     for const in code_obj.co_consts:

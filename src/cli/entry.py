@@ -1,9 +1,9 @@
 import logging
 import argparse
 from pathlib import Path
-from tabulate import tabulate
 
-from research.normalize_data import MalwiNode
+from cli.predict import initialize_models
+from research.disasemble_python import process_single_py_file
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -89,56 +89,35 @@ def main():
         parser.print_help()
         return
 
-    MalwiNode.load_models_into_memory(
-        model_path=args.model_path, tokenizer_path=args.tokenizer_path
-    )
+    initialize_models(model_path=args.model_path, tokenizer_path=args.tokenizer_path)
 
-    malicious_nodes, benign_nodes = MalwiNode.file_or_dir_to_nodes(
-        path=Path(args.path), threshold=args.threshold
-    )
+    objects = process_single_py_file(Path(args.path))
+
+    if objects:
+        for o in objects:
+            print(o.to_token_string())
+            print()
+            prediction = o.predict()
+            print(
+                f"benign: {prediction['probabilities'][0]}, malicious: {prediction['probabilities'][1]}"
+            )
 
     output = ""
 
     if args.format == "json":
-        output = MalwiNode.nodes_to_json(
-            malicious_nodes=malicious_nodes,
-            benign_nodes=benign_nodes,
-            malicious_only=args.malicious_only,
-        )
+        pass
     elif args.format == "yaml":
-        output = MalwiNode.nodes_to_yaml(
-            malicious_nodes=malicious_nodes,
-            benign_nodes=benign_nodes,
-            malicious_only=args.malicious_only,
-        )
+        pass
     elif args.format == "csv":
-        output = MalwiNode.nodes_to_csv(
-            malicious_nodes=malicious_nodes,
-            benign_nodes=benign_nodes,
-            malicious_only=args.malicious_only,
-        )
+        pass
     else:
-        if len(malicious_nodes) == 0:
-            output = "🟢 No malicious findings"
-        else:
-            table_data = [
-                {
-                    "File": m.file_path,
-                    "Name": m.name,
-                    "Malicious": f"{m.maliciousness:.2f}",
-                }
-                for m in malicious_nodes
-            ]
-            output = tabulate(table_data, headers="keys", tablefmt="github")
-
+        pass
     if args.save:
         Path(args.save).write_text(output)
         if not args.quiet:
             logging.info(f"Output saved to {args.save}")
     else:
         print(output)
-
-    exit(1 if malicious_nodes else 0)
 
 
 if __name__ == "__main__":
