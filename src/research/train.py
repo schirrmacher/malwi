@@ -7,7 +7,7 @@ import pandas as pd
 import os
 import json
 
-from typing import Set
+from typing import Set, Optional  # Added Optional
 from pathlib import Path
 from tokenizers import ByteLevelBPETokenizer, Tokenizer
 from tokenizers.models import BPE
@@ -23,6 +23,7 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+from transformers.trainer import Trainer  # Explicit import for subclassing
 
 from datasets import Dataset, DatasetDict
 from datasets.utils.logging import disable_progress_bar
@@ -43,10 +44,33 @@ DEFAULT_EPOCHS = 3
 DEFAULT_BATCH_SIZE = 16
 DEFAULT_VOCAB_SIZE = 30522
 DEFAULT_SAVE_STEPS = 0
-DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 1.5
+DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 4.0
 DEFAULT_NUM_PROC = (
     os.cpu_count() if os.cpu_count() is not None and os.cpu_count() > 1 else 2
 )
+
+
+class WeightedLossTrainer(Trainer):
+    def __init__(self, *args, class_weights: Optional[torch.Tensor] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.class_weights = (
+            class_weights.to(self.args.device) if class_weights is not None else None
+        )
+
+    def compute_loss(
+        self, model, inputs, return_outputs=False, num_items_in_batch=None
+    ):
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        logits = outputs.logits
+
+        effective_class_weights = None
+        if self.class_weights is not None:
+            effective_class_weights = self.class_weights.to(logits.device)
+
+        loss_fct = torch.nn.CrossEntropyLoss(weight=effective_class_weights)
+        loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        return (loss, outputs) if return_outputs else loss
 
 
 def load_asts_from_csv(
@@ -197,6 +221,9 @@ def run_training(args):
         print("Error: No malicious ASTs loaded. Cannot proceed with training.")
         return
 
+    num_benign_original = len(benign_asts)
+    num_malicious_original = len(malicious_asts)
+
     if (
         benign_asts
         and args.benign_to_malicious_ratio > 0
@@ -209,7 +236,7 @@ def run_training(args):
             print(
                 f"Downsampling benign ASTs from {len(benign_asts)} to {target_benign_count}"
             )
-            rng = np.random.RandomState(42)
+            rng = np.random.RandomState(42)  # For reproducibility
             benign_indices = rng.choice(
                 len(benign_asts), size=target_benign_count, replace=False
             )
@@ -228,6 +255,30 @@ def run_training(args):
         return
 
     print(f"Total AST strings for model training: {len(all_texts_for_training)}")
+
+    # --- Calculate Class Weights ---
+    num_labels = 2  # Benign (0) and Malicious (1)
+    # Calculate weights based on the distribution of labels *before* train/test split
+    # but *after* any downsampling, to reflect the data the model will actually see.
+    count_benign = len(benign_asts)
+    count_malicious = len(malicious_asts)
+
+    if count_benign == 0 or count_malicious == 0:
+        print(
+            "Warning: One of the classes has zero samples after processing. Weighted loss might not be effective or may cause errors."
+        )
+        class_weights = None
+    else:
+        # Formula: weight_class_c = total_samples / (num_classes * count_class_c)
+        total_samples = count_benign + count_malicious
+        weight_benign = total_samples / (num_labels * count_benign)
+        weight_malicious = total_samples / (num_labels * count_malicious)
+        class_weights = torch.tensor(
+            [weight_benign, weight_malicious], dtype=torch.float
+        )
+        print(
+            f"Calculated class weights: Benign (0): {weight_benign:.4f}, Malicious (1): {weight_malicious:.4f}"
+        )
 
     (
         distilbert_train_texts,
@@ -251,9 +302,9 @@ def run_training(args):
     try:
         tokenizer = create_or_load_tokenizer(
             tokenizer_output_path=Path(args.tokenizer_path),
-            texts_for_training=distilbert_train_texts,
+            texts_for_training=distilbert_train_texts,  # Use only training texts for tokenizer training
             vocab_size=args.vocab_size,
-            global_special_tokens=SPECIAL_TOKENS,  # Pass the globally loaded SPECIAL_TOKENS
+            global_special_tokens=SPECIAL_TOKENS,
             max_length=args.max_length,
             force_retrain=args.force_retrain_tokenizer,
         )
@@ -297,7 +348,9 @@ def run_training(args):
     logs_path = model_output_path / "logs"
 
     print(f"\nSetting up DistilBERT model for fine-tuning from {args.model_name}...")
-    config = DistilBertConfig.from_pretrained(args.model_name, num_labels=2)
+    config = DistilBertConfig.from_pretrained(
+        args.model_name, num_labels=2
+    )  # num_labels is 2 for binary classification
     config.pad_token_id = tokenizer.pad_token_id
     config.cls_token_id = tokenizer.cls_token_id
     config.sep_token_id = tokenizer.sep_token_id
@@ -325,62 +378,134 @@ def run_training(args):
         save_strategy="epoch" if args.save_steps == 0 else "steps",
         save_steps=args.save_steps if args.save_steps > 0 else None,
         load_best_model_at_end=True,
-        metric_for_best_model="f1",
+        metric_for_best_model="f1",  # Using f1 as it's good for imbalanced data
         save_total_limit=5 if args.save_steps > 0 else None,
-        report_to="none",
+        report_to="none",  # or "tensorboard", "wandb" etc.
     )
 
-    trainer = Trainer(
+    # --- Instantiate Custom Trainer ---
+    trainer = WeightedLossTrainer(  # Use the custom trainer
         model=model,
         args=training_arguments,
         train_dataset=train_dataset_for_trainer,
         eval_dataset=val_dataset_for_trainer,
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
+        class_weights=class_weights,  # Pass the calculated weights
     )
 
     print("\nStarting model training...")
     trainer.train()
+    print("--- Training Finished ---")
+
+    # Save the model and tokenizer explicitly after training
+    final_model_path = model_output_path / "final_model"
+    trainer.save_model(str(final_model_path))
+    tokenizer.save_pretrained(str(final_model_path))
+    print(f"Final model and tokenizer saved to {final_model_path}")
+
+    # Evaluate on the validation set
+    print("\nEvaluating model on the validation set...")
+    eval_results = trainer.evaluate()
+    print(f"Evaluation results: {eval_results}")
+
+    # Save evaluation results
+    eval_results_file = results_path / "evaluation_results.json"
+    with open(eval_results_file, "w") as f:
+        json.dump(eval_results, f, indent=4)
+    print(f"Evaluation results saved to {eval_results_file}")
 
 
 if __name__ == "__main__":
-    # Define DEFAULT_BENIGN_TO_MALICIOUS_RATIO if it's not already defined globally
-    # For example: DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 1.0
-
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Train a DistilBERT model for sequence classification with optional weighted loss."
+    )
     parser.add_argument("--benign", "-b", required=True, help="Path to benign CSV")
     parser.add_argument(
         "--malicious", "-m", required=True, help="Path to malicious CSV"
     )
-    parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME)
     parser.add_argument(
-        "--tokenizer-path", type=Path, default=DEFAULT_TOKENIZER_CLI_PATH
+        "--model-name",
+        default=DEFAULT_MODEL_NAME,
+        help=f"Base model name (default: {DEFAULT_MODEL_NAME})",
     )
     parser.add_argument(
-        "--model-output-path", type=Path, default=DEFAULT_MODEL_OUTPUT_CLI_PATH
+        "--tokenizer-path",
+        type=Path,
+        default=DEFAULT_TOKENIZER_CLI_PATH,
+        help=f"Path to save/load tokenizer (default: {DEFAULT_TOKENIZER_CLI_PATH})",
     )
-    parser.add_argument("--max-length", type=int, default=DEFAULT_MAX_LENGTH)
-    parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS)
-    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
-    parser.add_argument("--vocab-size", type=int, default=DEFAULT_VOCAB_SIZE)
-    parser.add_argument("--save-steps", type=int, default=DEFAULT_SAVE_STEPS)
-    parser.add_argument("--num-proc", type=int, default=DEFAULT_NUM_PROC)
-    parser.add_argument("--force-retrain-tokenizer", action="store_true")
-    # Removed --resume-from-checkpoint
-    parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
+    parser.add_argument(
+        "--model-output-path",
+        type=Path,
+        default=DEFAULT_MODEL_OUTPUT_CLI_PATH,
+        help=f"Path to save trained model and results (default: {DEFAULT_MODEL_OUTPUT_CLI_PATH})",
+    )
+    parser.add_argument(
+        "--max-length",
+        type=int,
+        default=DEFAULT_MAX_LENGTH,
+        help=f"Max sequence length for tokenizer (default: {DEFAULT_MAX_LENGTH})",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=DEFAULT_EPOCHS,
+        help=f"Number of training epochs (default: {DEFAULT_EPOCHS})",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=DEFAULT_BATCH_SIZE,
+        help=f"Batch size for training and evaluation (default: {DEFAULT_BATCH_SIZE})",
+    )
+    parser.add_argument(
+        "--vocab-size",
+        type=int,
+        default=DEFAULT_VOCAB_SIZE,
+        help=f"Vocabulary size for custom BPE tokenizer (default: {DEFAULT_VOCAB_SIZE})",
+    )
+    parser.add_argument(
+        "--save-steps",
+        type=int,
+        default=DEFAULT_SAVE_STEPS,
+        help="Save checkpoint every X updates steps. 0 to save by epoch. (default: 0)",
+    )
+    parser.add_argument(
+        "--num-proc",
+        type=int,
+        default=DEFAULT_NUM_PROC,
+        help=f"Number of processes for dataset mapping (default: {DEFAULT_NUM_PROC})",
+    )
+    parser.add_argument(
+        "--force-retrain-tokenizer",
+        action="store_true",
+        help="Force retraining of the tokenizer even if an existing one is found.",
+    )
+    parser.add_argument(
+        "--disable-hf-datasets-progress-bar",
+        action="store_true",
+        help="Disable Hugging Face datasets progress bars.",
+    )
     parser.add_argument(
         "--ast-column",
         type=str,
         default="tokens",
-        help="Name of column to use from CSV",
+        help="Name of the column containing AST strings in the CSV files (default: 'tokens').",
     )
     parser.add_argument(
         "--benign-to-malicious-ratio",
         type=float,
-        default=DEFAULT_BENIGN_TO_MALICIOUS_RATIO,  # Ensure this default is defined
-        help="Ratio of benign to malicious samples to use for training (e.g., 1.0 for 1:1). Set to 0 or negative to disable downsampling.",
+        default=DEFAULT_BENIGN_TO_MALICIOUS_RATIO,
+        help=f"Ratio of benign to malicious samples for downsampling benign data (e.g., 1.0 for 1:1). Set to 0 or negative to disable. (default: {DEFAULT_BENIGN_TO_MALICIOUS_RATIO})",
     )
 
     args = parser.parse_args()
+
+    # Create output directories if they don't exist
+    Path(args.tokenizer_path).mkdir(parents=True, exist_ok=True)
+    Path(args.model_output_path).mkdir(parents=True, exist_ok=True)
+    (Path(args.model_output_path) / "results").mkdir(parents=True, exist_ok=True)
+    (Path(args.model_output_path) / "logs").mkdir(parents=True, exist_ok=True)
 
     run_training(args)
