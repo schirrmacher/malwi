@@ -6,7 +6,7 @@ from pathlib import Path
 from research.normalize_data import MalwiNode
 from cli.entry import file_or_dir_to_nodes
 
-from cli.predict import initialize_models
+from research.predict import initialize_models
 
 
 def main():

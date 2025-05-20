@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Set, Optional, Any, Dict
 
 
-from cli.predict import get_node_text_prediction, initialize_models
+from research.predict import get_node_text_prediction, initialize_models
 from common.files import read_json_from_file
 
 

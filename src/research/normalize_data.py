@@ -26,7 +26,7 @@ import tree_sitter_javascript as tsjavascript
 import tree_sitter_typescript as tstypescript
 import tree_sitter_rust as tsrust
 
-from cli.predict import get_node_text_prediction, initialize_models
+from research.predict import get_node_text_prediction, initialize_models
 from common.files import read_json_from_file
 
 sys.setrecursionlimit(100000)
