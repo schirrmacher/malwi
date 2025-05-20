@@ -121,9 +121,10 @@ class MalwiFile:
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
 
-    def predict(self) -> dict:
+    def predict(self) -> Optional[dict]:
         prediction = get_node_text_prediction(self.to_token_string())
-        self.maliciousness = prediction["probabilities"][1]
+        if prediction and "probabilities" in prediction:
+            self.maliciousness = prediction["probabilities"][1]
         return prediction
 
     def to_dict(self) -> dict:

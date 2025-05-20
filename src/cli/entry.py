@@ -125,7 +125,7 @@ def main():
     if objects:
         for o in objects:
             prediction = o.predict()
-            if o.maliciousness > args.threshold:
+            if o.maliciousness and o.maliciousness > args.threshold:
                 print(o.to_yaml())
 
     output = ""
