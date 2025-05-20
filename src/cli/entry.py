@@ -84,12 +84,6 @@ def main():
     developer_group = parser.add_argument_group("Developer Options")
 
     developer_group.add_argument(
-        "--debug",
-        "-d",
-        action="store_true",
-        help="Print the model input before prediction.",
-    )
-    developer_group.add_argument(
         "--tokenizer-path",
         "-t",
         metavar="PATH",
@@ -131,7 +125,8 @@ def main():
     if objects:
         for o in objects:
             prediction = o.predict()
-            print(o.to_yaml())
+            if o.maliciousness > args.threshold:
+                print(o.to_yaml())
 
     output = ""
 
