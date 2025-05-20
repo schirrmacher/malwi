@@ -43,6 +43,7 @@ DEFAULT_EPOCHS = 3
 DEFAULT_BATCH_SIZE = 16
 DEFAULT_VOCAB_SIZE = 30522
 DEFAULT_SAVE_STEPS = 0
+DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 1.5
 DEFAULT_NUM_PROC = (
     os.cpu_count() if os.cpu_count() is not None and os.cpu_count() > 1 else 2
 )
@@ -89,91 +90,70 @@ def compute_metrics(pred):
     return {"accuracy": acc, "f1": f1, "precision": precision, "recall": recall}
 
 
-def run_training(args):
-    if args.disable_hf_datasets_progress_bar:
-        disable_progress_bar()
+def create_or_load_tokenizer(
+    tokenizer_output_path: Path,
+    texts_for_training: list[str],
+    vocab_size: int,
+    global_special_tokens: Set[str],
+    max_length: int,
+    force_retrain: bool,
+):
+    huggingface_tokenizer_config_file = tokenizer_output_path / "tokenizer.json"
 
-    if args.resume_from_checkpoint:
+    if not force_retrain and huggingface_tokenizer_config_file.exists():
         print(
-            f"--- Resuming Model Training from checkpoint: {args.resume_from_checkpoint} ---"
+            f"\nLoading existing PreTrainedTokenizerFast from {tokenizer_output_path} (found tokenizer.json)."
+        )
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(
+            str(tokenizer_output_path), model_max_length=max_length
         )
     else:
-        print("--- Starting New Model Training ---")
-
-    benign_asts = load_asts_from_csv(args.benign, args.ast_column)
-    malicious_asts = load_asts_from_csv(args.malicious, args.ast_column)
-
-    print(f"Processed benign ASTs for training lookup: {len(benign_asts)}")
-    print(f"Malicious ASTs for training: {len(malicious_asts)}")
-
-    all_texts_for_training = benign_asts + malicious_asts
-    all_labels_for_training = [0] * len(benign_asts) + [1] * len(malicious_asts)
-
-    if not all_texts_for_training:
-        print("Error: No data available for training after filtering.")
-        return
-
-    print(f"Total AST strings for model training: {len(all_texts_for_training)}")
-
-    (
-        distilbert_train_texts,
-        distilbert_val_texts,
-        distilbert_train_labels,
-        distilbert_val_labels,
-    ) = train_test_split(
-        all_texts_for_training,
-        all_labels_for_training,
-        test_size=0.2,
-        random_state=42,
-        stratify=all_labels_for_training,
-    )
-
-    tokenizer_path = Path(args.tokenizer_path)
-    huggingface_tokenizer_config_file = tokenizer_path / "tokenizer.json"
-
-    if not args.resume_from_checkpoint and (
-        args.force_retrain_tokenizer or not huggingface_tokenizer_config_file.exists()
-    ):
         print("\nTraining or re-training custom BPE tokenizer...")
-        if args.force_retrain_tokenizer and tokenizer_path.exists():
+        if force_retrain and tokenizer_output_path.exists():
             print(
-                f"Force retraining: Deleting existing tokenizer directory: {tokenizer_path}"
+                f"Force retraining: Deleting existing tokenizer directory: {tokenizer_output_path}"
             )
             try:
-                shutil.rmtree(tokenizer_path)
+                shutil.rmtree(tokenizer_output_path)
             except OSError as e:
                 print(
-                    f"Error deleting directory {tokenizer_path}: {e}. Please delete manually and retry."
+                    f"Error deleting directory {tokenizer_output_path}: {e}. Please delete manually and retry."
                 )
-                return
+                raise
 
-        tokenizer_path.mkdir(parents=True, exist_ok=True)
+        tokenizer_output_path.mkdir(parents=True, exist_ok=True)
 
-        vocab_file_path = tokenizer_path / "vocab.json"
-        merges_file_path = tokenizer_path / "merges.txt"
+        vocab_file_path = tokenizer_output_path / "vocab.json"
+        merges_file_path = tokenizer_output_path / "merges.txt"
 
-        if not distilbert_train_texts:
-            print("Error: distilbert_train_texts is empty. Cannot train BPE tokenizer.")
-            return
+        if not texts_for_training:
+            print("Error: No texts provided for training BPE tokenizer.")
+            raise ValueError("Cannot train tokenizer with no data.")
 
         bpe_trainer_obj = ByteLevelBPETokenizer()
 
-        bpe_special_tokens = [
+        bpe_default_special_tokens = [
             "[PAD]",
             "[UNK]",
             "[CLS]",
             "[SEP]",
             "[MASK]",
-        ] + list(SPECIAL_TOKENS)
+        ]
+        # Combine default BPE special tokens with user-defined ones from the global set
+        combined_special_tokens = list(
+            set(bpe_default_special_tokens + list(global_special_tokens))
+        )
 
         bpe_trainer_obj.train_from_iterator(
-            distilbert_train_texts,
-            vocab_size=args.vocab_size,
+            texts_for_training,
+            vocab_size=vocab_size,
             min_frequency=2,
-            special_tokens=bpe_special_tokens,
+            special_tokens=combined_special_tokens,
         )
-        bpe_trainer_obj.save_model(str(tokenizer_path))
-        print(f"BPE components (vocab.json, merges.txt) saved to {tokenizer_path}")
+        bpe_trainer_obj.save_model(str(tokenizer_output_path))
+        print(
+            f"BPE components (vocab.json, merges.txt) saved to {tokenizer_output_path}"
+        )
 
         bpe_model = BPE.from_file(
             str(vocab_file_path), str(merges_file_path), unk_token="[UNK]"
@@ -191,19 +171,95 @@ def run_training(args):
             mask_token="[MASK]",
             bos_token="[CLS]",
             eos_token="[SEP]",
-            model_max_length=args.max_length,
+            model_max_length=max_length,
         )
-        tokenizer.save_pretrained(str(tokenizer_path))
+        tokenizer.save_pretrained(str(tokenizer_output_path))
         print(
-            f"PreTrainedTokenizerFast fully saved to {tokenizer_path} (tokenizer.json created)."
+            f"PreTrainedTokenizerFast fully saved to {tokenizer_output_path} (tokenizer.json created)."
         )
-    else:
+
+    return tokenizer
+
+
+def run_training(args):
+    if args.disable_hf_datasets_progress_bar:
+        disable_progress_bar()
+
+    print("--- Starting New Model Training ---")
+
+    benign_asts = load_asts_from_csv(args.benign, args.ast_column)
+    malicious_asts = load_asts_from_csv(args.malicious, args.ast_column)
+
+    print(f"Original benign ASTs count: {len(benign_asts)}")
+    print(f"Original malicious ASTs count: {len(malicious_asts)}")
+
+    if not malicious_asts:
+        print("Error: No malicious ASTs loaded. Cannot proceed with training.")
+        return
+
+    if (
+        benign_asts
+        and args.benign_to_malicious_ratio > 0
+        and len(benign_asts) > len(malicious_asts) * args.benign_to_malicious_ratio
+    ):
+        target_benign_count = int(len(malicious_asts) * args.benign_to_malicious_ratio)
+        if target_benign_count < len(
+            benign_asts
+        ):  # Ensure we are actually downsampling
+            print(
+                f"Downsampling benign ASTs from {len(benign_asts)} to {target_benign_count}"
+            )
+            rng = np.random.RandomState(42)
+            benign_indices = rng.choice(
+                len(benign_asts), size=target_benign_count, replace=False
+            )
+            benign_asts = [benign_asts[i] for i in benign_indices]
+    elif not benign_asts:
+        print("Warning: No benign ASTs loaded.")
+
+    print(f"Processed benign ASTs for training lookup: {len(benign_asts)}")
+    print(f"Malicious ASTs for training: {len(malicious_asts)}")
+
+    all_texts_for_training = benign_asts + malicious_asts
+    all_labels_for_training = [0] * len(benign_asts) + [1] * len(malicious_asts)
+
+    if not all_texts_for_training:
+        print("Error: No data available for training after filtering or downsampling.")
+        return
+
+    print(f"Total AST strings for model training: {len(all_texts_for_training)}")
+
+    (
+        distilbert_train_texts,
+        distilbert_val_texts,
+        distilbert_train_labels,
+        distilbert_val_labels,
+    ) = train_test_split(
+        all_texts_for_training,
+        all_labels_for_training,
+        test_size=0.2,
+        random_state=42,
+        stratify=all_labels_for_training if all_labels_for_training else None,
+    )
+
+    if not distilbert_train_texts:
         print(
-            f"\nLoading existing PreTrainedTokenizerFast from {tokenizer_path} (found tokenizer.json)."
+            "Error: No training data available after train/test split. Cannot proceed."
         )
-        tokenizer = PreTrainedTokenizerFast.from_pretrained(
-            str(tokenizer_path), model_max_length=args.max_length
+        return
+
+    try:
+        tokenizer = create_or_load_tokenizer(
+            tokenizer_output_path=Path(args.tokenizer_path),
+            texts_for_training=distilbert_train_texts,
+            vocab_size=args.vocab_size,
+            global_special_tokens=SPECIAL_TOKENS,  # Pass the globally loaded SPECIAL_TOKENS
+            max_length=args.max_length,
+            force_retrain=args.force_retrain_tokenizer,
         )
+    except Exception as e:
+        print(f"Failed to create or load tokenizer: {e}")
+        return
 
     print("\nConverting data to Hugging Face Dataset format...")
     train_data_dict = {"text": distilbert_train_texts, "label": distilbert_train_labels}
@@ -240,35 +296,21 @@ def run_training(args):
     results_path = model_output_path / "results"
     logs_path = model_output_path / "logs"
 
-    if not args.resume_from_checkpoint:
-        print("\nSetting up NEW DistilBERT model for fine-tuning...")
-        config = DistilBertConfig.from_pretrained(args.model_name, num_labels=2)
-        config.pad_token_id = tokenizer.pad_token_id
-        config.cls_token_id = tokenizer.cls_token_id
-        config.sep_token_id = tokenizer.sep_token_id
-        model = DistilBertForSequenceClassification.from_pretrained(
-            args.model_name, config=config
-        )
+    print(f"\nSetting up DistilBERT model for fine-tuning from {args.model_name}...")
+    config = DistilBertConfig.from_pretrained(args.model_name, num_labels=2)
+    config.pad_token_id = tokenizer.pad_token_id
+    config.cls_token_id = tokenizer.cls_token_id
+    config.sep_token_id = tokenizer.sep_token_id
 
-        if len(tokenizer) != model.config.vocab_size:
-            print(
-                f"Resizing model token embeddings from {model.config.vocab_size} to {len(tokenizer)}"
-            )
-            model.resize_token_embeddings(len(tokenizer))
-    else:
+    model = DistilBertForSequenceClassification.from_pretrained(
+        args.model_name, config=config
+    )
+
+    if len(tokenizer) != model.config.vocab_size:
         print(
-            f"\nPreparing to resume training from checkpoint: {args.resume_from_checkpoint}"
+            f"Resizing model token embeddings from {model.config.vocab_size} to {len(tokenizer)}"
         )
-        config = DistilBertConfig.from_pretrained(
-            args.resume_from_checkpoint, num_labels=2
-        )
-        config.pad_token_id = tokenizer.pad_token_id
-        config.cls_token_id = tokenizer.cls_token_id
-        config.sep_token_id = tokenizer.sep_token_id
-
-        model = DistilBertForSequenceClassification.from_pretrained(
-            args.resume_from_checkpoint, config=config
-        )
+        model.resize_token_embeddings(len(tokenizer))
 
     training_arguments = TrainingArguments(
         output_dir=str(results_path),
@@ -297,11 +339,14 @@ def run_training(args):
         tokenizer=tokenizer,
     )
 
-    print("\nStarting/Resuming model training...")
-    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    print("\nStarting model training...")
+    trainer.train()
 
 
 if __name__ == "__main__":
+    # Define DEFAULT_BENIGN_TO_MALICIOUS_RATIO if it's not already defined globally
+    # For example: DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 1.0
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--benign", "-b", required=True, help="Path to benign CSV")
     parser.add_argument(
@@ -321,7 +366,7 @@ if __name__ == "__main__":
     parser.add_argument("--save-steps", type=int, default=DEFAULT_SAVE_STEPS)
     parser.add_argument("--num-proc", type=int, default=DEFAULT_NUM_PROC)
     parser.add_argument("--force-retrain-tokenizer", action="store_true")
-    parser.add_argument("--resume-from-checkpoint", type=str, default=None)
+    # Removed --resume-from-checkpoint
     parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
     parser.add_argument(
         "--ast-column",
@@ -329,6 +374,13 @@ if __name__ == "__main__":
         default="tokens",
         help="Name of column to use from CSV",
     )
+    parser.add_argument(
+        "--benign-to-malicious-ratio",
+        type=float,
+        default=DEFAULT_BENIGN_TO_MALICIOUS_RATIO,  # Ensure this default is defined
+        help="Ratio of benign to malicious samples to use for training (e.g., 1.0 for 1:1). Set to 0 or negative to disable downsampling.",
+    )
 
     args = parser.parse_args()
+
     run_training(args)
