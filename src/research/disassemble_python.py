@@ -338,7 +338,7 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     if argval in python_function_mapping:
         return python_function_mapping.get(argval)
     elif argval in python_import_mapping:
-        return python_import_mapping.get(argval)
+        return argval
     elif argval in SENSITIVE_PATHS:
         return f"{SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
     elif is_valid_ip(argval):
