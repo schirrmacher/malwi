@@ -60,6 +60,7 @@ class WeightedLossTrainer(Trainer):
     def compute_loss(
         self, model, inputs, return_outputs=False, num_items_in_batch=None
     ):
+        # Added num_items_in_batch parameter to match the parent class signature
         labels = inputs.pop("labels")
         outputs = model(**inputs)
         logits = outputs.logits
@@ -390,7 +391,7 @@ def run_training(args):
         train_dataset=train_dataset_for_trainer,
         eval_dataset=val_dataset_for_trainer,
         compute_metrics=compute_metrics,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         class_weights=class_weights,  # Pass the calculated weights
     )
 
