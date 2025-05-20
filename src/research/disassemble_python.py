@@ -336,7 +336,7 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     python_import_mapping = IMPORT_MAPPING.get("python", {})
 
     if argval in python_function_mapping:
-        return python_function_mapping.get(argval)
+        return argval
     elif argval in python_import_mapping:
         return argval
     elif argval in SENSITIVE_PATHS:
