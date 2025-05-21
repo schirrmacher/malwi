@@ -155,6 +155,129 @@ class MalwiFile:
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=4)
 
+    @staticmethod
+    def _generate_report_data(
+        malwi_files: List["MalwiFile"],
+        malicious_threshold: float = 0.5,
+        number_of_skipped_files: int = 0,
+        malicious_only: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Internal helper to compute report data.
+        """
+        num_processed_files = len(
+            malwi_files
+        )  # Files that were actually processed to this stage
+        total_maliciousness_score = 0.0
+        malicious_files_count = 0
+        files_with_scores_count = 0
+
+        for mf in malwi_files:
+            if mf.maliciousness is None:
+                mf.predict()
+
+            if mf.maliciousness is not None:
+                total_maliciousness_score += mf.maliciousness
+                files_with_scores_count += 1
+                if mf.maliciousness > malicious_threshold:
+                    malicious_files_count += 1
+
+        non_malicious_files_count = num_processed_files - malicious_files_count
+
+        average_maliciousness_score = (
+            (total_maliciousness_score / files_with_scores_count)
+            if files_with_scores_count > 0
+            else 0.0
+        )
+
+        if num_processed_files > 0:
+            proportion_malicious_processed = malicious_files_count / num_processed_files
+        else:
+            proportion_malicious_processed = 0.0
+
+        # Considering total files encountered = processed + skipped
+        total_files_encountered = num_processed_files + number_of_skipped_files
+
+        summary_statistics = {
+            "total_files_encountered": total_files_encountered,
+            "files_processed_for_maliciousness": num_processed_files,  # Renamed from total_files_scanned
+            "files_skipped_general": number_of_skipped_files,  # Renamed key
+            "average_maliciousness_score_for_processed": round(
+                average_maliciousness_score, 4
+            ),  # Clarified scope
+            "files_with_scores_count": files_with_scores_count,
+            "malicious_files_among_processed": malicious_files_count,  # Clarified scope
+            "non_malicious_files_among_processed": non_malicious_files_count,  # Clarified scope
+            "malicious_vs_non_malicious_ratio_processed": f"{malicious_files_count}:{non_malicious_files_count}",
+            "proportion_malicious_among_processed": round(
+                proportion_malicious_processed, 4
+            ),  # Clarified scope
+        }
+
+        # Adjusting summary for the specific case when no files are processed (num_processed_files == 0)
+        # to align more with the user's initial empty report structure, but keeping detailed keys.
+        if num_processed_files == 0:
+            summary_statistics["average_maliciousness_score_for_processed"] = 0.0
+            summary_statistics["malicious_files_among_processed"] = 0
+            summary_statistics["non_malicious_files_among_processed"] = 0
+            summary_statistics["proportion_malicious_among_processed"] = 0.0
+            summary_statistics["malicious_vs_non_malicious_ratio_processed"] = "0:0"
+
+        report_data = {
+            "statistics": summary_statistics,
+            "details": [],
+        }
+
+        for mf in malwi_files:
+            if mf.maliciousness is not None and mf.maliciousness > malicious_threshold:
+                report_data["details"].append(mf.to_dict())
+            elif not malicious_only:
+                report_data["details"].append(mf.to_dict())
+
+        return report_data
+
+    @classmethod
+    def to_report_json(
+        cls,
+        malwi_files: List["MalwiFile"],
+        malicious_threshold: float = 0.5,
+        number_of_skipped_files: int = 0,
+        malicious_only: bool = False,
+    ) -> str:
+        """
+        Generates a report in JSON format from a list of MalwiFile objects,
+        including aggregate statistics.
+        """
+        report_data = cls._generate_report_data(
+            malwi_files,
+            malicious_threshold,
+            number_of_skipped_files,
+            malicious_only=malicious_only,
+        )
+        return json.dumps(report_data, indent=4)
+
+    @classmethod
+    def to_report_yaml(
+        cls,
+        malwi_files: List["MalwiFile"],
+        malicious_threshold: float = 0.5,
+        number_of_skipped_files: int = 0,
+        malicious_only: bool = False,
+    ) -> str:
+        """
+        Generates a report in YAML format from a list of MalwiFile objects,
+        including aggregate statistics.
+        """
+        report_data = cls._generate_report_data(
+            malwi_files,
+            malicious_threshold,
+            number_of_skipped_files,
+            malicious_only=malicious_only,
+        )
+        return yaml.dump(
+            report_data, sort_keys=False, width=float("inf"), default_flow_style=False
+        )
+
 
 def sanitize_identifier(identifier: Optional[str]) -> str:
     if identifier is None:
@@ -586,6 +709,8 @@ def print_csv_output_to_stdout(
 def process_single_py_file(py_file: Path) -> Optional[List[MalwiFile]]:
     try:
         disassembled_data: List[MalwiFile] = disassemble_python_file(str(py_file))
+        for d in disassembled_data:
+            d.predict()
         return disassembled_data if disassembled_data else None
     except Exception as e:
         import traceback
@@ -601,11 +726,6 @@ def process_single_py_file(py_file: Path) -> Optional[List[MalwiFile]]:
 def process_input_path(
     input_path: Path, output_format: str, csv_writer_for_file: Optional[csv.writer]
 ) -> List[MalwiFile]:
-    """
-    Processes a single Python file or all Python files in a directory.
-    If csv_writer_for_file is provided, data is written incrementally.
-    Otherwise, data is accumulated and returned.
-    """
     accumulated_data_for_txt_or_stdout_csv: List[MalwiFile] = []
     files_processed_count = 0
     py_files_list = []

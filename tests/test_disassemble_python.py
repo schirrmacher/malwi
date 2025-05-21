@@ -1,13 +1,13 @@
 import pytest
-import tempfile
 import pathlib
 import types
 import dis
-import csv  # Standard import
+import pytest
+import json
+import yaml
 import io
-import sys  # For sys.version_info and sys.modules
+import sys
 
-# import csv as original_csv_standard_module # This alias can be tricky with patching, so we'll use sys.modules['csv']
 from unittest import mock
 
 # Import necessary components from the script to be tested, using the new package path
@@ -480,3 +480,210 @@ z = None
         module_mf.to_token_string()
         == "TARGETED_FILE RESUME LOAD_CONST INTEGER STORE_NAME STRING_LEN_XS_ENT_LOW LOAD_CONST STRING_LEN_XS_ENT_LOW STORE_NAME STRING_LEN_XS_ENT_LOW LOAD_CONST None STORE_NAME STRING_LEN_XS_ENT_LOW RETURN_CONST None"
     )
+
+
+def mock_initialize_models(model_path=None, tokenizer_path=None):
+    # print("Test: Mock models initialized")
+    pass
+
+
+def mock_get_node_text_prediction(token_string: str):
+    # Predefined responses for consistent testing
+    if "evil_script_tokens" in token_string:  # Specific to file1
+        return {"probabilities": [0.1, 0.9]}  # Malicious
+    if "harmless_utility_tokens" in token_string:  # Specific to file2
+        return {"probabilities": [0.95, 0.05]}  # Non-malicious
+    if "moderate_risk_tokens" in token_string:  # Specific to file3
+        return {"probabilities": [0.4, 0.6]}  # Malicious (if threshold <= 0.6)
+    if "unknown_op_tokens" in token_string:  # Specific to file4
+        return {"probabilities": [0.8, 0.2]}  # Non-malicious
+    return {"probabilities": [0.7, 0.3]}  # Default
+
+
+MalwiFile.load_models_into_memory = classmethod(mock_initialize_models)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_models():
+    # Ensure models are "loaded" once for the test module
+    MalwiFile.load_models_into_memory()
+
+
+@pytest.fixture
+def sample_malwi_files():
+    file1 = MalwiFile(
+        name="evil_script.py",
+        language="python",
+        id_hex="abc",
+        filename="/path/to/evil_script.py",
+        firstlineno=1,
+        instructions=[("LOAD_CONST", "evil_script_tokens")],
+        warnings=["Suspicious"],
+    )  # Expected score: 0.9
+
+    file2 = MalwiFile(
+        name="harmless_utility.py",
+        language="python",
+        id_hex="def",
+        filename="/path/to/harmless_utility.py",
+        firstlineno=5,
+        instructions=[("LOAD_CONST", "harmless_utility_tokens")],
+    )  # Expected score: 0.05
+
+    file3 = MalwiFile(
+        name="moderate_risk.js",
+        language="javascript",
+        id_hex="ghi",
+        filename="/path/to/moderate_risk.js",
+        firstlineno=10,
+        instructions=[("CALL", "moderate_risk_tokens")],
+    )  # Expected score: 0.6
+
+    file4 = MalwiFile(
+        name="unknown.txt",
+        language="text",
+        id_hex="jkl",
+        filename="/path/to/unknown.txt",
+        firstlineno=1,
+        instructions=[("DATA", "unknown_op_tokens")],
+    )  # Expected score: 0.2 (if it uses the mock directly)
+
+    return [file1, file2, file3, file4]
+
+
+@pytest.fixture
+def sample_malwi_files_predictions_set():
+    # Create files and explicitly call predict to make sure scores are set
+    # before report generation, simulating a scenario where scores are pre-calculated.
+    # This helps ensure predict() in report generation handles already-set scores correctly.
+    files = [
+        MalwiFile(
+            name="f1.py",
+            language="python",
+            id_hex="f1",
+            filename="f1.py",
+            firstlineno=1,
+            instructions=[("L", "evil_script_tokens")],
+        ),
+        MalwiFile(
+            name="f2.py",
+            language="python",
+            id_hex="f2",
+            filename="f2.py",
+            firstlineno=1,
+            instructions=[("L", "harmless_utility_tokens")],
+        ),
+    ]
+    for f in files:
+        # Use the mock directly for prediction for test consistency
+        prediction_result = mock_get_node_text_prediction(f.to_token_string())
+        if prediction_result and "probabilities" in prediction_result:
+            f.maliciousness = prediction_result["probabilities"][1]
+    return files
+
+
+def test_generate_yaml_report_basic(sample_malwi_files):
+    """Test basic YAML report generation and consistency with JSON."""
+    malwi_files = sample_malwi_files
+    threshold = 0.5
+    skipped_general = 1
+
+    # Manually run predict to set scores based on mock
+    for mf in malwi_files:
+        mf.predict()
+
+    yaml_report_str = MalwiFile.to_report_yaml(
+        malwi_files,
+        malicious_threshold=threshold,
+        number_of_skipped_files=skipped_general,
+    )
+    report_data_yaml = yaml.safe_load(yaml_report_str)
+
+    json_report_str = MalwiFile.to_report_json(
+        malwi_files,  # Use the same files (scores are already set)
+        malicious_threshold=threshold,
+        number_of_skipped_files=skipped_general,
+    )
+    report_data_json = json.loads(json_report_str)
+
+    # The core data structure should be identical
+    assert report_data_yaml == report_data_json
+
+
+def test_report_empty_file_list():
+    """Test report generation with an empty list of MalwiFiles."""
+    skipped_general = 3
+
+    json_report_str = MalwiFile.to_report_json(
+        [],
+        number_of_skipped_files=skipped_general,
+    )
+    report_data = json.loads(json_report_str)
+
+    summary = report_data["statistics"]
+    assert summary["total_files_encountered"] == skipped_general
+    assert summary["files_processed_for_maliciousness"] == 0
+    assert summary["files_skipped_general"] == skipped_general
+    assert summary["malicious_files_among_processed"] == 0
+    assert summary["non_malicious_files_among_processed"] == 0
+    assert summary["average_maliciousness_score_for_processed"] == 0.0
+    assert summary["proportion_malicious_among_processed"] == 0.0
+    assert len(report_data["details"]) == 0
+
+    yaml_report_str = MalwiFile.to_report_yaml(
+        [],
+        number_of_skipped_files=skipped_general,
+    )
+    report_data_yaml = yaml.safe_load(yaml_report_str)
+    assert report_data_yaml == report_data  # Consistency
+
+
+def test_report_calls_predict_if_needed(monkeypatch):
+    """
+    Test that _generate_report_data calls predict() on files if maliciousness is None.
+    """
+    # Mock predict method to check if it's called
+    called_predict_for = []
+    original_predict = MalwiFile.predict
+
+    def mock_predict_spy(self_mf):
+        called_predict_for.append(self_mf.name)
+        # Call original predict to get a score, using the outer mock_get_node_text_prediction
+        prediction_result = mock_get_node_text_prediction(self_mf.to_token_string())
+        if prediction_result and "probabilities" in prediction_result:
+            self_mf.maliciousness = prediction_result["probabilities"][1]
+        return prediction_result
+
+    monkeypatch.setattr(MalwiFile, "predict", mock_predict_spy)
+
+    test_files = [
+        MalwiFile(
+            name="needs_predict1.py",
+            language="python",
+            id_hex="np1",
+            filename="np1.py",
+            firstlineno=1,
+            instructions=[("L", "evil_script_tokens")],
+        ),
+        MalwiFile(
+            name="needs_predict2.py",
+            language="python",
+            id_hex="np2",
+            filename="np2.py",
+            firstlineno=1,
+            instructions=[("L", "harmless_utility_tokens")],
+        ),
+    ]
+    # Ensure maliciousness is None
+    assert test_files[0].maliciousness is None
+    assert test_files[1].maliciousness is None
+
+    MalwiFile.to_report_json(test_files)
+
+    assert "needs_predict1.py" in called_predict_for
+    assert "needs_predict2.py" in called_predict_for
+    assert test_files[0].maliciousness is not None  # Should be set after predict call
+    assert test_files[1].maliciousness is not None
+
+    # Restore original predict if other tests need it unmocked, though pytest handles fixture/monkeypatch scope.
+    monkeypatch.setattr(MalwiFile, "predict", original_predict)

@@ -1,7 +1,8 @@
 import logging
 import argparse
-from typing import List
+from tqdm import tqdm
 from pathlib import Path
+from typing import List, Tuple, Optional
 
 from research.disassemble_python import process_single_py_file, MalwiFile
 
@@ -10,35 +11,88 @@ logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 def process_source_path(
     input_path: str,
-) -> List[MalwiFile]:
+    accepted_extensions: Optional[List[str]] = None,
+) -> Tuple[List[MalwiFile], List[str]]:
+    if accepted_extensions is None:
+        accepted_extensions = ["py"]
+    normalized_accepted_extensions = [ext.lower() for ext in accepted_extensions]
+
     path_obj = Path(input_path)
-    all_files: List[MalwiFile] = []
+    all_malwi_files: List[MalwiFile] = []
+    skipped_file_paths: List[str] = []
+
+    if not path_obj.exists():
+        logging.error(f"Path '{input_path}' does not exist. Skipping.")
+        return all_malwi_files, skipped_file_paths
 
     if path_obj.is_file():
-        file = process_single_py_file(path_obj)
-        if file:
-            all_files.extend(file)
-        elif not any(Path(input_path).suffix.lstrip(".") in ext for ext in ["py"]):
-            logging.info(f"File '{input_path}' is not a supported file type.")
+        file_extension = path_obj.suffix.lstrip(".").lower()
+
+        if file_extension in normalized_accepted_extensions:
+            logging.debug(f"Processing file: {path_obj}")
+            processed_objects = process_single_py_file(path_obj)
+            if processed_objects:
+                all_malwi_files.extend(processed_objects)
+                logging.info(
+                    f"Successfully processed and extracted data from file: {path_obj}"
+                )
+            else:
+                logging.info(
+                    f"File '{path_obj}' (type: .{file_extension}) was processed by the relevant handler "
+                    f"but yielded no extractable data. This might be due to its content "
+                    f"(e.g., no relevant AST nodes, specific targets missing, or empty file)."
+                )
         else:
             logging.info(
-                f"No processable AST nodes found in '{input_path}' or relevant targets missing/empty in NODE_TARGETS for its language."
+                f"Skipping file '{path_obj}': Extension '.{file_extension}' "
+                f"is not in the accepted list: {accepted_extensions}."
             )
+            skipped_file_paths.append(str(path_obj))
 
     elif path_obj.is_dir():
-        logging.info(f"Processing directory: {input_path}")
-        processed_files_in_dir = False
-        for file_path in path_obj.rglob("*"):  # Using rglob for recursive traversal
-            if file_path.is_file():
-                file = process_single_py_file(Path(file_path))
-                if file:
-                    all_files.extend(file)
-                    processed_files_in_dir = True
-        if not processed_files_in_dir:
-            logging.info(f"No processable files found in directory '{input_path}'.")
+        logging.info(f"Scanning directory: {input_path}")
+
+        discovered_files = [f for f in path_obj.rglob("*") if f.is_file()]
+
+        if not discovered_files:
+            logging.info(f"No files found in directory '{input_path}'.")
+            return all_malwi_files, skipped_file_paths
+
+        logging.info(
+            f"Found {len(discovered_files)} total files. Processing files with accepted extensions..."
+        )
+
+        files_processed_yielding_data = 0
+        files_accepted_type_empty_yield = 0
+
+        for file_path in tqdm(
+            discovered_files,
+            desc=f"Processing '{path_obj.name}'",
+            unit="file",
+            ncols=100,
+            leave=False,
+        ):
+            file_extension = file_path.suffix.lstrip(".").lower()
+            if file_extension in normalized_accepted_extensions:
+                processed_objects = process_single_py_file(file_path)
+                if processed_objects:
+                    all_malwi_files.extend(processed_objects)
+                    files_processed_yielding_data += 1
+                else:
+                    files_accepted_type_empty_yield += 1
+                    logging.debug(
+                        f"File '{file_path}' (type: .{file_extension}) processed but yielded no data."
+                    )
+            else:
+                skipped_file_paths.append(str(file_path))
+
     else:
-        logging.error(f"Path '{input_path}' is neither a file nor a directory.")
-    return all_files
+        logging.error(
+            f"Path '{input_path}' exists but is neither a file nor a directory. Skipping."
+        )
+        skipped_file_paths.append(input_path)
+
+    return all_malwi_files, skipped_file_paths
 
 
 def main():
@@ -120,22 +174,24 @@ def main():
         model_path=args.model_path, tokenizer_path=args.tokenizer_path
     )
 
-    objects = process_source_path(args.path)
-
-    if objects:
-        for o in objects:
-            prediction = o.predict()
-            if o.maliciousness and o.maliciousness > args.threshold:
-                print(o.to_yaml())
+    objects, skipped = process_source_path(args.path)
 
     output = ""
 
     if args.format == "json":
-        pass
+        output = MalwiFile.to_report_json(
+            objects,
+            malicious_threshold=args.threshold,
+            number_of_skipped_files=len(skipped),
+            malicious_only=args.malicious_only,
+        )
     elif args.format == "yaml":
-        pass
-    elif args.format == "csv":
-        pass
+        output = MalwiFile.to_report_yaml(
+            objects,
+            malicious_threshold=args.threshold,
+            number_of_skipped_files=len(skipped),
+            malicious_only=args.malicious_only,
+        )
     else:
         pass
     if args.save:
