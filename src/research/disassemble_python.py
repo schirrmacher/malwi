@@ -474,6 +474,8 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     elif is_file_path(argval):
         return f"{SpecialCases.STRING_FILE_PATH.value}"
     else:
+        if len(argval) < 5:
+            return argval
         if is_escaped_hex(argval):
             prefix = SpecialCases.STRING_ESCAPED_HEX.value
         elif is_hex(argval):
@@ -527,9 +529,7 @@ def map_frozenset_arg(argval: frozenset, original_argrepr: str) -> str:
 
 
 def map_jump_instruction_arg(instruction: dis.Instruction) -> Optional[str]:
-    if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
-        return "TO_NUMBER"
-    return None
+    return "TO_NUMBER"
 
 
 def map_load_const_number_arg(
@@ -582,17 +582,15 @@ def recursively_disassemble_python(
         original_argrepr: str = (
             instruction.argrepr if instruction.argrepr is not None else ""
         )
-        mapped_value: str
 
-        mapped_by_jump = map_jump_instruction_arg(instruction)
-        mapped_by_load_const = map_load_const_number_arg(
-            instruction, argval, original_argrepr
-        )
+        mapped_value = ""
 
-        if mapped_by_jump is not None:
-            mapped_value = mapped_by_jump
-        elif mapped_by_load_const is not None:
-            mapped_value = mapped_by_load_const
+        if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
+            mapped_value = map_jump_instruction_arg(instruction)
+        elif instruction.opname == "LOAD_CONST":
+            mapped_value = map_load_const_number_arg(
+                instruction, argval, original_argrepr
+            )
         elif isinstance(argval, str):
             mapped_value = map_string_arg(argval, original_argrepr)
         elif isinstance(argval, types.CodeType):
@@ -601,7 +599,7 @@ def recursively_disassemble_python(
             mapped_value = map_tuple_arg(argval, original_argrepr)
         elif isinstance(argval, frozenset):
             mapped_value = map_frozenset_arg(argval, original_argrepr)
-        else:
+        elif mapped_value is None:
             mapped_value = original_argrepr
         current_instructions_data.append((opname, mapped_value))
 

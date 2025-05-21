@@ -302,8 +302,8 @@ def test_recursively_disassemble_python_simple():
         mf = all_objects_data[0]
         expected_instructions = []
         if sys.version_info >= (3, 11):
-            expected_instructions.append(("RESUME", "0"))
-        expected_instructions.extend([("LOAD_CONST", "None"), ("RETURN_VALUE", "")])
+            expected_instructions.append(("RESUME", ""))
+        expected_instructions.extend([("LOAD_CONST", None), ("RETURN_VALUE", "")])
         assert mf.instructions == expected_instructions
 
 
@@ -478,7 +478,7 @@ z = None
     module_mf = malwifiles[0]
     assert (
         module_mf.to_token_string()
-        == "TARGETED_FILE RESUME LOAD_CONST INTEGER STORE_NAME STRING_LEN_XS_ENT_LOW LOAD_CONST STRING_LEN_XS_ENT_LOW STORE_NAME STRING_LEN_XS_ENT_LOW LOAD_CONST None STORE_NAME STRING_LEN_XS_ENT_LOW RETURN_CONST None"
+        == "TARGETED_FILE RESUME LOAD_CONST INTEGER STORE_NAME x LOAD_CONST STORE_NAME y LOAD_CONST STORE_NAME z RETURN_CONST"
     )
 
 
