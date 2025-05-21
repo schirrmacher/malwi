@@ -386,6 +386,22 @@ def map_tuple_arg(argval: tuple, original_argrepr: str) -> str:
     return " ".join(ordered)
 
 
+def map_frozenset_arg(argval: frozenset, original_argrepr: str) -> str:
+    result = set()
+    for item in argval:
+        if isinstance(item, str):
+            result.add(str(item))
+        elif isinstance(item, int):
+            result.add(SpecialCases.INTEGER.value)
+        elif isinstance(item, float):
+            result.add(SpecialCases.FLOAT.value)
+    if not result:
+        return ""
+    ordered = list(result)
+    ordered.sort()
+    return " ".join(ordered)
+
+
 def map_jump_instruction_arg(instruction: dis.Instruction) -> Optional[str]:
     if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
         return "TO_NUMBER"
@@ -442,7 +458,7 @@ def recursively_disassemble_python(
         original_argrepr: str = (
             instruction.argrepr if instruction.argrepr is not None else ""
         )
-        arg_representation_to_store: str
+        mapped_value: str
 
         mapped_by_jump = map_jump_instruction_arg(instruction)
         mapped_by_load_const = map_load_const_number_arg(
@@ -450,18 +466,20 @@ def recursively_disassemble_python(
         )
 
         if mapped_by_jump is not None:
-            arg_representation_to_store = mapped_by_jump
+            mapped_value = mapped_by_jump
         elif mapped_by_load_const is not None:
-            arg_representation_to_store = mapped_by_load_const
+            mapped_value = mapped_by_load_const
         elif isinstance(argval, str):
-            arg_representation_to_store = map_string_arg(argval, original_argrepr)
+            mapped_value = map_string_arg(argval, original_argrepr)
         elif isinstance(argval, types.CodeType):
-            arg_representation_to_store = map_code_object_arg(argval, original_argrepr)
+            mapped_value = map_code_object_arg(argval, original_argrepr)
         elif isinstance(argval, tuple):
-            arg_representation_to_store = map_tuple_arg(argval, original_argrepr)
+            mapped_value = map_tuple_arg(argval, original_argrepr)
+        elif isinstance(argval, frozenset):
+            mapped_value = map_frozenset_arg(argval, original_argrepr)
         else:
-            arg_representation_to_store = original_argrepr
-        current_instructions_data.append((opname, arg_representation_to_store))
+            mapped_value = original_argrepr
+        current_instructions_data.append((opname, mapped_value))
 
     object_data = MalwiFile(
         name=code_obj.co_name,
