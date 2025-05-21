@@ -43,6 +43,7 @@ COMMON_TARGET_FILES: Dict[str, Set[str]] = read_json_from_file(
 
 
 class SpecialCases(Enum):
+    STRING_MAX_LENGTH = 10
     STRING_SENSITIVE_FILE_PATH = "STRING_SENSITIVE_FILE_PATH"
     STRING_URL = "STRING_URL"
     STRING_FILE_PATH = "STRING_FILE_PATH"
@@ -474,7 +475,7 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     elif is_file_path(argval):
         return f"{SpecialCases.STRING_FILE_PATH.value}"
     else:
-        if len(argval) < 5:
+        if len(argval) < SpecialCases.STRING_MAX_LENGTH.value:
             return argval
         if is_escaped_hex(argval):
             prefix = SpecialCases.STRING_ESCAPED_HEX.value
