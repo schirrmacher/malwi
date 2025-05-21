@@ -76,8 +76,8 @@ class MalwiFile:
     file_path: str
     firstlineno: int
     instructions: List[Tuple[str, str]]
+    warnings: List[str]
     maliciousness: Optional[float] = None
-    warnings: List[str] = field(default_factory=list)
 
     def __init__(
         self,
@@ -94,7 +94,7 @@ class MalwiFile:
         self.file_path = filename
         self.firstlineno = firstlineno
         self.instructions = instructions
-        self.warnings = warnings if warnings is not None else []
+        self.warnings = list(warnings)  # copy list to prevent list sharing
         if Path(filename).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings += [SpecialCases.TARGETED_FILE.value]
 
@@ -107,6 +107,7 @@ class MalwiFile:
     def to_tokens(self) -> List[str]:
         instructions: List[Tuple[str, str]] = self.instructions
         all_token_parts: List[str] = []
+        all_token_parts.extend(self.warnings)
         for opname, argrepr_val in instructions:
             all_token_parts.append(opname)
             if argrepr_val:
