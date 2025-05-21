@@ -54,6 +54,8 @@ class SpecialCases(Enum):
     MALFORMED_SYNTAX = "MALFORMED_SYNTAX"
     FILE_READING_ISSUES = "FILE_READING_ISSUES"
     TARGETED_FILE = "TARGETED_FILE"
+    INTEGER = "INTEGER"
+    FLOAT = "FLOAT"
 
 
 class LiteralStr(str):
@@ -369,11 +371,19 @@ def map_code_object_arg(argval: types.CodeType, original_argrepr: str) -> str:
 
 
 def map_tuple_arg(argval: tuple, original_argrepr: str) -> str:
-    string_elements: List[str] = [item for item in argval if isinstance(item, str)]
-    if string_elements:
-        return " ".join(string_elements)
-    else:
-        return original_argrepr
+    result = set()
+    for item in argval:
+        if isinstance(item, str):
+            result.add(str(item))
+        elif isinstance(item, int):
+            result.add(SpecialCases.INTEGER.value)
+        elif isinstance(item, float):
+            result.add(SpecialCases.FLOAT.value)
+    if not result:
+        return ""
+    ordered = list(result)
+    ordered.sort()
+    return " ".join(ordered)
 
 
 def map_jump_instruction_arg(instruction: dis.Instruction) -> Optional[str]:
@@ -387,9 +397,9 @@ def map_load_const_number_arg(
 ) -> Optional[str]:
     if instruction.opname == "LOAD_CONST":
         if isinstance(argval, int):
-            return "INTEGER"
+            return SpecialCases.INTEGER.value
         elif isinstance(argval, float):
-            return "FLOAT"
+            return SpecialCases.INTEGER.value
         elif isinstance(argval, types.CodeType):
             return map_code_object_arg(argval, original_argrepr)
         else:
