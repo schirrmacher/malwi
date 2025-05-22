@@ -696,13 +696,14 @@ def print_csv_output_to_stdout(
 
 
 def process_single_py_file(
-    py_file: Path,
+    py_file: Path, predict: bool = True
 ) -> Optional[List[MalwiFile]]:
     try:
         disassembled_data: List[MalwiFile] = disassemble_python_file(str(py_file))
-        for d in disassembled_data:
-            if d.instructions:
-                d.predict()
+        if predict:
+            for d in disassembled_data:
+                if d.instructions:
+                    d.predict()
         return disassembled_data if disassembled_data else None
     except Exception as e:
         print(
@@ -750,7 +751,7 @@ def process_input_path(
         disable=disable_tqdm,
     ):
         try:
-            file_disassembled_data = process_single_py_file(py_file)
+            file_disassembled_data = process_single_py_file(py_file, predict=False)
             if file_disassembled_data:
                 files_processed_count += 1
                 if output_format == "csv" and csv_writer_for_file:
