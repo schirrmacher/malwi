@@ -672,7 +672,6 @@ def print_txt_output(all_objects_data: List[MalwiFile], output_stream: Any) -> N
 
 def get_row_data(obj: MalwiFile) -> List[Any]:
     return [
-        obj.name,
         obj.to_token_string(),
         obj.to_string_hash(),
         obj.file_path,
@@ -690,7 +689,7 @@ def print_csv_output_to_stdout(
     all_objects_data: List[MalwiFile], output_stream: Any
 ) -> None:
     writer = csv.writer(output_stream)
-    writer.writerow(["name", "tokens", "hash", "filepath"])
+    writer.writerow(["tokens", "hash", "filepath"])
     for obj in all_objects_data:
         writer.writerow(get_row_data(obj))
 
@@ -856,9 +855,7 @@ def main() -> None:
                 )
                 csv_writer_instance = csv.writer(output_file_obj)
                 if is_empty:
-                    csv_writer_instance.writerow(
-                        ["tokens", "hash", "filepath", "object_name", "first_line"]
-                    )
+                    csv_writer_instance.writerow(["tokens", "hash", "filepath"])
             else:
                 output_file_obj = open(
                     save_path, "w", encoding="utf-8", errors="replace"

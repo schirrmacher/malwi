@@ -410,7 +410,7 @@ def test_write_csv_rows_for_file_data(sample_malwifile):
     # Use standard csv from the 'csv' module directly, not an alias that might be patched
     csv_writer = sys.modules["csv"].writer(output_stream, lineterminator="\n")
     write_csv_rows_for_file_data([sample_malwifile], csv_writer)
-    expected = "<module>,LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
+    expected = "LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
     assert output_stream.getvalue().strip() == expected
 
 
@@ -430,8 +430,8 @@ def test_print_csv_output_to_stdout(sample_malwifile):
         print_csv_output_to_stdout([sample_malwifile], output_stream)
 
     lines = output_stream.getvalue().strip().split("\n")
-    assert lines[0] == "name,tokens,hash,filepath"
-    expected_data_row = "<module>,LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
+    assert lines[0] == "tokens,hash,filepath"
+    expected_data_row = "LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
     assert lines[1] == expected_data_row
 
 
