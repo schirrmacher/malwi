@@ -10,6 +10,7 @@ import json
 import types
 import socket
 import urllib
+import inspect
 import pathlib
 import hashlib
 import warnings
@@ -19,7 +20,7 @@ import collections
 from tqdm import tqdm
 from enum import Enum
 from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Tuple, Set, Optional, Any, Dict
 
 
@@ -73,30 +74,35 @@ yaml.add_representer(LiteralStr, literal_str_representer)
 @dataclass
 class MalwiFile:
     name: str
-    id_hex: str
+    id_hex: Optional[str]
     file_path: str
-    firstlineno: int
+    firstlineno: Optional[int]
     instructions: List[Tuple[str, str]]
     warnings: List[str]
     maliciousness: Optional[float] = None
+    code: Optional[str] = None
 
     def __init__(
         self,
         name: str,
         language: str,
-        id_hex: str,
-        filename: str,
-        firstlineno: int,
+        id_hex: Optional[str],
+        file_path: str,
+        firstlineno: Optional[int],
         instructions: List[Tuple[str, str]],
         warnings: List[str] = [],
+        code: Optional[str] = None,
     ):
         self.name = name
         self.id_hex = id_hex
-        self.file_path = filename
+        self.file_path = file_path
         self.firstlineno = firstlineno
         self.instructions = instructions
-        self.warnings = list(warnings)  # copy list to prevent list sharing
-        if Path(filename).name in COMMON_TARGET_FILES.get(language, []):
+        self.warnings = list(warnings)
+        self.maliciousness = None
+        self.code = code
+
+        if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings += [SpecialCases.TARGETED_FILE.value]
 
     @classmethod
@@ -132,14 +138,23 @@ class MalwiFile:
         return prediction
 
     def to_dict(self) -> dict:
+        code_display_value = self.code
+        if code_display_value is None:
+            code_display_value = "<source not available>"
+
+        if isinstance(code_display_value, str) and "\n" in code_display_value:
+            final_code_value = LiteralStr(code_display_value.strip())
+        else:
+            final_code_value = code_display_value
+
         return {
             "path": self.file_path,
             "contents": [
                 {
                     "name": self.name,
                     "score": self.maliciousness,
+                    "code": final_code_value,
                     "tokens": self.to_token_string(),
-                    "code": "<tbd>",
                     "hash": self.to_string_hash(),
                 }
             ],
@@ -159,6 +174,7 @@ class MalwiFile:
     @staticmethod
     def _generate_report_data(
         malwi_files: List["MalwiFile"],
+        all_files: List[str],
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
         malicious_only: bool = False,
@@ -166,11 +182,9 @@ class MalwiFile:
         """
         Internal helper to compute report data.
         """
-        num_processed_files = len(
-            malwi_files
-        )  # Files that were actually processed to this stage
+        processed_objects_count = len(malwi_files)
         total_maliciousness_score = 0.0
-        malicious_files_count = 0
+        malicious_objects_count = 0
         files_with_scores_count = 0
 
         for mf in malwi_files:
@@ -181,48 +195,14 @@ class MalwiFile:
                 total_maliciousness_score += mf.maliciousness
                 files_with_scores_count += 1
                 if mf.maliciousness > malicious_threshold:
-                    malicious_files_count += 1
-
-        non_malicious_files_count = num_processed_files - malicious_files_count
-
-        average_maliciousness_score = (
-            (total_maliciousness_score / files_with_scores_count)
-            if files_with_scores_count > 0
-            else 0.0
-        )
-
-        if num_processed_files > 0:
-            proportion_malicious_processed = malicious_files_count / num_processed_files
-        else:
-            proportion_malicious_processed = 0.0
-
-        # Considering total files encountered = processed + skipped
-        total_files_encountered = num_processed_files + number_of_skipped_files
+                    malicious_objects_count += 1
 
         summary_statistics = {
-            "total_files_encountered": total_files_encountered,
-            "files_processed_for_maliciousness": num_processed_files,  # Renamed from total_files_scanned
-            "files_skipped_general": number_of_skipped_files,  # Renamed key
-            "average_maliciousness_score_for_processed": round(
-                average_maliciousness_score, 4
-            ),  # Clarified scope
-            "files_with_scores_count": files_with_scores_count,
-            "malicious_files_among_processed": malicious_files_count,  # Clarified scope
-            "non_malicious_files_among_processed": non_malicious_files_count,  # Clarified scope
-            "malicious_vs_non_malicious_ratio_processed": f"{malicious_files_count}:{non_malicious_files_count}",
-            "proportion_malicious_among_processed": round(
-                proportion_malicious_processed, 4
-            ),  # Clarified scope
+            "total_files": len(all_files),
+            "skipped_files": number_of_skipped_files,
+            "processed_objects": processed_objects_count,
+            "malicious_objects": malicious_objects_count,
         }
-
-        # Adjusting summary for the specific case when no files are processed (num_processed_files == 0)
-        # to align more with the user's initial empty report structure, but keeping detailed keys.
-        if num_processed_files == 0:
-            summary_statistics["average_maliciousness_score_for_processed"] = 0.0
-            summary_statistics["malicious_files_among_processed"] = 0
-            summary_statistics["non_malicious_files_among_processed"] = 0
-            summary_statistics["proportion_malicious_among_processed"] = 0.0
-            summary_statistics["malicious_vs_non_malicious_ratio_processed"] = "0:0"
 
         report_data = {
             "statistics": summary_statistics,
@@ -230,8 +210,11 @@ class MalwiFile:
         }
 
         for mf in malwi_files:
-            if mf.maliciousness is not None and mf.maliciousness > malicious_threshold:
-                report_data["details"].append(mf.to_dict())
+            if mf.maliciousness is not None:
+                if mf.maliciousness > malicious_threshold:
+                    report_data["details"].append(mf.to_dict())
+                elif not malicious_only:
+                    report_data["details"].append(mf.to_dict())
             elif not malicious_only:
                 report_data["details"].append(mf.to_dict())
 
@@ -241,16 +224,14 @@ class MalwiFile:
     def to_report_json(
         cls,
         malwi_files: List["MalwiFile"],
+        all_files: List[str],
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
         malicious_only: bool = False,
     ) -> str:
-        """
-        Generates a report in JSON format from a list of MalwiFile objects,
-        including aggregate statistics.
-        """
         report_data = cls._generate_report_data(
             malwi_files,
+            all_files,
             malicious_threshold,
             number_of_skipped_files,
             malicious_only=malicious_only,
@@ -261,16 +242,14 @@ class MalwiFile:
     def to_report_yaml(
         cls,
         malwi_files: List["MalwiFile"],
+        all_files: List[str],
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
         malicious_only: bool = False,
     ) -> str:
-        """
-        Generates a report in YAML format from a list of MalwiFile objects,
-        including aggregate statistics.
-        """
         report_data = cls._generate_report_data(
             malwi_files,
+            all_files,
             malicious_threshold,
             number_of_skipped_files,
             malicious_only=malicious_only,
@@ -326,21 +305,6 @@ def map_string_length_to_token(str_len: int):
         return "LEN_XL"
     else:
         return "LEN_XXL"
-
-
-def map_file_site_to_token(str_len: int):  # Unused function
-    if str_len <= 100:
-        return "FILE_LEN_XS"
-    elif str_len <= 1000:
-        return "FILE_LEN_S"
-    elif str_len <= 10000:
-        return "FILE_LEN_M"
-    elif str_len <= 100000:
-        return "FILE_LEN_L"
-    elif str_len <= 1000000:
-        return "FILE_LEN_XL"
-    else:
-        return "FILE_LEN_XXL"
 
 
 def calculate_shannon_entropy(data: bytes) -> float:
@@ -436,27 +400,6 @@ def is_file_path(text: str) -> bool:
     ) and not is_common_non_file_url
 
 
-def parse_python_string_literal(
-    s: str,
-) -> Optional[Tuple[str, str, str]]:  # Unused function
-    pattern = re.compile(
-        r"""
-        ^
-        (?P<prefix>[fFrRbBuU]?)
-        (?P<quote>'''|\"\"\"|'|\")
-        (?P<content>.*?)
-        (?P=quote)
-        $
-        """,
-        re.DOTALL | re.VERBOSE,
-    )
-    match = pattern.match(s)
-    if match:
-        return match.group("content")
-    else:
-        return s
-
-
 def map_string_arg(argval: str, original_argrepr: str) -> str:
     prefix = "STRING"
     python_function_mapping = FUNCTION_MAPPING.get("python", {})
@@ -536,15 +479,14 @@ def map_jump_instruction_arg(instruction: dis.Instruction) -> Optional[str]:
 def map_load_const_number_arg(
     instruction: dis.Instruction, argval: Any, original_argrepr: str
 ) -> Optional[str]:
-    if instruction.opname == "LOAD_CONST":
-        if isinstance(argval, int):
-            return SpecialCases.INTEGER.value
-        elif isinstance(argval, float):
-            return SpecialCases.INTEGER.value
-        elif isinstance(argval, types.CodeType):
-            return map_code_object_arg(argval, original_argrepr)
-        else:
-            return None
+    if isinstance(argval, int):
+        return SpecialCases.INTEGER.value
+    elif isinstance(argval, float):
+        return SpecialCases.FLOAT.value
+    elif isinstance(argval, types.CodeType):
+        return map_code_object_arg(argval, original_argrepr)
+    elif isinstance(argval, str):
+        return map_string_arg(argval, original_argrepr)
     return None
 
 
@@ -557,16 +499,31 @@ def recursively_disassemble_python(
     errors: List[str] = [],
 ) -> None:
     if errors or not code_obj:
-        for w in errors:
+        for err_msg in errors:
             object_data = MalwiFile(
-                name=w,
+                name=err_msg,
                 language=language,
                 id_hex=None,
-                filename=file_path,
+                file_path=file_path,
                 firstlineno=None,
                 instructions=[],
+                warnings=[err_msg],
+                code=f"<Not applicable: file error '{err_msg}'>",
             )
             all_objects_data.append(object_data)
+        if not code_obj and not errors:
+            all_objects_data.append(
+                MalwiFile(
+                    name=SpecialCases.MALFORMED_FILE.value,
+                    language=language,
+                    id_hex=None,
+                    file_path=file_path,
+                    firstlineno=None,
+                    instructions=[],
+                    warnings=[SpecialCases.MALFORMED_FILE.value],
+                    code="<Not applicable: no code object generated>",
+                )
+            )
         return
 
     if visited_code_ids is None:
@@ -584,141 +541,174 @@ def recursively_disassemble_python(
             instruction.argrepr if instruction.argrepr is not None else ""
         )
 
-        mapped_value = ""
+        final_value = ""
 
         if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
-            mapped_value = map_jump_instruction_arg(instruction)
+            final_value = map_jump_instruction_arg(instruction)
         elif instruction.opname == "LOAD_CONST":
-            mapped_value = map_load_const_number_arg(
+            final_value = map_load_const_number_arg(
                 instruction, argval, original_argrepr
             )
         elif isinstance(argval, str):
-            mapped_value = map_string_arg(argval, original_argrepr)
+            final_value = map_string_arg(argval, original_argrepr)
         elif isinstance(argval, types.CodeType):
-            mapped_value = map_code_object_arg(argval, original_argrepr)
+            final_value = map_code_object_arg(argval, original_argrepr)
         elif isinstance(argval, tuple):
-            mapped_value = map_tuple_arg(argval, original_argrepr)
+            final_value = map_tuple_arg(argval, original_argrepr)
         elif isinstance(argval, frozenset):
-            mapped_value = map_frozenset_arg(argval, original_argrepr)
-        elif mapped_value is None:
-            mapped_value = original_argrepr
-        current_instructions_data.append((opname, mapped_value))
+            final_value = map_frozenset_arg(argval, original_argrepr)
+        else:
+            final_value = original_argrepr
+
+        current_instructions_data.append((opname, final_value))
+
+    code: Optional[str] = None
+    if code_obj:
+        try:
+            lines, _ = inspect.getsourcelines(code_obj)
+            code = "".join(lines)
+        except (OSError, TypeError, IndexError) as e:
+            code = f"<source retrieval failed: {type(e).__name__} on {code_obj.co_name or 'unknown_object'}>"
+        except Exception as e:
+            code = f"<source retrieval error: {type(e).__name__} on {code_obj.co_name or 'unknown_object'}>"
 
     object_data = MalwiFile(
-        name=code_obj.co_name,
+        name=code_obj.co_name if code_obj else "UnknownObject",
         language=language,
-        id_hex=hex(id(code_obj)),
-        filename=code_obj.co_filename,
-        firstlineno=code_obj.co_firstlineno,
+        id_hex=hex(id(code_obj)) if code_obj else None,
+        file_path=(code_obj.co_filename if code_obj else file_path),
+        firstlineno=code_obj.co_firstlineno if code_obj else None,
         instructions=current_instructions_data,
+        code=code,
+        warnings=[],
     )
     all_objects_data.append(object_data)
 
-    for const in code_obj.co_consts:
-        if isinstance(const, types.CodeType):
-            recursively_disassemble_python(
-                file_path=file_path,
-                language=language,
-                code_obj=const,
-                all_objects_data=all_objects_data,
-                visited_code_ids=visited_code_ids,
-            )
+    if code_obj:  # Only recurse if code_obj is valid
+        for const in code_obj.co_consts:
+            if isinstance(const, types.CodeType):
+                recursively_disassemble_python(
+                    file_path=file_path,  # Pass the original file_path for context
+                    language=language,
+                    code_obj=const,
+                    all_objects_data=all_objects_data,
+                    visited_code_ids=visited_code_ids,
+                    errors=[],
+                )
 
 
 def disassemble_python_file(file_path_str: str) -> List[MalwiFile]:
     all_disassembled_data: List[MalwiFile] = []
-    source_code: str
-
-    errors: List[str] = []
+    source_code: Optional[str] = None
+    current_file_errors: List[str] = []
 
     try:
         with open(file_path_str, "r", encoding="utf-8", errors="replace") as f:
             source_code = f.read()
     except Exception:
-        errors.append(SpecialCases.FILE_READING_ISSUES.value)
+        current_file_errors.append(SpecialCases.FILE_READING_ISSUES.value)
 
     top_level_code_object = None
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", SyntaxWarning)
-            top_level_code_object: types.CodeType = compile(
-                source_code, file_path_str, "exec"
-            )
-    except UnicodeDecodeError:
-        errors.append(SpecialCases.MALFORMED_FILE.value)
-    except SyntaxError:
-        errors.append(SpecialCases.MALFORMED_SYNTAX.value)
-    except Exception:
-        errors.append(SpecialCases.MALFORMED_FILE.value)
+    if source_code is not None:
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SyntaxWarning)
+                top_level_code_object = compile(source_code, file_path_str, "exec")
+        except UnicodeDecodeError:
+            current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
+        except SyntaxError:
+            current_file_errors.append(SpecialCases.MALFORMED_SYNTAX.value)
+        except Exception:
+            current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
+    else:
+        if not current_file_errors:
+            current_file_errors.append(SpecialCases.FILE_READING_ISSUES.value)
 
     recursively_disassemble_python(
         file_path=file_path_str,
         language="python",
         code_obj=top_level_code_object,
         all_objects_data=all_disassembled_data,
-        errors=errors,
+        errors=current_file_errors,
     )
     return all_disassembled_data
 
 
 def print_txt_output(all_objects_data: List[MalwiFile], output_stream: Any) -> None:
     for obj_data in all_objects_data:
+        # For error entries, id_hex and firstlineno might be None.
+        obj_id_hex = obj_data.id_hex if obj_data.id_hex is not None else "<N/A>"
+        obj_firstlineno = (
+            obj_data.firstlineno if obj_data.firstlineno is not None else "<N/A>"
+        )
+
         print(
-            f"\nDisassembly of <code object {obj_data.name} at {obj_data.id_hex}>:",
+            f"\nDisassembly of <code object {obj_data.name} at {obj_id_hex}>:",
             file=output_stream,
         )
         print(
-            f'  (file: "{obj_data.file_path}", line: {obj_data.firstlineno})',
+            f'  (file: "{obj_data.file_path}", line: {obj_firstlineno})',
             file=output_stream,
         )
-        print(f"{'OPNAME':<25} ARGREPR", file=output_stream)
-        print(f"{'-' * 25} {'-' * 20}", file=output_stream)
-        for opname, argrepr_val in obj_data.instructions:
-            print(f"{opname:<25} {argrepr_val}", file=output_stream)
+        if obj_data.code and not obj_data.code.startswith("<Not applicable"):
+            indented_source = "\n".join(
+                ["    " + line for line in obj_data.code.splitlines()]
+            )
+            print(f"  Source Code:\n{indented_source}", file=output_stream)
+        elif obj_data.code:
+            print(f"  Source Code: {obj_data.code}", file=output_stream)
+
+        if obj_data.instructions:
+            print(f"{'OPNAME':<25} ARGREPR", file=output_stream)
+            print(f"{'-' * 25} {'-' * 20}", file=output_stream)
+            for opname, argrepr_val in obj_data.instructions:
+                print(f"{opname:<25} {argrepr_val}", file=output_stream)
+        elif not obj_data.code or obj_data.code.startswith("<Not applicable"):
+            print(
+                f"  (No instructions, entry likely represents a file/syntax error: {obj_data.name})",
+                file=output_stream,
+            )
+
+
+def get_row_data(obj: MalwiFile) -> List[Any]:
+    return [
+        obj.name,
+        obj.to_token_string(),
+        obj.to_string_hash(),
+        obj.file_path,
+    ]
 
 
 def write_csv_rows_for_file_data(
     file_disassembled_data: List[MalwiFile], csv_writer_obj: csv.writer
 ) -> None:
-    """Writes CSV rows for the disassembled data of a single file."""
-    if not file_disassembled_data:
-        return
-    for obj_data in file_disassembled_data:
-        concatenated_tokens_string = obj_data.to_token_string()
-        sha256_hash: str = obj_data.to_string_hash()
-        csv_writer_obj.writerow(
-            [concatenated_tokens_string, sha256_hash, obj_data.file_path]
-        )
+    for obj in file_disassembled_data:
+        csv_writer_obj.writerow(get_row_data(obj))
 
 
 def print_csv_output_to_stdout(
     all_objects_data: List[MalwiFile], output_stream: Any
 ) -> None:
-    """Prints all collected disassembled data to a CSV stream (typically stdout)."""
     writer = csv.writer(output_stream)
-    writer.writerow(["tokens", "hash", "filepath"])
-    if not all_objects_data:
-        return
-    for obj_data in all_objects_data:
-        concatenated_tokens_string = obj_data.to_token_string()
-        sha256_hash: str = obj_data.to_string_hash()
-        writer.writerow([concatenated_tokens_string, sha256_hash, obj_data.file_path])
+    writer.writerow(["name", "tokens", "hash", "filepath"])
+    for obj in all_objects_data:
+        writer.writerow(get_row_data(obj))
 
 
-def process_single_py_file(py_file: Path) -> Optional[List[MalwiFile]]:
+def process_single_py_file(
+    py_file: Path,
+) -> Optional[List[MalwiFile]]:
     try:
         disassembled_data: List[MalwiFile] = disassemble_python_file(str(py_file))
         for d in disassembled_data:
-            d.predict()
+            if d.instructions:
+                d.predict()
         return disassembled_data if disassembled_data else None
     except Exception as e:
-        import traceback
-
         print(
             f"An unexpected error occurred while processing {py_file}: {e}",
             file=sys.stderr,
         )
-        traceback.print_exc(file=sys.stderr)
     return None
 
 
@@ -739,27 +729,26 @@ def process_input_path(
         py_files_list = list(input_path.rglob("*.py"))
         if not py_files_list:
             print(f"No .py files found in directory: {input_path}", file=sys.stderr)
-            return accumulated_data_for_txt_or_stdout_csv
+            return accumulated_data_for_txt_or_stdout_csv  # Return empty list
     else:
         print(f"Error: Path is not a file or directory: {input_path}", file=sys.stderr)
-        return accumulated_data_for_txt_or_stdout_csv
+        return accumulated_data_for_txt_or_stdout_csv  # Return empty list
 
     tqdm_desc = (
-        f"Processing '{input_path.name}'"
-        if len(py_files_list) > 1 or input_path.is_dir()
-        else "Processing file"
+        f"Processing directory '{input_path.name}'"  # Changed description for clarity
+        if input_path.is_dir() and len(py_files_list) > 1
+        else f"Processing '{input_path.name}'"
     )
+
+    disable_tqdm = len(py_files_list) <= 1 and input_path.is_file()
 
     for py_file in tqdm(
         py_files_list,
         desc=tqdm_desc,
         unit="file",
         ncols=100,
-        disable=len(py_files_list) <= 1 and not input_path.is_dir(),
+        disable=disable_tqdm,
     ):
-        if input_path.is_file() and len(py_files_list) == 1:
-            print(f"--- Analyzing file: {py_file.resolve()} ---", file=sys.stderr)
-
         try:
             file_disassembled_data = process_single_py_file(py_file)
             if file_disassembled_data:
@@ -773,11 +762,11 @@ def process_input_path(
                         file_disassembled_data
                     )
         except Exception as e:
-            print(f"{input_path} {e}")
+            print(f"Critical error processing file {py_file}: {e}", file=sys.stderr)
 
     if files_processed_count == 0 and py_files_list:
         print(
-            "No Python files were successfully processed from the input path.",
+            "No Python files were successfully processed to produce disassemblies from the input path.",
             file=sys.stderr,
         )
 
@@ -786,8 +775,8 @@ def process_input_path(
 
 def main() -> None:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
-        description="Recursively disassemble Python file(s). Various argreprs are replaced.",
-        epilog="Example: python %(prog)s your_script.or_directory --format csv --save output.csv",
+        description="Recursively disassemble Python files",
+        epilog="Example: python %(prog)s your_script.or_directory --format txt --save output.txt",
     )
     parser.add_argument(
         "path", metavar="PATH", help="The Python file or directory to process."
@@ -796,9 +785,9 @@ def main() -> None:
         "-f",
         "--format",
         type=str,
-        choices=["txt", "csv"],
+        choices=["txt", "csv", "json", "yaml"],
         default="txt",
-        help="Output format (default: txt)",
+        help="Output format (default: txt). 'json' and 'yaml' are report formats.",
     )
     parser.add_argument(
         "-s",
@@ -808,10 +797,43 @@ def main() -> None:
         metavar="FILEPATH",
         help="Path to save the output. If not provided, output goes to stdout.",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 2.5")
+    parser.add_argument(
+        "--model-path",
+        type=str,
+        default=None,
+        help="Path to the ML model for maliciousness prediction.",
+    )
+    parser.add_argument(
+        "--tokenizer-path",
+        type=str,
+        default=None,
+        help="Path to the tokenizer for the ML model.",
+    )
+    parser.add_argument(
+        "--malicious-threshold",
+        type=float,
+        default=0.5,
+        help="Threshold for classifying as malicious in reports (0.0 to 1.0).",
+    )
+    parser.add_argument(
+        "--malicious-only",
+        action="store_true",
+        help="In reports, include only files deemed malicious.",
+    )
+    parser.add_argument("--version", action="version", version="%(prog)s 2.6")
 
     args: argparse.Namespace = parser.parse_args()
     input_path_obj: Path = Path(args.path)
+
+    try:
+        MalwiFile.load_models_into_memory(
+            model_path=args.model_path, tokenizer_path=args.tokenizer_path
+        )
+    except Exception as e:
+        print(
+            f"Warning: Could not initialize ML models: {e}. Maliciousness prediction will be disabled.",
+            file=sys.stderr,
+        )
 
     if not input_path_obj.exists():
         print(f"Error: Input path does not exist: {input_path_obj}", file=sys.stderr)
@@ -833,13 +855,25 @@ def main() -> None:
                 )
                 csv_writer_instance = csv.writer(output_file_obj)
                 if is_empty:
-                    csv_writer_instance.writerow(["tokens", "hash", "filepath"])
+                    csv_writer_instance.writerow(
+                        ["tokens", "hash", "filepath", "object_name", "first_line"]
+                    )
             else:
                 output_file_obj = open(
                     save_path, "w", encoding="utf-8", errors="replace"
                 )
                 output_stream_target = output_file_obj
-            print(f"Output will be saved to: {save_path.resolve()}", file=sys.stderr)
+
+            if args.format not in ["csv"]:
+                print(
+                    f"Output will be saved to: {save_path.resolve()}", file=sys.stderr
+                )
+            elif args.format == "csv" and output_file_obj != sys.stdout:
+                print(
+                    f"CSV output will be appended to: {save_path.resolve()}",
+                    file=sys.stderr,
+                )
+
         except IOError as e:
             print(
                 f"Error: Could not open save path '{args.save}': {e}", file=sys.stderr
@@ -852,32 +886,51 @@ def main() -> None:
             )
             sys.exit(1)
 
-    collected_data_for_final_print: List[MalwiFile] = []
+    collected_data: List[MalwiFile] = []
     try:
-        collected_data_for_final_print = process_input_path(
-            input_path_obj, args.format, csv_writer_instance
+        collected_data = process_input_path(
+            input_path_obj,
+            args.format,
+            csv_writer_instance,
         )
     except Exception as e:
         print(
-            f"A critical error occurred during path processing: {input_path_obj} {e}",
+            f"A critical error occurred during path processing for '{input_path_obj}': {e}",
             file=sys.stderr,
         )
+        import traceback
+
+        traceback.print_exc(file=sys.stderr)
+        if output_file_obj and output_file_obj != sys.stdout:
+            output_file_obj.close()
         sys.exit(1)
 
     if not csv_writer_instance:
-        if not collected_data_for_final_print:
+        if not collected_data:
             if args.format == "csv" and output_stream_target == sys.stdout:
                 print_csv_output_to_stdout([], output_stream_target)
         else:
             if args.format == "txt":
-                print_txt_output(collected_data_for_final_print, output_stream_target)
-            elif args.format == "csv":
-                print_csv_output_to_stdout(
-                    collected_data_for_final_print, output_stream_target
+                print_txt_output(collected_data, output_stream_target)
+            elif args.format == "csv":  # CSV to stdout
+                print_csv_output_to_stdout(collected_data, output_stream_target)
+            elif args.format == "json":
+                report_json = MalwiFile.to_report_json(
+                    collected_data, args.malicious_threshold, 0, args.malicious_only
                 )
+                output_stream_target.write(report_json + "\n")
+            elif args.format == "yaml":
+                report_yaml = MalwiFile.to_report_yaml(
+                    collected_data, args.malicious_threshold, 0, args.malicious_only
+                )
+                output_stream_target.write(report_yaml + "\n")
 
-    if output_file_obj:
-        output_file_obj.close()
+    if output_file_obj and output_file_obj != sys.stdout:
+        try:
+            output_file_obj.close()
+        except Exception as e:
+            print(f"Error closing output file '{args.save}': {e}", file=sys.stderr)
+
     sys.exit(0)
 
 

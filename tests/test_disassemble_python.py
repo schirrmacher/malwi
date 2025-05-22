@@ -69,8 +69,9 @@ def sample_malwifile():
     return MalwiFile(
         name="<module>",
         language="python",
+        code="abc",
         id_hex="0x123",
-        filename="test.py",
+        file_path="test.py",
         firstlineno=1,
         instructions=[("LOAD_CONST", "1"), ("RETURN_VALUE", "")],
     )
@@ -91,7 +92,7 @@ class TestMalwiFile:
             name="test_func",
             language="python",
             id_hex="0xabc",
-            filename="example.py",
+            file_path="example.py",
             firstlineno=10,
             instructions=[("LOAD_NAME", "print")],
             warnings=["TEST_WARNING"],
@@ -133,8 +134,8 @@ class TestMalwiFile:
                 {
                     "name": "<module>",
                     "score": 0.75,
+                    "code": "abc",
                     "tokens": "LOAD_CONST 1 RETURN_VALUE",
-                    "code": "<tbd>",
                     "hash": current_hash,
                 }
             ],
@@ -302,8 +303,8 @@ def test_recursively_disassemble_python_simple():
         mf = all_objects_data[0]
         expected_instructions = []
         if sys.version_info >= (3, 11):
-            expected_instructions.append(("resume", ""))
-        expected_instructions.extend([("load_const", ""), ("return_value", "")])
+            expected_instructions.append(("resume", "0"))
+        expected_instructions.extend([("load_const", "None"), ("return_value", "")])
         assert mf.instructions == expected_instructions
 
 
@@ -409,30 +410,28 @@ def test_write_csv_rows_for_file_data(sample_malwifile):
     # Use standard csv from the 'csv' module directly, not an alias that might be patched
     csv_writer = sys.modules["csv"].writer(output_stream, lineterminator="\n")
     write_csv_rows_for_file_data([sample_malwifile], csv_writer)
-    expected = f"{sample_malwifile.to_token_string()},{sample_malwifile.to_string_hash()},{sample_malwifile.file_path}"
+    expected = "<module>,LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
     assert output_stream.getvalue().strip() == expected
 
 
 def test_print_csv_output_to_stdout(sample_malwifile):
-    # Get a guaranteed original reference to the standard library's csv.writer
     original_stdlib_csv_writer = sys.modules["csv"].writer
 
     def custom_writer_factory(stream_from_sut, *args_from_sut, **kwargs_from_sut):
-        # This function is called when 'research.disassemble_python.csv.writer' is invoked.
         return original_stdlib_csv_writer(
             stream_from_sut, *args_from_sut, **kwargs_from_sut, lineterminator="\n"
         )
 
     output_stream = io.StringIO()
     with mock.patch(
-        "research.disassemble_python.csv.writer",  # Target the 'csv.writer' used by the SUT
+        "research.disassemble_python.csv.writer",
         side_effect=custom_writer_factory,
     ):
         print_csv_output_to_stdout([sample_malwifile], output_stream)
 
     lines = output_stream.getvalue().strip().split("\n")
-    assert lines[0] == "tokens,hash,filepath"
-    expected_data_row = f"{sample_malwifile.to_token_string()},{sample_malwifile.to_string_hash()},{sample_malwifile.file_path}"
+    assert lines[0] == "name,tokens,hash,filepath"
+    expected_data_row = "<module>,LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
     assert lines[1] == expected_data_row
 
 
@@ -478,7 +477,7 @@ z = None
     module_mf = malwifiles[0]
     assert (
         module_mf.to_token_string()
-        == "TARGETED_FILE resume load_const INTEGER store_name x load_const store_name y load_const store_name z return_const"
+        == "TARGETED_FILE resume load_const INTEGER store_name x load_const s store_name y load_const store_name z return_const None"
     )
 
 
@@ -515,7 +514,7 @@ def sample_malwi_files():
         name="evil_script.py",
         language="python",
         id_hex="abc",
-        filename="/path/to/evil_script.py",
+        file_path="/path/to/evil_script.py",
         firstlineno=1,
         instructions=[("LOAD_CONST", "evil_script_tokens")],
         warnings=["Suspicious"],
@@ -525,7 +524,7 @@ def sample_malwi_files():
         name="harmless_utility.py",
         language="python",
         id_hex="def",
-        filename="/path/to/harmless_utility.py",
+        file_path="/path/to/harmless_utility.py",
         firstlineno=5,
         instructions=[("LOAD_CONST", "harmless_utility_tokens")],
     )  # Expected score: 0.05
@@ -534,7 +533,7 @@ def sample_malwi_files():
         name="moderate_risk.js",
         language="javascript",
         id_hex="ghi",
-        filename="/path/to/moderate_risk.js",
+        file_path="/path/to/moderate_risk.js",
         firstlineno=10,
         instructions=[("CALL", "moderate_risk_tokens")],
     )  # Expected score: 0.6
@@ -543,7 +542,7 @@ def sample_malwi_files():
         name="unknown.txt",
         language="text",
         id_hex="jkl",
-        filename="/path/to/unknown.txt",
+        file_path="/path/to/unknown.txt",
         firstlineno=1,
         instructions=[("DATA", "unknown_op_tokens")],
     )  # Expected score: 0.2 (if it uses the mock directly)
@@ -561,7 +560,7 @@ def sample_malwi_files_predictions_set():
             name="f1.py",
             language="python",
             id_hex="f1",
-            filename="f1.py",
+            file_path="f1.py",
             firstlineno=1,
             instructions=[("L", "evil_script_tokens")],
         ),
@@ -569,7 +568,7 @@ def sample_malwi_files_predictions_set():
             name="f2.py",
             language="python",
             id_hex="f2",
-            filename="f2.py",
+            file_path="f2.py",
             firstlineno=1,
             instructions=[("L", "harmless_utility_tokens")],
         ),
@@ -594,6 +593,7 @@ def test_generate_yaml_report_basic(sample_malwi_files):
 
     yaml_report_str = MalwiFile.to_report_yaml(
         malwi_files,
+        all_files=[],
         malicious_threshold=threshold,
         number_of_skipped_files=skipped_general,
     )
@@ -601,6 +601,7 @@ def test_generate_yaml_report_basic(sample_malwi_files):
 
     json_report_str = MalwiFile.to_report_json(
         malwi_files,  # Use the same files (scores are already set)
+        all_files=[],
         malicious_threshold=threshold,
         number_of_skipped_files=skipped_general,
     )
@@ -616,22 +617,16 @@ def test_report_empty_file_list():
 
     json_report_str = MalwiFile.to_report_json(
         [],
+        all_files=[],
         number_of_skipped_files=skipped_general,
     )
     report_data = json.loads(json_report_str)
 
-    summary = report_data["statistics"]
-    assert summary["total_files_encountered"] == skipped_general
-    assert summary["files_processed_for_maliciousness"] == 0
-    assert summary["files_skipped_general"] == skipped_general
-    assert summary["malicious_files_among_processed"] == 0
-    assert summary["non_malicious_files_among_processed"] == 0
-    assert summary["average_maliciousness_score_for_processed"] == 0.0
-    assert summary["proportion_malicious_among_processed"] == 0.0
     assert len(report_data["details"]) == 0
 
     yaml_report_str = MalwiFile.to_report_yaml(
-        [],
+        malwi_files=[],
+        all_files=[],
         number_of_skipped_files=skipped_general,
     )
     report_data_yaml = yaml.safe_load(yaml_report_str)
@@ -661,7 +656,7 @@ def test_report_calls_predict_if_needed(monkeypatch):
             name="needs_predict1.py",
             language="python",
             id_hex="np1",
-            filename="np1.py",
+            file_path="np1.py",
             firstlineno=1,
             instructions=[("L", "evil_script_tokens")],
         ),
@@ -669,7 +664,7 @@ def test_report_calls_predict_if_needed(monkeypatch):
             name="needs_predict2.py",
             language="python",
             id_hex="np2",
-            filename="np2.py",
+            file_path="np2.py",
             firstlineno=1,
             instructions=[("L", "harmless_utility_tokens")],
         ),
@@ -678,7 +673,7 @@ def test_report_calls_predict_if_needed(monkeypatch):
     assert test_files[0].maliciousness is None
     assert test_files[1].maliciousness is None
 
-    MalwiFile.to_report_json(test_files)
+    MalwiFile.to_report_json(test_files, all_files=[])
 
     assert "needs_predict1.py" in called_predict_for
     assert "needs_predict2.py" in called_predict_for

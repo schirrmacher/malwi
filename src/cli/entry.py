@@ -18,6 +18,7 @@ def process_source_path(
     normalized_accepted_extensions = [ext.lower() for ext in accepted_extensions]
 
     path_obj = Path(input_path)
+    all_files: List[str] = []
     all_malwi_files: List[MalwiFile] = []
     skipped_file_paths: List[str] = []
 
@@ -26,10 +27,11 @@ def process_source_path(
         return all_malwi_files, skipped_file_paths
 
     if path_obj.is_file():
+        all_files.append(path_obj)
+
         file_extension = path_obj.suffix.lstrip(".").lower()
 
         if file_extension in normalized_accepted_extensions:
-            logging.debug(f"Processing file: {path_obj}")
             processed_objects = process_single_py_file(path_obj)
             if processed_objects:
                 all_malwi_files.extend(processed_objects)
@@ -50,23 +52,17 @@ def process_source_path(
             skipped_file_paths.append(str(path_obj))
 
     elif path_obj.is_dir():
-        logging.info(f"Scanning directory: {input_path}")
+        all_files = [f for f in path_obj.rglob("*") if f.is_file()]
 
-        discovered_files = [f for f in path_obj.rglob("*") if f.is_file()]
-
-        if not discovered_files:
+        if not all_files:
             logging.info(f"No files found in directory '{input_path}'.")
             return all_malwi_files, skipped_file_paths
-
-        logging.info(
-            f"Found {len(discovered_files)} total files. Processing files with accepted extensions..."
-        )
 
         files_processed_yielding_data = 0
         files_accepted_type_empty_yield = 0
 
         for file_path in tqdm(
-            discovered_files,
+            all_files,
             desc=f"Processing '{path_obj.name}'",
             unit="file",
             ncols=100,
@@ -92,7 +88,7 @@ def process_source_path(
         )
         skipped_file_paths.append(input_path)
 
-    return all_malwi_files, skipped_file_paths
+    return all_malwi_files, skipped_file_paths, all_files
 
 
 def main():
@@ -174,13 +170,14 @@ def main():
         model_path=args.model_path, tokenizer_path=args.tokenizer_path
     )
 
-    objects, skipped = process_source_path(args.path)
+    objects, skipped, all_files = process_source_path(args.path)
 
     output = ""
 
     if args.format == "json":
         output = MalwiFile.to_report_json(
             objects,
+            all_files=all_files,
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(skipped),
             malicious_only=args.malicious_only,
@@ -188,6 +185,7 @@ def main():
     elif args.format == "yaml":
         output = MalwiFile.to_report_yaml(
             objects,
+            all_files=all_files,
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(skipped),
             malicious_only=args.malicious_only,
