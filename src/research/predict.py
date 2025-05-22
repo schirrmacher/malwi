@@ -40,7 +40,6 @@ def initialize_models(
         )
         HF_MODEL_INSTANCE.to(HF_DEVICE_INSTANCE)
         HF_MODEL_INSTANCE.eval()
-        logging.info(f"HF model '{actual_model_path}' loaded on {HF_DEVICE_INSTANCE}.")
     except Exception as e:
         logging.error(f"Failed to load HF model/tokenizer: {e}")
         HF_TOKENIZER_INSTANCE = HF_MODEL_INSTANCE = HF_DEVICE_INSTANCE = None

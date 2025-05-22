@@ -267,7 +267,7 @@ def test_recursively_disassemble_python_simple():
     if sys.version_info >= (3, 11):
         mock_py_instructions.append(
             mock.Mock(
-                opname="RESUME",
+                opname="resume",
                 argval=0,
                 argrepr="0",
                 opcode=dis.opmap.get("RESUME", -1),
@@ -276,13 +276,13 @@ def test_recursively_disassemble_python_simple():
     mock_py_instructions.extend(
         [
             mock.Mock(
-                opname="LOAD_CONST",
+                opname="load_const",
                 argval=None,
                 argrepr="None",
                 opcode=dis.opmap["LOAD_CONST"],
             ),
             mock.Mock(
-                opname="RETURN_VALUE",
+                opname="return_value",
                 argval=None,
                 argrepr="",
                 opcode=dis.opmap["RETURN_VALUE"],
@@ -302,8 +302,8 @@ def test_recursively_disassemble_python_simple():
         mf = all_objects_data[0]
         expected_instructions = []
         if sys.version_info >= (3, 11):
-            expected_instructions.append(("RESUME", ""))
-        expected_instructions.extend([("LOAD_CONST", None), ("RETURN_VALUE", "")])
+            expected_instructions.append(("resume", ""))
+        expected_instructions.extend([("load_const", ""), ("return_value", "")])
         assert mf.instructions == expected_instructions
 
 
@@ -478,7 +478,7 @@ z = None
     module_mf = malwifiles[0]
     assert (
         module_mf.to_token_string()
-        == "TARGETED_FILE RESUME LOAD_CONST INTEGER STORE_NAME x LOAD_CONST STORE_NAME y LOAD_CONST STORE_NAME z RETURN_CONST"
+        == "TARGETED_FILE resume load_const INTEGER store_name x load_const store_name y load_const store_name z return_const"
     )
 
 

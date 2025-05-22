@@ -475,7 +475,7 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     elif is_file_path(argval):
         return f"{SpecialCases.STRING_FILE_PATH.value}"
     else:
-        if len(argval) < SpecialCases.STRING_MAX_LENGTH.value:
+        if len(argval) <= SpecialCases.STRING_MAX_LENGTH.value:
             return argval
         if is_escaped_hex(argval):
             prefix = SpecialCases.STRING_ESCAPED_HEX.value
@@ -578,7 +578,7 @@ def recursively_disassemble_python(
 
     current_instructions_data: List[Tuple[str, str]] = []
     for instruction in dis.get_instructions(code_obj):
-        opname: str = instruction.opname
+        opname: str = instruction.opname.lower()
         argval: Any = instruction.argval
         original_argrepr: str = (
             instruction.argrepr if instruction.argrepr is not None else ""
