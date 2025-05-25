@@ -91,7 +91,6 @@ class MalwiFile:
         firstlineno: Optional[int],
         instructions: List[Tuple[str, str]],
         warnings: List[str] = [],
-        code: Optional[str] = None,
     ):
         self.name = name
         self.id_hex = id_hex
@@ -100,7 +99,6 @@ class MalwiFile:
         self.instructions = instructions
         self.warnings = list(warnings)
         self.maliciousness = None
-        self.code = code
 
         if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings += [SpecialCases.TARGETED_FILE.value]
@@ -130,6 +128,16 @@ class MalwiFile:
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
+
+    def retrieveSourceCode(self) -> Optional[str]:
+        if self.code:
+            try:
+                lines, _ = inspect.getsourcelines(self.code)
+                self.code = "".join(lines)
+                return self.code
+            except Exception:
+                pass
+        return None
 
     def predict(self) -> Optional[dict]:
         prediction = get_node_text_prediction(self.to_token_string())
@@ -508,7 +516,6 @@ def recursively_disassemble_python(
                 firstlineno=None,
                 instructions=[],
                 warnings=[err_msg],
-                code=f"<Not applicable: file error '{err_msg}'>",
             )
             all_objects_data.append(object_data)
         if not code_obj and not errors:
@@ -562,16 +569,6 @@ def recursively_disassemble_python(
 
         current_instructions_data.append((opname, final_value))
 
-    code: Optional[str] = None
-    if code_obj:
-        try:
-            lines, _ = inspect.getsourcelines(code_obj)
-            code = "".join(lines)
-        except (OSError, TypeError, IndexError) as e:
-            code = f"<source retrieval failed: {type(e).__name__} on {code_obj.co_name or 'unknown_object'}>"
-        except Exception as e:
-            code = f"<source retrieval error: {type(e).__name__} on {code_obj.co_name or 'unknown_object'}>"
-
     object_data = MalwiFile(
         name=code_obj.co_name if code_obj else "UnknownObject",
         language=language,
@@ -579,7 +576,6 @@ def recursively_disassemble_python(
         file_path=(code_obj.co_filename if code_obj else file_path),
         firstlineno=code_obj.co_firstlineno if code_obj else None,
         instructions=current_instructions_data,
-        code=code,
         warnings=[],
     )
     all_objects_data.append(object_data)
@@ -597,7 +593,9 @@ def recursively_disassemble_python(
                 )
 
 
-def disassemble_python_file(file_path_str: str) -> List[MalwiFile]:
+def disassemble_python_file(
+    file_path_str: str, retrieve_source_code: bool = True
+) -> List[MalwiFile]:
     all_disassembled_data: List[MalwiFile] = []
     source_code: Optional[str] = None
     current_file_errors: List[str] = []
@@ -695,14 +693,19 @@ def print_csv_output_to_stdout(
 
 
 def process_single_py_file(
-    py_file: Path, predict: bool = True
+    py_file: Path, predict: bool = True, retrieve_source_code: bool = True
 ) -> Optional[List[MalwiFile]]:
     try:
-        disassembled_data: List[MalwiFile] = disassemble_python_file(str(py_file))
+        disassembled_data: List[MalwiFile] = disassemble_python_file(
+            str(py_file), retrieve_source_code=retrieve_source_code
+        )
         if predict:
             for d in disassembled_data:
                 if d.instructions:
                     d.predict()
+        if retrieve_source_code:
+            for d in disassembled_data:
+                d.retrieveSourceCode()
         return disassembled_data if disassembled_data else None
     except Exception as e:
         print(
@@ -750,7 +753,9 @@ def process_input_path(
         disable=disable_tqdm,
     ):
         try:
-            file_disassembled_data = process_single_py_file(py_file, predict=False)
+            file_disassembled_data = process_single_py_file(
+                py_file, predict=False, retrieve_source_code=False
+            )
             if file_disassembled_data:
                 files_processed_count += 1
                 if output_format == "csv" and csv_writer_for_file:

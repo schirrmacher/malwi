@@ -69,7 +69,6 @@ def sample_malwifile():
     return MalwiFile(
         name="<module>",
         language="python",
-        code="abc",
         id_hex="0x123",
         file_path="test.py",
         firstlineno=1,
@@ -134,7 +133,7 @@ class TestMalwiFile:
                 {
                     "name": "<module>",
                     "score": 0.75,
-                    "code": "abc",
+                    "code": "<source not available>",
                     "tokens": "LOAD_CONST 1 RETURN_VALUE",
                     "hash": current_hash,
                 }
