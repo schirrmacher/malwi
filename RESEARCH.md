@@ -1,5 +1,13 @@
 # Research Notes
 
+- Commit: `5b1eb22`
+- `DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 5.0`
+
+```
+{'eval_loss': 0.11457934230566025, 'eval_accuracy': 0.9714260101745815, 'eval_f1': 0.9104697703812934, 'eval_precision': 0.9527751922794298, 'eval_recall': 0.8717615419094576, 'eval_runtime': 226.4452, 'eval_samples_per_second': 591.15, 'eval_steps_per_second': 36.949, 'epoch': 3.0}
+{'train_runtime': 8969.4482, 'train_samples_per_second': 179.091, 'train_steps_per_second': 11.193, 'train_loss': 0.12444903290217556, 'epoch': 3.0}
+```
+
 - Commit: `1188024`
 
 ```
