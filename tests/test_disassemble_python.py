@@ -14,6 +14,8 @@ from unittest import mock
 from research.disassemble_python import (
     MalwiObject,
     SpecialCases,
+    OutputFormatter,
+    CSVWriter,
     sanitize_identifier,
     map_identifier,
     map_entropy_to_token,
@@ -35,9 +37,7 @@ from research.disassemble_python import (
     disassemble_python_file,
     process_single_py_file,
     process_input_path,
-    print_txt_output,
-    print_csv_output_to_stdout,
-    write_csv_rows_for_file_data,
+    collect_python_files,
     main as script_main,
 )
 
@@ -69,9 +69,7 @@ def sample_malwifile():
     return MalwiObject(
         name="<module>",
         language="python",
-        id_hex="0x123",
         file_path="test.py",
-        firstlineno=1,
         instructions=[("LOAD_CONST", "1"), ("RETURN_VALUE", "")],
     )
 
@@ -90,9 +88,7 @@ class TestMalwiFile:
         mf = MalwiObject(
             name="test_func",
             language="python",
-            id_hex="0xabc",
             file_path="example.py",
-            firstlineno=10,
             instructions=[("LOAD_NAME", "print")],
             warnings=["TEST_WARNING"],
         )
@@ -140,6 +136,65 @@ class TestMalwiFile:
             ],
         }
         assert sample_malwifile.to_dict() == expected_dict
+
+
+# --- Tests for OutputFormatter Class ---
+class TestOutputFormatter:
+    def test_format_text(self, sample_malwifile):
+        output_stream = io.StringIO()
+        OutputFormatter.format_text([sample_malwifile], output_stream)
+        output_content = output_stream.getvalue()
+        assert "Disassembly of <code object <module>>:" in output_content
+        assert '(file: "test.py")' in output_content
+
+    def test_format_csv(self, sample_malwifile):
+        output_stream = io.StringIO()
+        OutputFormatter.format_csv([sample_malwifile], output_stream)
+        lines = output_stream.getvalue().strip().split("\n")
+        assert lines[0] == "tokens,hash,filepath\r"
+        expected_data_row = "LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
+        assert lines[1] == expected_data_row
+
+    def test_format_json(self, sample_malwifile):
+        output_stream = io.StringIO()
+        OutputFormatter.format_json([sample_malwifile], output_stream)
+        output_content = output_stream.getvalue()
+        # Should be valid JSON
+        json_data = json.loads(output_content)
+        assert "statistics" in json_data
+        assert "details" in json_data
+
+    def test_format_yaml(self, sample_malwifile):
+        output_stream = io.StringIO()
+        OutputFormatter.format_yaml([sample_malwifile], output_stream)
+        output_content = output_stream.getvalue()
+        # Should be valid YAML
+        yaml_data = yaml.safe_load(output_content)
+        assert "statistics" in yaml_data
+        assert "details" in yaml_data
+
+
+# --- Tests for CSVWriter Class ---
+class TestCSVWriter:
+    def test_csv_writer_initialization(self, tmp_path):
+        csv_file = tmp_path / "test.csv"
+        writer = CSVWriter(csv_file)
+        writer.close()
+
+        # Check that headers were written
+        content = csv_file.read_text()
+        assert "tokens,hash,filepath" in content
+
+    def test_csv_writer_write_objects(self, tmp_path, sample_malwifile):
+        csv_file = tmp_path / "test.csv"
+        writer = CSVWriter(csv_file)
+        writer.write_objects([sample_malwifile])
+        writer.close()
+
+        content = csv_file.read_text()
+        lines = content.strip().split("\n")
+        assert len(lines) == 2  # Header + 1 data row
+        assert "LOAD_CONST 1 RETURN_VALUE" in lines[1]
 
 
 # --- Tests for Helper Functions ---
@@ -352,12 +407,12 @@ def test_disassemble_python_file_read_error(mock_recursive_disassemble):
         )
 
 
-# --- Tests for File Processing and Output ---
+# --- Tests for File Processing ---
 @mock.patch("research.disassemble_python.disassemble_python_file")
 def test_process_single_py_file(mock_disassemble, tmp_path):
     py_file = tmp_path / "sample.py"
     py_file.write_text("a = 1")
-    mock_mf_instance = MalwiObject("name", "lang", "id", "file", 1, [])
+    mock_mf_instance = MalwiObject("name", "lang", "file", [])
     mock_disassemble.return_value = [mock_mf_instance]
     result = process_single_py_file(py_file)
     assert result == [mock_mf_instance]
@@ -374,13 +429,31 @@ def test_process_single_py_file_exception(mock_disassemble_exc, tmp_path, capsys
     assert "An unexpected error occurred" in capsys.readouterr().err
 
 
+def test_collect_python_files_single_file(tmp_path):
+    target_file = tmp_path / "myfile.py"
+    target_file.write_text("pass")
+    result = collect_python_files(target_file)
+    assert result == [target_file]
+
+
+def test_collect_python_files_directory(tmp_path):
+    py_file1 = tmp_path / "s1.py"
+    py_file1.write_text("p1")
+    (tmp_path / "sub").mkdir()
+    py_file2 = tmp_path / "sub" / "s2.py"
+    py_file2.write_text("p2")
+    result = collect_python_files(tmp_path)
+    assert py_file1 in result
+    assert py_file2 in result
+
+
 @mock.patch("research.disassemble_python.process_single_py_file")
 def test_process_input_path_single_file(mock_process_single, tmp_path):
     target_file = tmp_path / "myfile.py"
     target_file.write_text("pass")
-    mock_mf_instance = MalwiObject("name", "lang", "id", "file", 1, [])
+    mock_mf_instance = MalwiObject("name", "lang", "file", [])
     mock_process_single.return_value = [mock_mf_instance]
-    result = process_input_path(target_file, "txt", None)
+    result = process_input_path(target_file)
     assert result == [mock_mf_instance]
 
 
@@ -391,62 +464,30 @@ def test_process_input_path_directory(mock_process_single, tmp_path):
     (tmp_path / "sub").mkdir()
     py_file2 = tmp_path / "sub" / "s2.py"
     py_file2.write_text("p2")
-    mf1 = MalwiObject("mf1", "py", "id1", str(py_file1), 1, [])
-    mf2 = MalwiObject("mf2", "py", "id2", str(py_file2), 1, [])
+    mf1 = MalwiObject("mf1", "py", str(py_file1), [])
+    mf2 = MalwiObject("mf2", "py", str(py_file2), [])
     mock_process_single.side_effect = [[mf1], [mf2]]
-    result = process_input_path(tmp_path, "txt", None)
+    result = process_input_path(tmp_path)
     assert mf1 in result and mf2 in result
-
-
-def test_print_txt_output(sample_malwifile):
-    output_stream = io.StringIO()
-    print_txt_output([sample_malwifile], output_stream)
-    assert "Disassembly of <code object <module> at 0x123>:" in output_stream.getvalue()
-
-
-def test_write_csv_rows_for_file_data(sample_malwifile):
-    output_stream = io.StringIO()
-    # Use standard csv from the 'csv' module directly, not an alias that might be patched
-    csv_writer = sys.modules["csv"].writer(output_stream, lineterminator="\n")
-    write_csv_rows_for_file_data([sample_malwifile], csv_writer)
-    expected = "LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
-    assert output_stream.getvalue().strip() == expected
-
-
-def test_print_csv_output_to_stdout(sample_malwifile):
-    original_stdlib_csv_writer = sys.modules["csv"].writer
-
-    def custom_writer_factory(stream_from_sut, *args_from_sut, **kwargs_from_sut):
-        return original_stdlib_csv_writer(
-            stream_from_sut, *args_from_sut, **kwargs_from_sut, lineterminator="\n"
-        )
-
-    output_stream = io.StringIO()
-    with mock.patch(
-        "research.disassemble_python.csv.writer",
-        side_effect=custom_writer_factory,
-    ):
-        print_csv_output_to_stdout([sample_malwifile], output_stream)
-
-    lines = output_stream.getvalue().strip().split("\n")
-    assert lines[0] == "tokens,hash,filepath"
-    expected_data_row = "LOAD_CONST 1 RETURN_VALUE,d31f3e92b68ef17e63ed31922f3bb7c733d7484fd97d845d034ad184903b3cad,test.py"
-    assert lines[1] == expected_data_row
 
 
 # Test for main function
 @mock.patch("argparse.ArgumentParser.parse_args")
 @mock.patch("research.disassemble_python.Path.exists", return_value=True)
 @mock.patch("research.disassemble_python.process_input_path")
-@mock.patch("research.disassemble_python.print_txt_output")
+@mock.patch("research.disassemble_python.OutputFormatter.format_text")
 @mock.patch("sys.stdout", new_callable=io.StringIO)
 def test_main_simple_run(
-    mock_stdout, mock_print_txt, mock_process_input, mock_path_exists, mock_parse_args
+    mock_stdout, mock_format_text, mock_process_input, mock_path_exists, mock_parse_args
 ):
     mock_args = mock.Mock()
     mock_args.path = "dummy.py"
     mock_args.format = "txt"
     mock_args.save = None
+    mock_args.malicious_threshold = 0.5
+    mock_args.malicious_only = False
+    mock_args.model_path = None
+    mock_args.tokenizer_path = None
     mock_parse_args.return_value = mock_args
     mock_mf = mock.MagicMock(spec=MalwiObject)
     mock_process_input.return_value = [mock_mf]
@@ -454,8 +495,8 @@ def test_main_simple_run(
     with pytest.raises(SystemExit) as e:
         script_main()
     assert e.value.code == 0
-    mock_process_input.assert_called_once_with(pathlib.Path("dummy.py"), "txt", None)
-    mock_print_txt.assert_called_once_with([mock_mf], mock_stdout)
+    mock_process_input.assert_called_once_with(pathlib.Path("dummy.py"))
+    mock_format_text.assert_called_once_with([mock_mf], mock_stdout)
 
 
 @mock.patch("builtins.open")
@@ -512,9 +553,7 @@ def sample_malwi_files():
     file1 = MalwiObject(
         name="evil_script.py",
         language="python",
-        id_hex="abc",
         file_path="/path/to/evil_script.py",
-        firstlineno=1,
         instructions=[("LOAD_CONST", "evil_script_tokens")],
         warnings=["Suspicious"],
     )  # Expected score: 0.9
@@ -522,27 +561,21 @@ def sample_malwi_files():
     file2 = MalwiObject(
         name="harmless_utility.py",
         language="python",
-        id_hex="def",
         file_path="/path/to/harmless_utility.py",
-        firstlineno=5,
         instructions=[("LOAD_CONST", "harmless_utility_tokens")],
     )  # Expected score: 0.05
 
     file3 = MalwiObject(
         name="moderate_risk.js",
         language="javascript",
-        id_hex="ghi",
         file_path="/path/to/moderate_risk.js",
-        firstlineno=10,
         instructions=[("CALL", "moderate_risk_tokens")],
     )  # Expected score: 0.6
 
     file4 = MalwiObject(
         name="unknown.txt",
         language="text",
-        id_hex="jkl",
         file_path="/path/to/unknown.txt",
-        firstlineno=1,
         instructions=[("DATA", "unknown_op_tokens")],
     )  # Expected score: 0.2 (if it uses the mock directly)
 
@@ -558,17 +591,13 @@ def sample_malwi_files_predictions_set():
         MalwiObject(
             name="f1.py",
             language="python",
-            id_hex="f1",
             file_path="f1.py",
-            firstlineno=1,
             instructions=[("L", "evil_script_tokens")],
         ),
         MalwiObject(
             name="f2.py",
             language="python",
-            id_hex="f2",
             file_path="f2.py",
-            firstlineno=1,
             instructions=[("L", "harmless_utility_tokens")],
         ),
     ]
@@ -654,17 +683,13 @@ def test_report_calls_predict_if_needed(monkeypatch):
         MalwiObject(
             name="needs_predict1.py",
             language="python",
-            id_hex="np1",
             file_path="np1.py",
-            firstlineno=1,
             instructions=[("L", "evil_script_tokens")],
         ),
         MalwiObject(
             name="needs_predict2.py",
             language="python",
-            id_hex="np2",
             file_path="np2.py",
-            firstlineno=1,
             instructions=[("L", "harmless_utility_tokens")],
         ),
     ]

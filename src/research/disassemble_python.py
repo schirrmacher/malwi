@@ -21,7 +21,7 @@ from tqdm import tqdm
 from enum import Enum
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Tuple, Set, Optional, Any, Dict
+from typing import List, Tuple, Set, Optional, Any, Dict, TextIO
 
 
 from research.predict import get_node_text_prediction, initialize_models
@@ -74,9 +74,7 @@ yaml.add_representer(LiteralStr, literal_str_representer)
 @dataclass
 class MalwiObject:
     name: str
-    id_hex: Optional[str]
     file_path: str
-    firstlineno: Optional[int]
     instructions: List[Tuple[str, str]]
     warnings: List[str]
     maliciousness: Optional[float] = None
@@ -86,16 +84,12 @@ class MalwiObject:
         self,
         name: str,
         language: str,
-        id_hex: Optional[str],
         file_path: str,
-        firstlineno: Optional[int],
         instructions: List[Tuple[str, str]],
         warnings: List[str] = [],
     ):
         self.name = name
-        self.id_hex = id_hex
         self.file_path = file_path
-        self.firstlineno = firstlineno
         self.instructions = instructions
         self.warnings = list(warnings)
         self.maliciousness = None
@@ -265,6 +259,114 @@ class MalwiObject:
         return yaml.dump(
             report_data, sort_keys=False, width=float("inf"), default_flow_style=False
         )
+
+
+class OutputFormatter:
+    """Handles different output formats for MalwiObject data."""
+
+    @staticmethod
+    def format_text(objects_data: List[MalwiObject], output_stream: TextIO) -> None:
+        """Format objects as readable text."""
+        for obj_data in objects_data:
+            output_stream.write(f"\nDisassembly of <code object {obj_data.name}>:\n")
+            output_stream.write(f'  (file: "{obj_data.file_path}")\n')
+
+            if obj_data.code and not obj_data.code.startswith("<Not applicable"):
+                indented_source = "\n".join(
+                    ["    " + line for line in obj_data.code.splitlines()]
+                )
+                output_stream.write(f"  Source Code:\n{indented_source}\n")
+            elif obj_data.code:
+                output_stream.write(f"  Source Code: {obj_data.code}\n")
+
+            if obj_data.instructions:
+                output_stream.write(f"{'OPNAME':<25} ARGREPR\n")
+                output_stream.write(f"{'-' * 25} {'-' * 20}\n")
+                for opname, argrepr_val in obj_data.instructions:
+                    output_stream.write(f"{opname:<25} {argrepr_val}\n")
+            elif not obj_data.code or obj_data.code.startswith("<Not applicable"):
+                output_stream.write(
+                    f"  (No instructions, entry likely represents a file/syntax error: {obj_data.name})\n"
+                )
+
+    @staticmethod
+    def format_csv(objects_data: List[MalwiObject], output_stream: TextIO) -> None:
+        """Format objects as CSV."""
+        writer = csv.writer(output_stream)
+        writer.writerow(["tokens", "hash", "filepath"])
+        for obj in objects_data:
+            writer.writerow(
+                [
+                    obj.to_token_string(),
+                    obj.to_string_hash(),
+                    obj.file_path,
+                ]
+            )
+
+    @staticmethod
+    def format_json(
+        objects_data: List[MalwiObject],
+        output_stream: TextIO,
+        malicious_threshold: float = 0.5,
+        malicious_only: bool = False,
+    ) -> None:
+        """Format objects as JSON report."""
+        report_json = MalwiObject.to_report_json(
+            objects_data, [], malicious_threshold, 0, malicious_only
+        )
+        output_stream.write(report_json + "\n")
+
+    @staticmethod
+    def format_yaml(
+        objects_data: List[MalwiObject],
+        output_stream: TextIO,
+        malicious_threshold: float = 0.5,
+        malicious_only: bool = False,
+    ) -> None:
+        """Format objects as YAML report."""
+        report_yaml = MalwiObject.to_report_yaml(
+            objects_data, [], malicious_threshold, 0, malicious_only
+        )
+        output_stream.write(report_yaml + "\n")
+
+
+class CSVWriter:
+    """Handles CSV output operations."""
+
+    def __init__(self, file_path: Path):
+        self.file_path = file_path
+        self.file_handle = None
+        self.writer = None
+        self._initialize_file()
+
+    def _initialize_file(self):
+        """Initialize CSV file with headers if needed."""
+        file_exists_before_open = self.file_path.is_file()
+        is_empty = not file_exists_before_open or self.file_path.stat().st_size == 0
+
+        self.file_handle = open(
+            self.file_path, "a", newline="", encoding="utf-8", errors="replace"
+        )
+        self.writer = csv.writer(self.file_handle)
+
+        if is_empty:
+            self.writer.writerow(["tokens", "hash", "filepath"])
+
+    def write_objects(self, objects_data: List[MalwiObject]) -> None:
+        """Write MalwiObject data to CSV."""
+        for obj in objects_data:
+            self.writer.writerow(
+                [
+                    obj.to_token_string(),
+                    obj.to_string_hash(),
+                    obj.file_path,
+                ]
+            )
+
+    def close(self):
+        """Close the CSV file."""
+        if self.file_handle:
+            self.file_handle.close()
 
 
 def sanitize_identifier(identifier: Optional[str]) -> str:
@@ -511,9 +613,7 @@ def recursively_disassemble_python(
             object_data = MalwiObject(
                 name=err_msg,
                 language=language,
-                id_hex=None,
                 file_path=file_path,
-                firstlineno=None,
                 instructions=[],
                 warnings=[err_msg],
             )
@@ -523,9 +623,7 @@ def recursively_disassemble_python(
                 MalwiObject(
                     name=SpecialCases.MALFORMED_FILE.value,
                     language=language,
-                    id_hex=None,
                     file_path=file_path,
-                    firstlineno=None,
                     instructions=[],
                     warnings=[SpecialCases.MALFORMED_FILE.value],
                     code="<Not applicable: no code object generated>",
@@ -572,9 +670,7 @@ def recursively_disassemble_python(
     object_data = MalwiObject(
         name=code_obj.co_name if code_obj else "UnknownObject",
         language=language,
-        id_hex=hex(id(code_obj)) if code_obj else None,
         file_path=(code_obj.co_filename if code_obj else file_path),
-        firstlineno=code_obj.co_firstlineno if code_obj else None,
         instructions=current_instructions_data,
         warnings=[],
     )
@@ -632,66 +728,6 @@ def disassemble_python_file(
     return all_disassembled_data
 
 
-def print_txt_output(all_objects_data: List[MalwiObject], output_stream: Any) -> None:
-    for obj_data in all_objects_data:
-        # For error entries, id_hex and firstlineno might be None.
-        obj_id_hex = obj_data.id_hex if obj_data.id_hex is not None else "<N/A>"
-        obj_firstlineno = (
-            obj_data.firstlineno if obj_data.firstlineno is not None else "<N/A>"
-        )
-
-        print(
-            f"\nDisassembly of <code object {obj_data.name} at {obj_id_hex}>:",
-            file=output_stream,
-        )
-        print(
-            f'  (file: "{obj_data.file_path}", line: {obj_firstlineno})',
-            file=output_stream,
-        )
-        if obj_data.code and not obj_data.code.startswith("<Not applicable"):
-            indented_source = "\n".join(
-                ["    " + line for line in obj_data.code.splitlines()]
-            )
-            print(f"  Source Code:\n{indented_source}", file=output_stream)
-        elif obj_data.code:
-            print(f"  Source Code: {obj_data.code}", file=output_stream)
-
-        if obj_data.instructions:
-            print(f"{'OPNAME':<25} ARGREPR", file=output_stream)
-            print(f"{'-' * 25} {'-' * 20}", file=output_stream)
-            for opname, argrepr_val in obj_data.instructions:
-                print(f"{opname:<25} {argrepr_val}", file=output_stream)
-        elif not obj_data.code or obj_data.code.startswith("<Not applicable"):
-            print(
-                f"  (No instructions, entry likely represents a file/syntax error: {obj_data.name})",
-                file=output_stream,
-            )
-
-
-def get_row_data(obj: MalwiObject) -> List[Any]:
-    return [
-        obj.to_token_string(),
-        obj.to_string_hash(),
-        obj.file_path,
-    ]
-
-
-def write_csv_rows_for_file_data(
-    file_disassembled_data: List[MalwiObject], csv_writer_obj: csv.writer
-) -> None:
-    for obj in file_disassembled_data:
-        csv_writer_obj.writerow(get_row_data(obj))
-
-
-def print_csv_output_to_stdout(
-    all_objects_data: List[MalwiObject], output_stream: Any
-) -> None:
-    writer = csv.writer(output_stream)
-    writer.writerow(["tokens", "hash", "filepath"])
-    for obj in all_objects_data:
-        writer.writerow(get_row_data(obj))
-
-
 def process_single_py_file(
     py_file: Path, predict: bool = True, retrieve_source_code: bool = True
 ) -> Optional[List[MalwiObject]]:
@@ -715,11 +751,8 @@ def process_single_py_file(
     return None
 
 
-def process_input_path(
-    input_path: Path, output_format: str, csv_writer_for_file: Optional[csv.writer]
-) -> List[MalwiObject]:
-    accumulated_data_for_txt_or_stdout_csv: List[MalwiObject] = []
-    files_processed_count = 0
+def collect_python_files(input_path: Path) -> List[Path]:
+    """Collect all Python files from the input path."""
     py_files_list = []
 
     if input_path.is_file():
@@ -732,13 +765,23 @@ def process_input_path(
         py_files_list = list(input_path.rglob("*.py"))
         if not py_files_list:
             print(f"No .py files found in directory: {input_path}", file=sys.stderr)
-            return accumulated_data_for_txt_or_stdout_csv  # Return empty list
     else:
         print(f"Error: Path is not a file or directory: {input_path}", file=sys.stderr)
-        return accumulated_data_for_txt_or_stdout_csv  # Return empty list
+
+    return py_files_list
+
+
+def process_input_path(input_path: Path) -> List[MalwiObject]:
+    """Process input path and return all MalwiObjects."""
+    accumulated_data: List[MalwiObject] = []
+    files_processed_count = 0
+
+    py_files_list = collect_python_files(input_path)
+    if not py_files_list:
+        return accumulated_data
 
     tqdm_desc = (
-        f"Processing directory '{input_path.name}'"  # Changed description for clarity
+        f"Processing directory '{input_path.name}'"
         if input_path.is_dir() and len(py_files_list) > 1
         else f"Processing '{input_path.name}'"
     )
@@ -758,14 +801,7 @@ def process_input_path(
             )
             if file_disassembled_data:
                 files_processed_count += 1
-                if output_format == "csv" and csv_writer_for_file:
-                    write_csv_rows_for_file_data(
-                        file_disassembled_data, csv_writer_for_file
-                    )
-                else:
-                    accumulated_data_for_txt_or_stdout_csv.extend(
-                        file_disassembled_data
-                    )
+                accumulated_data.extend(file_disassembled_data)
         except Exception as e:
             print(f"Critical error processing file {py_file}: {e}", file=sys.stderr)
 
@@ -775,7 +811,7 @@ def process_input_path(
             file=sys.stderr,
         )
 
-    return accumulated_data_for_txt_or_stdout_csv
+    return accumulated_data
 
 
 def main() -> None:
@@ -844,95 +880,104 @@ def main() -> None:
         print(f"Error: Input path does not exist: {input_path_obj}", file=sys.stderr)
         sys.exit(1)
 
-    output_stream_target: Any = sys.stdout
-    output_file_obj: Optional[Any] = None
-    csv_writer_instance: Optional[csv.writer] = None
+    # Process input and collect all data
+    collected_data: List[MalwiObject] = []
+    csv_writer_instance: Optional[CSVWriter] = None
 
-    if args.save:
-        try:
+    try:
+        # Handle CSV output separately for streaming
+        if args.format == "csv" and args.save:
             save_path = Path(args.save)
             save_path.parent.mkdir(parents=True, exist_ok=True)
-            if args.format == "csv":
-                file_exists_before_open = save_path.is_file()
-                is_empty = not file_exists_before_open or save_path.stat().st_size == 0
-                output_file_obj = open(
-                    save_path, "a", newline="", encoding="utf-8", errors="replace"
-                )
-                csv_writer_instance = csv.writer(output_file_obj)
-                if is_empty:
-                    csv_writer_instance.writerow(["tokens", "hash", "filepath"])
-            else:
-                output_file_obj = open(
-                    save_path, "w", encoding="utf-8", errors="replace"
-                )
-                output_stream_target = output_file_obj
+            csv_writer_instance = CSVWriter(save_path)
+            print(
+                f"CSV output will be appended to: {save_path.resolve()}",
+                file=sys.stderr,
+            )
 
-            if args.format not in ["csv"]:
+            # Process files and write directly to CSV
+            py_files_list = collect_python_files(input_path_obj)
+            if not py_files_list:
+                csv_writer_instance.close()
+                sys.exit(0)
+
+            tqdm_desc = (
+                f"Processing directory '{input_path_obj.name}'"
+                if input_path_obj.is_dir() and len(py_files_list) > 1
+                else f"Processing '{input_path_obj.name}'"
+            )
+            disable_tqdm = len(py_files_list) <= 1 and input_path_obj.is_file()
+
+            for py_file in tqdm(
+                py_files_list,
+                desc=tqdm_desc,
+                unit="file",
+                ncols=100,
+                disable=disable_tqdm,
+            ):
+                try:
+                    file_data = process_single_py_file(
+                        py_file, predict=False, retrieve_source_code=False
+                    )
+                    if file_data:
+                        csv_writer_instance.write_objects(file_data)
+                except Exception as e:
+                    print(
+                        f"Critical error processing file {py_file}: {e}",
+                        file=sys.stderr,
+                    )
+
+            csv_writer_instance.close()
+
+        else:
+            # For all other formats, collect data first
+            collected_data = process_input_path(input_path_obj)
+
+            # Handle output
+            output_stream = sys.stdout
+            output_file = None
+
+            if args.save:
+                save_path = Path(args.save)
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                output_file = open(save_path, "w", encoding="utf-8", errors="replace")
+                output_stream = output_file
                 print(
                     f"Output will be saved to: {save_path.resolve()}", file=sys.stderr
                 )
-            elif args.format == "csv" and output_file_obj != sys.stdout:
-                print(
-                    f"CSV output will be appended to: {save_path.resolve()}",
-                    file=sys.stderr,
-                )
 
-        except IOError as e:
-            print(
-                f"Error: Could not open save path '{args.save}': {e}", file=sys.stderr
-            )
-            sys.exit(1)
-        except Exception as e:
-            print(
-                f"An unexpected error occurred while preparing save file '{args.save}': {e}",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+            try:
+                # Format and output data
+                if args.format == "txt":
+                    OutputFormatter.format_text(collected_data, output_stream)
+                elif args.format == "csv":
+                    OutputFormatter.format_csv(collected_data, output_stream)
+                elif args.format == "json":
+                    OutputFormatter.format_json(
+                        collected_data,
+                        output_stream,
+                        args.malicious_threshold,
+                        args.malicious_only,
+                    )
+                elif args.format == "yaml":
+                    OutputFormatter.format_yaml(
+                        collected_data,
+                        output_stream,
+                        args.malicious_threshold,
+                        args.malicious_only,
+                    )
+            finally:
+                if output_file:
+                    output_file.close()
 
-    collected_data: List[MalwiObject] = []
-    try:
-        collected_data = process_input_path(
-            input_path_obj,
-            args.format,
-            csv_writer_instance,
-        )
     except Exception as e:
-        print(
-            f"A critical error occurred during path processing for '{input_path_obj}': {e}",
-            file=sys.stderr,
-        )
+        print(f"A critical error occurred: {e}", file=sys.stderr)
         import traceback
 
         traceback.print_exc(file=sys.stderr)
-        if output_file_obj and output_file_obj != sys.stdout:
-            output_file_obj.close()
+        if csv_writer_instance:
+            csv_writer_instance.close()
         sys.exit(1)
-
-    if not csv_writer_instance:
-        if not collected_data:
-            if args.format == "csv" and output_stream_target == sys.stdout:
-                print_csv_output_to_stdout([], output_stream_target)
-        else:
-            if args.format == "txt":
-                print_txt_output(collected_data, output_stream_target)
-            elif args.format == "csv":  # CSV to stdout
-                print_csv_output_to_stdout(collected_data, output_stream_target)
-            elif args.format == "json":
-                report_json = MalwiObject.to_report_json(
-                    collected_data, args.malicious_threshold, 0, args.malicious_only
-                )
-                output_stream_target.write(report_json + "\n")
-            elif args.format == "yaml":
-                report_yaml = MalwiObject.to_report_yaml(
-                    collected_data, args.malicious_threshold, 0, args.malicious_only
-                )
-                output_stream_target.write(report_yaml + "\n")
-
-    if output_file_obj and output_file_obj != sys.stdout:
-        try:
-            output_file_obj.close()
-        except Exception as e:
-            print(f"Error closing output file '{args.save}': {e}", file=sys.stderr)
 
     sys.exit(0)
 
