@@ -79,6 +79,7 @@ class MalwiObject:
     warnings: List[str]
     maliciousness: Optional[float] = None
     code: Optional[str] = None
+    codeType: Optional[types.CodeType] = None
 
     def __init__(
         self,
@@ -86,6 +87,7 @@ class MalwiObject:
         language: str,
         file_path: str,
         instructions: List[Tuple[str, str]],
+        codeType: types.CodeType = None,
         warnings: List[str] = [],
     ):
         self.name = name
@@ -93,6 +95,7 @@ class MalwiObject:
         self.instructions = instructions
         self.warnings = list(warnings)
         self.maliciousness = None
+        self.codeType = codeType
 
         if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings += [SpecialCases.TARGETED_FILE.value]
@@ -123,14 +126,13 @@ class MalwiObject:
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
 
-    def retrieveSourceCode(self) -> Optional[str]:
-        if self.code:
-            try:
-                lines, _ = inspect.getsourcelines(self.code)
-                self.code = "".join(lines)
-                return self.code
-            except Exception:
-                pass
+    def retrieve_source_code(self) -> Optional[str]:
+        try:
+            lines, _ = inspect.getsourcelines(self.codeType)
+            self.code = "".join(lines)
+            return self.code
+        except Exception:
+            pass
         return None
 
     def predict(self) -> Optional[dict]:
@@ -190,6 +192,7 @@ class MalwiObject:
         files_with_scores_count = 0
 
         for mf in malwi_files:
+            mf.retrieve_source_code()
             if mf.maliciousness is None:
                 mf.predict()
 
@@ -615,6 +618,7 @@ def recursively_disassemble_python(
                 language=language,
                 file_path=file_path,
                 instructions=[],
+                codeType=None,
                 warnings=[err_msg],
             )
             all_objects_data.append(object_data)
@@ -625,6 +629,7 @@ def recursively_disassemble_python(
                     language=language,
                     file_path=file_path,
                     instructions=[],
+                    codeType=None,
                     warnings=[SpecialCases.MALFORMED_FILE.value],
                     code="<Not applicable: no code object generated>",
                 )
@@ -672,6 +677,7 @@ def recursively_disassemble_python(
         language=language,
         file_path=(code_obj.co_filename if code_obj else file_path),
         instructions=current_instructions_data,
+        codeType=code_obj,
         warnings=[],
     )
     all_objects_data.append(object_data)
@@ -741,7 +747,7 @@ def process_single_py_file(
                     d.predict()
         if retrieve_source_code:
             for d in disassembled_data:
-                d.retrieveSourceCode()
+                d.retrieve_source_code()
         return disassembled_data if disassembled_data else None
     except Exception as e:
         print(
@@ -751,67 +757,155 @@ def process_single_py_file(
     return None
 
 
-def collect_python_files(input_path: Path) -> List[Path]:
-    """Collect all Python files from the input path."""
-    py_files_list = []
+@dataclass
+class ProcessingResult:
+    """Result of processing files from a path."""
+
+    malwi_objects: List[MalwiObject]
+    all_files: List[Path]
+    skipped_files: List[Path]
+    processed_files: int
+
+
+def collect_files_by_extension(
+    input_path: Path,
+    accepted_extensions: Optional[List[str]] = None,
+    silent: bool = False,
+) -> Tuple[List[Path], List[Path]]:
+    """
+    Collect files from the input path, filtering by accepted extensions.
+
+    Args:
+        input_path: Path to file or directory
+        accepted_extensions: List of file extensions to accept (without dots)
+        silent: If True, suppress error messages
+
+    Returns:
+        Tuple of (accepted_files, skipped_files)
+    """
+    if accepted_extensions is None:
+        accepted_extensions = ["py"]
+
+    normalized_extensions = [ext.lower().lstrip(".") for ext in accepted_extensions]
+    accepted_files = []
+    skipped_files = []
+
+    if not input_path.exists():
+        if not silent:
+            print(f"Error: Path does not exist: {input_path}", file=sys.stderr)
+        return accepted_files, skipped_files
 
     if input_path.is_file():
-        if input_path.suffix == ".py":
-            py_files_list.append(input_path)
+        file_extension = input_path.suffix.lstrip(".").lower()
+        if file_extension in normalized_extensions:
+            accepted_files.append(input_path)
         else:
-            print(f"Skipping non-Python file: {input_path}", file=sys.stderr)
+            skipped_files.append(input_path)
+            if not silent:
+                print(
+                    f"Skipping file '{input_path}': Extension '.{file_extension}' "
+                    f"not in accepted list: {accepted_extensions}",
+                    file=sys.stderr,
+                )
+
     elif input_path.is_dir():
-        print(f"--- Searching directory: {input_path.resolve()} ---", file=sys.stderr)
-        py_files_list = list(input_path.rglob("*.py"))
-        if not py_files_list:
-            print(f"No .py files found in directory: {input_path}", file=sys.stderr)
+        if not silent:
+            print(
+                f"--- Searching directory: {input_path.resolve()} ---", file=sys.stderr
+            )
+
+        for file_path in input_path.rglob("*"):
+            if file_path.is_file():
+                file_extension = file_path.suffix.lstrip(".").lower()
+                if file_extension in normalized_extensions:
+                    accepted_files.append(file_path)
+                else:
+                    skipped_files.append(file_path)
+
+        if not accepted_files and not silent:
+            print(
+                f"No files with extensions {accepted_extensions} found in directory: {input_path}",
+                file=sys.stderr,
+            )
+
     else:
-        print(f"Error: Path is not a file or directory: {input_path}", file=sys.stderr)
+        if not silent:
+            print(
+                f"Error: Path is not a file or directory: {input_path}", file=sys.stderr
+            )
+        skipped_files.append(input_path)
 
-    return py_files_list
+    return accepted_files, skipped_files
 
 
-def process_input_path(input_path: Path) -> List[MalwiObject]:
-    """Process input path and return all MalwiObjects."""
+def process_files(
+    input_path: Path,
+    accepted_extensions: Optional[List[str]] = None,
+    predict: bool = False,
+    retrieve_source_code: bool = False,
+    silent: bool = False,
+    show_progress: bool = True,
+) -> ProcessingResult:
+    accepted_files, skipped_files = collect_files_by_extension(
+        input_path, accepted_extensions, silent
+    )
+
+    all_files = accepted_files + skipped_files
     accumulated_data: List[MalwiObject] = []
     files_processed_count = 0
 
-    py_files_list = collect_python_files(input_path)
-    if not py_files_list:
-        return accumulated_data
+    if not accepted_files:
+        return ProcessingResult(
+            malwi_objects=accumulated_data,
+            all_files=all_files,
+            skipped_files=skipped_files,
+            processed_files=files_processed_count,
+        )
 
+    # Configure progress bar
     tqdm_desc = (
         f"Processing directory '{input_path.name}'"
-        if input_path.is_dir() and len(py_files_list) > 1
+        if input_path.is_dir() and len(accepted_files) > 1
         else f"Processing '{input_path.name}'"
     )
 
-    disable_tqdm = len(py_files_list) <= 1 and input_path.is_file()
+    disable_tqdm = not show_progress or (
+        len(accepted_files) <= 1 and input_path.is_file()
+    )
 
-    for py_file in tqdm(
-        py_files_list,
+    for file_path in tqdm(
+        accepted_files,
         desc=tqdm_desc,
         unit="file",
         ncols=100,
         disable=disable_tqdm,
+        leave=False,
     ):
         try:
-            file_disassembled_data = process_single_py_file(
-                py_file, predict=False, retrieve_source_code=False
+            file_data = process_single_py_file(
+                file_path, predict=predict, retrieve_source_code=retrieve_source_code
             )
-            if file_disassembled_data:
+            if file_data:
                 files_processed_count += 1
-                accumulated_data.extend(file_disassembled_data)
+                accumulated_data.extend(file_data)
         except Exception as e:
-            print(f"Critical error processing file {py_file}: {e}", file=sys.stderr)
+            if not silent:
+                print(
+                    f"Critical error processing file {file_path}: {e}", file=sys.stderr
+                )
 
-    if files_processed_count == 0 and py_files_list:
+    if files_processed_count == 0 and accepted_files and not silent:
         print(
-            "No Python files were successfully processed to produce disassemblies from the input path.",
+            "No files were successfully processed to produce data from the input path.",
             file=sys.stderr,
         )
 
-    return accumulated_data
+    return ProcessingResult(
+        malwi_objects=accumulated_data,
+        all_files=all_files,
+        skipped_files=skipped_files,
+        processed_files=files_processed_count,
+    )
 
 
 def main() -> None:
@@ -896,42 +990,31 @@ def main() -> None:
             )
 
             # Process files and write directly to CSV
-            py_files_list = collect_python_files(input_path_obj)
-            if not py_files_list:
-                csv_writer_instance.close()
-                sys.exit(0)
-
-            tqdm_desc = (
-                f"Processing directory '{input_path_obj.name}'"
-                if input_path_obj.is_dir() and len(py_files_list) > 1
-                else f"Processing '{input_path_obj.name}'"
+            result = process_files(
+                input_path_obj,
+                accepted_extensions=["py"],
+                predict=False,
+                retrieve_source_code=False,
+                silent=False,
+                show_progress=True,
             )
-            disable_tqdm = len(py_files_list) <= 1 and input_path_obj.is_file()
 
-            for py_file in tqdm(
-                py_files_list,
-                desc=tqdm_desc,
-                unit="file",
-                ncols=100,
-                disable=disable_tqdm,
-            ):
-                try:
-                    file_data = process_single_py_file(
-                        py_file, predict=False, retrieve_source_code=False
-                    )
-                    if file_data:
-                        csv_writer_instance.write_objects(file_data)
-                except Exception as e:
-                    print(
-                        f"Critical error processing file {py_file}: {e}",
-                        file=sys.stderr,
-                    )
+            if result.malwi_objects:
+                csv_writer_instance.write_objects(result.malwi_objects)
 
             csv_writer_instance.close()
 
         else:
             # For all other formats, collect data first
-            collected_data = process_input_path(input_path_obj)
+            result = process_files(
+                input_path_obj,
+                accepted_extensions=["py"],
+                predict=False,
+                retrieve_source_code=False,
+                silent=False,
+                show_progress=True,
+            )
+            collected_data = result.malwi_objects
 
             # Handle output
             output_stream = sys.stdout

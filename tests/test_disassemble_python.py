@@ -8,6 +8,7 @@ import yaml
 import io
 import sys
 
+from pathlib import Path
 from unittest import mock
 
 # Import necessary components from the script to be tested, using the new package path
@@ -16,6 +17,7 @@ from research.disassemble_python import (
     SpecialCases,
     OutputFormatter,
     CSVWriter,
+    ProcessingResult,
     sanitize_identifier,
     map_identifier,
     map_entropy_to_token,
@@ -36,12 +38,32 @@ from research.disassemble_python import (
     recursively_disassemble_python,
     disassemble_python_file,
     process_single_py_file,
-    process_input_path,
-    collect_python_files,
+    process_files,
+    collect_files_by_extension,
     main as script_main,
 )
 
-# --- Fixtures ---
+
+# --- Tests for File Processing ---
+@mock.patch("research.disassemble_python.disassemble_python_file")
+def test_process_single_py_file(mock_disassemble, tmp_path):
+    py_file = tmp_path / "sample.py"
+    py_file.write_text("a = 1")
+    mock_mf_instance = MalwiObject("name", "lang", "file", [])
+    mock_disassemble.return_value = [mock_mf_instance]
+    result = process_single_py_file(py_file)
+    assert result == [mock_mf_instance]
+
+
+@mock.patch(
+    "research.disassemble_python.disassemble_python_file",
+    side_effect=Exception("Test error"),
+)
+def test_process_single_py_file_exception(mock_disassemble_exc, tmp_path, capsys):
+    py_file = tmp_path / "error_sample.py"
+    py_file.write_text("a = 1")
+    assert process_single_py_file(py_file) is None
+    assert "An unexpected error occurred" in capsys.readouterr().err
 
 
 @pytest.fixture(autouse=True)
@@ -71,6 +93,7 @@ def sample_malwifile():
         language="python",
         file_path="test.py",
         instructions=[("LOAD_CONST", "1"), ("RETURN_VALUE", "")],
+        codeType=None,
     )
 
 
@@ -90,6 +113,7 @@ class TestMalwiFile:
             language="python",
             file_path="example.py",
             instructions=[("LOAD_NAME", "print")],
+            codeType=None,
             warnings=["TEST_WARNING"],
         )
         assert mf.name == "test_func"
@@ -407,78 +431,198 @@ def test_disassemble_python_file_read_error(mock_recursive_disassemble):
         )
 
 
-# --- Tests for File Processing ---
-@mock.patch("research.disassemble_python.disassemble_python_file")
-def test_process_single_py_file(mock_disassemble, tmp_path):
-    py_file = tmp_path / "sample.py"
-    py_file.write_text("a = 1")
-    mock_mf_instance = MalwiObject("name", "lang", "file", [])
-    mock_disassemble.return_value = [mock_mf_instance]
-    result = process_single_py_file(py_file)
-    assert result == [mock_mf_instance]
+# --- Tests for ProcessingResult ---
+class TestProcessingResult:
+    def test_processing_result_creation(self):
+        malwi_objects = [MalwiObject("test", "python", "test.py", [])]
+        all_files = [Path("test.py"), Path("other.txt")]
+        skipped_files = [Path("other.txt")]
+        processed_files = 1
+
+        result = ProcessingResult(
+            malwi_objects=malwi_objects,
+            all_files=all_files,
+            skipped_files=skipped_files,
+            processed_files=processed_files,
+        )
+
+        assert len(result.malwi_objects) == 1
+        assert len(result.all_files) == 2
+        assert len(result.skipped_files) == 1
+        assert result.processed_files == 1
 
 
-@mock.patch(
-    "research.disassemble_python.disassemble_python_file",
-    side_effect=Exception("Test error"),
-)
-def test_process_single_py_file_exception(mock_disassemble_exc, tmp_path, capsys):
-    py_file = tmp_path / "error_sample.py"
-    py_file.write_text("a = 1")
-    assert process_single_py_file(py_file) is None
-    assert "An unexpected error occurred" in capsys.readouterr().err
+# --- Tests for File Collection Functions ---
+class TestFileCollection:
+    def test_collect_files_by_extension_single_py_file(self, tmp_path):
+        py_file = tmp_path / "test.py"
+        py_file.write_text("print('hello')")
+
+        accepted, skipped = collect_files_by_extension(py_file, ["py"], silent=True)
+
+        assert len(accepted) == 1
+        assert accepted[0] == py_file
+        assert len(skipped) == 0
+
+    def test_collect_files_by_extension_wrong_extension(self, tmp_path):
+        txt_file = tmp_path / "test.txt"
+        txt_file.write_text("hello")
+
+        accepted, skipped = collect_files_by_extension(txt_file, ["py"], silent=True)
+
+        assert len(accepted) == 0
+        assert len(skipped) == 1
+        assert skipped[0] == txt_file
+
+    def test_collect_files_by_extension_directory(self, tmp_path):
+        py_file1 = tmp_path / "script1.py"
+        py_file1.write_text("pass")
+        py_file2 = tmp_path / "script2.py"
+        py_file2.write_text("pass")
+        txt_file = tmp_path / "readme.txt"
+        txt_file.write_text("readme")
+
+        accepted, skipped = collect_files_by_extension(tmp_path, ["py"], silent=True)
+
+        assert len(accepted) == 2
+        assert py_file1 in accepted
+        assert py_file2 in accepted
+        assert len(skipped) == 1
+        assert txt_file in skipped
+
+    def test_collect_files_by_extension_multiple_extensions(self, tmp_path):
+        py_file = tmp_path / "script.py"
+        py_file.write_text("pass")
+        js_file = tmp_path / "script.js"
+        js_file.write_text("console.log('hello');")
+        txt_file = tmp_path / "readme.txt"
+        txt_file.write_text("readme")
+
+        accepted, skipped = collect_files_by_extension(
+            tmp_path, ["py", "js"], silent=True
+        )
+
+        assert len(accepted) == 2
+        assert py_file in accepted
+        assert js_file in accepted
+        assert len(skipped) == 1
+        assert txt_file in skipped
+
+    def test_collect_files_by_extension_nonexistent_path(self, tmp_path):
+        nonexistent = tmp_path / "nonexistent.py"
+
+        accepted, skipped = collect_files_by_extension(nonexistent, ["py"], silent=True)
+
+        assert len(accepted) == 0
+        assert len(skipped) == 0
 
 
-def test_collect_python_files_single_file(tmp_path):
-    target_file = tmp_path / "myfile.py"
-    target_file.write_text("pass")
-    result = collect_python_files(target_file)
-    assert result == [target_file]
+class TestProcessFilesWithProgress:
+    @mock.patch("research.disassemble_python.process_single_py_file")
+    def test_process_files_with_progress_single_file(
+        self, mock_process_single, tmp_path
+    ):
+        py_file = tmp_path / "test.py"
+        py_file.write_text("print('hello')")
+
+        mock_obj = MalwiObject("test", "python", str(py_file), [])
+        mock_process_single.return_value = [mock_obj]
+
+        result = process_files(
+            py_file,
+            accepted_extensions=["py"],
+            predict=False,
+            retrieve_source_code=False,
+            silent=True,
+            show_progress=False,
+        )
+
+        assert len(result.malwi_objects) == 1
+        assert result.malwi_objects[0] == mock_obj
+        assert len(result.all_files) == 1
+        assert len(result.skipped_files) == 0
+        assert result.processed_files == 1
+
+    @mock.patch("research.disassemble_python.process_single_py_file")
+    def test_process_files_with_progress_directory(self, mock_process_single, tmp_path):
+        py_file1 = tmp_path / "script1.py"
+        py_file1.write_text("pass")
+        py_file2 = tmp_path / "script2.py"
+        py_file2.write_text("pass")
+        txt_file = tmp_path / "readme.txt"
+        txt_file.write_text("readme")
+
+        mock_obj1 = MalwiObject("script1", "python", str(py_file1), [])
+        mock_obj2 = MalwiObject("script2", "python", str(py_file2), [])
+        mock_process_single.side_effect = [[mock_obj1], [mock_obj2]]
+
+        result = process_files(
+            tmp_path,
+            accepted_extensions=["py"],
+            predict=False,
+            retrieve_source_code=False,
+            silent=True,
+            show_progress=False,
+        )
+
+        assert len(result.malwi_objects) == 2
+        assert len(result.all_files) == 3  # 2 py + 1 txt
+        assert len(result.skipped_files) == 1  # txt file
+        assert result.processed_files == 2
+
+    @mock.patch("research.disassemble_python.process_single_py_file")
+    def test_process_files_with_progress_no_files(self, mock_process_single, tmp_path):
+        result = process_files(
+            tmp_path,
+            accepted_extensions=["py"],
+            predict=False,
+            retrieve_source_code=False,
+            silent=True,
+            show_progress=False,
+        )
+
+        assert len(result.malwi_objects) == 0
+        assert len(result.all_files) == 0
+        assert len(result.skipped_files) == 0
+        assert result.processed_files == 0
+
+    @mock.patch("research.disassemble_python.process_single_py_file")
+    def test_process_files_with_progress_with_exceptions(
+        self, mock_process_single, tmp_path, capsys
+    ):
+        py_file = tmp_path / "error.py"
+        py_file.write_text("pass")
+
+        mock_process_single.side_effect = Exception("Processing error")
+
+        result = process_files(
+            py_file,
+            accepted_extensions=["py"],
+            predict=False,
+            retrieve_source_code=False,
+            silent=False,  # Enable error output for testing
+            show_progress=False,
+        )
+
+        assert len(result.malwi_objects) == 0
+        assert result.processed_files == 0
+        captured = capsys.readouterr()
+        assert "Critical error processing file" in captured.err
 
 
-def test_collect_python_files_directory(tmp_path):
-    py_file1 = tmp_path / "s1.py"
-    py_file1.write_text("p1")
-    (tmp_path / "sub").mkdir()
-    py_file2 = tmp_path / "sub" / "s2.py"
-    py_file2.write_text("p2")
-    result = collect_python_files(tmp_path)
-    assert py_file1 in result
-    assert py_file2 in result
-
-
-@mock.patch("research.disassemble_python.process_single_py_file")
-def test_process_input_path_single_file(mock_process_single, tmp_path):
-    target_file = tmp_path / "myfile.py"
-    target_file.write_text("pass")
-    mock_mf_instance = MalwiObject("name", "lang", "file", [])
-    mock_process_single.return_value = [mock_mf_instance]
-    result = process_input_path(target_file)
-    assert result == [mock_mf_instance]
-
-
-@mock.patch("research.disassemble_python.process_single_py_file")
-def test_process_input_path_directory(mock_process_single, tmp_path):
-    py_file1 = tmp_path / "s1.py"
-    py_file1.write_text("p1")
-    (tmp_path / "sub").mkdir()
-    py_file2 = tmp_path / "sub" / "s2.py"
-    py_file2.write_text("p2")
-    mf1 = MalwiObject("mf1", "py", str(py_file1), [])
-    mf2 = MalwiObject("mf2", "py", str(py_file2), [])
-    mock_process_single.side_effect = [[mf1], [mf2]]
-    result = process_input_path(tmp_path)
-    assert mf1 in result and mf2 in result
-
-
-# Test for main function
 @mock.patch("argparse.ArgumentParser.parse_args")
 @mock.patch("research.disassemble_python.Path.exists", return_value=True)
-@mock.patch("research.disassemble_python.process_input_path")
+@mock.patch("research.disassemble_python.process_files")
 @mock.patch("research.disassemble_python.OutputFormatter.format_text")
+@mock.patch("research.disassemble_python.MalwiObject.load_models_into_memory")
 @mock.patch("sys.stdout", new_callable=io.StringIO)
 def test_main_simple_run(
-    mock_stdout, mock_format_text, mock_process_input, mock_path_exists, mock_parse_args
+    mock_stdout,
+    mock_load_models,
+    mock_format_text,
+    mock_process_files,
+    mock_path_exists,
+    mock_parse_args,
 ):
     mock_args = mock.Mock()
     mock_args.path = "dummy.py"
@@ -489,14 +633,22 @@ def test_main_simple_run(
     mock_args.model_path = None
     mock_args.tokenizer_path = None
     mock_parse_args.return_value = mock_args
+
     mock_mf = mock.MagicMock(spec=MalwiObject)
-    mock_process_input.return_value = [mock_mf]
+    mock_result = ProcessingResult(
+        malwi_objects=[mock_mf],
+        all_files=[pathlib.Path("dummy.py")],
+        skipped_files=[],
+        processed_files=1,
+    )
+    mock_process_files.return_value = mock_result
 
     with pytest.raises(SystemExit) as e:
         script_main()
     assert e.value.code == 0
-    mock_process_input.assert_called_once_with(pathlib.Path("dummy.py"))
+    mock_process_files.assert_called_once()
     mock_format_text.assert_called_once_with([mock_mf], mock_stdout)
+    mock_load_models.assert_called_once_with(model_path=None, tokenizer_path=None)
 
 
 @mock.patch("builtins.open")
@@ -555,6 +707,7 @@ def sample_malwi_files():
         language="python",
         file_path="/path/to/evil_script.py",
         instructions=[("LOAD_CONST", "evil_script_tokens")],
+        codeType=None,
         warnings=["Suspicious"],
     )  # Expected score: 0.9
 
@@ -563,6 +716,7 @@ def sample_malwi_files():
         language="python",
         file_path="/path/to/harmless_utility.py",
         instructions=[("LOAD_CONST", "harmless_utility_tokens")],
+        codeType=None,
     )  # Expected score: 0.05
 
     file3 = MalwiObject(
@@ -570,6 +724,7 @@ def sample_malwi_files():
         language="javascript",
         file_path="/path/to/moderate_risk.js",
         instructions=[("CALL", "moderate_risk_tokens")],
+        codeType=None,
     )  # Expected score: 0.6
 
     file4 = MalwiObject(
@@ -577,6 +732,7 @@ def sample_malwi_files():
         language="text",
         file_path="/path/to/unknown.txt",
         instructions=[("DATA", "unknown_op_tokens")],
+        codeType=None,
     )  # Expected score: 0.2 (if it uses the mock directly)
 
     return [file1, file2, file3, file4]
@@ -593,12 +749,14 @@ def sample_malwi_files_predictions_set():
             language="python",
             file_path="f1.py",
             instructions=[("L", "evil_script_tokens")],
+            codeType=None,
         ),
         MalwiObject(
             name="f2.py",
             language="python",
             file_path="f2.py",
             instructions=[("L", "harmless_utility_tokens")],
+            codeType=None,
         ),
     ]
     for f in files:
@@ -685,12 +843,14 @@ def test_report_calls_predict_if_needed(monkeypatch):
             language="python",
             file_path="np1.py",
             instructions=[("L", "evil_script_tokens")],
+            codeType=None,
         ),
         MalwiObject(
             name="needs_predict2.py",
             language="python",
             file_path="np2.py",
             instructions=[("L", "harmless_utility_tokens")],
+            codeType=None,
         ),
     ]
     # Ensure maliciousness is None

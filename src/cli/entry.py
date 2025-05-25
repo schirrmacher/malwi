@@ -1,94 +1,15 @@
 import logging
 import argparse
-from tqdm import tqdm
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional
 
-from research.disassemble_python import process_single_py_file, MalwiObject
+from research.disassemble_python import (
+    MalwiObject,
+    process_files,
+    ProcessingResult,
+)
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
-
-
-def process_source_path(
-    input_path: str,
-    accepted_extensions: Optional[List[str]] = None,
-) -> Tuple[List[MalwiObject], List[str]]:
-    if accepted_extensions is None:
-        accepted_extensions = ["py"]
-    normalized_accepted_extensions = [ext.lower() for ext in accepted_extensions]
-
-    path_obj = Path(input_path)
-    all_files: List[str] = []
-    all_malwi_files: List[MalwiObject] = []
-    skipped_file_paths: List[str] = []
-
-    if not path_obj.exists():
-        logging.error(f"Path '{input_path}' does not exist. Skipping.")
-        return all_malwi_files, skipped_file_paths
-
-    if path_obj.is_file():
-        all_files.append(path_obj)
-
-        file_extension = path_obj.suffix.lstrip(".").lower()
-
-        if file_extension in normalized_accepted_extensions:
-            processed_objects = process_single_py_file(path_obj)
-            if processed_objects:
-                all_malwi_files.extend(processed_objects)
-                logging.info(
-                    f"Successfully processed and extracted data from file: {path_obj}"
-                )
-            else:
-                logging.info(
-                    f"File '{path_obj}' (type: .{file_extension}) was processed by the relevant handler "
-                    f"but yielded no extractable data. This might be due to its content "
-                    f"(e.g., no relevant AST nodes, specific targets missing, or empty file)."
-                )
-        else:
-            logging.info(
-                f"Skipping file '{path_obj}': Extension '.{file_extension}' "
-                f"is not in the accepted list: {accepted_extensions}."
-            )
-            skipped_file_paths.append(str(path_obj))
-
-    elif path_obj.is_dir():
-        all_files = [f for f in path_obj.rglob("*") if f.is_file()]
-
-        if not all_files:
-            logging.info(f"No files found in directory '{input_path}'.")
-            return all_malwi_files, skipped_file_paths
-
-        files_processed_yielding_data = 0
-        files_accepted_type_empty_yield = 0
-
-        for file_path in tqdm(
-            all_files,
-            desc=f"Processing '{path_obj.name}'",
-            unit="file",
-            ncols=100,
-            leave=False,
-        ):
-            file_extension = file_path.suffix.lstrip(".").lower()
-            if file_extension in normalized_accepted_extensions:
-                processed_objects = process_single_py_file(file_path)
-                if processed_objects:
-                    all_malwi_files.extend(processed_objects)
-                    files_processed_yielding_data += 1
-                else:
-                    files_accepted_type_empty_yield += 1
-                    logging.debug(
-                        f"File '{file_path}' (type: .{file_extension}) processed but yielded no data."
-                    )
-            else:
-                skipped_file_paths.append(str(file_path))
-
-    else:
-        logging.error(
-            f"Path '{input_path}' exists but is neither a file nor a directory. Skipping."
-        )
-        skipped_file_paths.append(input_path)
-
-    return all_malwi_files, skipped_file_paths, all_files
 
 
 def main():
@@ -99,7 +20,7 @@ def main():
     parser.add_argument(
         "--format",
         "-f",
-        choices=["json", "yaml", "table", "csv", "tokens"],
+        choices=["json", "yaml", "tokens"],
         default="table",
         help="Specify the output format.",
     )
@@ -129,6 +50,13 @@ def main():
         type=float,
         default=0.5,
         help="Specify the threshold for classifying nodes as malicious (default: 0.5).",
+    )
+    parser.add_argument(
+        "--extensions",
+        "-e",
+        nargs="+",
+        default=["py"],
+        help="Specify file extensions to process (default: py).",
     )
 
     developer_group = parser.add_argument_group("Developer Options")
@@ -166,38 +94,84 @@ def main():
         parser.print_help()
         return
 
-    MalwiObject.load_models_into_memory(
-        model_path=args.model_path, tokenizer_path=args.tokenizer_path
+    # Load ML models
+    try:
+        MalwiObject.load_models_into_memory(
+            model_path=args.model_path, tokenizer_path=args.tokenizer_path
+        )
+    except Exception as e:
+        if not args.quiet:
+            logging.error(
+                f"Warning: Could not initialize ML models: {e}. "
+                "Maliciousness prediction will be disabled."
+            )
+
+    # Process files using the consolidated function
+    input_path = Path(args.path)
+    if not input_path.exists():
+        logging.error(f"Error: Input path does not exist: {input_path}")
+        return
+
+    result: ProcessingResult = process_files(
+        input_path=input_path,
+        accepted_extensions=args.extensions,
+        predict=True,  # Enable prediction for malwi scanner
+        retrieve_source_code=True,  # Retrieve source code for better analysis
+        silent=args.quiet,
+        show_progress=not args.quiet,
     )
 
-    objects, skipped, all_files = process_source_path(args.path)
+    if not args.quiet:
+        logging.info(f"Files processed successfully: {result.processed_files}")
+        if result.skipped_files:
+            logging.info(f"Files skipped: {len(result.skipped_files)}")
+
+        files_no_data = (
+            len([f for f in result.all_files if f not in result.skipped_files])
+            - result.processed_files
+        )
+        if files_no_data > 0:
+            logging.info(f"Files processed but yielded no data: {files_no_data}")
 
     output = ""
 
     if args.format == "json":
         output = MalwiObject.to_report_json(
-            objects,
-            all_files=all_files,
+            result.malwi_objects,
+            all_files=[str(f) for f in result.all_files],
             malicious_threshold=args.threshold,
-            number_of_skipped_files=len(skipped),
+            number_of_skipped_files=len(result.skipped_files),
             malicious_only=args.malicious_only,
         )
     elif args.format == "yaml":
         output = MalwiObject.to_report_yaml(
-            objects,
-            all_files=all_files,
+            result.malwi_objects,
+            all_files=[str(f) for f in result.all_files],
             malicious_threshold=args.threshold,
-            number_of_skipped_files=len(skipped),
+            number_of_skipped_files=len(result.skipped_files),
             malicious_only=args.malicious_only,
         )
-    else:
-        pass
+    elif args.format == "tokens":
+        output = generate_tokens_output(result.malwi_objects)
+
     if args.save:
-        Path(args.save).write_text(output)
+        save_path = Path(args.save)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        save_path.write_text(output, encoding="utf-8")
         if not args.quiet:
             logging.info(f"Output saved to {args.save}")
     else:
         print(output)
+
+
+def generate_tokens_output(malwi_objects: List[MalwiObject]) -> str:
+    """Generate tokens-only output."""
+    lines = []
+    for obj in malwi_objects:
+        lines.append(f"# {obj.file_path} - {obj.name}")
+        lines.append(obj.to_token_string())
+        lines.append("")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
