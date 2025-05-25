@@ -4,7 +4,7 @@ from tqdm import tqdm
 from pathlib import Path
 from typing import List, Tuple, Optional
 
-from research.disassemble_python import process_single_py_file, MalwiFile
+from research.disassemble_python import process_single_py_file, MalwiObject
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -12,14 +12,14 @@ logging.basicConfig(format="%(message)s", level=logging.INFO)
 def process_source_path(
     input_path: str,
     accepted_extensions: Optional[List[str]] = None,
-) -> Tuple[List[MalwiFile], List[str]]:
+) -> Tuple[List[MalwiObject], List[str]]:
     if accepted_extensions is None:
         accepted_extensions = ["py"]
     normalized_accepted_extensions = [ext.lower() for ext in accepted_extensions]
 
     path_obj = Path(input_path)
     all_files: List[str] = []
-    all_malwi_files: List[MalwiFile] = []
+    all_malwi_files: List[MalwiObject] = []
     skipped_file_paths: List[str] = []
 
     if not path_obj.exists():
@@ -166,7 +166,7 @@ def main():
         parser.print_help()
         return
 
-    MalwiFile.load_models_into_memory(
+    MalwiObject.load_models_into_memory(
         model_path=args.model_path, tokenizer_path=args.tokenizer_path
     )
 
@@ -175,7 +175,7 @@ def main():
     output = ""
 
     if args.format == "json":
-        output = MalwiFile.to_report_json(
+        output = MalwiObject.to_report_json(
             objects,
             all_files=all_files,
             malicious_threshold=args.threshold,
@@ -183,7 +183,7 @@ def main():
             malicious_only=args.malicious_only,
         )
     elif args.format == "yaml":
-        output = MalwiFile.to_report_yaml(
+        output = MalwiObject.to_report_yaml(
             objects,
             all_files=all_files,
             malicious_threshold=args.threshold,

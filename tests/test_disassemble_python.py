@@ -12,7 +12,7 @@ from unittest import mock
 
 # Import necessary components from the script to be tested, using the new package path
 from research.disassemble_python import (
-    MalwiFile,
+    MalwiObject,
     SpecialCases,
     sanitize_identifier,
     map_identifier,
@@ -66,7 +66,7 @@ def mock_model_predictions(monkeypatch):
 
 @pytest.fixture
 def sample_malwifile():
-    return MalwiFile(
+    return MalwiObject(
         name="<module>",
         language="python",
         id_hex="0x123",
@@ -87,7 +87,7 @@ def sample_code_object():
 # --- Tests for MalwiFile Class ---
 class TestMalwiFile:
     def test_malwifile_initialization(self):
-        mf = MalwiFile(
+        mf = MalwiObject(
             name="test_func",
             language="python",
             id_hex="0xabc",
@@ -357,7 +357,7 @@ def test_disassemble_python_file_read_error(mock_recursive_disassemble):
 def test_process_single_py_file(mock_disassemble, tmp_path):
     py_file = tmp_path / "sample.py"
     py_file.write_text("a = 1")
-    mock_mf_instance = MalwiFile("name", "lang", "id", "file", 1, [])
+    mock_mf_instance = MalwiObject("name", "lang", "id", "file", 1, [])
     mock_disassemble.return_value = [mock_mf_instance]
     result = process_single_py_file(py_file)
     assert result == [mock_mf_instance]
@@ -378,7 +378,7 @@ def test_process_single_py_file_exception(mock_disassemble_exc, tmp_path, capsys
 def test_process_input_path_single_file(mock_process_single, tmp_path):
     target_file = tmp_path / "myfile.py"
     target_file.write_text("pass")
-    mock_mf_instance = MalwiFile("name", "lang", "id", "file", 1, [])
+    mock_mf_instance = MalwiObject("name", "lang", "id", "file", 1, [])
     mock_process_single.return_value = [mock_mf_instance]
     result = process_input_path(target_file, "txt", None)
     assert result == [mock_mf_instance]
@@ -391,8 +391,8 @@ def test_process_input_path_directory(mock_process_single, tmp_path):
     (tmp_path / "sub").mkdir()
     py_file2 = tmp_path / "sub" / "s2.py"
     py_file2.write_text("p2")
-    mf1 = MalwiFile("mf1", "py", "id1", str(py_file1), 1, [])
-    mf2 = MalwiFile("mf2", "py", "id2", str(py_file2), 1, [])
+    mf1 = MalwiObject("mf1", "py", "id1", str(py_file1), 1, [])
+    mf2 = MalwiObject("mf2", "py", "id2", str(py_file2), 1, [])
     mock_process_single.side_effect = [[mf1], [mf2]]
     result = process_input_path(tmp_path, "txt", None)
     assert mf1 in result and mf2 in result
@@ -448,7 +448,7 @@ def test_main_simple_run(
     mock_args.format = "txt"
     mock_args.save = None
     mock_parse_args.return_value = mock_args
-    mock_mf = mock.MagicMock(spec=MalwiFile)
+    mock_mf = mock.MagicMock(spec=MalwiObject)
     mock_process_input.return_value = [mock_mf]
 
     with pytest.raises(SystemExit) as e:
@@ -498,18 +498,18 @@ def mock_get_node_text_prediction(token_string: str):
     return {"probabilities": [0.7, 0.3]}  # Default
 
 
-MalwiFile.load_models_into_memory = classmethod(mock_initialize_models)
+MalwiObject.load_models_into_memory = classmethod(mock_initialize_models)
 
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_models():
     # Ensure models are "loaded" once for the test module
-    MalwiFile.load_models_into_memory()
+    MalwiObject.load_models_into_memory()
 
 
 @pytest.fixture
 def sample_malwi_files():
-    file1 = MalwiFile(
+    file1 = MalwiObject(
         name="evil_script.py",
         language="python",
         id_hex="abc",
@@ -519,7 +519,7 @@ def sample_malwi_files():
         warnings=["Suspicious"],
     )  # Expected score: 0.9
 
-    file2 = MalwiFile(
+    file2 = MalwiObject(
         name="harmless_utility.py",
         language="python",
         id_hex="def",
@@ -528,7 +528,7 @@ def sample_malwi_files():
         instructions=[("LOAD_CONST", "harmless_utility_tokens")],
     )  # Expected score: 0.05
 
-    file3 = MalwiFile(
+    file3 = MalwiObject(
         name="moderate_risk.js",
         language="javascript",
         id_hex="ghi",
@@ -537,7 +537,7 @@ def sample_malwi_files():
         instructions=[("CALL", "moderate_risk_tokens")],
     )  # Expected score: 0.6
 
-    file4 = MalwiFile(
+    file4 = MalwiObject(
         name="unknown.txt",
         language="text",
         id_hex="jkl",
@@ -555,7 +555,7 @@ def sample_malwi_files_predictions_set():
     # before report generation, simulating a scenario where scores are pre-calculated.
     # This helps ensure predict() in report generation handles already-set scores correctly.
     files = [
-        MalwiFile(
+        MalwiObject(
             name="f1.py",
             language="python",
             id_hex="f1",
@@ -563,7 +563,7 @@ def sample_malwi_files_predictions_set():
             firstlineno=1,
             instructions=[("L", "evil_script_tokens")],
         ),
-        MalwiFile(
+        MalwiObject(
             name="f2.py",
             language="python",
             id_hex="f2",
@@ -590,7 +590,7 @@ def test_generate_yaml_report_basic(sample_malwi_files):
     for mf in malwi_files:
         mf.predict()
 
-    yaml_report_str = MalwiFile.to_report_yaml(
+    yaml_report_str = MalwiObject.to_report_yaml(
         malwi_files,
         all_files=[],
         malicious_threshold=threshold,
@@ -598,7 +598,7 @@ def test_generate_yaml_report_basic(sample_malwi_files):
     )
     report_data_yaml = yaml.safe_load(yaml_report_str)
 
-    json_report_str = MalwiFile.to_report_json(
+    json_report_str = MalwiObject.to_report_json(
         malwi_files,  # Use the same files (scores are already set)
         all_files=[],
         malicious_threshold=threshold,
@@ -614,7 +614,7 @@ def test_report_empty_file_list():
     """Test report generation with an empty list of MalwiFiles."""
     skipped_general = 3
 
-    json_report_str = MalwiFile.to_report_json(
+    json_report_str = MalwiObject.to_report_json(
         [],
         all_files=[],
         number_of_skipped_files=skipped_general,
@@ -623,7 +623,7 @@ def test_report_empty_file_list():
 
     assert len(report_data["details"]) == 0
 
-    yaml_report_str = MalwiFile.to_report_yaml(
+    yaml_report_str = MalwiObject.to_report_yaml(
         malwi_files=[],
         all_files=[],
         number_of_skipped_files=skipped_general,
@@ -638,7 +638,7 @@ def test_report_calls_predict_if_needed(monkeypatch):
     """
     # Mock predict method to check if it's called
     called_predict_for = []
-    original_predict = MalwiFile.predict
+    original_predict = MalwiObject.predict
 
     def mock_predict_spy(self_mf):
         called_predict_for.append(self_mf.name)
@@ -648,10 +648,10 @@ def test_report_calls_predict_if_needed(monkeypatch):
             self_mf.maliciousness = prediction_result["probabilities"][1]
         return prediction_result
 
-    monkeypatch.setattr(MalwiFile, "predict", mock_predict_spy)
+    monkeypatch.setattr(MalwiObject, "predict", mock_predict_spy)
 
     test_files = [
-        MalwiFile(
+        MalwiObject(
             name="needs_predict1.py",
             language="python",
             id_hex="np1",
@@ -659,7 +659,7 @@ def test_report_calls_predict_if_needed(monkeypatch):
             firstlineno=1,
             instructions=[("L", "evil_script_tokens")],
         ),
-        MalwiFile(
+        MalwiObject(
             name="needs_predict2.py",
             language="python",
             id_hex="np2",
@@ -672,7 +672,7 @@ def test_report_calls_predict_if_needed(monkeypatch):
     assert test_files[0].maliciousness is None
     assert test_files[1].maliciousness is None
 
-    MalwiFile.to_report_json(test_files, all_files=[])
+    MalwiObject.to_report_json(test_files, all_files=[])
 
     assert "needs_predict1.py" in called_predict_for
     assert "needs_predict2.py" in called_predict_for
@@ -680,4 +680,4 @@ def test_report_calls_predict_if_needed(monkeypatch):
     assert test_files[1].maliciousness is not None
 
     # Restore original predict if other tests need it unmocked, though pytest handles fixture/monkeypatch scope.
-    monkeypatch.setattr(MalwiFile, "predict", original_predict)
+    monkeypatch.setattr(MalwiObject, "predict", original_predict)

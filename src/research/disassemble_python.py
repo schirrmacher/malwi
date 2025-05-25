@@ -72,7 +72,7 @@ yaml.add_representer(LiteralStr, literal_str_representer)
 
 
 @dataclass
-class MalwiFile:
+class MalwiObject:
     name: str
     id_hex: Optional[str]
     file_path: str
@@ -181,7 +181,7 @@ class MalwiFile:
 
     @staticmethod
     def _generate_report_data(
-        malwi_files: List["MalwiFile"],
+        malwi_files: List["MalwiObject"],
         all_files: List[str],
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
@@ -231,7 +231,7 @@ class MalwiFile:
     @classmethod
     def to_report_json(
         cls,
-        malwi_files: List["MalwiFile"],
+        malwi_files: List["MalwiObject"],
         all_files: List[str],
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
@@ -249,7 +249,7 @@ class MalwiFile:
     @classmethod
     def to_report_yaml(
         cls,
-        malwi_files: List["MalwiFile"],
+        malwi_files: List["MalwiObject"],
         all_files: List[str],
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
@@ -502,13 +502,13 @@ def recursively_disassemble_python(
     file_path: str,
     language: str,
     code_obj: Optional[types.CodeType],
-    all_objects_data: List[MalwiFile] = [],
+    all_objects_data: List[MalwiObject] = [],
     visited_code_ids: Optional[Set[int]] = None,
     errors: List[str] = [],
 ) -> None:
     if errors or not code_obj:
         for err_msg in errors:
-            object_data = MalwiFile(
+            object_data = MalwiObject(
                 name=err_msg,
                 language=language,
                 id_hex=None,
@@ -520,7 +520,7 @@ def recursively_disassemble_python(
             all_objects_data.append(object_data)
         if not code_obj and not errors:
             all_objects_data.append(
-                MalwiFile(
+                MalwiObject(
                     name=SpecialCases.MALFORMED_FILE.value,
                     language=language,
                     id_hex=None,
@@ -569,7 +569,7 @@ def recursively_disassemble_python(
 
         current_instructions_data.append((opname, final_value))
 
-    object_data = MalwiFile(
+    object_data = MalwiObject(
         name=code_obj.co_name if code_obj else "UnknownObject",
         language=language,
         id_hex=hex(id(code_obj)) if code_obj else None,
@@ -595,8 +595,8 @@ def recursively_disassemble_python(
 
 def disassemble_python_file(
     file_path_str: str, retrieve_source_code: bool = True
-) -> List[MalwiFile]:
-    all_disassembled_data: List[MalwiFile] = []
+) -> List[MalwiObject]:
+    all_disassembled_data: List[MalwiObject] = []
     source_code: Optional[str] = None
     current_file_errors: List[str] = []
 
@@ -632,7 +632,7 @@ def disassemble_python_file(
     return all_disassembled_data
 
 
-def print_txt_output(all_objects_data: List[MalwiFile], output_stream: Any) -> None:
+def print_txt_output(all_objects_data: List[MalwiObject], output_stream: Any) -> None:
     for obj_data in all_objects_data:
         # For error entries, id_hex and firstlineno might be None.
         obj_id_hex = obj_data.id_hex if obj_data.id_hex is not None else "<N/A>"
@@ -668,7 +668,7 @@ def print_txt_output(all_objects_data: List[MalwiFile], output_stream: Any) -> N
             )
 
 
-def get_row_data(obj: MalwiFile) -> List[Any]:
+def get_row_data(obj: MalwiObject) -> List[Any]:
     return [
         obj.to_token_string(),
         obj.to_string_hash(),
@@ -677,14 +677,14 @@ def get_row_data(obj: MalwiFile) -> List[Any]:
 
 
 def write_csv_rows_for_file_data(
-    file_disassembled_data: List[MalwiFile], csv_writer_obj: csv.writer
+    file_disassembled_data: List[MalwiObject], csv_writer_obj: csv.writer
 ) -> None:
     for obj in file_disassembled_data:
         csv_writer_obj.writerow(get_row_data(obj))
 
 
 def print_csv_output_to_stdout(
-    all_objects_data: List[MalwiFile], output_stream: Any
+    all_objects_data: List[MalwiObject], output_stream: Any
 ) -> None:
     writer = csv.writer(output_stream)
     writer.writerow(["tokens", "hash", "filepath"])
@@ -694,9 +694,9 @@ def print_csv_output_to_stdout(
 
 def process_single_py_file(
     py_file: Path, predict: bool = True, retrieve_source_code: bool = True
-) -> Optional[List[MalwiFile]]:
+) -> Optional[List[MalwiObject]]:
     try:
-        disassembled_data: List[MalwiFile] = disassemble_python_file(
+        disassembled_data: List[MalwiObject] = disassemble_python_file(
             str(py_file), retrieve_source_code=retrieve_source_code
         )
         if predict:
@@ -717,8 +717,8 @@ def process_single_py_file(
 
 def process_input_path(
     input_path: Path, output_format: str, csv_writer_for_file: Optional[csv.writer]
-) -> List[MalwiFile]:
-    accumulated_data_for_txt_or_stdout_csv: List[MalwiFile] = []
+) -> List[MalwiObject]:
+    accumulated_data_for_txt_or_stdout_csv: List[MalwiObject] = []
     files_processed_count = 0
     py_files_list = []
 
@@ -831,7 +831,7 @@ def main() -> None:
     input_path_obj: Path = Path(args.path)
 
     try:
-        MalwiFile.load_models_into_memory(
+        MalwiObject.load_models_into_memory(
             model_path=args.model_path, tokenizer_path=args.tokenizer_path
         )
     except Exception as e:
@@ -889,7 +889,7 @@ def main() -> None:
             )
             sys.exit(1)
 
-    collected_data: List[MalwiFile] = []
+    collected_data: List[MalwiObject] = []
     try:
         collected_data = process_input_path(
             input_path_obj,
@@ -918,12 +918,12 @@ def main() -> None:
             elif args.format == "csv":  # CSV to stdout
                 print_csv_output_to_stdout(collected_data, output_stream_target)
             elif args.format == "json":
-                report_json = MalwiFile.to_report_json(
+                report_json = MalwiObject.to_report_json(
                     collected_data, args.malicious_threshold, 0, args.malicious_only
                 )
                 output_stream_target.write(report_json + "\n")
             elif args.format == "yaml":
-                report_yaml = MalwiFile.to_report_yaml(
+                report_yaml = MalwiObject.to_report_yaml(
                     collected_data, args.malicious_threshold, 0, args.malicious_only
                 )
                 output_stream_target.write(report_yaml + "\n")
