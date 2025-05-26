@@ -15,8 +15,8 @@ Based on open research, open code, open data.
 pip install --user malwi
 ```
 
+Run:
 ```
-# Run
 malwi ./examples
 ```
 
@@ -24,11 +24,15 @@ Output:
 ```
 ## examples/__init__.py
 - Object: runcommand
-- Maliciousness: 0.9620079398155212
+- Maliciousness: 👹 0.9620079398155212
 
+### Code
 def runcommand(value):
     output = subprocess.run(value, shell=True, capture_output=True)
     return [output.stdout, output.stderr]
+
+### Tokens
+TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
 ...
 ```
 
