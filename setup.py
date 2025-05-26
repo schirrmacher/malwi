@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="malwi",
-    version="0.0.9",
+    version="0.0.10",
     author="Marvin Schirrmacher",
     author_email="m@schirrmacher.io",
     description="malwi - AI Python Malware Scanner",
