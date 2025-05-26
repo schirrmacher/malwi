@@ -525,7 +525,13 @@ class TestProcessFilesWithProgress:
         py_file = tmp_path / "test.py"
         py_file.write_text("print('hello')")
 
-        mock_obj = MalwiObject("test", "python", str(py_file), [])
+        mock_obj = MalwiObject(
+            name="test",
+            language="python",
+            file_path=str(py_file),
+            instructions=[],
+            warnings=[],
+        )
         mock_process_single.return_value = [mock_obj]
 
         result = process_files(

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import re
 import dis
 import sys
@@ -15,6 +16,7 @@ import pathlib
 import hashlib
 import warnings
 import argparse
+import questionary
 import collections
 
 from tqdm import tqdm
@@ -869,18 +871,19 @@ def process_files(
     retrieve_source_code: bool = False,
     silent: bool = False,
     show_progress: bool = True,
+    interactive_triaging: bool = False,
 ) -> ProcessingResult:
     accepted_files, skipped_files = collect_files_by_extension(
         input_path, accepted_extensions, silent
     )
 
     all_files = accepted_files + skipped_files
-    accumulated_data: List[MalwiObject] = []
+    all_objects: List[MalwiObject] = []
     files_processed_count = 0
 
     if not accepted_files:
         return ProcessingResult(
-            malwi_objects=accumulated_data,
+            malwi_objects=all_objects,
             all_files=all_files,
             skipped_files=skipped_files,
             processed_files=files_processed_count,
@@ -906,12 +909,15 @@ def process_files(
         leave=False,
     ):
         try:
-            file_data = process_single_py_file(
+            file_objects: List[MalwiObject] = process_single_py_file(
                 file_path, predict=predict, retrieve_source_code=retrieve_source_code
             )
-            if file_data:
+            if file_objects:
                 files_processed_count += 1
-                accumulated_data.extend(file_data)
+                all_objects.extend(file_objects)
+            if interactive_triaging:
+                triage(file_objects)
+
         except Exception as e:
             if not silent:
                 print(
@@ -925,11 +931,56 @@ def process_files(
         )
 
     return ProcessingResult(
-        malwi_objects=accumulated_data,
+        malwi_objects=all_objects,
         all_files=all_files,
         skipped_files=skipped_files,
         processed_files=files_processed_count,
     )
+
+
+def triage(all_objects: List["MalwiObject"]):
+    # Create directories if they don't exist
+    os.makedirs(os.path.join("triaging", "benign"), exist_ok=True)
+    os.makedirs(os.path.join("triaging", "malicious"), exist_ok=True)
+
+    for obj in all_objects:
+        obj.retrieve_source_code()
+
+        # Generate SHA-1 hash of the code
+        code_hash = hashlib.sha1(obj.code.encode("utf-8")).hexdigest()
+
+        # Check if file already exists in either folder
+        benign_path = os.path.join("triaging", "benign", f"{code_hash}.py")
+        malicious_path = os.path.join("triaging", "malicious", f"{code_hash}.py")
+
+        if os.path.exists(benign_path) or os.path.exists(malicious_path):
+            print(f"Hash {code_hash} already exists, skipping...")
+            continue
+
+        triage_result = questionary.select(
+            f"Is the following code malicious?\n\n# Maliciousness: {obj.maliciousness}\n\n{obj.code}\n\n",
+            use_shortcuts=True,
+            choices=["yes", "no", "skip", "exit"],
+        ).ask()
+
+        if triage_result == "yes":
+            # Save to malicious folder
+            with open(malicious_path, "w", encoding="utf-8") as f:
+                f.write(obj.code)
+            print(f"Saved malicious code as {code_hash}.py")
+
+        elif triage_result == "no":
+            # Save to benign folder
+            with open(benign_path, "w", encoding="utf-8") as f:
+                f.write(obj.code)
+            print(f"Saved benign code as {code_hash}.py")
+
+        elif triage_result == "skip":
+            print("Skipping this sample...")
+            continue
+
+        elif triage_result == "exit":
+            exit(0)
 
 
 def main() -> None:

@@ -75,6 +75,12 @@ def main():
         help="Specify the custom model path directory.",
         default=None,
     )
+    developer_group.add_argument(
+        "--triage",
+        action="store_true",
+        default=False,
+        help="Enable triage mode (default: False)",
+    )
 
     args = parser.parse_args()
 
@@ -119,6 +125,7 @@ def main():
         retrieve_source_code=True,  # Retrieve source code for better analysis
         silent=args.quiet,
         show_progress=not args.quiet,
+        interactive_triaging=args.triage,
     )
 
     output = ""
