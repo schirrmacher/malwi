@@ -57,7 +57,7 @@ Future iterations will cover malware scanning for more languages (JavaScript, Ru
 
 ## How does it work?
 
-malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) and Support Vector Machines (SVM) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). 
+malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) and Support Vector Machines (SVM) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). [pypi_malregistry](https://github.com/lxyeternal/pypi_malregistry) is used as a source for malicious samples.
 
 1. malwi compiles Python files to bytecode:
 
