@@ -263,6 +263,47 @@ class MalwiObject:
             report_data, sort_keys=False, width=float("inf"), default_flow_style=False
         )
 
+    @classmethod
+    def to_report_markdown(
+        cls,
+        malwi_files: List["MalwiObject"],
+        all_files: List[str],
+        malicious_threshold: float = 0.5,
+        number_of_skipped_files: int = 0,
+        malicious_only: bool = False,
+    ) -> str:
+        report_data = cls._generate_report_data(
+            malwi_files,
+            all_files,
+            malicious_threshold,
+            number_of_skipped_files,
+            malicious_only=malicious_only,
+        )
+
+        stats = report_data["statistics"]
+
+        txt = "# Malwi Report\n\n"
+        txt += f"- Files: {stats['total_files']}\n"
+        txt += f"- Skipped: {stats['skipped_files']}\n"
+        txt += f"- Processed Objects: {stats['processed_objects']}\n"
+        txt += f"- Malicious Objects: {stats['malicious_objects']}\n\n"
+
+        for file in report_data["details"]:
+            txt += f"## {file['path']}\n"
+
+            for object in file["contents"]:
+                txt += (
+                    f"- Object: {object['name'] if object['name']  else "<object>"}\n"
+                )
+                txt += f"- Maliciousness: {object['score']}\n\n"
+                txt += "### Code\n"
+                txt += f"```\n{object['code']}\n```\n\n"
+                txt += "### Tokens\n"
+                txt += f"```\n{object['tokens']}\n```\n"
+            txt += "\n\n"
+
+        return txt
+
 
 class OutputFormatter:
     """Handles different output formats for MalwiObject data."""

@@ -1,7 +1,7 @@
 import logging
 import argparse
+from typing import List
 from pathlib import Path
-from typing import List, Optional
 
 from research.disassemble_python import (
     MalwiObject,
@@ -20,8 +20,8 @@ def main():
     parser.add_argument(
         "--format",
         "-f",
-        choices=["json", "yaml", "tokens"],
-        default="table",
+        choices=["markdown", "json", "yaml", "tokens"],
+        default="markdown",
         help="Specify the output format.",
     )
     parser.add_argument(
@@ -135,16 +135,16 @@ def main():
 
     output = ""
 
-    if args.format == "json":
-        output = MalwiObject.to_report_json(
+    if args.format == "yaml":
+        output = MalwiObject.to_report_yaml(
             result.malwi_objects,
             all_files=[str(f) for f in result.all_files],
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(result.skipped_files),
             malicious_only=args.malicious_only,
         )
-    elif args.format == "yaml":
-        output = MalwiObject.to_report_yaml(
+    elif args.format == "markdown":
+        output = MalwiObject.to_report_markdown(
             result.malwi_objects,
             all_files=[str(f) for f in result.all_files],
             malicious_threshold=args.threshold,
@@ -153,6 +153,14 @@ def main():
         )
     elif args.format == "tokens":
         output = generate_tokens_output(result.malwi_objects)
+    else:
+        output = MalwiObject.to_report_json(
+            result.malwi_objects,
+            all_files=[str(f) for f in result.all_files],
+            malicious_threshold=args.threshold,
+            number_of_skipped_files=len(result.skipped_files),
+            malicious_only=args.malicious_only,
+        )
 
     if args.save:
         save_path = Path(args.save)

@@ -13,16 +13,29 @@ Based on open research, open code, open data.
 ```
 # Install
 pip install --user malwi
+```
 
+```
 # Run
 malwi ./examples
-
-| File                 | Name       |   Malicious |
-|----------------------|------------|-------------|
-| examples/__init__.py | run        |        0.93 |
-| examples/__init__.py | debug      |        0.99 |
-| examples/__init__.py | runcommand |        1    |
 ```
+
+Output:
+```
+## examples/__init__.py
+- Object: runcommand
+- Maliciousness: 0.9620079398155212
+
+def runcommand(value):
+    output = subprocess.run(value, shell=True, capture_output=True)
+    return [output.stdout, output.stderr]
+
+TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
+
+...
+```
+
+
 
 ## Why malwi?
 
