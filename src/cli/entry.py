@@ -121,18 +121,6 @@ def main():
         show_progress=not args.quiet,
     )
 
-    if not args.quiet:
-        logging.info(f"Files processed successfully: {result.processed_files}")
-        if result.skipped_files:
-            logging.info(f"Files skipped: {len(result.skipped_files)}")
-
-        files_no_data = (
-            len([f for f in result.all_files if f not in result.skipped_files])
-            - result.processed_files
-        )
-        if files_no_data > 0:
-            logging.info(f"Files processed but yielded no data: {files_no_data}")
-
     output = ""
 
     if args.format == "yaml":

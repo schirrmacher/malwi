@@ -293,8 +293,13 @@ class MalwiObject:
 
             for object in file["contents"]:
                 name = object["name"] if object["name"] else "<object>"
+                score = object["score"]
+                if score > malicious_threshold:
+                    maliciousness = f"👹 {score}"
+                else:
+                    maliciousness = f"🟢 {score}"
                 txt += f"- Object: {name}\n"
-                txt += f"- Maliciousness: {object['score']}\n\n"
+                txt += f"- Maliciousness: {maliciousness}\n\n"
                 txt += "### Code\n"
                 txt += f"```\n{object['code']}\n```\n\n"
                 txt += "### Tokens\n"
@@ -841,19 +846,8 @@ def collect_files_by_extension(
             accepted_files.append(input_path)
         else:
             skipped_files.append(input_path)
-            if not silent:
-                print(
-                    f"Skipping file '{input_path}': Extension '.{file_extension}' "
-                    f"not in accepted list: {accepted_extensions}",
-                    file=sys.stderr,
-                )
 
     elif input_path.is_dir():
-        if not silent:
-            print(
-                f"--- Searching directory: {input_path.resolve()} ---", file=sys.stderr
-            )
-
         for file_path in input_path.rglob("*"):
             if file_path.is_file():
                 file_extension = file_path.suffix.lstrip(".").lower()
@@ -862,17 +856,7 @@ def collect_files_by_extension(
                 else:
                     skipped_files.append(file_path)
 
-        if not accepted_files and not silent:
-            print(
-                f"No files with extensions {accepted_extensions} found in directory: {input_path}",
-                file=sys.stderr,
-            )
-
     else:
-        if not silent:
-            print(
-                f"Error: Path is not a file or directory: {input_path}", file=sys.stderr
-            )
         skipped_files.append(input_path)
 
     return accepted_files, skipped_files
