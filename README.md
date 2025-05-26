@@ -10,30 +10,25 @@ Open-source software made in Europe.
 Based on open research, open code, open data.
  🇪🇺🤘🕊️
 
+1) **Install**
 ```
-# Install
 pip install --user malwi
 ```
 
-Run:
+2) **Run**
 ```
 malwi ./examples
 ```
 
-Output:
+3) **Evaluate**: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
 ```
-## examples/__init__.py
-- Object: runcommand
-- Maliciousness: 👹 0.9620079398155212
-
-### Code
 def runcommand(value):
     output = subprocess.run(value, shell=True, capture_output=True)
     return [output.stdout, output.stderr]
 
-### Tokens
-TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
-...
+## examples/__init__.py
+- Object: runcommand
+- Maliciousness: 👹 0.9620079398155212
 ```
 
 ## Why malwi?
