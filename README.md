@@ -29,13 +29,8 @@ Output:
 def runcommand(value):
     output = subprocess.run(value, shell=True, capture_output=True)
     return [output.stdout, output.stderr]
-
-TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
-
 ...
 ```
-
-
 
 ## Why malwi?
 
@@ -59,13 +54,36 @@ Future iterations will cover malware scanning for more languages (JavaScript, Ru
 ## How does it work?
 
 malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) and Support Vector Machines (SVM) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). 
-Additionally, malwi applies [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) for creating abstract syntax trees (ASTs) which are mapped to a unified and security sensitive syntax used as training input. The Python malware dataset can be found [here](https://github.com/lxyeternal/pypi_malregistry). After 3 epochs of training you will get: Loss: `0.0986`, Accuracy: `0.9669`, F1: `0.9666`.
 
-High-level training pipeline:
+1. malwi compiles Python files to bytecode:
 
-- Create dataset from malicious/benign repositories and map code to malwi syntax
-- Remove code duplications based on hashes
-- Train DistilBert based on the malwi samples for categorizing malicious/benign
+```
+def runcommand(value):
+    output = subprocess.run(value, shell=True, capture_output=True)
+    return [output.stdout, output.stderr]
+```
+
+```
+  0           RESUME                   0
+
+  1           LOAD_CONST               0 (<code object runcommand at 0x5b4f60ae7540, file "example.py", line 1>)
+              MAKE_FUNCTION
+              STORE_NAME               0 (runcommand)
+              RETURN_CONST             1 (None)
+  ...
+```
+
+2. Bytecode operators are mapped to tokens:
+
+```
+TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
+```
+
+3. Tokens are used as input for a pre-trained DistilBert:
+
+```
+Maliciousness: 0.9620079398155212
+```
 
 ## Support
 
