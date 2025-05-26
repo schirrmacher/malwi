@@ -292,9 +292,8 @@ class MalwiObject:
             txt += f"## {file['path']}\n"
 
             for object in file["contents"]:
-                txt += (
-                    f"- Object: {object['name'] if object['name']  else "<object>"}\n"
-                )
+                name = object["name"] if object["name"] else "<object>"
+                txt += f"- Object: {name}\n"
                 txt += f"- Maliciousness: {object['score']}\n\n"
                 txt += "### Code\n"
                 txt += f"```\n{object['code']}\n```\n\n"
