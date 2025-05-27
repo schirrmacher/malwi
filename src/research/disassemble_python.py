@@ -10,9 +10,11 @@ import yaml
 import json
 import types
 import socket
+import base64
 import urllib
 import inspect
 import pathlib
+import marshal
 import hashlib
 import warnings
 import argparse
@@ -108,13 +110,62 @@ class MalwiObject:
     ):
         initialize_models(model_path=model_path, tokenizer_path=tokenizer_path)
 
+    def _generate_instructions_from_codetype(self) -> None:
+        """
+        Populates self.instructions by processing self.codeType.
+        This contains the logic extracted from recursively_disassemble_python.
+        """
+        if not self.codeType:
+            return
+
+        processed_instructions: List[Tuple[str, str]] = []
+        for instruction in dis.get_instructions(self.codeType):
+            opname: str = instruction.opname.lower()
+            argval: Any = instruction.argval
+            original_argrepr: str = (
+                instruction.argrepr if instruction.argrepr is not None else ""
+            )
+            final_value = ""
+
+            if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
+                final_value = map_jump_instruction_arg(instruction)
+            elif (
+                instruction.opname == "LOAD_CONST"
+            ):  # Opname check is case-sensitive in dis
+                final_value = map_load_const_number_arg(
+                    instruction, argval, original_argrepr
+                )
+            elif isinstance(argval, str):
+                final_value = map_string_arg(argval, original_argrepr)
+            elif isinstance(argval, types.CodeType):
+                final_value = map_code_object_arg(argval, original_argrepr)
+            elif isinstance(argval, tuple):
+                final_value = map_tuple_arg(argval, original_argrepr)
+            elif isinstance(argval, frozenset):
+                final_value = map_frozenset_arg(argval, original_argrepr)
+            else:
+                final_value = original_argrepr
+
+            processed_instructions.append((opname, final_value))
+
+        self.instructions = processed_instructions
+
     def to_tokens(self) -> List[str]:
-        instructions: List[Tuple[str, str]] = self.instructions
+        """
+        Generates a flat list of tokens.
+        If instructions are not already populated and a codeType is available,
+        it first generates the instructions.
+        """
+        # Check if instructions are empty AND codeType is available to generate them
+        if not self.instructions and self.codeType:
+            self._generate_instructions_from_codetype()
+
         all_token_parts: List[str] = []
-        all_token_parts.extend(self.warnings)
-        for opname, argrepr_val in instructions:
+        all_token_parts.extend(self.warnings)  # Prepend warnings as tokens
+
+        for opname, argrepr_val in self.instructions:
             all_token_parts.append(opname)
-            if argrepr_val:
+            if argrepr_val:  # Only append argrepr if it's not empty
                 all_token_parts.append(argrepr_val)
         return all_token_parts
 
@@ -309,6 +360,81 @@ class MalwiObject:
             txt += "\n\n"
 
         return txt
+
+    @classmethod
+    def from_triaged_file(
+        cls, json_file_path: str, language: str = "python"
+    ) -> Optional["MalwiObject"]:
+        try:
+            with open(json_file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            code_s: Optional[str] = data.get("code_string")
+            marshalled_base64: Optional[str] = data.get("marshalled_base64")
+            orig_mal: Optional[float] = data.get("original_maliciousness")
+            hash_val: Optional[str] = data.get("code_hash_sha1")
+
+            if code_s is None or marshalled_base64 is None or hash_val is None:
+                print(
+                    f"Error: Essential data (code_string, marshalled_base64, or code_hash_sha1) "
+                    f"missing in {json_file_path}"
+                )
+                return None
+
+            base64_encoded_bytes = marshalled_base64.encode("utf-8")
+            marshalled_bytes = base64.b64decode(base64_encoded_bytes)
+            code_o: types.CodeType = marshal.loads(marshalled_bytes)
+
+            if not isinstance(code_o, types.CodeType):
+                print(
+                    f"Error: Expected a CodeType object from {json_file_path}, "
+                    f"but got {type(code_o).__name__}."
+                )
+                return None
+
+            # Generate instructions from the CodeType object
+            generated_instructions: List[Tuple[str, str]] = []
+            for instruction in dis.get_instructions(code_o):
+                generated_instructions.append((instruction.opname, instruction.argrepr))
+
+            object_name = f"triaged_{Path(json_file_path).stem}"
+
+            malwi_obj = cls(
+                name=object_name,
+                language=language,
+                file_path=json_file_path,
+                instructions=generated_instructions,
+                codeType=code_o,
+                warnings=[],
+            )
+
+            malwi_obj.code = code_s
+            malwi_obj.maliciousness = orig_mal
+
+            return malwi_obj
+
+        except FileNotFoundError:
+            print(f"Error: File not found at {json_file_path}")
+            return None
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON from {json_file_path}: {e}")
+            return None
+        except base64.binascii.Error as e:
+            print(f"Error decoding base64 data from {json_file_path}: {e}")
+            return None
+        except (
+            TypeError,
+            ValueError,
+        ) as e:  # Errors from marshal.loads or dis.get_instructions
+            print(
+                f"Error processing data (unmarshal/instructions) from {json_file_path}: {e}"
+            )
+            return None
+        except Exception as e:
+            print(
+                f"An unexpected error occurred while processing {json_file_path}: {e}"
+            )
+            return None
 
 
 class OutputFormatter:
@@ -654,29 +780,31 @@ def recursively_disassemble_python(
     file_path: str,
     language: str,
     code_obj: Optional[types.CodeType],
-    all_objects_data: List[MalwiObject] = [],
+    all_objects_data: List[MalwiObject],
     visited_code_ids: Optional[Set[int]] = None,
-    errors: List[str] = [],
+    errors: Optional[List[str]] = None,
 ) -> None:
-    if errors or not code_obj:
-        for err_msg in errors:
+    current_errors = list(errors) if errors is not None else []
+
+    if current_errors or not code_obj:
+        for err_msg in current_errors:
             object_data = MalwiObject(
                 name=err_msg,
                 language=language,
                 file_path=file_path,
-                instructions=[],
                 codeType=None,
+                instructions=[],
                 warnings=[err_msg],
             )
             all_objects_data.append(object_data)
-        if not code_obj and not errors:
+        if not code_obj and not current_errors:
             all_objects_data.append(
                 MalwiObject(
                     name=SpecialCases.MALFORMED_FILE.value,
                     language=language,
                     file_path=file_path,
-                    instructions=[],
                     codeType=None,
+                    instructions=[],
                     warnings=[SpecialCases.MALFORMED_FILE.value],
                     code="<Not applicable: no code object generated>",
                 )
@@ -690,56 +818,26 @@ def recursively_disassemble_python(
         return
     visited_code_ids.add(id(code_obj))
 
-    current_instructions_data: List[Tuple[str, str]] = []
-    for instruction in dis.get_instructions(code_obj):
-        opname: str = instruction.opname.lower()
-        argval: Any = instruction.argval
-        original_argrepr: str = (
-            instruction.argrepr if instruction.argrepr is not None else ""
-        )
-
-        final_value = ""
-
-        if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
-            final_value = map_jump_instruction_arg(instruction)
-        elif instruction.opname == "LOAD_CONST":
-            final_value = map_load_const_number_arg(
-                instruction, argval, original_argrepr
-            )
-        elif isinstance(argval, str):
-            final_value = map_string_arg(argval, original_argrepr)
-        elif isinstance(argval, types.CodeType):
-            final_value = map_code_object_arg(argval, original_argrepr)
-        elif isinstance(argval, tuple):
-            final_value = map_tuple_arg(argval, original_argrepr)
-        elif isinstance(argval, frozenset):
-            final_value = map_frozenset_arg(argval, original_argrepr)
-        else:
-            final_value = original_argrepr
-
-        current_instructions_data.append((opname, final_value))
-
     object_data = MalwiObject(
-        name=code_obj.co_name if code_obj else "UnknownObject",
+        name=code_obj.co_name if code_obj.co_name else "UnknownObject",
         language=language,
-        file_path=(code_obj.co_filename if code_obj else file_path),
-        instructions=current_instructions_data,
+        file_path=code_obj.co_filename if code_obj.co_filename else file_path,
         codeType=code_obj,
+        instructions=[],
         warnings=[],
     )
     all_objects_data.append(object_data)
 
-    if code_obj:  # Only recurse if code_obj is valid
-        for const in code_obj.co_consts:
-            if isinstance(const, types.CodeType):
-                recursively_disassemble_python(
-                    file_path=file_path,  # Pass the original file_path for context
-                    language=language,
-                    code_obj=const,
-                    all_objects_data=all_objects_data,
-                    visited_code_ids=visited_code_ids,
-                    errors=[],
-                )
+    for const in code_obj.co_consts:
+        if isinstance(const, types.CodeType):
+            recursively_disassemble_python(
+                file_path=file_path,
+                language=language,
+                code_obj=const,
+                all_objects_data=all_objects_data,
+                visited_code_ids=visited_code_ids,
+                errors=[],
+            )
 
 
 def disassemble_python_file(
@@ -939,48 +1037,88 @@ def process_files(
 
 
 def triage(all_objects: List["MalwiObject"]):
-    # Create directories if they don't exist
-    os.makedirs(os.path.join("triaging", "benign"), exist_ok=True)
-    os.makedirs(os.path.join("triaging", "malicious"), exist_ok=True)
+    benign_dir = os.path.join("triaging", "benign")
+    malicious_dir = os.path.join("triaging", "malicious")
+
+    os.makedirs(benign_dir, exist_ok=True)
+    os.makedirs(malicious_dir, exist_ok=True)
 
     for obj in all_objects:
         obj.retrieve_source_code()
 
-        # Generate SHA-1 hash of the code
+        if not hasattr(obj, "code") or not obj.code:
+            print(
+                "Object has no source code or 'retrieve_source_code' was not effective, skipping..."
+            )
+            continue
+
         code_hash = hashlib.sha1(obj.code.encode("utf-8")).hexdigest()
 
-        # Check if file already exists in either folder
-        benign_path = os.path.join("triaging", "benign", f"{code_hash}.py")
-        malicious_path = os.path.join("triaging", "malicious", f"{code_hash}.py")
+        file_extension = ".json"
+        benign_path = os.path.join(benign_dir, f"{code_hash}{file_extension}")
+        malicious_path = os.path.join(malicious_dir, f"{code_hash}{file_extension}")
 
         if os.path.exists(benign_path) or os.path.exists(malicious_path):
-            print(f"Hash {code_hash} already exists, skipping...")
+            print(f"Hash {code_hash} (JSON data) already exists, skipping...")
             continue
 
         triage_result = questionary.select(
-            f"Is the following code malicious?\n\n# Maliciousness: {obj.maliciousness}\n\n{obj.code}\n\n",
+            f"Is the following code malicious?\n\n# Original Maliciousness: {obj.maliciousness}\n\n{obj.code}\n\n",
             use_shortcuts=True,
             choices=["yes", "no", "skip", "exit"],
         ).ask()
 
-        if triage_result == "yes":
-            # Save to malicious folder
-            with open(malicious_path, "w", encoding="utf-8") as f:
-                f.write(obj.code)
-            print(f"Saved malicious code as {code_hash}.py")
-
-        elif triage_result == "no":
-            # Save to benign folder
-            with open(benign_path, "w", encoding="utf-8") as f:
-                f.write(obj.code)
-            print(f"Saved benign code as {code_hash}.py")
-
-        elif triage_result == "skip":
-            print("Skipping this sample...")
+        marshalled_bytes: bytes
+        base64_encoded_string: str
+        try:
+            marshalled_bytes = marshal.dumps(obj.codeType)
+            base64_encoded_bytes = base64.b64encode(marshalled_bytes)
+            base64_encoded_string = base64_encoded_bytes.decode("utf-8")
+        except Exception as e:
+            print(
+                f"Error processing compiled code for hash {code_hash} (marshal/base64), skipping: {e}"
+            )
             continue
 
-        elif triage_result == "exit":
+        data_to_save: Dict[str, Any] = {
+            "code_string": obj.code,
+            "original_maliciousness": obj.maliciousness,
+            "marshalled_base64": base64_encoded_string,
+            "code_hash_sha1": code_hash,
+        }
+
+        output_path: str = ""
+        if triage_result == "yes":
+            output_path = malicious_path
+            data_to_save["triaged_as_malicious"] = True
+        elif triage_result == "no":
+            output_path = benign_path
+            data_to_save["triaged_as_malicious"] = False
+        elif triage_result == "skip":
+            print(f"Skipping sample {code_hash}...")
+            continue
+        elif triage_result == "exit" or triage_result is None:
+            print("Exiting triage process.")
             exit(0)
+        else:
+            print(
+                f"Unknown triage result '{triage_result}', skipping sample {code_hash}."
+            )
+            continue
+
+        if output_path:
+            try:
+                with open(output_path, "w", encoding="utf-8") as f:
+                    json.dump(data_to_save, f, indent=4)
+                print(f"Saved data for hash {code_hash} to {output_path}")
+            except IOError as e:
+                print(
+                    f"Error writing JSON file {output_path} for hash {code_hash}: {e}"
+                )
+            except Exception as e:
+                print(
+                    f"An unexpected error occurred while saving JSON for hash {code_hash}: {e}"
+                )
 
 
 def main() -> None:

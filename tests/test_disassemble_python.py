@@ -1,15 +1,20 @@
-import pytest
-import pathlib
-import types
-import dis
-import pytest
-import json
-import yaml
 import io
 import sys
+import dis
+import yaml
+import json
+import types
+import base64
+import pytest
+import hashlib
+import pathlib
+import marshal
 
 from pathlib import Path
 from unittest import mock
+
+from pathlib import Path
+from typing import Dict, Any
 
 # Import necessary components from the script to be tested, using the new package path
 from research.disassemble_python import (
@@ -19,7 +24,6 @@ from research.disassemble_python import (
     CSVWriter,
     ProcessingResult,
     sanitize_identifier,
-    map_identifier,
     map_entropy_to_token,
     map_string_length_to_token,
     calculate_shannon_entropy,
@@ -227,17 +231,6 @@ def test_sanitize_identifier():
     assert sanitize_identifier(".my_func.") == "my.func"
 
 
-def test_map_identifier(monkeypatch):
-    mock_mapping_table = {
-        "python": {
-            "os.path.join": "MAPPED_JOIN",
-            "requests.get": "MAPPED_GET",
-            "get": "MAPPED_FALLBACK_GET",
-        }
-    }
-    assert map_identifier("os.path.join", "python", mock_mapping_table) == "MAPPED_JOIN"
-
-
 def test_map_entropy_to_token():
     assert map_entropy_to_token(0.5) == "ENT_LOW"
 
@@ -342,48 +335,16 @@ def test_recursively_disassemble_python_simple():
 
     code_obj = simple_func.__code__
 
-    mock_py_instructions = []
-    if sys.version_info >= (3, 11):
-        mock_py_instructions.append(
-            mock.Mock(
-                opname="resume",
-                argval=0,
-                argrepr="0",
-                opcode=dis.opmap.get("RESUME", -1),
-            )
-        )
-    mock_py_instructions.extend(
-        [
-            mock.Mock(
-                opname="load_const",
-                argval=None,
-                argrepr="None",
-                opcode=dis.opmap["LOAD_CONST"],
-            ),
-            mock.Mock(
-                opname="return_value",
-                argval=None,
-                argrepr="",
-                opcode=dis.opmap["RETURN_VALUE"],
-            ),
-        ]
+    all_objects_data = []
+    recursively_disassemble_python(
+        file_path="test.py",
+        language="python",
+        code_obj=code_obj,
+        all_objects_data=all_objects_data,
     )
+    assert len(all_objects_data) == 1
 
-    with mock.patch("dis.get_instructions", return_value=mock_py_instructions):
-        all_objects_data = []
-        recursively_disassemble_python(
-            file_path="test.py",
-            language="python",
-            code_obj=code_obj,
-            all_objects_data=all_objects_data,
-        )
-        assert len(all_objects_data) == 1
-        mf = all_objects_data[0]
-        expected_instructions = []
-        if sys.version_info >= (3, 11):
-            expected_instructions.append(("resume", "0"))
-        expected_instructions.extend([("load_const", "None"), ("return_value", "")])
-        assert mf.instructions == expected_instructions
+    assert all_objects_data[0].to_token_string() == "resume return_const None"
 
 
 def test_recursively_disassemble_python_with_errors():
@@ -872,3 +833,112 @@ def test_report_calls_predict_if_needed(monkeypatch):
 
     # Restore original predict if other tests need it unmocked, though pytest handles fixture/monkeypatch scope.
     monkeypatch.setattr(MalwiObject, "predict", original_predict)
+
+
+@pytest.fixture
+def sample_code_string() -> str:
+    return "print('Hello, Test!')\na = 1 + 2"
+
+
+@pytest.fixture
+def sample_code_object(sample_code_string: str) -> types.CodeType:
+    return compile(sample_code_string, "<test_source>", "exec")
+
+
+@pytest.fixture
+def valid_triaged_json_data(
+    sample_code_string: str, sample_code_object: types.CodeType
+) -> Dict[str, Any]:
+    marshalled_bytes = marshal.dumps(sample_code_object)
+    base64_string = base64.b64encode(marshalled_bytes).decode("utf-8")
+    code_hash = hashlib.sha1(sample_code_string.encode("utf-8")).hexdigest()
+    return {
+        "code_string": sample_code_string,
+        "original_maliciousness": 0.5,
+        "triaged_as_malicious": True,
+        "marshalled_base64": base64_string,
+        "code_hash_sha1": code_hash,
+    }
+
+
+# --- Tests for MalwiObject.from_triaged_file ---
+
+
+def test_from_triaged_file_success(
+    tmp_path: Path, valid_triaged_json_data: Dict[str, Any], sample_code_string: str
+):
+    json_file = tmp_path / "test_data.json"
+    with open(json_file, "w") as f:
+        json.dump(valid_triaged_json_data, f)
+
+    malwi_obj = MalwiObject.from_triaged_file(str(json_file))
+
+    assert isinstance(malwi_obj, MalwiObject)
+    assert malwi_obj.code == sample_code_string
+    assert isinstance(malwi_obj.codeType, types.CodeType)
+    assert (
+        malwi_obj.codeType.co_name == "<module>"
+    )  # Or whatever filename was used in compile for fixture
+    assert malwi_obj.maliciousness == 0.5
+    assert len(malwi_obj.instructions) > 0  # Instructions should be generated
+    assert malwi_obj.name == f"triaged_{json_file.stem}"
+    assert malwi_obj.file_path == str(json_file)
+
+
+def test_from_triaged_file_not_found(caplog):
+    malwi_obj = MalwiObject.from_triaged_file("non_existent_file.json")
+    assert malwi_obj is None
+    # To check logs if needed: assert "File not found" in caplog.text
+
+
+def test_from_triaged_file_malformed_json(tmp_path: Path, caplog):
+    json_file = tmp_path / "malformed.json"
+    json_file.write_text("this is not json")
+    malwi_obj = MalwiObject.from_triaged_file(str(json_file))
+    assert malwi_obj is None
+    # assert "Error decoding JSON" in caplog.text
+
+
+def test_from_triaged_file_missing_keys(
+    tmp_path: Path, valid_triaged_json_data: Dict[str, Any], caplog
+):
+    data_missing_code = valid_triaged_json_data.copy()
+    del data_missing_code["code_string"]
+    json_file = tmp_path / "missing_code.json"
+    with open(json_file, "w") as f:
+        json.dump(data_missing_code, f)
+
+    malwi_obj = MalwiObject.from_triaged_file(str(json_file))
+    assert malwi_obj is None
+    # assert "Essential data missing" in caplog.text
+
+
+def test_from_triaged_file_invalid_base64(
+    tmp_path: Path, valid_triaged_json_data: Dict[str, Any], caplog
+):
+    data_invalid_b64 = valid_triaged_json_data.copy()
+    data_invalid_b64["marshalled_base64"] = "this is not valid base64!!!"
+    json_file = tmp_path / "invalid_b64.json"
+    with open(json_file, "w") as f:
+        json.dump(data_invalid_b64, f)
+
+    malwi_obj = MalwiObject.from_triaged_file(str(json_file))
+    assert malwi_obj is None
+    # assert "Error decoding base64" in caplog.text
+
+
+def test_from_triaged_file_not_codetype(
+    tmp_path: Path, valid_triaged_json_data: Dict[str, Any], caplog
+):
+    # Marshal a simple string instead of a code object
+    marshalled_str_bytes = marshal.dumps("not a code object")
+    base64_str = base64.b64encode(marshalled_str_bytes).decode("utf-8")
+
+    data_not_codetype = valid_triaged_json_data.copy()
+    data_not_codetype["marshalled_base64"] = base64_str
+    json_file = tmp_path / "not_codetype.json"
+    with open(json_file, "w") as f:
+        json.dump(data_not_codetype, f)
+
+    malwi_obj = MalwiObject.from_triaged_file(str(json_file))
+    assert malwi_obj is None
