@@ -110,18 +110,25 @@ class MalwiObject:
     ) -> None:
         initialize_models(model_path=model_path, tokenizer_path=tokenizer_path)
 
-    def _generate_instructions_from_codetype(self) -> None:
-        if not self.codeType:
-            return
+    @staticmethod
+    def generate_instructions_from_codetype(
+        code_type: Optional[types.CodeType],
+    ) -> List[str]:
+        if not code_type:
+            return []
 
-        processed_instructions: List[Tuple[str, str]] = []
-        for instruction in dis.get_instructions(self.codeType):
+        flat_instructions: List[str] = []
+        all_instructions: List[Tuple[str, str]] = []
+
+        all_instructions = dis.get_instructions(code_type)
+
+        for instruction in all_instructions:
             opname: str = instruction.opname.lower()
             argval: Any = instruction.argval
             original_argrepr: str = (
                 instruction.argrepr if instruction.argrepr is not None else ""
             )
-            final_value = ""
+            final_value: str = ""
 
             if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
                 final_value = map_jump_instruction_arg(instruction)
@@ -140,20 +147,19 @@ class MalwiObject:
             else:
                 final_value = original_argrepr
 
-            processed_instructions.append((opname, final_value))
-        self.instructions = processed_instructions
+            flat_instructions.append(opname)
+            # Only add final_value if it's meaningful (not None and not an empty string)
+            if final_value is not None and str(final_value) != "":
+                flat_instructions.append(str(final_value))
+        return flat_instructions
 
     def to_tokens(self) -> List[str]:
-        if not self.instructions and self.codeType:
-            self._generate_instructions_from_codetype()
-
         all_token_parts: List[str] = []
         all_token_parts.extend(self.warnings)
-
-        for opname, argrepr_val in self.instructions:
-            all_token_parts.append(opname)
-            if argrepr_val:
-                all_token_parts.append(str(argrepr_val))
+        generated_instructions = MalwiObject.generate_instructions_from_codetype(
+            code_type=self.codeType
+        )
+        all_token_parts.extend(generated_instructions)
         return all_token_parts
 
     def to_token_string(self) -> str:
