@@ -372,24 +372,6 @@ class TestMalwiObject:
         json_data = json.loads(obj_json)
         assert json_data["path"] == "test.py"
 
-    def test_from_file_json(self, tmp_path, sample_code_type):
-        # This test highlights a bug in SUT's MalwiObject.from_file
-        # It expects TypeError because from_file doesn't correctly get 'path'
-        # from the structure produced by to_json().
-        obj_orig = MalwiObject(
-            "<module>", "python", "original_file.py", [], codeType=sample_code_type
-        )
-        obj_json_str = obj_orig.to_json()
-
-        p = tmp_path / "data.json"
-        p.write_text(obj_json_str)
-
-        with pytest.raises(
-            TypeError,
-            match="argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
-        ):
-            MalwiObject.from_file(p, "python")
-
 
 class TestOutputFormatting:
     @pytest.fixture

@@ -1,139 +1,135 @@
+import os
 import argparse
 import pandas as pd
-import os
+
+from typing import Dict, Optional
+from research.disassemble_python import MalwiObject
 
 
-def process_csv_files(benign, malicious):
+def enrich_dataframe_with_triage(
+    df: pd.DataFrame, triage_subfolder: str
+) -> pd.DataFrame:
+    rows = []
+
+    # Load enrichment data from all triage files
+    for filename in os.listdir(triage_subfolder):
+        filepath = os.path.join(triage_subfolder, filename)
+        try:
+            objs = MalwiObject.from_file(filepath, language="python")
+            print(f"Loaded {len(objs)} objects from {filepath}")
+            for obj in objs:
+                h = obj.to_string_hash()
+                row = {
+                    "hash": h,
+                    "tokens": obj.to_token_string(),
+                    "filepath": obj.file_path,
+                    # Add any other relevant fields from obj here
+                }
+                rows.append(row)
+        except Exception as e:
+            print(f"Warning: Failed to process triage file {filepath}: {e}")
+            continue
+
+    # Create a DataFrame from the enrichment rows
+    enrichment_df = pd.DataFrame(rows)
+
+    # Append the enrichment DataFrame to the original
+    df_appended = pd.concat([df, enrichment_df], ignore_index=True)
+
+    # Optionally, remove duplicates based on hash or other columns:
+    df_appended = df_appended.drop_duplicates(subset=["hash"])
+
+    return df_appended
+
+
+def process_csv_files(benign, malicious, triage_dir=None):
     """
-    Processes two CSV files, assumed to be a benign set (file_path1_benign)
-    and a malicious set (file_path2_malicious).
-    1. Removes intra-file duplicates (based on 'hash') from both files.
-    2. Identifies rows with common 'hash' values between the two files.
-    3. Removes these common rows ONLY from the malicious set (file_path2_malicious).
-       Rows in the benign set (file_path1_benign) that have hashes common
-       with the malicious set are KEPT.
-
-    Args:
-        file_path1_benign (str): Path to the CSV file considered the 'benign' set.
-        file_path2_malicious (str): Path to the CSV file considered the 'malicious' set.
+    Process benign and malicious CSV files:
+    - Remove internal duplicates (by 'hash') in each file.
+    - Remove rows from malicious that have hashes common with benign.
+    - If triage_dir given, enrich both DataFrames with MalwiObject data.
     """
+
     try:
-        # Read the CSV files
         print(f"Reading BENIGN CSV file: {benign}")
-        df1_benign = pd.read_csv(benign)
-        print(f"Successfully read {benign}. Shape: {df1_benign.shape}")
+        df_benign = pd.read_csv(benign)
+        print(f"Read {benign} - shape: {df_benign.shape}")
 
-        print(f"\nReading MALICIOUS CSV file: {malicious}")
-        df2_malicious = pd.read_csv(malicious)
-        print(f"Successfully read {malicious}. Shape: {df2_malicious.shape}")
+        print(f"Reading MALICIOUS CSV file: {malicious}")
+        df_malicious = pd.read_csv(malicious)
+        print(f"Read {malicious} - shape: {df_malicious.shape}")
 
-    except FileNotFoundError as e:
-        print(f"Error: File not found. {e}")
-        return
-    except pd.errors.EmptyDataError as e:
-        print(f"Error: File is empty. {e}")
-        return
     except Exception as e:
-        print(f"An error occurred while reading the files: {e}")
+        print(f"Error reading files: {e}")
         return
 
-    # --- Step 1: Remove duplicates within each file based on 'hash' ---
-    print(f"\nProcessing {benign} (benign) for internal duplicates...")
-    initial_rows_df1 = len(df1_benign)
-    df1_benign_deduplicated = df1_benign.drop_duplicates(subset=["hash"], keep="first")
-    deduplicated_rows_df1 = initial_rows_df1 - len(df1_benign_deduplicated)
+    # Enrich with triage data if folder provided
+    if triage_dir:
+        benign_triage_path = os.path.join(triage_dir, "benign")
+        malicious_triage_path = os.path.join(triage_dir, "malicious")
+
+        if os.path.isdir(benign_triage_path):
+            print(f"Enriching benign data with files from: {benign_triage_path}")
+            df_benign = enrich_dataframe_with_triage(df_benign, benign_triage_path)
+
+        if os.path.isdir(malicious_triage_path):
+            print(f"Enriching malicious data with files from: {malicious_triage_path}")
+            df_malicious = enrich_dataframe_with_triage(
+                df_malicious, malicious_triage_path
+            )
+
+    # Remove internal duplicates in each CSV by 'hash'
+    initial_benign = len(df_benign)
+    df_benign = df_benign.drop_duplicates(subset=["hash"], keep="first")
+    print(f"Removed {initial_benign - len(df_benign)} duplicate rows from benign set")
+
+    initial_malicious = len(df_malicious)
+    df_malicious = df_malicious.drop_duplicates(subset=["hash"], keep="first")
     print(
-        f"Removed {deduplicated_rows_df1} duplicate rows from {benign} (based on 'hash')."
-    )
-    print(
-        f"Shape of {os.path.basename(benign)} after internal deduplication: {df1_benign_deduplicated.shape}"
+        f"Removed {initial_malicious - len(df_malicious)} duplicate rows from malicious set"
     )
 
-    print(f"\nProcessing {malicious} (malicious) for internal duplicates...")
-    initial_rows_df2 = len(df2_malicious)
-    df2_malicious_deduplicated = df2_malicious.drop_duplicates(
-        subset=["hash"], keep="first"
-    )
-    deduplicated_rows_df2 = initial_rows_df2 - len(df2_malicious_deduplicated)
-    print(
-        f"Removed {deduplicated_rows_df2} duplicate rows from {malicious} (based on 'hash')."
-    )
-    print(
-        f"Shape of {os.path.basename(malicious)} after internal deduplication: {df2_malicious_deduplicated.shape}"
-    )
-
-    # --- Step 2: Identify common hashes and process according to benign/malicious sets ---
-    print("\nIdentifying common hashes between the benign and malicious sets...")
-    hashes_benign = set(df1_benign_deduplicated["hash"])
-    hashes_malicious = set(df2_malicious_deduplicated["hash"])
-
+    # Identify common hashes between the two sets
+    hashes_benign = set(df_benign["hash"])
+    hashes_malicious = set(df_malicious["hash"])
     common_hashes = hashes_benign.intersection(hashes_malicious)
-    print(f"Found {len(common_hashes)} common hashes between the two sets.")
+    print(f"Found {len(common_hashes)} common hashes between benign and malicious sets")
 
-    # Process benign set (df1_benign_deduplicated): Keep all rows after intra-file deduplication.
-    # Common hashes with the malicious set are NOT removed from the benign set.
-    df1_benign_final = df1_benign_deduplicated
-    print(
-        f"The benign set ({os.path.basename(benign)}) retains all {len(df1_benign_final)} rows after its internal deduplication."
-    )
+    # Remove common hashes ONLY from malicious set
     if common_hashes:
+        df_malicious = df_malicious[~df_malicious["hash"].isin(common_hashes)]
         print(
-            f"This includes {len(df1_benign_final[df1_benign_final['hash'].isin(common_hashes)])} rows with hashes also found in the malicious set (before its inter-file deduplication)."
+            f"Removed {len(common_hashes)} rows from malicious set with common hashes"
         )
 
-    # Process malicious set (df2_malicious_deduplicated): Remove rows with hashes common to the benign set.
-    if common_hashes:
-        df2_malicious_final = df2_malicious_deduplicated[
-            ~df2_malicious_deduplicated["hash"].isin(common_hashes)
-        ]
-        removed_common_from_malicious = len(df2_malicious_deduplicated) - len(
-            df2_malicious_final
-        )
-        print(
-            f"Removed {removed_common_from_malicious} rows from the malicious set ({os.path.basename(malicious)}) that had hashes common with the benign set."
-        )
-    else:
-        # If no common hashes, the malicious set is also just its internally deduplicated version.
-        df2_malicious_final = df2_malicious_deduplicated
-        print(
-            f"No common hashes found. The malicious set ({os.path.basename(malicious)}) remains unchanged by inter-file comparison (it only underwent internal deduplication)."
-        )
+    print(f"Final benign set shape: {df_benign.shape}")
+    print(f"Final malicious set shape: {df_malicious.shape}")
 
-    print(
-        f"\nFinal shape of {os.path.basename(benign)} (benign) data: {df1_benign_final.shape}"
-    )
-    print(
-        f"Final shape of {os.path.basename(malicious)} (malicious) data: {df2_malicious_final.shape}"
-    )
+    # Save outputs
+    base_benign, ext_benign = os.path.splitext(benign)
+    output_benign = f"{base_benign}_processed{ext_benign}"
 
-    # --- Step 3: Save the processed DataFrames to new CSV files ---
-    base1, ext1 = os.path.splitext(benign)
-    output_path1 = f"{base1}_processed{ext1}"
-
-    base2, ext2 = os.path.splitext(malicious)
-    output_path2 = f"{base2}_processed{ext2}"
+    base_malicious, ext_malicious = os.path.splitext(malicious)
+    output_malicious = f"{base_malicious}_processed{ext_malicious}"
 
     try:
-        print(
-            f"\nSaving processed data for {os.path.basename(benign)} (benign) to: {output_path1}"
-        )
-        df1_benign_final.to_csv(output_path1, index=False)
-        print(f"Successfully saved {output_path1}")
+        df_benign.to_csv(output_benign, index=False)
+        print(f"Saved processed benign CSV to: {output_benign}")
 
-        print(
-            f"\nSaving processed data for {os.path.basename(malicious)} (malicious) to: {output_path2}"
-        )
-        df2_malicious_final.to_csv(output_path2, index=False)
-        print(f"Successfully saved {output_path2}")
+        df_malicious.to_csv(output_malicious, index=False)
+        print(f"Saved processed malicious CSV to: {output_malicious}")
 
     except Exception as e:
-        print(f"An error occurred while saving the processed files: {e}")
+        print(f"Error saving processed CSVs: {e}")
 
 
 if __name__ == "__main__":
-    # Set up argument parser
     parser = argparse.ArgumentParser(
-        description="Processes two CSV files (benign and malicious). Removes intra-file duplicates from both. Removes inter-file duplicates (common hashes) ONLY from the malicious file, keeping them in the benign file."
+        description=(
+            "Process two CSV files (benign and malicious). Removes intra-file duplicates from both. "
+            "Removes duplicates common with the benign file ONLY from the malicious file. "
+            "Optionally enriches CSV data from a triaging folder containing 'benign' and/or 'malicious' subfolders."
+        )
     )
     parser.add_argument(
         "--benign",
@@ -149,9 +145,19 @@ if __name__ == "__main__":
         type=str,
         help="Path to the malicious CSV file. Duplicates common with the benign file will be REMOVED from this file.",
     )
+    parser.add_argument(
+        "--triaging",
+        "-t",
+        metavar="TRIAGING_FOLDER",
+        type=str,
+        help="Folder containing 'benign' and/or 'malicious' subfolders to enrich CSV data by parsing files.",
+    )
 
-    # Parse arguments
     args = parser.parse_args()
 
-    # Call the processing function
-    process_csv_files(benign=args.benign, malicious=args.malicious)
+    if args.benign and args.malicious:
+        process_csv_files(args.benign, args.malicious, triage_dir=args.triaging)
+    else:
+        print(
+            "Error: Both --benign and --malicious CSV file paths must be provided to process."
+        )

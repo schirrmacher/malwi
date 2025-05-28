@@ -3,7 +3,8 @@ import pytest
 import pandas as pd
 from pathlib import Path
 
-from research.filter_data import process_csv_files
+from unittest.mock import patch, MagicMock
+from research.filter_data import process_csv_files, enrich_dataframe_with_triage
 
 
 def create_csv(tmp_path: Path, filename: str, data: pd.DataFrame):
@@ -346,3 +347,140 @@ def test_malicious_has_unique_and_common_benign_has_unique_and_common(tmp_path):
 
     assert_df_equal_ignore_order(processed_benign, expected_benign)
     assert_df_equal_ignore_order(processed_malicious, expected_malicious)
+
+
+def test_triaging_only_common_hashes_removed(tmp_path):
+    # This test is for the old triaging mode where only common hashes
+    # are removed from malicious, but duplicates are NOT removed.
+    benign_data = pd.DataFrame(
+        {
+            "hash": ["h_b1", "h_common1", "h_b2"],
+            "feature": ["b_data1", "b_common_data", "b_data2"],
+        }
+    )
+    malicious_data = pd.DataFrame(
+        {
+            "hash": ["h_m1", "h_common1", "h_common1", "h_m2"],
+            "feature": ["m_data1", "m_common_data_a", "m_common_data_b", "m_data2"],
+        }
+    )
+
+    benign_file = create_csv(tmp_path, "benign_triage.csv", benign_data)
+    malicious_file = create_csv(tmp_path, "malicious_triage.csv", malicious_data)
+
+    # Suppose your old triaging-only function is named `process_csv_files_triage`
+    # or is invoked differently. Replace accordingly.
+    process_csv_files(str(benign_file), str(malicious_file))
+
+    processed_benign = read_processed_csv(tmp_path, "benign_triage.csv")
+    processed_malicious = read_processed_csv(tmp_path, "malicious_triage.csv")
+
+    # benign should be unchanged
+    assert_df_equal_ignore_order(processed_benign, benign_data)
+
+    # malicious should only have common hashes removed, duplicates remain
+    expected_malicious = malicious_data[
+        ~malicious_data["hash"].isin(["h_common1"])
+    ].reset_index(drop=True)
+
+    assert_df_equal_ignore_order(processed_malicious, expected_malicious)
+
+
+def test_triaging_only_duplicates_kept(tmp_path):
+    benign_data = pd.DataFrame(
+        {
+            "hash": ["h_b1"],
+            "feature": ["b_data1"],
+        }
+    )
+    malicious_data = pd.DataFrame(
+        {
+            "hash": ["h_m1", "h_m1", "h_b1"],
+            "feature": ["m_data1a", "m_data1b", "m_data_b1"],
+        }
+    )
+
+    benign_file = create_csv(tmp_path, "benign_dup_triage.csv", benign_data)
+    malicious_file = create_csv(tmp_path, "malicious_dup_triage.csv", malicious_data)
+
+    process_csv_files(str(benign_file), str(malicious_file))
+
+    processed_benign = read_processed_csv(tmp_path, "benign_dup_triage.csv")
+    processed_malicious = read_processed_csv(tmp_path, "malicious_dup_triage.csv")
+
+    # benign unchanged
+    assert_df_equal_ignore_order(processed_benign, benign_data)
+
+    # malicious should only have benign hashes removed, duplicates collapsed
+    expected_malicious = pd.DataFrame(
+        {
+            "hash": ["h_m1"],
+            "feature": ["m_data1a"],
+        }
+    )
+
+    assert_df_equal_ignore_order(processed_malicious, expected_malicious)
+
+
+@pytest.fixture
+def sample_df():
+    return pd.DataFrame(
+        {
+            "hash": ["hash1", "hash2"],
+            "tokens": ["token1", "token2"],
+            "filepath": ["path1.py", "path2.py"],
+        }
+    )
+
+
+@pytest.fixture
+def triage_files(tmp_path):
+    # Create dummy triage files (filenames only matter for iteration)
+    (tmp_path / "file1.yaml").write_text("dummy content")
+    (tmp_path / "file2.yaml").write_text("dummy content")
+    return tmp_path
+
+
+def make_mock_obj(hash_value, tokens_value, filepath_value):
+    mock_obj = MagicMock()
+    mock_obj.to_string_hash.return_value = hash_value
+    mock_obj.to_token_string.return_value = tokens_value
+    mock_obj.file_path = filepath_value
+    return mock_obj
+
+
+def test_enrich_dataframe_with_triage(sample_df, triage_files):
+    # Prepare mock MalwiObject.from_file to return controlled objects
+    mock_objs_file1 = [make_mock_obj("hash3", "token3", "file3.py")]
+    mock_objs_file2 = [make_mock_obj("hash4", "token4", "file4.py")]
+
+    with patch("research.disassemble_python.MalwiObject.from_file") as mock_from_file:
+        # Configure mock to return different objects depending on input file path
+        def side_effect(filepath, language="python"):
+            if filepath.endswith("file1.yaml"):
+                return mock_objs_file1
+            elif filepath.endswith("file2.yaml"):
+                return mock_objs_file2
+            else:
+                return []
+
+        mock_from_file.side_effect = side_effect
+
+        # Call the function
+        result_df = enrich_dataframe_with_triage(sample_df, str(triage_files))
+
+        # Check that original rows are kept
+        assert "hash1" in result_df["hash"].values
+        assert "hash2" in result_df["hash"].values
+
+        # Check new rows are appended
+        assert "hash3" in result_df["hash"].values
+        assert "hash4" in result_df["hash"].values
+
+        # Check that tokens and filepath columns for new rows are correct
+        new_rows = result_df[result_df["hash"].isin(["hash3", "hash4"])]
+
+        assert set(new_rows["tokens"]) == {"token3", "token4"}
+        assert set(new_rows["filepath"]) == {"file3.py", "file4.py"}
+        # Check total length: original 2 + 2 new = 4
+        assert len(result_df) == 4

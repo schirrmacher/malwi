@@ -361,7 +361,7 @@ class MalwiObject:
 
     @classmethod
     def from_file(
-        cls, file_path: Union[str, Path], language: str
+        cls, file_path: Union[str, Path], language: str = "python"
     ) -> List["MalwiObject"]:
         file_path = Path(file_path)
         with file_path.open("r", encoding="utf-8") as f:
@@ -372,36 +372,37 @@ class MalwiObject:
             else:
                 raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
-        if isinstance(data, dict) and "contents" in data:
-            data = data["contents"]
-
         malwi_objects: List[MalwiObject] = []
 
-        for item in data:
-            name = item.get("name")
-            file_path_val = item.get("path", item.get("file_path"))
-            instructions = item.get("instructions", [])
-            warnings = item.get("warnings", [])
-            instructions = [(str(op), str(arg)) for op, arg in instructions]
+        # New: the malware objects are under data["details"]
+        details = data.get("details", [])
+        for detail in details:
+            detail_path = detail.get("path", "") or ""
+            contents = detail.get("contents", [])
+            for item in contents:
+                name = item.get("name")
+                file_path_val = detail_path
+                instructions = item.get("instructions", [])
+                warnings = item.get("warnings", [])
+                instructions = [(str(op), str(arg)) for op, arg in instructions]
 
-            codeType = None
-            marshalled_code = item.get("marshalled")
-            if marshalled_code:
-                try:
-                    codeType = cls._decode_code_object(marshalled_code)
-                except Exception as e:
-                    warnings.append(f"Failed to decode code object: {str(e)}")
+                codeType = None
+                marshalled_code = item.get("marshalled")
+                if marshalled_code:
+                    try:
+                        codeType = cls._decode_code_object(marshalled_code)
+                    except Exception as e:
+                        warnings.append(f"Failed to decode code object: {str(e)}")
 
-            malwi_object = cls(
-                name=name,
-                language=language,
-                file_path=file_path_val,
-                instructions=instructions,
-                warnings=warnings,
-                codeType=codeType,
-            )
-
-            malwi_objects.append(malwi_object)
+                malwi_object = cls(
+                    name=name,
+                    language=language,
+                    file_path=file_path_val,
+                    instructions=instructions,
+                    warnings=warnings,
+                    codeType=codeType,
+                )
+                malwi_objects.append(malwi_object)
 
         return malwi_objects
 
@@ -1023,7 +1024,7 @@ def triage(all_objects: List["MalwiObject"]):
 
         code_hash = hashlib.sha1(obj.code.encode("utf-8")).hexdigest()
 
-        file_extension = ".json"
+        file_extension = ".yaml"
         benign_path = os.path.join(benign_dir, f"{code_hash}{file_extension}")
         malicious_path = os.path.join(malicious_dir, f"{code_hash}{file_extension}")
 
