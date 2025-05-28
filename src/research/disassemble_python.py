@@ -1031,32 +1031,11 @@ def triage(all_objects: List["MalwiObject"]):
             choices=["yes", "no", "skip", "exit"],
         ).ask()
 
-        marshalled_bytes: bytes
-        base64_encoded_string: str
-        try:
-            marshalled_bytes = marshal.dumps(obj.codeType)
-            base64_encoded_bytes = base64.b64encode(marshalled_bytes)
-            base64_encoded_string = base64_encoded_bytes.decode("utf-8")
-        except Exception as e:
-            print(
-                f"Error processing compiled code for hash {code_hash} (marshal/base64), skipping: {e}"
-            )
-            continue
-
-        data_to_save: Dict[str, Any] = {
-            "code_string": obj.code,
-            "original_maliciousness": obj.maliciousness,
-            "marshalled_base64": base64_encoded_string,
-            "code_hash_sha1": code_hash,
-        }
-
         output_path: str = ""
         if triage_result == "yes":
             output_path = malicious_path
-            data_to_save["triaged_as_malicious"] = True
         elif triage_result == "no":
             output_path = benign_path
-            data_to_save["triaged_as_malicious"] = False
         elif triage_result == "skip":
             print(f"Skipping sample {code_hash}...")
             continue
@@ -1072,7 +1051,15 @@ def triage(all_objects: List["MalwiObject"]):
         if output_path:
             try:
                 with open(output_path, "w", encoding="utf-8") as f:
-                    json.dump(data_to_save, f, indent=4)
+                    f.write(
+                        MalwiObject.to_report_yaml(
+                            [obj],
+                            [obj.file_path],
+                            malicious_threshold=0.0,
+                            number_of_skipped_files=0.0,
+                            malicious_only=False,
+                        )
+                    )
                 print(f"Saved data for hash {code_hash} to {output_path}")
             except IOError as e:
                 print(
