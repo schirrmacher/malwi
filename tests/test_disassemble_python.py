@@ -1,20 +1,15 @@
 import io
-import sys
 import dis
 import yaml
 import json
 import types
 import base64
 import pytest
-import hashlib
 import pathlib
 import marshal
 
 from pathlib import Path
 from unittest import mock
-
-from pathlib import Path
-from typing import Dict, Any
 
 # Import necessary components from the script to be tested, using the new package path
 from research.disassemble_python import (
@@ -834,3 +829,67 @@ def test_report_calls_predict_if_needed(monkeypatch):
 
     # Restore original predict if other tests need it unmocked, though pytest handles fixture/monkeypatch scope.
     monkeypatch.setattr(MalwiObject, "predict", original_predict)
+
+
+def sample_code_object2() -> types.CodeType:
+    def example():
+        return 42
+
+    return example.__code__
+
+
+def encoded_code_object(code_obj: types.CodeType) -> str:
+    return base64.b64encode(marshal.dumps(code_obj)).decode("utf-8")
+
+
+def make_test_data(name="test", path="/fake/path/test.py", language="python"):
+    code_obj = sample_code_object2()
+    encoded = encoded_code_object(code_obj)
+    return {
+        "name": name,
+        "path": path,
+        "instructions": [],
+        "warnings": [],
+        "marshalled": encoded,
+    }, code_obj
+
+
+def test_from_file_json_marshalled(tmp_path):
+    data, original_code = make_test_data()
+    file = tmp_path / "test.json"
+    file.write_text(json.dumps([data]))
+
+    objs = MalwiObject.from_file(file, language="python")
+    assert len(objs) == 1
+    assert isinstance(objs[0].codeType, types.CodeType)
+    assert objs[0].codeType.co_code == original_code.co_code
+    assert objs[0].codeType.co_consts == original_code.co_consts
+
+
+def test_from_file_yaml_marshalled(tmp_path):
+    data, original_code = make_test_data()
+    file = tmp_path / "test.yaml"
+    file.write_text(yaml.dump([data]))
+
+    objs = MalwiObject.from_file(file, language="python")
+    assert len(objs) == 1
+    assert isinstance(objs[0].codeType, types.CodeType)
+    assert objs[0].codeType.co_code == original_code.co_code
+    assert objs[0].codeType.co_consts == original_code.co_consts
+
+
+def test_from_file_invalid_base64(tmp_path):
+    file = tmp_path / "bad.json"
+    bad_data = {
+        "name": "bad",
+        "path": "/bad/path.py",
+        "instructions": [],
+        "warnings": [],
+        "marshalled": "!!!invalid_base64!!!",
+    }
+    file.write_text(json.dumps([bad_data]))
+
+    objs = MalwiObject.from_file(file, language="python")
+    assert len(objs) == 1
+    assert objs[0].codeType is None
+    assert any("Failed to decode" in w for w in objs[0].warnings)

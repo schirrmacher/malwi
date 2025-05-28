@@ -25,7 +25,7 @@ from tqdm import tqdm
 from enum import Enum
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Tuple, Set, Optional, Any, Dict, TextIO
+from typing import List, Tuple, Set, Optional, Any, Dict, TextIO, Union
 
 
 from research.predict import get_node_text_prediction, initialize_models
@@ -347,6 +347,57 @@ class MalwiObject:
             txt += "\n\n"
 
         return txt
+
+    @staticmethod
+    def _decode_code_object(encoded: str) -> types.CodeType:
+        raw_bytes = base64.b64decode(encoded)
+        return marshal.loads(raw_bytes)
+
+    @classmethod
+    def from_file(
+        cls, file_path: Union[str, Path], language: str
+    ) -> List["MalwiObject"]:
+        file_path = Path(file_path)
+        with file_path.open("r", encoding="utf-8") as f:
+            if file_path.suffix in [".yaml", ".yml"]:
+                data = yaml.safe_load(f)
+            elif file_path.suffix == ".json":
+                data = json.load(f)
+            else:
+                raise ValueError(f"Unsupported file type: {file_path.suffix}")
+
+        if isinstance(data, dict) and "contents" in data:
+            data = data["contents"]
+
+        malwi_objects: List[MalwiObject] = []
+
+        for item in data:
+            name = item.get("name")
+            file_path_val = item.get("path", item.get("file_path"))
+            instructions = item.get("instructions", [])
+            warnings = item.get("warnings", [])
+            instructions = [(str(op), str(arg)) for op, arg in instructions]
+
+            codeType = None
+            marshalled_code = item.get("marshalled")
+            if marshalled_code:
+                try:
+                    codeType = cls._decode_code_object(marshalled_code)
+                except Exception as e:
+                    warnings.append(f"Failed to decode code object: {str(e)}")
+
+            malwi_object = cls(
+                name=name,
+                language=language,
+                file_path=file_path_val,
+                instructions=instructions,
+                warnings=warnings,
+                codeType=codeType,
+            )
+
+            malwi_objects.append(malwi_object)
+
+        return malwi_objects
 
 
 class OutputFormatter:
