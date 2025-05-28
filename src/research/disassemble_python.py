@@ -107,14 +107,10 @@ class MalwiObject:
     @classmethod
     def load_models_into_memory(
         cls, model_path: Optional[str] = None, tokenizer_path: Optional[str] = None
-    ):
+    ) -> None:
         initialize_models(model_path=model_path, tokenizer_path=tokenizer_path)
 
     def _generate_instructions_from_codetype(self) -> None:
-        """
-        Populates self.instructions by processing self.codeType.
-        This contains the logic extracted from recursively_disassemble_python.
-        """
         if not self.codeType:
             return
 
@@ -129,9 +125,7 @@ class MalwiObject:
 
             if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
                 final_value = map_jump_instruction_arg(instruction)
-            elif (
-                instruction.opname == "LOAD_CONST"
-            ):  # Opname check is case-sensitive in dis
+            elif instruction.opname == "LOAD_CONST":
                 final_value = map_load_const_number_arg(
                     instruction, argval, original_argrepr
                 )
@@ -147,26 +141,19 @@ class MalwiObject:
                 final_value = original_argrepr
 
             processed_instructions.append((opname, final_value))
-
         self.instructions = processed_instructions
 
     def to_tokens(self) -> List[str]:
-        """
-        Generates a flat list of tokens.
-        If instructions are not already populated and a codeType is available,
-        it first generates the instructions.
-        """
-        # Check if instructions are empty AND codeType is available to generate them
         if not self.instructions and self.codeType:
             self._generate_instructions_from_codetype()
 
         all_token_parts: List[str] = []
-        all_token_parts.extend(self.warnings)  # Prepend warnings as tokens
+        all_token_parts.extend(self.warnings)
 
         for opname, argrepr_val in self.instructions:
             all_token_parts.append(opname)
-            if argrepr_val:  # Only append argrepr if it's not empty
-                all_token_parts.append(argrepr_val)
+            if argrepr_val:
+                all_token_parts.append(str(argrepr_val))
         return all_token_parts
 
     def to_token_string(self) -> str:
@@ -213,6 +200,9 @@ class MalwiObject:
                     "code": final_code_value,
                     "tokens": self.to_token_string(),
                     "hash": self.to_string_hash(),
+                    "marshalled": base64.b64encode(marshal.dumps(self.codeType)).decode(
+                        "utf-8"
+                    ),
                 }
             ],
         }
@@ -236,9 +226,6 @@ class MalwiObject:
         number_of_skipped_files: int = 0,
         malicious_only: bool = False,
     ) -> Dict[str, Any]:
-        """
-        Internal helper to compute report data.
-        """
         processed_objects_count = len(malwi_files)
         total_maliciousness_score = 0.0
         malicious_objects_count = 0
@@ -360,81 +347,6 @@ class MalwiObject:
             txt += "\n\n"
 
         return txt
-
-    @classmethod
-    def from_triaged_file(
-        cls, json_file_path: str, language: str = "python"
-    ) -> Optional["MalwiObject"]:
-        try:
-            with open(json_file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            code_s: Optional[str] = data.get("code_string")
-            marshalled_base64: Optional[str] = data.get("marshalled_base64")
-            orig_mal: Optional[float] = data.get("original_maliciousness")
-            hash_val: Optional[str] = data.get("code_hash_sha1")
-
-            if code_s is None or marshalled_base64 is None or hash_val is None:
-                print(
-                    f"Error: Essential data (code_string, marshalled_base64, or code_hash_sha1) "
-                    f"missing in {json_file_path}"
-                )
-                return None
-
-            base64_encoded_bytes = marshalled_base64.encode("utf-8")
-            marshalled_bytes = base64.b64decode(base64_encoded_bytes)
-            code_o: types.CodeType = marshal.loads(marshalled_bytes)
-
-            if not isinstance(code_o, types.CodeType):
-                print(
-                    f"Error: Expected a CodeType object from {json_file_path}, "
-                    f"but got {type(code_o).__name__}."
-                )
-                return None
-
-            # Generate instructions from the CodeType object
-            generated_instructions: List[Tuple[str, str]] = []
-            for instruction in dis.get_instructions(code_o):
-                generated_instructions.append((instruction.opname, instruction.argrepr))
-
-            object_name = f"triaged_{Path(json_file_path).stem}"
-
-            malwi_obj = cls(
-                name=object_name,
-                language=language,
-                file_path=json_file_path,
-                instructions=generated_instructions,
-                codeType=code_o,
-                warnings=[],
-            )
-
-            malwi_obj.code = code_s
-            malwi_obj.maliciousness = orig_mal
-
-            return malwi_obj
-
-        except FileNotFoundError:
-            print(f"Error: File not found at {json_file_path}")
-            return None
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON from {json_file_path}: {e}")
-            return None
-        except base64.binascii.Error as e:
-            print(f"Error decoding base64 data from {json_file_path}: {e}")
-            return None
-        except (
-            TypeError,
-            ValueError,
-        ) as e:  # Errors from marshal.loads or dis.get_instructions
-            print(
-                f"Error processing data (unmarshal/instructions) from {json_file_path}: {e}"
-            )
-            return None
-        except Exception as e:
-            print(
-                f"An unexpected error occurred while processing {json_file_path}: {e}"
-            )
-            return None
 
 
 class OutputFormatter:
