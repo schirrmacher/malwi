@@ -18,6 +18,7 @@ import marshal
 import hashlib
 import warnings
 import argparse
+import binascii
 import questionary
 import collections
 
@@ -111,8 +112,8 @@ class MalwiObject:
         initialize_models(model_path=model_path, tokenizer_path=tokenizer_path)
 
     @staticmethod
-    def generate_instructions_from_codetype(
-        code_type: Optional[types.CodeType],
+    def tokenize_code_type(
+        code_type: Optional[types.CodeType], map_special_tokens: bool = True
     ) -> List[str]:
         if not code_type:
             return []
@@ -128,6 +129,12 @@ class MalwiObject:
             original_argrepr: str = (
                 instruction.argrepr if instruction.argrepr is not None else ""
             )
+
+            if not map_special_tokens:
+                flat_instructions.append(opname)
+                flat_instructions.append(str(argval))
+                continue
+
             final_value: str = ""
 
             if instruction.opcode in dis.hasjabs or instruction.opcode in dis.hasjrel:
@@ -153,17 +160,17 @@ class MalwiObject:
                 flat_instructions.append(str(final_value))
         return flat_instructions
 
-    def to_tokens(self) -> List[str]:
+    def to_tokens(self, map_special_tokens: bool = True) -> List[str]:
         all_token_parts: List[str] = []
         all_token_parts.extend(self.warnings)
-        generated_instructions = MalwiObject.generate_instructions_from_codetype(
-            code_type=self.codeType
+        generated_instructions = MalwiObject.tokenize_code_type(
+            code_type=self.codeType, map_special_tokens=map_special_tokens
         )
         all_token_parts.extend(generated_instructions)
         return all_token_parts
 
-    def to_token_string(self) -> str:
-        return " ".join(self.to_tokens())
+    def to_token_string(self, map_special_tokens: bool = True) -> str:
+        return " ".join(self.to_tokens(map_special_tokens=map_special_tokens))
 
     def to_string_hash(self) -> str:
         tokens = self.to_token_string()
@@ -205,6 +212,7 @@ class MalwiObject:
                     "score": self.maliciousness,
                     "code": final_code_value,
                     "tokens": self.to_token_string(),
+                    "tokens_raw": self.to_token_string(map_special_tokens=False),
                     "hash": self.to_string_hash(),
                     "marshalled": base64.b64encode(marshal.dumps(self.codeType)).decode(
                         "utf-8"
@@ -356,53 +364,75 @@ class MalwiObject:
 
     @staticmethod
     def _decode_code_object(encoded: str) -> types.CodeType:
-        raw_bytes = base64.b64decode(encoded)
-        return marshal.loads(raw_bytes)
+        try:
+            raw_bytes = base64.b64decode(encoded)
+        except (binascii.Error, ValueError) as e:
+            raise ValueError(f"Failed to decode base64 string: {e}") from e
+
+        try:
+            code_obj = marshal.loads(raw_bytes)
+        except (ValueError, TypeError, EOFError) as e:
+            raise ValueError(f"Failed to unmarshal code object: {e}") from e
+
+        if not isinstance(code_obj, types.CodeType):
+            raise TypeError("Decoded object is not a code object")
+
+        return code_obj
 
     @classmethod
     def from_file(
         cls, file_path: Union[str, Path], language: str = "python"
     ) -> List["MalwiObject"]:
         file_path = Path(file_path)
+        malwi_objects: List[MalwiObject] = []
+
         with file_path.open("r", encoding="utf-8") as f:
             if file_path.suffix in [".yaml", ".yml"]:
-                data = yaml.safe_load(f)
+                # Load all YAML documents in the file
+                documents = yaml.safe_load_all(f)
             elif file_path.suffix == ".json":
-                data = json.load(f)
+                # JSON normally single doc; for multiple JSON objects in one file,
+                # you could do more advanced parsing, but here just one load:
+                documents = [json.load(f)]
             else:
                 raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
-        malwi_objects: List[MalwiObject] = []
+            for data in documents:
+                if not data:
+                    continue
+                details = data.get("details", [])
+                for detail in details:
+                    if not details:
+                        continue
+                    detail_path = detail.get("path", "") or ""
+                    contents = detail.get("contents", [])
+                    if not contents:
+                        continue
+                    for item in contents:
+                        name = item.get("name")
+                        file_path_val = detail_path
+                        instructions = item.get("instructions", [])
+                        warnings = item.get("warnings", [])
+                        # Normalize instructions to list of str tuples
+                        instructions = [(str(op), str(arg)) for op, arg in instructions]
 
-        # New: the malware objects are under data["details"]
-        details = data.get("details", [])
-        for detail in details:
-            detail_path = detail.get("path", "") or ""
-            contents = detail.get("contents", [])
-            for item in contents:
-                name = item.get("name")
-                file_path_val = detail_path
-                instructions = item.get("instructions", [])
-                warnings = item.get("warnings", [])
-                instructions = [(str(op), str(arg)) for op, arg in instructions]
+                        codeType = None
+                        marshalled_code = item.get("marshalled")
+                        if marshalled_code:
+                            try:
+                                codeType = cls._decode_code_object(marshalled_code)
+                            except Exception as e:
+                                print(f"Failed to decode code object: {str(e)}")
 
-                codeType = None
-                marshalled_code = item.get("marshalled")
-                if marshalled_code:
-                    try:
-                        codeType = cls._decode_code_object(marshalled_code)
-                    except Exception as e:
-                        warnings.append(f"Failed to decode code object: {str(e)}")
-
-                malwi_object = cls(
-                    name=name,
-                    language=language,
-                    file_path=file_path_val,
-                    instructions=instructions,
-                    warnings=warnings,
-                    codeType=codeType,
-                )
-                malwi_objects.append(malwi_object)
+                        malwi_object = cls(
+                            name=name,
+                            language=language,
+                            file_path=file_path_val,
+                            instructions=instructions,
+                            warnings=warnings,
+                            codeType=codeType,
+                        )
+                        malwi_objects.append(malwi_object)
 
         return malwi_objects
 

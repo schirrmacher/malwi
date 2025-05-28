@@ -155,6 +155,14 @@ class TestCoreDisassembly:
         module_obj = next((obj for obj in results if obj.name == "<module>"), None)
         assert module_obj is not None
         assert module_obj.codeType is not None
+        assert (
+            module_obj.to_token_string()
+            == "resume load_const INTEGER load_const import_name os store_name os load_const OBJECT make_function store_name hello push_null load_build_class load_const OBJECT make_function load_const MyClass call store_name MyClass load_name __name__ load_const __main__ compare_op == pop_jump_if_false TO_NUMBER push_null load_name hello load_const world call pop_top return_const None return_const None"
+        )
+        assert (
+            "resume 0 load_const 0 load_const None import_name os store_name os load_const"
+            in module_obj.to_token_string(map_special_tokens=False)
+        )
 
     def test_disassemble_syntax_error_file(self, tmp_path, syntax_error_py_content):
         p = tmp_path / "syntax.py"
@@ -307,7 +315,7 @@ class TestMalwiObject:
         )
 
     def test_generate_instructions_from_codetype(self, sample_code_type):
-        instructions = MalwiObject.generate_instructions_from_codetype(sample_code_type)
+        instructions = MalwiObject.tokenize_code_type(sample_code_type)
         assert isinstance(instructions, list)
         assert len(instructions) > 0
         assert "load_const" in instructions
