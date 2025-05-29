@@ -1,5 +1,45 @@
 # Research Notes
 
+## Tokenization
+
+Status: `Open`
+
+Problem: Different language versions create different artifacts. Example: Compilation of Python version A creates different bytecode than Python version B.
+
+There are different ways to address this:
+
+- Train models with randomly picked bytecode versions
+    - More development effort
+    - Better for the user because she can use any Python version
+- Train different models for different versions
+    - Complex model management
+    - User potentially works with many models
+- Define abstract format for training
+    - Requires deep knowledge of all Python versions
+- Pin compilation version, e.g. by extracting compilation logic of one language version
+    - Requires platform independent binaries for the compilation on the user's machine
+
+## Triaging
+
+Status: `Open`
+
+Problem: Triaging is the categorization of findings into true-positives or false-positives. Persisting triaging data has the advantage of using it for future training. However, when the tokenization logic changes, the triaging data might get obsolete. This creates the question how to persist triaging data independently of the language version beeing used and the tokenization logic?
+
+- code snippet extraction
+    - snippets might not be syntactically sound, e.g. only extracting a function from a class cannot be compiled solely
+- store whole file
+    - requires more memory
+    - open how to target a specific object in that file, most object do not possess a name
+- store raw tokenization information
+    - still bytecode might change due to versions
+    - mapping tokenization to new format very elaborate
+- ❌ marshalling the code object
+    - Highly language version specific
+- ❌ store tokenized bytecode
+    - mapping logic changes, making the triaged data obsolete
+
+## Model Training
+
 - Commit: `5b1eb22`
 - `DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 7.0`
 - `STRING_MAX_LENGTH = 15`
@@ -14,7 +54,7 @@
 {'eval_loss': 0.29895564913749695, 'eval_accuracy': 0.8867476329084278, 'eval_f1': 0.8473368511252424, 'eval_precision': 0.9194479788587648, 'eval_recall': 0.7857142857142857, 'eval_runtime': 51.7835, 'eval_samples_per_second': 577.191, 'eval_steps_per_second': 36.093, 'epoch': 3.0}
 ```
 
-## Showing Content of Strings
+### Importance of Strings
 
 When showing the content of strings smaller than 10 chars without mapping the performance increases massively.
 
