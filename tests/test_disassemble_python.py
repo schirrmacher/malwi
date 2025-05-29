@@ -116,6 +116,7 @@ class TestOutputFormatting:
             name="obj1_pass",
             language="python",
             file_path=str(tmp_path / "dummy.py"),
+            file_source_code="",
             codeType=co_pass,
         )
         obj1.code = "pass"  # For source code display
@@ -123,6 +124,7 @@ class TestOutputFormatting:
             SpecialCases.MALFORMED_SYNTAX.value,
             language="python",
             file_path=str(tmp_path / "bad.py"),
+            file_source_code="",
             warnings=[SpecialCases.MALFORMED_SYNTAX.value],
         )
         return [obj1, obj_err]
@@ -192,6 +194,7 @@ class TestTriageFunction:
         obj = MalwiObject(
             name="triage_obj",
             language="python",
+            file_source_code="",
             file_path="triage_test.py",
             codeType=co,
         )

@@ -26,6 +26,7 @@ class TestMalwiObject:
         return MalwiObject(
             name="<module>",
             language="python",
+            file_source_code="abcd",
             file_path="test.py",
             codeType=sample_code_type,
         )
@@ -78,6 +79,7 @@ class TestMalwiObject:
 
         obj_yaml = malwi_obj.to_yaml()
         assert "path: test.py" in obj_yaml
+        assert "source: YWJjZA==" in obj_yaml
         assert "code: |" in obj_yaml  # For LiteralStr
 
         obj_json = malwi_obj.to_json()

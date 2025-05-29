@@ -32,8 +32,9 @@ class MalwiObject:
     name: str
     file_path: str
     warnings: List[str]
-    maliciousness: Optional[float] = None
+    file_source_code: str
     code: Optional[str] = None
+    maliciousness: Optional[float] = None
     codeType: Optional[types.CodeType] = None
 
     def __init__(
@@ -41,6 +42,7 @@ class MalwiObject:
         name: str,
         language: str,
         file_path: str,
+        file_source_code: str,
         codeType: types.CodeType = None,
         warnings: List[str] = [],
     ):
@@ -49,6 +51,7 @@ class MalwiObject:
         self.warnings = list(warnings)
         self.maliciousness = None
         self.codeType = codeType
+        self.file_source_code = file_source_code
 
         if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings += [SpecialCases.TARGETED_FILE.value]
@@ -104,6 +107,9 @@ class MalwiObject:
 
         return {
             "path": self.file_path,
+            "source": base64.b64encode(self.file_source_code.encode("utf-8")).decode(
+                "utf-8"
+            ),
             "contents": [
                 {
                     "name": self.name,

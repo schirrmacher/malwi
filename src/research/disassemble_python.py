@@ -104,6 +104,7 @@ class CSVWriter:
 
 def recursively_disassemble_python(
     file_path: str,
+    source_code: str,
     language: str,
     code_obj: Optional[types.CodeType],
     all_objects_data: List[MalwiObject],
@@ -119,6 +120,7 @@ def recursively_disassemble_python(
                 language=language,
                 file_path=file_path,
                 codeType=None,
+                file_source_code="",
                 warnings=[err_msg],
             )
             all_objects_data.append(object_data)
@@ -128,6 +130,7 @@ def recursively_disassemble_python(
                     name=SpecialCases.MALFORMED_FILE.value,
                     language=language,
                     file_path=file_path,
+                    file_source_code="",
                     warnings=[SpecialCases.MALFORMED_FILE.value],
                 )
             )
@@ -145,6 +148,7 @@ def recursively_disassemble_python(
         language=language,
         file_path=file_path,
         codeType=code_obj,
+        file_source_code=source_code,
     )
     all_objects_data.append(object_data)
 
@@ -152,6 +156,7 @@ def recursively_disassemble_python(
         if isinstance(const, types.CodeType):
             recursively_disassemble_python(
                 file_path=file_path,
+                source_code=source_code,
                 language=language,
                 code_obj=const,
                 all_objects_data=all_objects_data,
@@ -159,9 +164,7 @@ def recursively_disassemble_python(
             )
 
 
-def disassemble_python_file(
-    file_path_str: str, retrieve_source_code: bool = True
-) -> List[MalwiObject]:
+def disassemble_python_file(file_path_str: str) -> List[MalwiObject]:
     all_disassembled_data: List[MalwiObject] = []
     source_code: Optional[str] = None
     current_file_errors: List[str] = []
@@ -190,6 +193,7 @@ def disassemble_python_file(
 
     recursively_disassemble_python(
         file_path=file_path_str,
+        source_code=source_code,
         language="python",
         code_obj=top_level_code_object,
         all_objects_data=all_disassembled_data,
@@ -202,9 +206,7 @@ def process_single_py_file(
     py_file: Path, predict: bool = True, retrieve_source_code: bool = True
 ) -> Optional[List[MalwiObject]]:
     try:
-        disassembled_data: List[MalwiObject] = disassemble_python_file(
-            str(py_file), retrieve_source_code=retrieve_source_code
-        )
+        disassembled_data: List[MalwiObject] = disassemble_python_file(str(py_file))
         if predict:
             for d in disassembled_data:
                 d.predict()
