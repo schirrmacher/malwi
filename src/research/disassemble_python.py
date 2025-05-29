@@ -164,62 +164,66 @@ def recursively_disassemble_python(
             )
 
 
-def disassemble_python_file(file_path_str: str) -> List[MalwiObject]:
+def disassemble_python_file(source_code: str, file_path: str) -> List[MalwiObject]:
     all_disassembled_data: List[MalwiObject] = []
-    source_code: Optional[str] = None
     current_file_errors: List[str] = []
 
     try:
-        with open(file_path_str, "r", encoding="utf-8", errors="replace") as f:
-            source_code = f.read()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", SyntaxWarning)
+            top_level_code_object = compile(source_code, file_path, "exec")
+
+    except UnicodeDecodeError:
+        current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
+        top_level_code_object = None
+    except SyntaxError:
+        current_file_errors.append(SpecialCases.MALFORMED_SYNTAX.value)
+        top_level_code_object = None
     except Exception:
+        current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
+        top_level_code_object = None
+
+    # If compilation failed and no errors were caught, add fallback error
+    if top_level_code_object is None and not current_file_errors:
         current_file_errors.append(SpecialCases.FILE_READING_ISSUES.value)
 
-    top_level_code_object = None
-    if source_code is not None:
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", SyntaxWarning)
-                top_level_code_object = compile(source_code, file_path_str, "exec")
-        except UnicodeDecodeError:
-            current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
-        except SyntaxError:
-            current_file_errors.append(SpecialCases.MALFORMED_SYNTAX.value)
-        except Exception:
-            current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
-    else:
-        if not current_file_errors:
-            current_file_errors.append(SpecialCases.FILE_READING_ISSUES.value)
-
     recursively_disassemble_python(
-        file_path=file_path_str,
+        file_path=file_path,
         source_code=source_code,
         language="python",
         code_obj=top_level_code_object,
         all_objects_data=all_disassembled_data,
         errors=current_file_errors,
     )
+
     return all_disassembled_data
 
 
 def process_single_py_file(
-    py_file: Path, predict: bool = True, retrieve_source_code: bool = True
+    file_path: Path, predict: bool = True, retrieve_source_code: bool = True
 ) -> Optional[List[MalwiObject]]:
     try:
-        disassembled_data: List[MalwiObject] = disassemble_python_file(str(py_file))
+        source_code = file_path.read_text(encoding="utf-8", errors="replace")
+        disassembled_data: List[MalwiObject] = disassemble_python_file(
+            source_code, file_path=str(file_path)
+        )
+
         if predict:
-            for d in disassembled_data:
-                d.predict()
+            for obj in disassembled_data:
+                obj.predict()
+
         if retrieve_source_code:
-            for d in disassembled_data:
-                d.retrieve_source_code()
-        return disassembled_data if disassembled_data else None
+            for obj in disassembled_data:
+                obj.retrieve_source_code()
+
+        return disassembled_data or None
+
     except Exception as e:
         print(
-            f"An unexpected error occurred while processing {py_file}: {e}",
+            f"[Error] Failed to process {file_path} ({type(e).__name__}): {e}",
             file=sys.stderr,
         )
-    return None
+        return None
 
 
 @dataclass

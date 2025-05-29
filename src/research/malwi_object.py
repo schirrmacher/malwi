@@ -105,7 +105,7 @@ class MalwiObject:
             final_code_value = code_display_value
 
         return {
-            "path": self.file_path,
+            "path": str(self.file_path),
             "source": base64.b64encode(self.file_source_code.encode("utf-8")).decode(
                 "utf-8"
             ),
