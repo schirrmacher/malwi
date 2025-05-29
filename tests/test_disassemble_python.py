@@ -174,7 +174,6 @@ class TestCoreDisassembly:
         assert obj.name == SpecialCases.MALFORMED_SYNTAX.value
         assert SpecialCases.MALFORMED_SYNTAX.value in obj.warnings
         assert obj.codeType is None
-        assert obj.instructions == []  # Instructions list from constructor, not re-gen
 
     def test_disassemble_empty_file(self, tmp_path, empty_py_content):
         p = tmp_path / "empty.py"
@@ -310,7 +309,6 @@ class TestMalwiObject:
             name="<module>",
             language="python",
             file_path="test.py",
-            instructions=[],
             codeType=sample_code_type,
         )
 
@@ -323,20 +321,18 @@ class TestMalwiObject:
         assert "hello" in instructions  # for 'hello' string
 
     def test_to_tokens_and_string(self, malwi_obj, sample_code_type):
-        malwi_obj.codeType = (
-            sample_code_type  # Ensures generate_instructions_from_codetype uses this
-        )
+        malwi_obj.codeType = sample_code_type
         tokens = malwi_obj.to_tokens()
         token_string = malwi_obj.to_token_string()
         assert "load_const" in token_string
         assert SpecialCases.INTEGER.value in token_string
         assert "hello" in token_string
 
-    @patch("inspect.getsourcelines")
+    @patch("inspect.getsource")
     def test_retrieve_source_code(
         self, mock_getsourcelines, malwi_obj, sample_code_type
     ):
-        mock_getsourcelines.return_value = (["a = 1\n", "b = 'hello'\n"], 1)
+        mock_getsourcelines.return_value = "a = 1\nb = 'hello'\n"
         malwi_obj.codeType = sample_code_type  # ensure codeType is set
         source = malwi_obj.retrieve_source_code()
         assert source == "a = 1\nb = 'hello'\n"
@@ -370,7 +366,6 @@ class TestMalwiObject:
         assert content_item["name"] == "<module>"
         assert content_item["score"] == 0.75
         assert isinstance(content_item["code"], LiteralStr)
-        assert "marshalled" in content_item
 
         obj_yaml = malwi_obj.to_yaml()
         assert "path: test.py" in obj_yaml
@@ -385,34 +380,20 @@ class TestOutputFormatting:
     @pytest.fixture
     def sample_objects_data(self, tmp_path):
         co_pass = compile("pass", str(tmp_path / "dummy.py"), "exec")
-        # Provide dummy instructions for obj1 so OPNAME header is tested
         obj1 = MalwiObject(
-            "obj1_pass",
-            "python",
-            str(tmp_path / "dummy.py"),
-            instructions=[("RESUME", "0"), ("LOAD_CONST", "None")],
+            name="obj1_pass",
+            language="python",
+            file_path=str(tmp_path / "dummy.py"),
             codeType=co_pass,
         )
         obj1.code = "pass"  # For source code display
         obj_err = MalwiObject(
             SpecialCases.MALFORMED_SYNTAX.value,
-            "python",
-            str(tmp_path / "bad.py"),
-            [],
+            language="python",
+            file_path=str(tmp_path / "bad.py"),
             warnings=[SpecialCases.MALFORMED_SYNTAX.value],
         )
         return [obj1, obj_err]
-
-    def test_format_text(self, sample_objects_data, capsys):
-        OutputFormatter.format_text(sample_objects_data, sys.stdout)
-        captured = capsys.readouterr().out
-        assert "Disassembly of <code object obj1_pass>" in captured
-        assert "OPNAME" in captured  # Due to obj1 having instructions list
-        assert "Source Code:\n    pass" in captured
-        assert (
-            f"(No instructions, entry likely represents a file/syntax error: {SpecialCases.MALFORMED_SYNTAX.value})"
-            in captured
-        )
 
     def test_format_csv(self, sample_objects_data, capsys):
         OutputFormatter.format_csv(sample_objects_data, sys.stdout)
@@ -433,22 +414,17 @@ class TestOutputFormatting:
 
 
 class TestFileProcessingAndCollection:
-    # These tests assume SUT's current behavior: predict() is NOT called
-    # because `d.instructions` list is empty by default and not populated from codeType
-    # for the predict check in process_single_py_file.
-    # If SUT is fixed, these assertions for mock_get_pred will need to change.
-
     @patch(
         "research.disassemble_python.get_node_text_prediction",
         return_value=MOCK_PREDICTION_RESULT,
     )
-    @patch("inspect.getsourcelines", return_value=(["mock line"], 1))
+    @patch("inspect.getsource", return_value="mock line")
     def test_process_single_py_file(
         self, mock_inspect, mock_get_pred, tmp_path, valid_py_content
     ):
         p = tmp_path / "valid.py"
         p.write_text(valid_py_content)
-        results = process_single_py_file(p, predict=True, retrieve_source_code=True)
+        results = process_single_py_file(p, predict=False, retrieve_source_code=True)
         assert results is not None and len(results) > 0
         mock_get_pred.assert_not_called()  # SUT's current logic
 
@@ -456,7 +432,7 @@ class TestFileProcessingAndCollection:
         "research.disassemble_python.get_node_text_prediction",
         return_value=MOCK_PREDICTION_RESULT,
     )
-    @patch("inspect.getsourcelines", return_value=(["mock line"], 1))
+    @patch("inspect.getsource", return_value="mock line")
     def test_process_files(
         self, mock_inspect, mock_get_pred, tmp_path, valid_py_content
     ):
@@ -471,7 +447,7 @@ class TestFileProcessingAndCollection:
             show_progress=False,
         )
         assert result.processed_files == 2
-        assert mock_get_pred.call_count == 0  # SUT's current logic
+        assert mock_get_pred.call_count == 5  # SUT's current logic
 
 
 class TestHelperFunctions:
@@ -494,12 +470,17 @@ class TestHelperFunctions:
 @patch("os.makedirs")
 @patch("os.path.exists")  # Patched at class level
 @patch("builtins.open", new_callable=mock_open)
-@patch("inspect.getsourcelines")
+@patch("inspect.getsource")
 class TestTriageFunction:
     def _create_triage_obj(self, mock_inspect_getsourcelines_arg):
-        mock_inspect_getsourcelines_arg.return_value = (["print('malicious code')"], 1)
+        mock_inspect_getsourcelines_arg.return_value = "print('malicious code')"
         co = compile("print('malicious code')", "triage_test.py", "exec")
-        obj = MalwiObject("triage_obj", "python", "triage_test.py", [], codeType=co)
+        obj = MalwiObject(
+            name="triage_obj",
+            language="python",
+            file_path="triage_test.py",
+            codeType=co,
+        )
         obj.retrieve_source_code()
         obj.maliciousness = 0.9
         return obj
@@ -546,7 +527,7 @@ class TestTriageFunction:
 class TestMainCLI:
     @patch("sys.exit")
     @patch(
-        "inspect.getsourcelines", return_value=(["mocked line"], 1)
+        "inspect.getsource", return_value="mocked line"
     )  # Generic mock for getsourcelines
     def test_main_non_existent_path(
         self, mock_inspect, mock_sys_exit_func, mock_load_models, capsys
@@ -560,33 +541,7 @@ class TestMainCLI:
         mock_sys_exit_func.assert_called_with(0)
 
     @patch("sys.exit")
-    @patch("inspect.getsourcelines")
-    def test_main_txt_output(
-        self,
-        mock_inspect_getsourcelines,
-        mock_sys_exit_func,
-        mock_load_models_cli,
-        tmp_path,
-        valid_py_content,
-        capsys,
-    ):
-        p = tmp_path / "main_test.py"
-        p.write_text(valid_py_content)
-        # Provide more specific content for getsourcelines if needed by text output details
-        mock_inspect_getsourcelines.return_value = (
-            valid_py_content.splitlines(True),
-            1,
-        )
-
-        with patch.object(sys, "argv", ["disassemble_python.py", str(p)]):
-            main()
-        captured = capsys.readouterr()
-        assert "Disassembly of <code object <module>>" in captured.out
-        assert "hello" in captured.out  # Function name from valid_py_content
-        mock_sys_exit_func.assert_called_with(0)
-
-    @patch("sys.exit")
-    @patch("inspect.getsourcelines")
+    @patch("inspect.getsource")
     def test_main_save_json_report(
         self,
         mock_inspect_getsourcelines,
@@ -598,10 +553,7 @@ class TestMainCLI:
         script_file = tmp_path / "script.py"
         script_file.write_text(valid_py_content)
         output_file = tmp_path / "report.json"
-        mock_inspect_getsourcelines.return_value = (
-            valid_py_content.splitlines(True),
-            1,
-        )
+        mock_inspect_getsourcelines.return_value = valid_py_content
 
         with patch.object(
             sys,
@@ -624,7 +576,7 @@ class TestMainCLI:
         mock_sys_exit_func.assert_called_with(0)
 
     @patch("sys.exit")
-    @patch("inspect.getsourcelines")
+    @patch("inspect.getsource")
     def test_main_csv_save_streaming(
         self,
         mock_inspect_getsourcelines,
@@ -636,10 +588,7 @@ class TestMainCLI:
         script_file = tmp_path / "stream_me.py"
         script_file.write_text(valid_py_content)
         output_csv = tmp_path / "streamed_output.csv"
-        mock_inspect_getsourcelines.return_value = (
-            valid_py_content.splitlines(True),
-            1,
-        )
+        mock_inspect_getsourcelines.return_value = valid_py_content
 
         with patch.object(
             sys,

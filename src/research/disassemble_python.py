@@ -80,7 +80,6 @@ yaml.add_representer(LiteralStr, literal_str_representer)
 class MalwiObject:
     name: str
     file_path: str
-    instructions: List[Tuple[str, str]]
     warnings: List[str]
     maliciousness: Optional[float] = None
     code: Optional[str] = None
@@ -91,13 +90,11 @@ class MalwiObject:
         name: str,
         language: str,
         file_path: str,
-        instructions: List[Tuple[str, str]],
         codeType: types.CodeType = None,
         warnings: List[str] = [],
     ):
         self.name = name
         self.file_path = file_path
-        self.instructions = instructions
         self.warnings = list(warnings)
         self.maliciousness = None
         self.codeType = codeType
@@ -181,8 +178,7 @@ class MalwiObject:
 
     def retrieve_source_code(self) -> Optional[str]:
         try:
-            lines, _ = inspect.getsourcelines(self.codeType)
-            self.code = "".join(lines)
+            self.code = inspect.getsource(self.codeType)
             return self.code
         except Exception:
             pass
@@ -212,11 +208,7 @@ class MalwiObject:
                     "score": self.maliciousness,
                     "code": final_code_value,
                     "tokens": self.to_token_string(),
-                    "tokens_raw": self.to_token_string(map_special_tokens=False),
                     "hash": self.to_string_hash(),
-                    "marshalled": base64.b64encode(marshal.dumps(self.codeType)).decode(
-                        "utf-8"
-                    ),
                 }
             ],
         }
@@ -439,31 +431,6 @@ class MalwiObject:
 
 class OutputFormatter:
     """Handles different output formats for MalwiObject data."""
-
-    @staticmethod
-    def format_text(objects_data: List[MalwiObject], output_stream: TextIO) -> None:
-        """Format objects as readable text."""
-        for obj_data in objects_data:
-            output_stream.write(f"\nDisassembly of <code object {obj_data.name}>:\n")
-            output_stream.write(f'  (file: "{obj_data.file_path}")\n')
-
-            if obj_data.code and not obj_data.code.startswith("<Not applicable"):
-                indented_source = "\n".join(
-                    ["    " + line for line in obj_data.code.splitlines()]
-                )
-                output_stream.write(f"  Source Code:\n{indented_source}\n")
-            elif obj_data.code:
-                output_stream.write(f"  Source Code: {obj_data.code}\n")
-
-            if obj_data.instructions:
-                output_stream.write(f"{'OPNAME':<25} ARGREPR\n")
-                output_stream.write(f"{'-' * 25} {'-' * 20}\n")
-                for opname, argrepr_val in obj_data.instructions:
-                    output_stream.write(f"{opname:<25} {argrepr_val}\n")
-            elif not obj_data.code or obj_data.code.startswith("<Not applicable"):
-                output_stream.write(
-                    f"  (No instructions, entry likely represents a file/syntax error: {obj_data.name})\n"
-                )
 
     @staticmethod
     def format_csv(objects_data: List[MalwiObject], output_stream: TextIO) -> None:
@@ -793,7 +760,6 @@ def recursively_disassemble_python(
                 language=language,
                 file_path=file_path,
                 codeType=None,
-                instructions=[],
                 warnings=[err_msg],
             )
             all_objects_data.append(object_data)
@@ -803,10 +769,7 @@ def recursively_disassemble_python(
                     name=SpecialCases.MALFORMED_FILE.value,
                     language=language,
                     file_path=file_path,
-                    codeType=None,
-                    instructions=[],
                     warnings=[SpecialCases.MALFORMED_FILE.value],
-                    code="<Not applicable: no code object generated>",
                 )
             )
         return
@@ -819,12 +782,10 @@ def recursively_disassemble_python(
     visited_code_ids.add(id(code_obj))
 
     object_data = MalwiObject(
-        name=code_obj.co_name if code_obj.co_name else "UnknownObject",
+        name=code_obj.co_name,
         language=language,
-        file_path=code_obj.co_filename if code_obj.co_filename else file_path,
+        file_path=file_path,
         codeType=code_obj,
-        instructions=[],
-        warnings=[],
     )
     all_objects_data.append(object_data)
 
@@ -836,7 +797,6 @@ def recursively_disassemble_python(
                 code_obj=const,
                 all_objects_data=all_objects_data,
                 visited_code_ids=visited_code_ids,
-                errors=[],
             )
 
 
@@ -1229,10 +1189,7 @@ def main() -> None:
                 )
 
             try:
-                # Format and output data
-                if args.format == "txt":
-                    OutputFormatter.format_text(collected_data, output_stream)
-                elif args.format == "csv":
+                if args.format == "csv":
                     OutputFormatter.format_csv(collected_data, output_stream)
                 elif args.format == "json":
                     OutputFormatter.format_json(
