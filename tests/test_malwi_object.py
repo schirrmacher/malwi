@@ -1,6 +1,11 @@
 import json
+import yaml
+import types
 import pytest
+import base64
+import tempfile
 
+from pathlib import Path
 from unittest.mock import patch
 
 from research.mapping import SpecialCases
@@ -85,3 +90,53 @@ class TestMalwiObject:
         obj_json = malwi_obj.to_json()
         json_data = json.loads(obj_json)
         assert json_data["path"] == "test.py"
+
+
+def get_fake_code_object():
+    def sample_function():
+        return "malicious"
+
+    return sample_function.__code__
+
+
+def test_from_file_reads_yaml_correctly():
+    fake_source = "print('hello world')"
+    encoded_source = base64.b64encode(fake_source.encode("utf-8")).decode("utf-8")
+
+    yaml_data = {
+        "statistics": {
+            "total_files": 1,
+            "skipped_files": 0,
+            "processed_objects": 1,
+            "malicious_objects": 0,
+        },
+        "details": [
+            {
+                "path": "example.py",
+                "source": encoded_source,
+                "contents": [
+                    {
+                        "name": "test_function",
+                        "score": 0.3,
+                        "tokens": "some tokenized form",
+                        "hash": "fakehash",
+                        "warnings": ["suspicious"],
+                    }
+                ],
+            }
+        ],
+    }
+
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as tmp:
+        yaml.dump(yaml_data, tmp, sort_keys=False)
+        tmp_path = Path(tmp.name)
+
+    malwi_objects = MalwiObject.from_file(tmp_path, language="python")
+
+    assert len(malwi_objects) == 1
+    obj = malwi_objects[0]
+
+    assert obj.name == "test_function"
+    assert obj.file_path == "example.py"
+    assert obj.file_source_code == encoded_source
+    assert obj.warnings == ["suspicious"]

@@ -3,7 +3,6 @@ import json
 import types
 import base64
 import inspect
-import marshal
 import hashlib
 import binascii
 
@@ -262,23 +261,6 @@ class MalwiObject:
 
         return txt
 
-    @staticmethod
-    def _decode_code_object(encoded: str) -> types.CodeType:
-        try:
-            raw_bytes = base64.b64decode(encoded)
-        except (binascii.Error, ValueError) as e:
-            raise ValueError(f"Failed to decode base64 string: {e}") from e
-
-        try:
-            code_obj = marshal.loads(raw_bytes)
-        except (ValueError, TypeError, EOFError) as e:
-            raise ValueError(f"Failed to unmarshal code object: {e}") from e
-
-        if not isinstance(code_obj, types.CodeType):
-            raise TypeError("Decoded object is not a code object")
-
-        return code_obj
-
     @classmethod
     def from_file(
         cls, file_path: Union[str, Path], language: str = "python"
@@ -306,29 +288,21 @@ class MalwiObject:
                         continue
                     detail_path = detail.get("path", "") or ""
                     contents = detail.get("contents", [])
+                    source = detail.get("source", "")
                     if not contents:
                         continue
                     for item in contents:
                         name = item.get("name")
                         file_path_val = detail_path
-                        instructions = item.get("instructions", [])
                         warnings = item.get("warnings", [])
-                        # Normalize instructions to list of str tuples
-                        instructions = [(str(op), str(arg)) for op, arg in instructions]
 
                         codeType = None
-                        marshalled_code = item.get("marshalled")
-                        if marshalled_code:
-                            try:
-                                codeType = cls._decode_code_object(marshalled_code)
-                            except Exception as e:
-                                print(f"Failed to decode code object: {str(e)}")
 
                         malwi_object = cls(
                             name=name,
+                            file_source_code=source,
                             language=language,
                             file_path=file_path_val,
-                            instructions=instructions,
                             warnings=warnings,
                             codeType=codeType,
                         )
