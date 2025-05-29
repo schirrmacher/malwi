@@ -1,116 +1,28 @@
-# test_disassemble_python.py
-
-import pytest
 import sys
-import os
 import json
-import yaml
-import base64
-import marshal
-import types
-import re
-from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
+import pytest
+
+from unittest.mock import patch, mock_open
 
 import research
+import research.mapping
+from research.mapping import SpecialCases
 
-# Import specific classes and functions to test or use in tests
 from research.disassemble_python import (
     MalwiObject,
-    SpecialCases,
     OutputFormatter,
-    CSVWriter,
-    # sanitize_identifier, # Not directly tested here, but used by other functions
-    map_entropy_to_token,
-    map_string_length_to_token,
-    calculate_shannon_entropy,
-    is_valid_ip,
-    is_valid_url,
-    is_escaped_hex,
-    is_base64,
-    is_hex,
-    is_file_path,
-    map_string_arg,
-    map_code_object_arg,
-    map_tuple_arg,
-    map_frozenset_arg,
-    map_jump_instruction_arg,
-    map_load_const_number_arg,
-    # recursively_disassemble_python, # Tested via disassemble_python_file
     disassemble_python_file,
     process_single_py_file,
-    collect_files_by_extension,
     process_files,
-    ProcessingResult,
     triage,
     main,
     LiteralStr,
 )
 
-# --- Test Data and Mocks ---
-
-MOCK_SENSITIVE_PATHS_DATA = [
-    "/etc/passwd",
-    "/etc/shadow",
-    "C:\\Windows\\System32\\config\\SAM",
-]
-
-MOCK_FUNCTION_MAPPING_DATA = {
-    "python": {
-        "eval": "FUNC_EVAL",
-        "exec": "FUNC_EXEC",
-        "os.system": "FUNC_OS_SYSTEM",
-        "surveymonkey.com": "MAPPED_URL_FUNC",  # Changed to be a distinct mapped value
-    }
-}
-
-MOCK_IMPORT_MAPPING_DATA = {
-    "python": {
-        "os": "IMPORT_OS",
-        "sys": "IMPORT_SYS",
-        "subprocess": "IMPORT_SUBPROCESS",
-    }
-}
 
 MOCK_TARGET_FILES_DATA = {"python": ["setup.py", "manage.py"]}
 
 MOCK_PREDICTION_RESULT = {"probabilities": [0.2, 0.8]}
-
-# --- Fixtures ---
-
-
-@pytest.fixture(autouse=True)
-def mock_module_level_load_json_constants(monkeypatch):
-    """Mocks common.files.read_json_from_file and sets module-level constants."""
-
-    def mock_read_json(file_path_obj):  # file_path_obj is a Path object in SUT
-        file_path_str = str(file_path_obj)
-        if "sensitive_files.json" in file_path_str:
-            return MOCK_SENSITIVE_PATHS_DATA
-        elif "function_mapping.json" in file_path_str:
-            return MOCK_FUNCTION_MAPPING_DATA
-        elif "import_mapping.json" in file_path_str:
-            return MOCK_IMPORT_MAPPING_DATA
-        elif "target_files.json" in file_path_str:
-            return MOCK_TARGET_FILES_DATA
-        raise FileNotFoundError(f"Unexpected file in mock_read_json: {file_path_str}")
-
-    monkeypatch.setattr(
-        research.disassemble_python, "read_json_from_file", mock_read_json
-    )
-
-    monkeypatch.setattr(
-        research.disassemble_python, "SENSITIVE_PATHS", set(MOCK_SENSITIVE_PATHS_DATA)
-    )
-    monkeypatch.setattr(
-        research.disassemble_python, "FUNCTION_MAPPING", MOCK_FUNCTION_MAPPING_DATA
-    )
-    monkeypatch.setattr(
-        research.disassemble_python, "IMPORT_MAPPING", MOCK_IMPORT_MAPPING_DATA
-    )
-    monkeypatch.setattr(
-        research.disassemble_python, "COMMON_TARGET_FILES", MOCK_TARGET_FILES_DATA
-    )
 
 
 @pytest.fixture
@@ -140,9 +52,6 @@ def syntax_error_py_content():
 @pytest.fixture
 def empty_py_content():
     return "# This is an empty file"
-
-
-# --- Test Classes and Functions ---
 
 
 class TestCoreDisassembly:
@@ -202,102 +111,6 @@ class TestCoreDisassembly:
         assert SpecialCases.TARGETED_FILE.value in module_obj.warnings
 
 
-class TestArgumentMapping:
-    @pytest.mark.parametrize(
-        "argval, expected_output_pattern",
-        [
-            ("eval", "FUNC_EVAL"),
-            ("os", "os"),  # From IMPORT_MAPPING, returns key itself
-            ("/etc/passwd", SpecialCases.STRING_SENSITIVE_FILE_PATH.value),
-            ("192.168.1.1", SpecialCases.STRING_IP.value),
-            ("http://example.com", SpecialCases.STRING_URL.value),
-            ("surveymonkey.com", "MAPPED_URL_FUNC"),  # From MOCK_FUNCTION_MAPPING_DATA
-            ("./path/to/file.txt", SpecialCases.STRING_FILE_PATH.value),
-            ("short", "short"),  # len=5 <= STRING_MAX_LENGTH (15)
-            # If SUT classifies '\\x...' as STRING_FILE_PATH due to '\'
-            ("\\x68\\x65\\x6c\\x6c\\x6f", SpecialCases.STRING_FILE_PATH.value),
-            ("68656c6c6f", "68656c6c6f"),  # len=10 <= STRING_MAX_LENGTH (15)
-            (
-                "SGVsbG8gd29ybGQ=",
-                f"{SpecialCases.STRING_BASE64.value}_LEN_S_ENT_HIGH",
-            ),  # len=16
-            ("a" * 50, f"{SpecialCases.STRING_HEX.value}_LEN_S_ENT_LOW"),  # len=50
-            (
-                "this_is_a_long_generic_string_greater_than_15_chars",
-                "STRING_LEN_L_ENT_HIGH",
-            ),  # len=55
-        ],
-    )
-    def test_map_string_arg(self, argval, expected_output_pattern, monkeypatch):
-        result = map_string_arg(argval, repr(argval))
-
-        is_complex_token = (
-            any(
-                token_prefix in expected_output_pattern
-                for token_prefix in [
-                    SpecialCases.STRING_BASE64.value,
-                    SpecialCases.STRING_HEX.value,
-                    "STRING_",
-                ]
-            )
-            and "_" in expected_output_pattern
-        )
-
-        if is_complex_token:
-            parts = expected_output_pattern.split("_")
-            expected_main_type_prefix = parts[0]
-            # LEN_S, ENT_LOW etc. parts
-            expected_suffix_parts = parts[1:]
-
-            assert result.startswith(expected_main_type_prefix)
-            for suffix_part_component in expected_suffix_parts:
-                # Handle cases like "LEN_S" vs "S" or "ENT_LOW" vs "LOW"
-                assert suffix_part_component in result
-        else:  # For exact matches
-            assert result == expected_output_pattern
-
-    def test_map_code_object_arg(self):
-        co = compile("x=1", "<string>", "exec")
-        assert map_code_object_arg(co, repr(co)) == "OBJECT"
-
-    @pytest.mark.parametrize(
-        "argval, expected",
-        [
-            (("cmd", "/bin/sh", 123), "/bin/sh INTEGER cmd"),
-            ((1.0, 2.0), SpecialCases.FLOAT.value),
-            ((1.0, "text"), "FLOAT text"),
-            ((), ""),
-        ],
-    )
-    def test_map_tuple_arg(self, argval, expected):
-        assert map_tuple_arg(argval, repr(argval)) == expected
-
-    @pytest.mark.parametrize(
-        "argval, expected",
-        [(frozenset({"admin", "user", 404.0}), "FLOAT admin user"), (frozenset(), "")],
-    )
-    def test_map_frozenset_arg(self, argval, expected):
-        assert map_frozenset_arg(argval, repr(argval)) == expected
-
-    def test_map_jump_instruction_arg(self):
-        mock_instr = MagicMock(spec=research.disassemble_python.dis.Instruction)
-        assert map_jump_instruction_arg(mock_instr) == "TO_NUMBER"
-
-    @pytest.mark.parametrize(
-        "argval_value, expected_map_val",
-        [
-            (100, SpecialCases.INTEGER.value),
-            (3.14, SpecialCases.FLOAT.value),
-            (compile("y=2", "<string>", "exec"), "OBJECT"),
-            ("a_const_string", "a_const_string"),
-        ],
-    )
-    def test_map_load_const_number_arg(self, argval_value, expected_map_val):
-        mock_instr = MagicMock(spec=research.disassemble_python.dis.Instruction)
-        result = map_load_const_number_arg(mock_instr, argval_value, repr(argval_value))
-        assert result == expected_map_val
-
-
 class TestMalwiObject:
     @pytest.fixture
     def sample_code_type(self):
@@ -312,17 +125,8 @@ class TestMalwiObject:
             codeType=sample_code_type,
         )
 
-    def test_generate_instructions_from_codetype(self, sample_code_type):
-        instructions = MalwiObject.tokenize_code_type(sample_code_type)
-        assert isinstance(instructions, list)
-        assert len(instructions) > 0
-        assert "load_const" in instructions
-        assert SpecialCases.INTEGER.value in instructions  # for '1'
-        assert "hello" in instructions  # for 'hello' string
-
     def test_to_tokens_and_string(self, malwi_obj, sample_code_type):
         malwi_obj.codeType = sample_code_type
-        tokens = malwi_obj.to_tokens()
         token_string = malwi_obj.to_token_string()
         assert "load_const" in token_string
         assert SpecialCases.INTEGER.value in token_string
@@ -401,9 +205,6 @@ class TestOutputFormatting:
         lines = captured.out.strip().split("\n")
         assert "tokens,hash,filepath" in lines[0]
 
-        # For obj1_pass (compiled from "pass")
-        # The tokens are generated from its codeType by obj.to_token_string()
-        # SUT's output based on previous error was 'resume return_const None'
         obj1_tokens_csv = lines[1].split(",")[0]
         assert "resume" in obj1_tokens_csv
         assert "return_const" in obj1_tokens_csv
@@ -448,21 +249,6 @@ class TestFileProcessingAndCollection:
         )
         assert result.processed_files == 2
         assert mock_get_pred.call_count == 5  # SUT's current logic
-
-
-class TestHelperFunctions:
-    @pytest.mark.parametrize(
-        "b64_str, expected",
-        [
-            ("SGVsbG8=", True),
-            ("Zm9vYmFy", True),
-            ("SGVsbG8", False),
-            ("Not!Base64", False),
-            ("", False),  # Corrected: is_base64('') is False in SUT
-        ],
-    )
-    def test_is_base64(self, b64_str, expected):
-        assert is_base64(b64_str) == expected
 
 
 # Applied class-level patches for TestTriageFunction
