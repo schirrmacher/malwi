@@ -888,8 +888,7 @@ def process_single_py_file(
         )
         if predict:
             for d in disassembled_data:
-                if d.instructions:
-                    d.predict()
+                d.predict()
         if retrieve_source_code:
             for d in disassembled_data:
                 d.retrieve_source_code()
