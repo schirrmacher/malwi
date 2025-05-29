@@ -127,6 +127,14 @@ def is_file_path(text: str) -> bool:
     ) and not is_common_non_file_url
 
 
+def remove_newlines(text: str) -> str:
+    return text.replace("\n", "").replace("\r", "")
+
+
+def reduce_whitespace(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def map_entropy_to_token(entropy: float):
     if entropy <= 1.0:
         return "ENT_LOW"
@@ -168,6 +176,8 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     prefix = "STRING"
     python_function_mapping = FUNCTION_MAPPING.get("python", {})
     python_import_mapping = IMPORT_MAPPING.get("python", {})
+
+    argval = reduce_whitespace(remove_newlines(argval))
 
     if argval in python_function_mapping:
         return python_function_mapping.get(argval)

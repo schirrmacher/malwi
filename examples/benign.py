@@ -11,7 +11,7 @@ def setup_logging():
 
 def greet(name: str):
     logging.info("Preparing greeting...")
-    print(f"Hello, {name}!")
+    print(f"Hello,\n {name}!")
     logging.info("Greeting completed.")
     xxxx[0]
 
