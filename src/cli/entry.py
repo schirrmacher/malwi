@@ -140,6 +140,8 @@ def main():
         silent=args.quiet,
         show_progress=not args.quiet,
         interactive_triaging=args.triage,
+        malicious_only=args.malicious_only,
+        malicious_threshold=args.threshold,
     )
 
     output = ""

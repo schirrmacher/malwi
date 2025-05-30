@@ -331,6 +331,8 @@ def process_files(
     silent: bool = False,
     show_progress: bool = True,
     interactive_triaging: bool = False,
+    malicious_only: bool = False,
+    malicious_threshold: float = 0.5,
 ) -> ProcessingResult:
     accepted_files, skipped_files = collect_files_by_extension(
         input_path, accepted_extensions, silent
@@ -375,7 +377,11 @@ def process_files(
                 files_processed_count += 1
                 all_objects.extend(file_objects)
             if interactive_triaging:
-                triage(file_objects)
+                triage(
+                    file_objects,
+                    malicious_only=malicious_only,
+                    malicious_threshold=malicious_threshold,
+                )
 
         except Exception as e:
             if not silent:
@@ -397,7 +403,11 @@ def process_files(
     )
 
 
-def triage(all_objects: List["MalwiObject"]):
+def triage(
+    all_objects: List["MalwiObject"],
+    malicious_only: bool = False,
+    malicious_threshold: float = 0.5,
+):
     benign_dir = os.path.join("triaging", "benign")
     malicious_dir = os.path.join("triaging", "malicious")
 
@@ -405,6 +415,9 @@ def triage(all_objects: List["MalwiObject"]):
     os.makedirs(malicious_dir, exist_ok=True)
 
     for obj in all_objects:
+        if malicious_only and obj.maliciousness < malicious_threshold:
+            continue
+
         obj.retrieve_source_code()
 
         if not hasattr(obj, "code") or not obj.code:
@@ -854,7 +867,7 @@ def main() -> None:
         sys.exit(1)
 
     # Process input and collect all data
-    collected_data: List[MalwiObject] = []
+    objects: List[MalwiObject] = []
     csv_writer_instance: Optional[CSVWriter] = None
 
     try:
@@ -893,11 +906,11 @@ def main() -> None:
                 silent=False,
                 show_progress=True,
             )
-            collected_data = result.malwi_objects
+            objects = result.malwi_objects
 
             # Handle output
-            output_stream = sys.stdout
             output_file = None
+            output_stream = sys.stdout
 
             if args.save:
                 save_path = Path(args.save)
@@ -910,20 +923,20 @@ def main() -> None:
 
             try:
                 if args.format == "csv":
-                    OutputFormatter.format_csv(collected_data, output_stream)
+                    OutputFormatter.format_csv(objects, output_stream)
                 elif args.format == "json":
                     OutputFormatter.format_json(
-                        collected_data,
-                        output_stream,
-                        args.malicious_threshold,
-                        args.malicious_only,
+                        objects,
+                        output_stream=output_stream,
+                        malicious_threshold=args.malicious_threshold,
+                        malicious_only=args.malicious_only,
                     )
                 elif args.format == "yaml":
                     OutputFormatter.format_yaml(
-                        collected_data,
-                        output_stream,
-                        args.malicious_threshold,
-                        args.malicious_only,
+                        objects,
+                        output_stream=output_stream,
+                        malicious_threshold=args.malicious_threshold,
+                        malicious_only=args.malicious_only,
                     )
             finally:
                 if output_file:
