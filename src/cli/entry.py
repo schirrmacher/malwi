@@ -32,18 +32,6 @@ def main():
         default=None,
     )
     parser.add_argument(
-        "--quiet",
-        "-q",
-        action="store_true",
-        help="Suppress logging output and progress bar.",
-    )
-    parser.add_argument(
-        "--malicious-only",
-        "-mo",
-        action="store_true",
-        help="Only include malicious findings in the output.",
-    )
-    parser.add_argument(
         "--threshold",
         "-mt",
         metavar="FLOAT",
@@ -58,18 +46,30 @@ def main():
         default=["py"],
         help="Specify file extensions to process (default: py).",
     )
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress logging output and progress bar.",
+    )
 
     speed_group = parser.add_argument_group("Efficiency")
     speed_group.add_argument(
+        "--malicious-only",
+        "-mo",
+        action="store_true",
+        help="Only include malicious findings in the output.",
+    )
+    speed_group.add_argument(
         "--no-snippets",
         action="store_false",
-        help="Avoid code snippet retrieval of finding to increase performance.",
+        help="Do not add code snippets of findings in the output to increase performance.",
         default=True,
     )
     speed_group.add_argument(
         "--no-sources",
         action="store_false",
-        help="Avoid full source files being added to the output.",
+        help="Avoid full source files being added to the output (required for loading objects from files, e.g. after triaging).",
         default=True,
     )
 
