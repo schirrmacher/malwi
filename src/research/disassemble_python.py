@@ -431,8 +431,10 @@ def triage(all_objects: List["MalwiObject"]):
 
         output_path: str = ""
         if triage_result == "yes":
+            obj.maliciousness = 1.0
             output_path = malicious_path
         elif triage_result == "no":
+            obj.maliciousness = 0.0
             output_path = benign_path
         elif triage_result == "skip":
             print(f"Skipping sample {code_hash}...")
