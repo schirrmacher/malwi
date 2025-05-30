@@ -206,4 +206,7 @@ def generate_tokens_output(malwi_objects: List[MalwiObject]) -> str:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("👋")
