@@ -145,7 +145,6 @@ class MalwiObject:
         files_with_scores_count = 0
 
         for mf in malwi_files:
-            mf.retrieve_source_code()
             if mf.maliciousness is None:
                 mf.predict()
 
@@ -170,10 +169,16 @@ class MalwiObject:
         for mf in malwi_files:
             if mf.maliciousness is not None:
                 if mf.maliciousness > malicious_threshold:
+                    # only retrieve code when needed for performance
+                    mf.retrieve_source_code()
                     report_data["details"].append(mf.to_dict())
                 elif not malicious_only:
+                    # only retrieve code when needed for performance
+                    mf.retrieve_source_code()
                     report_data["details"].append(mf.to_dict())
             elif not malicious_only:
+                # only retrieve code when needed for performance
+                mf.retrieve_source_code()
                 report_data["details"].append(mf.to_dict())
 
         return report_data
