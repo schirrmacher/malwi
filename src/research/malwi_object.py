@@ -106,9 +106,6 @@ class MalwiObject:
 
         return {
             "path": str(self.file_path),
-            "source": base64.b64encode(self.file_source_code.encode("utf-8")).decode(
-                "utf-8"
-            ),
             "contents": [
                 {
                     "name": self.name,
@@ -164,6 +161,7 @@ class MalwiObject:
         report_data = {
             "statistics": summary_statistics,
             "details": [],
+            "sources": {},
         }
 
         for mf in malwi_files:
@@ -172,10 +170,16 @@ class MalwiObject:
                     # only retrieve code when needed for performance
                     mf.retrieve_source_code()
                     report_data["details"].append(mf.to_dict())
+                    report_data["sources"][mf.file_path] = base64.b64encode(
+                        mf.file_source_code.encode("utf-8")
+                    ).decode("utf-8")
                 elif not malicious_only:
                     # only retrieve code when needed for performance
                     mf.retrieve_source_code()
                     report_data["details"].append(mf.to_dict())
+                    report_data["sources"][mf.file_path] = base64.b64encode(
+                        mf.file_source_code.encode("utf-8")
+                    ).decode("utf-8")
             elif not malicious_only:
                 # only retrieve code when needed for performance
                 mf.retrieve_source_code()
@@ -291,14 +295,16 @@ class MalwiObject:
                 for detail in details:
                     if not details:
                         continue
-                    detail_path = detail.get("path", "") or ""
+                    file_path = detail.get("path", "") or ""
+                    raw_source = data.get("sources", {}).get(file_path)
+                    source = base64.b64decode(raw_source).decode("utf-8")
                     contents = detail.get("contents", [])
-                    source = detail.get("source", "")
+
                     if not contents:
                         continue
                     for item in contents:
                         name = item.get("name")
-                        file_path_val = detail_path
+                        file_path_val = file_path
                         warnings = item.get("warnings", [])
 
                         codeType = None

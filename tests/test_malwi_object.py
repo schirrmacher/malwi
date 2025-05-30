@@ -84,7 +84,7 @@ class TestMalwiObject:
 
         obj_yaml = malwi_obj.to_yaml()
         assert "path: test.py" in obj_yaml
-        assert "source: YWJjZA==" in obj_yaml
+        assert "source code\n    line2" in obj_yaml
         assert "code: |" in obj_yaml  # For LiteralStr
 
         obj_json = malwi_obj.to_json()
@@ -113,7 +113,6 @@ def test_from_file_reads_yaml_correctly():
         "details": [
             {
                 "path": "example.py",
-                "source": encoded_source,
                 "contents": [
                     {
                         "name": "test_function",
@@ -125,6 +124,7 @@ def test_from_file_reads_yaml_correctly():
                 ],
             }
         ],
+        "sources": {"example.py": encoded_source},
     }
 
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as tmp:
@@ -138,5 +138,5 @@ def test_from_file_reads_yaml_correctly():
 
     assert obj.name == "test_function"
     assert obj.file_path == "example.py"
-    assert obj.file_source_code == encoded_source
+    assert obj.file_source_code == "print('hello world')"
     assert obj.warnings == ["suspicious"]
