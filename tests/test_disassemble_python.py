@@ -77,7 +77,7 @@ class TestCoreDisassembly:
         assert myclass_obj is not None
 
         method_one_obj = next(
-            (obj for obj in results if obj.name == "method_one"), None
+            (obj for obj in results if obj.name == "MyClass.method_one"), None
         )
         assert method_one_obj is not None
 
@@ -162,7 +162,7 @@ class TestOutputFormatting:
 
 class TestFileProcessingAndCollection:
     @patch(
-        "research.malwi_object.get_node_text_prediction",
+        "research.disassemble_python.get_node_text_prediction",
         return_value=MOCK_PREDICTION_RESULT,
     )
     @patch("inspect.getsource", return_value="mock line")
@@ -175,11 +175,13 @@ class TestFileProcessingAndCollection:
         assert results is not None
         assert len(results) == 4
         object_names = sorted([obj.name for obj in results])
-        assert object_names == sorted(["<module>", "MyClass", "hello", "method_one"])
+        assert object_names == sorted(
+            ["<module>", "MyClass", "hello", "MyClass.method_one"]
+        )
         mock_get_pred.assert_not_called()
 
     @patch(
-        "research.malwi_object.get_node_text_prediction",
+        "research.disassemble_python.get_node_text_prediction",
         return_value=MOCK_PREDICTION_RESULT,
     )
     @patch("inspect.getsource", return_value="mock line")
@@ -321,7 +323,9 @@ class TestMainCLI:
         # Check that each detail object has at least 'filepath' and 'name' (if 'name' is indeed expected)
         # The KeyError for 'name' suggests it might be missing from some detail objects.
         # For now, let's check 'filepath' and that 'contents' (which usually holds name) is present.
-        expected_object_names = sorted(["<module>", "hello", "MyClass", "method_one"])
+        expected_object_names = sorted(
+            ["<module>", "hello", "MyClass", "MyClass.method_one"]
+        )
         reported_object_info = []
 
         for detail in report_data["details"]:
