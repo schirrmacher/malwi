@@ -15,14 +15,10 @@ import argparse
 import questionary
 
 from tqdm import tqdm
+from google import genai
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Tuple, Set, Optional, TextIO
-
-
-from pathlib import Path
-from dataclasses import dataclass
-from typing import List, Optional, Any, Dict, Union
+from typing import List, Tuple, Set, Optional, TextIO, Optional, Any, Dict, Union
 
 from research.mapping import SpecialCases, tokenize_code_type, COMMON_TARGET_FILES
 from research.predict import get_node_text_prediction, initialize_models
@@ -333,6 +329,7 @@ def process_files(
     interactive_triaging: bool = False,
     malicious_only: bool = False,
     malicious_threshold: float = 0.5,
+    llm_api_key: Optional[str] = None,
 ) -> ProcessingResult:
     accepted_files, skipped_files = collect_files_by_extension(
         input_path, accepted_extensions, silent
@@ -381,6 +378,7 @@ def process_files(
                     file_objects,
                     malicious_only=malicious_only,
                     malicious_threshold=malicious_threshold,
+                    llm_api_key=llm_api_key,
                 )
 
         except Exception as e:
@@ -403,10 +401,96 @@ def process_files(
     )
 
 
+def save_yaml_report(obj: "MalwiObject", path: str, code_hash: str) -> None:
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(
+                MalwiObject.to_report_yaml(
+                    [obj],
+                    [obj.file_path],
+                    malicious_threshold=0.0,
+                    number_of_skipped_files=0.0,
+                    malicious_only=False,
+                )
+            )
+        print(f"Saved data for hash {code_hash} to {path}")
+    except IOError as e:
+        print(f"Error writing YAML file {path} for hash {code_hash}: {e}")
+    except Exception as e:
+        print(f"Unexpected error saving YAML for hash {code_hash}: {e}")
+
+
+def manual_triage(
+    obj: "MalwiObject", code_hash: str, benign_path: str, malicious_path: str
+) -> None:
+    triage_result: Optional[str] = questionary.select(
+        f"Is the following code malicious?\n\n# Original Maliciousness: {obj.maliciousness}\n\n{obj.code}\n\n",
+        use_shortcuts=True,
+        choices=["yes", "no", "skip", "exit"],
+    ).ask()
+
+    if triage_result == "yes":
+        obj.maliciousness = 1.0
+        save_yaml_report(obj, malicious_path, code_hash)
+    elif triage_result == "no":
+        obj.maliciousness = 0.0
+        save_yaml_report(obj, benign_path, code_hash)
+    elif triage_result == "skip":
+        print(f"Skipping sample {code_hash}...")
+    elif triage_result == "exit" or triage_result is None:
+        print("Exiting triage process.")
+        exit(0)
+    else:
+        print(f"Unknown triage result '{triage_result}', skipping sample {code_hash}.")
+
+
+def llm_triage(
+    obj: "MalwiObject",
+    code_hash: str,
+    benign_path: str,
+    malicious_path: str,
+    llm_api_key: Optional[str] = None,
+) -> None:
+    try:
+        client = genai.Client(api_key=llm_api_key)
+        prompt = f"""You are a professional security code reviewer. 
+Is the following code sample indicating any malicious behavior to you? 
+Examples for malicious behavior: suspicious usage of eval, exfiltration attempts, obfuscation.
+Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", contents=prompt
+        )
+        result_text: str = response.text.lower().strip()
+
+        if "yes" in result_text:
+            obj.maliciousness = 1.0
+            save_yaml_report(obj, malicious_path, code_hash)
+            print(f"👹 Code categorized as malicious")
+        elif "no" in result_text:
+            obj.maliciousness = 0.0
+            save_yaml_report(obj, benign_path, code_hash)
+            print(f"🟢 Code categorized as benign")
+        else:
+            print(f"Unclear LLM response for {code_hash}: {result_text}. Skipping.")
+
+    except Exception as e:
+        error_message = str(e).lower()
+        if (
+            "400" in error_message
+            or "unauthorized" in error_message
+            or "invalid api key" in error_message
+        ):
+            print(f"Authentication failed: {e}")
+            sys.exit(1)
+        else:
+            print(f"LLM triage failed for {code_hash}: {e}")
+
+
 def triage(
     all_objects: List["MalwiObject"],
     malicious_only: bool = False,
     malicious_threshold: float = 0.5,
+    llm_api_key: Optional[str] = None,
 ):
     benign_dir = os.path.join("triaging", "benign")
     malicious_dir = os.path.join("triaging", "malicious")
@@ -421,67 +505,28 @@ def triage(
         obj.retrieve_source_code()
 
         if not hasattr(obj, "code") or not obj.code:
-            print(
-                "Object has no source code or 'retrieve_source_code' was not effective, skipping..."
-            )
+            print("Object has no source code, skipping...")
             continue
 
         code_hash = hashlib.sha1(obj.code.encode("utf-8")).hexdigest()
 
-        file_extension = ".yaml"
-        benign_path = os.path.join(benign_dir, f"{code_hash}{file_extension}")
-        malicious_path = os.path.join(malicious_dir, f"{code_hash}{file_extension}")
+        benign_path = os.path.join(benign_dir, f"{code_hash}.yaml")
+        malicious_path = os.path.join(malicious_dir, f"{code_hash}.yaml")
 
         if os.path.exists(benign_path) or os.path.exists(malicious_path):
             print(f"Hash {code_hash} already exists, skipping...")
             continue
 
-        triage_result = questionary.select(
-            f"Is the following code malicious?\n\n# Original Maliciousness: {obj.maliciousness}\n\n{obj.code}\n\n",
-            use_shortcuts=True,
-            choices=["yes", "no", "skip", "exit"],
-        ).ask()
-
-        output_path: str = ""
-        if triage_result == "yes":
-            obj.maliciousness = 1.0
-            output_path = malicious_path
-        elif triage_result == "no":
-            obj.maliciousness = 0.0
-            output_path = benign_path
-        elif triage_result == "skip":
-            print(f"Skipping sample {code_hash}...")
-            continue
-        elif triage_result == "exit" or triage_result is None:
-            print("Exiting triage process.")
-            exit(0)
-        else:
-            print(
-                f"Unknown triage result '{triage_result}', skipping sample {code_hash}."
+        if llm_api_key:
+            llm_triage(
+                obj=obj,
+                code_hash=code_hash,
+                benign_path=benign_path,
+                malicious_path=malicious_path,
+                llm_api_key=llm_api_key,
             )
-            continue
-
-        if output_path:
-            try:
-                with open(output_path, "w", encoding="utf-8") as f:
-                    f.write(
-                        MalwiObject.to_report_yaml(
-                            [obj],
-                            [obj.file_path],
-                            malicious_threshold=0.0,
-                            number_of_skipped_files=0.0,
-                            malicious_only=False,
-                        )
-                    )
-                print(f"Saved data for hash {code_hash} to {output_path}")
-            except IOError as e:
-                print(
-                    f"Error writing JSON file {output_path} for hash {code_hash}: {e}"
-                )
-            except Exception as e:
-                print(
-                    f"An unexpected error occurred while saving JSON for hash {code_hash}: {e}"
-                )
+        else:
+            manual_triage(obj, code_hash, benign_path, malicious_path)
 
 
 class LiteralStr(str):

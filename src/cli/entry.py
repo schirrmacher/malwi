@@ -89,11 +89,20 @@ def main():
         help="Specify the custom model path directory.",
         default=None,
     )
-    developer_group.add_argument(
+    triage_group = developer_group.add_mutually_exclusive_group()
+
+    triage_group.add_argument(
         "--triage",
         action="store_true",
-        default=False,
-        help="Enable triage mode (default: False)",
+        help="Enable manual triage mode.",
+    )
+
+    triage_group.add_argument(
+        "--triage-gemini",
+        metavar="API_KEY",
+        default=None,
+        type=str,
+        help="Enable LLM-based triage mode using Google Gemini with the provided API key.",
     )
 
     args = parser.parse_args()
@@ -139,9 +148,10 @@ def main():
         retrieve_source_code=args.no_snippets,
         silent=args.quiet,
         show_progress=not args.quiet,
-        interactive_triaging=args.triage,
+        interactive_triaging=args.triage or args.triage_gemini,
         malicious_only=args.malicious_only,
         malicious_threshold=args.threshold,
+        llm_api_key=args.triage_gemini,
     )
 
     output = ""
