@@ -48,8 +48,8 @@ def main():
         "-mt",
         metavar="FLOAT",
         type=float,
-        default=0.5,
-        help="Specify the threshold for classifying nodes as malicious (default: 0.5).",
+        default=0.7,
+        help="Specify the threshold for classifying code objects as malicious (default: 0.7).",
     )
     parser.add_argument(
         "--extensions",
@@ -57,6 +57,20 @@ def main():
         nargs="+",
         default=["py"],
         help="Specify file extensions to process (default: py).",
+    )
+
+    speed_group = parser.add_argument_group("Efficiency")
+    speed_group.add_argument(
+        "--no-snippets",
+        action="store_false",
+        help="Avoid code snippet retrieval of finding to increase performance.",
+        default=True,
+    )
+    speed_group.add_argument(
+        "--no-sources",
+        action="store_false",
+        help="Avoid full source files being added to the output.",
+        default=True,
     )
 
     developer_group = parser.add_argument_group("Developer Options")
@@ -122,7 +136,7 @@ def main():
         input_path=input_path,
         accepted_extensions=args.extensions,
         predict=True,  # Enable prediction for malwi scanner
-        retrieve_source_code=True,  # Retrieve source code for better analysis
+        retrieve_source_code=args.no_snippets,
         silent=args.quiet,
         show_progress=not args.quiet,
         interactive_triaging=args.triage,
@@ -137,6 +151,7 @@ def main():
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(result.skipped_files),
             malicious_only=args.malicious_only,
+            include_source_files=args.no_sources,
         )
     elif args.format == "markdown":
         output = MalwiObject.to_report_markdown(
@@ -145,6 +160,7 @@ def main():
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(result.skipped_files),
             malicious_only=args.malicious_only,
+            include_source_files=args.no_sources,
         )
     elif args.format == "tokens":
         output = generate_tokens_output(result.malwi_objects)

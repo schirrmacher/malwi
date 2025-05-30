@@ -236,24 +236,24 @@ def disassemble_python_file(
     return all_objects
 
 
-def process_single_py_file(
+def process_python_file(
     file_path: Path, predict: bool = True, retrieve_source_code: bool = True
 ) -> Optional[List["MalwiObject"]]:
     try:
         source_code = file_path.read_text(encoding="utf-8", errors="replace")
-        disassembled_data: List[MalwiObject] = disassemble_python_file(
+        objects: List[MalwiObject] = disassemble_python_file(
             source_code, file_path=str(file_path)
         )
 
         if predict:
-            for obj in disassembled_data:
+            for obj in objects:
                 obj.predict()
 
         if retrieve_source_code:
-            for obj in disassembled_data:
+            for obj in objects:
                 obj.retrieve_source_code()
 
-        return disassembled_data or None
+        return objects or None
 
     except Exception as e:
         print(
@@ -368,7 +368,7 @@ def process_files(
         leave=False,
     ):
         try:
-            file_objects: List[MalwiObject] = process_single_py_file(
+            file_objects: List[MalwiObject] = process_python_file(
                 file_path, predict=predict, retrieve_source_code=retrieve_source_code
             )
             if file_objects:
@@ -589,6 +589,7 @@ class MalwiObject:
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
         malicious_only: bool = False,
+        include_source_files: bool = True,
     ) -> Dict[str, Any]:
         processed_objects_count = len(malwi_files)
         total_maliciousness_score = 0.0
@@ -615,29 +616,29 @@ class MalwiObject:
         report_data = {
             "statistics": summary_statistics,
             "details": [],
-            "sources": {},
         }
 
+        if include_source_files:
+            report_data["sources"] = {}
+
         for mf in malwi_files:
-            if mf.maliciousness is not None:
-                if mf.maliciousness > malicious_threshold:
-                    # only retrieve code when needed for performance
-                    mf.retrieve_source_code()
-                    report_data["details"].append(mf.to_dict())
-                    report_data["sources"][mf.file_path] = base64.b64encode(
-                        mf.file_source_code.encode("utf-8")
-                    ).decode("utf-8")
-                elif not malicious_only:
-                    # only retrieve code when needed for performance
-                    mf.retrieve_source_code()
-                    report_data["details"].append(mf.to_dict())
-                    report_data["sources"][mf.file_path] = base64.b64encode(
-                        mf.file_source_code.encode("utf-8")
-                    ).decode("utf-8")
-            elif not malicious_only:
-                # only retrieve code when needed for performance
+            is_malicious = (
+                mf.maliciousness is not None and mf.maliciousness > malicious_threshold
+            )
+            include = (
+                is_malicious
+                or (not malicious_only and mf.maliciousness is None)
+                or (not malicious_only and mf.maliciousness is not None)
+            )
+
+            if include:
                 mf.retrieve_source_code()
                 report_data["details"].append(mf.to_dict())
+
+                if include_source_files:
+                    report_data["sources"][mf.file_path] = base64.b64encode(
+                        mf.file_source_code.encode("utf-8")
+                    ).decode("utf-8")
 
         return report_data
 
@@ -649,6 +650,7 @@ class MalwiObject:
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
         malicious_only: bool = False,
+        include_source_files: bool = True,
     ) -> str:
         report_data = cls._generate_report_data(
             malwi_files,
@@ -656,6 +658,7 @@ class MalwiObject:
             malicious_threshold,
             number_of_skipped_files,
             malicious_only=malicious_only,
+            include_source_files=include_source_files,
         )
         return json.dumps(report_data, indent=4)
 
@@ -667,6 +670,7 @@ class MalwiObject:
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
         malicious_only: bool = False,
+        include_source_files: bool = True,
     ) -> str:
         report_data = cls._generate_report_data(
             malwi_files,
@@ -674,6 +678,7 @@ class MalwiObject:
             malicious_threshold,
             number_of_skipped_files,
             malicious_only=malicious_only,
+            include_source_files=include_source_files,
         )
         return yaml.dump(
             report_data, sort_keys=False, width=float("inf"), default_flow_style=False

@@ -11,7 +11,7 @@ from research.disassemble_python import (
     MalwiObject,
     OutputFormatter,
     disassemble_python_file,
-    process_single_py_file,
+    process_python_file,
     process_files,
     triage,
     main,
@@ -171,7 +171,7 @@ class TestFileProcessingAndCollection:
     ):
         p = tmp_path / "valid.py"
         p.write_text(valid_py_content)
-        results = process_single_py_file(p, predict=False, retrieve_source_code=True)
+        results = process_python_file(p, predict=False, retrieve_source_code=True)
         assert results is not None
         assert len(results) == 4
         object_names = sorted([obj.name for obj in results])
