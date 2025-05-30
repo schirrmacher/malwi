@@ -420,7 +420,7 @@ def triage(all_objects: List["MalwiObject"]):
         malicious_path = os.path.join(malicious_dir, f"{code_hash}{file_extension}")
 
         if os.path.exists(benign_path) or os.path.exists(malicious_path):
-            print(f"Hash {code_hash} (JSON data) already exists, skipping...")
+            print(f"Hash {code_hash} already exists, skipping...")
             continue
 
         triage_result = questionary.select(
