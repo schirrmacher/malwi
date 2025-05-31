@@ -444,6 +444,14 @@ def manual_triage(
         print(f"Unknown triage result '{triage_result}', skipping sample {code_hash}.")
 
 
+def auto_triage(
+    obj: "MalwiObject",
+    code_hash: str,
+    path: str,
+) -> None:
+    save_yaml_report(obj, path, code_hash)
+
+
 def llm_triage(
     obj: "MalwiObject",
     code_hash: str,
@@ -483,6 +491,8 @@ def triage(
     all_objects: List["MalwiObject"],
     malicious_only: bool = False,
     malicious_threshold: float = 0.5,
+    grep_string: str = None,
+    auto_triaging: Optional[str] = None,
     llm_api_key: Optional[str] = None,
 ):
     benign_dir = os.path.join("triaging", "benign")
@@ -501,6 +511,9 @@ def triage(
             print("Object has no source code, skipping...")
             continue
 
+        if grep_string and not (grep_string in obj.name or grep_string in obj.code):
+            continue
+
         code_hash = hashlib.sha1(obj.code.encode("utf-8")).hexdigest()
 
         benign_path = os.path.join(benign_dir, f"{code_hash}.yaml")
@@ -517,6 +530,12 @@ def triage(
                 benign_path=benign_path,
                 malicious_path=malicious_path,
                 llm_api_key=llm_api_key,
+            )
+        elif auto_triaging:
+            auto_triage(
+                obj,
+                code_hash,
+                benign_path if auto_triaging == "benign" else malicious_path,
             )
         else:
             manual_triage(obj, code_hash, benign_path, malicious_path)
