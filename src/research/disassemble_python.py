@@ -474,16 +474,9 @@ Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
             print(f"Unclear LLM response for {code_hash}: {result_text}. Skipping.")
 
     except Exception as e:
-        error_message = str(e).lower()
-        if (
-            "400" in error_message
-            or "unauthorized" in error_message
-            or "invalid api key" in error_message
-        ):
-            print(f"Authentication failed: {e}")
-            sys.exit(1)
-        else:
-            print(f"LLM triage failed for {code_hash}: {e}")
+        error_message = str(e)
+        print(f"Authentication failed: {error_message}")
+        sys.exit(1)
 
 
 def triage(
