@@ -492,6 +492,7 @@ def triage(
     malicious_only: bool = False,
     malicious_threshold: float = 0.5,
     grep_string: str = None,
+    max_tokens: int = 0,
     auto_triaging: Optional[str] = None,
     llm_api_key: Optional[str] = None,
 ):
@@ -512,6 +513,9 @@ def triage(
             continue
 
         if grep_string and not (grep_string in obj.name or grep_string in obj.code):
+            continue
+
+        if max_tokens > 0 and len(obj.to_tokens()) >= max_tokens:
             continue
 
         code_hash = hashlib.sha1(obj.code.encode("utf-8")).hexdigest()
