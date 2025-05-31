@@ -98,6 +98,12 @@ def main():
     )
 
     triage_group.add_argument(
+        "--triage-ollama",
+        action="store_true",
+        help="Enable Ollama triage mode.",
+    )
+
+    triage_group.add_argument(
         "--triage-gemini",
         metavar="API_KEY",
         default=None,
@@ -141,6 +147,14 @@ def main():
         logging.error(f"Error: Input path does not exist: {input_path}")
         return
 
+    triaging_type = None
+    if args.triage:
+        triaging_type = "manual"
+    elif args.triage_gemini:
+        triaging_type = "gemini"
+    elif args.triage_ollama:
+        triaging_type = "ollama"
+
     result: ProcessingResult = process_files(
         input_path=input_path,
         accepted_extensions=args.extensions,
@@ -148,7 +162,7 @@ def main():
         retrieve_source_code=args.no_snippets,
         silent=args.quiet,
         show_progress=not args.quiet,
-        interactive_triaging=args.triage or args.triage_gemini,
+        triaging_type=triaging_type,
         malicious_only=args.malicious_only,
         malicious_threshold=args.threshold,
         llm_api_key=args.triage_gemini,

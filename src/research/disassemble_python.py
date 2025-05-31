@@ -18,6 +18,7 @@ from tqdm import tqdm
 from google import genai
 from pathlib import Path
 from dataclasses import dataclass
+from ollama import ChatResponse, chat
 from typing import List, Tuple, Set, Optional, TextIO, Optional, Any, Dict, Union
 
 from research.mapping import SpecialCases, tokenize_code_type, COMMON_TARGET_FILES
@@ -326,7 +327,7 @@ def process_files(
     retrieve_source_code: bool = False,
     silent: bool = False,
     show_progress: bool = True,
-    interactive_triaging: bool = False,
+    triaging_type: Optional[str] = None,
     malicious_only: bool = False,
     malicious_threshold: float = 0.5,
     llm_api_key: Optional[str] = None,
@@ -373,11 +374,12 @@ def process_files(
             if file_objects:
                 files_processed_count += 1
                 all_objects.extend(file_objects)
-            if interactive_triaging:
+            if triaging_type:
                 triage(
                     file_objects,
                     malicious_only=malicious_only,
                     malicious_threshold=malicious_threshold,
+                    triaging_type=triaging_type,
                     llm_api_key=llm_api_key,
                 )
 
@@ -452,6 +454,46 @@ def auto_triage(
     save_yaml_report(obj, path, code_hash)
 
 
+def ollama_triage(
+    obj: "MalwiObject",
+    code_hash: str,
+    benign_path: str,
+    malicious_path: str,
+) -> None:
+    try:
+        prompt = f"""You are a professional security code reviewer. 
+Is the following code sample indicating any malicious behavior to you? 
+Examples for malicious behavior: suspicious usage of eval, exfiltration attempts, obfuscation.
+Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
+        response: ChatResponse = chat(
+            model="gemma3",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+        )
+
+        result_text = response.message.content
+
+        if "yes" in result_text:
+            obj.maliciousness = 1.0
+            save_yaml_report(obj, malicious_path, code_hash)
+            print(f"👹 Code categorized as malicious")
+        elif "no" in result_text:
+            obj.maliciousness = 0.0
+            save_yaml_report(obj, benign_path, code_hash)
+            print(f"🟢 Code categorized as benign")
+        else:
+            print(f"Unclear LLM response for {code_hash}: {result_text}. Skipping.")
+
+    except Exception as e:
+        error_message = str(e)
+        print(f"Authentication failed: {error_message}")
+        sys.exit(1)
+
+
 def llm_triage(
     obj: "MalwiObject",
     code_hash: str,
@@ -493,6 +535,7 @@ def triage(
     malicious_threshold: float = 0.5,
     grep_string: str = None,
     max_tokens: int = 0,
+    triaging_type: str = "manual",
     auto_triaging: Optional[str] = None,
     llm_api_key: Optional[str] = None,
 ):
@@ -527,7 +570,7 @@ def triage(
             print(f"Hash {code_hash} already exists, skipping...")
             continue
 
-        if llm_api_key:
+        if llm_api_key and triaging_type == "gemini":
             llm_triage(
                 obj=obj,
                 code_hash=code_hash,
@@ -535,7 +578,14 @@ def triage(
                 malicious_path=malicious_path,
                 llm_api_key=llm_api_key,
             )
-        elif auto_triaging:
+        elif triaging_type == "ollama":
+            ollama_triage(
+                obj=obj,
+                code_hash=code_hash,
+                benign_path=benign_path,
+                malicious_path=malicious_path,
+            )
+        elif triaging_type == "auto":
             auto_triage(
                 obj,
                 code_hash,

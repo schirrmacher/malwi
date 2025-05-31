@@ -19,6 +19,7 @@ dependencies = [
     "datasets>=3.6.0",
     "google-genai>=1.17.0",
     "nltk>=3.9.1",
+    "ollama>=0.5.1",
     "pandas>=2.2.3",
     "pytest>=8.3.5",
     "questionary>=2.1.0",
