@@ -1,0 +1,63 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/botaa3/1.0.0/botaa3-1.0.0/boto3-1.20.7/boto3/compat.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      # Copyright 2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+      #
+      # Licensed under the Apache License, Version 2.0 (the "License"). You
+      # may not use this file except in compliance with the License. A copy of
+      # the License is located at
+      #
+      # https://aws.amazon.com/apache2.0/
+      #
+      # or in the "license" file accompanying this file. This file is
+      # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+      # ANY KIND, either express or implied. See the License for the specific
+      # language governing permissions and limitations under the License.
+      import sys
+      import os
+      import errno
+      import socket
+      import warnings
+
+      from botocore.vendored import six
+      from boto3.exceptions import PythonDeprecationWarning
+
+      if six.PY3:
+          # In python3, socket.error is OSError, which is too general
+          # for what we want (i.e FileNotFoundError is a subclass of OSError).
+          # In py3 all the socket related errors are in a newly created
+          # ConnectionError
+          SOCKET_ERROR = ConnectionError
+      else:
+          SOCKET_ERROR = socket.error
+
+      if six.PY3:
+          import collections.abc as collections_abc
+      else:
+          import collections as collections_abc
+
+
+      if sys.platform.startswith('win'):
+          def rename_file(current_filename, new_filename):
+              try:
+                  os.remove(new_filename)
+              except OSError as e:
+                  if not e.errno == errno.ENOENT:
+                      # We only want to a ignore trying to remove
+                      # a file that does not exist.  If it fails
+                      # for any other reason we should be propagating
+                      # that exception.
+                      raise
+              os.rename(current_filename, new_filename)
+    tokens: resume load_const INTEGER load_const import_name sys store_name sys load_const INTEGER load_const import_name os store_name os load_const INTEGER load_const import_name errno store_name errno load_const INTEGER load_const import_name socket store_name socket load_const INTEGER load_const import_name warnings store_name warnings load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from six store_name six pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from STRING_BASE64_LEN_S_ENT_HIGH store_name STRING_BASE64_LEN_S_ENT_HIGH pop_top load_name six load_attr PY3 pop_jump_if_false TO_NUMBER load_name ConnectionError store_name SOCKET_ERROR jump_forward TO_NUMBER load_name socket load_attr error store_name SOCKET_ERROR load_name six load_attr PY3 pop_jump_if_false TO_NUMBER load_const INTEGER load_const import_name collections.abc import_from abc store_name collections_abc pop_top jump_forward TO_NUMBER load_const INTEGER load_const import_name collections store_name collections_abc load_name sys load_attr platform load_attr startswith load_const win call pop_jump_if_false TO_NUMBER load_const OBJECT make_function store_name rename_file jump_forward TO_NUMBER load_name os load_attr rename store_name rename_file load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH return_const None
+    hash: 40039f14f86ab82d365e82c998966875fab2059f3ad4faf2b8865599865e63e3
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/botaa3/1.0.0/botaa3-1.0.0/boto3-1.20.7/boto3/compat.py: IyBDb3B5cmlnaHQgMjAxNSBBbWF6b24uY29tLCBJbmMuIG9yIGl0cyBhZmZpbGlhdGVzLiBBbGwgUmlnaHRzIFJlc2VydmVkLgojCiMgTGljZW5zZWQgdW5kZXIgdGhlIEFwYWNoZSBMaWNlbnNlLCBWZXJzaW9uIDIuMCAodGhlICJMaWNlbnNlIikuIFlvdQojIG1heSBub3QgdXNlIHRoaXMgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZSB3aXRoIHRoZSBMaWNlbnNlLiBBIGNvcHkgb2YKIyB0aGUgTGljZW5zZSBpcyBsb2NhdGVkIGF0CiMKIyBodHRwczovL2F3cy5hbWF6b24uY29tL2FwYWNoZTIuMC8KIwojIG9yIGluIHRoZSAibGljZW5zZSIgZmlsZSBhY2NvbXBhbnlpbmcgdGhpcyBmaWxlLiBUaGlzIGZpbGUgaXMKIyBkaXN0cmlidXRlZCBvbiBhbiAiQVMgSVMiIEJBU0lTLCBXSVRIT1VUIFdBUlJBTlRJRVMgT1IgQ09ORElUSU9OUyBPRgojIEFOWSBLSU5ELCBlaXRoZXIgZXhwcmVzcyBvciBpbXBsaWVkLiBTZWUgdGhlIExpY2Vuc2UgZm9yIHRoZSBzcGVjaWZpYwojIGxhbmd1YWdlIGdvdmVybmluZyBwZXJtaXNzaW9ucyBhbmQgbGltaXRhdGlvbnMgdW5kZXIgdGhlIExpY2Vuc2UuCmltcG9ydCBzeXMKaW1wb3J0IG9zCmltcG9ydCBlcnJubwppbXBvcnQgc29ja2V0CmltcG9ydCB3YXJuaW5ncwoKZnJvbSBib3RvY29yZS52ZW5kb3JlZCBpbXBvcnQgc2l4CmZyb20gYm90bzMuZXhjZXB0aW9ucyBpbXBvcnQgUHl0aG9uRGVwcmVjYXRpb25XYXJuaW5nCgppZiBzaXguUFkzOgogICAgIyBJbiBweXRob24zLCBzb2NrZXQuZXJyb3IgaXMgT1NFcnJvciwgd2hpY2ggaXMgdG9vIGdlbmVyYWwKICAgICMgZm9yIHdoYXQgd2Ugd2FudCAoaS5lIEZpbGVOb3RGb3VuZEVycm9yIGlzIGEgc3ViY2xhc3Mgb2YgT1NFcnJvcikuCiAgICAjIEluIHB5MyBhbGwgdGhlIHNvY2tldCByZWxhdGVkIGVycm9ycyBhcmUgaW4gYSBuZXdseSBjcmVhdGVkCiAgICAjIENvbm5lY3Rpb25FcnJvcgogICAgU09DS0VUX0VSUk9SID0gQ29ubmVjdGlvbkVycm9yCmVsc2U6CiAgICBTT0NLRVRfRVJST1IgPSBzb2NrZXQuZXJyb3IKCmlmIHNpeC5QWTM6CiAgICBpbXBvcnQgY29sbGVjdGlvbnMuYWJjIGFzIGNvbGxlY3Rpb25zX2FiYwplbHNlOgogICAgaW1wb3J0IGNvbGxlY3Rpb25zIGFzIGNvbGxlY3Rpb25zX2FiYwoKCmlmIHN5cy5wbGF0Zm9ybS5zdGFydHN3aXRoKCd3aW4nKToKICAgIGRlZiByZW5hbWVfZmlsZShjdXJyZW50X2ZpbGVuYW1lLCBuZXdfZmlsZW5hbWUpOgogICAgICAgIHRyeToKICAgICAgICAgICAgb3MucmVtb3ZlKG5ld19maWxlbmFtZSkKICAgICAgICBleGNlcHQgT1NFcnJvciBhcyBlOgogICAgICAgICAgICBpZiBub3QgZS5lcnJubyA9PSBlcnJuby5FTk9FTlQ6CiAgICAgICAgICAgICAgICAjIFdlIG9ubHkgd2FudCB0byBhIGlnbm9yZSB0cnlpbmcgdG8gcmVtb3ZlCiAgICAgICAgICAgICAgICAjIGEgZmlsZSB0aGF0IGRvZXMgbm90IGV4aXN0LiAgSWYgaXQgZmFpbHMKICAgICAgICAgICAgICAgICMgZm9yIGFueSBvdGhlciByZWFzb24gd2Ugc2hvdWxkIGJlIHByb3BhZ2F0aW5nCiAgICAgICAgICAgICAgICAjIHRoYXQgZXhjZXB0aW9uLgogICAgICAgICAgICAgICAgcmFpc2UKICAgICAgICBvcy5yZW5hbWUoY3VycmVudF9maWxlbmFtZSwgbmV3X2ZpbGVuYW1lKQplbHNlOgogICAgcmVuYW1lX2ZpbGUgPSBvcy5yZW5hbWUKCgpkZWYgZmlsdGVyX3B5dGhvbl9kZXByZWNhdGlvbl93YXJuaW5ncygpOgogICAgIiIiCiAgICBJbnZva2luZyB0aGlzIGZpbHRlciBhY2tub3dsZWRnZXMgeW91ciBydW50aW1lIHdpbGwgc29vbiBiZSBkZXByZWNhdGVkCiAgICBhdCB3aGljaCB0aW1lIHlvdSB3aWxsIHN0b3AgcmVjZWl2aW5nIGFsbCB1cGRhdGVzIHRvIHlvdXIgY2xpZW50LgogICAgIiIiCiAgICB3YXJuaW5ncy5maWx0ZXJ3YXJuaW5ncygKICAgICAgICAnaWdub3JlJywKICAgICAgICBtZXNzYWdlPSIuKkJvdG8zIHdpbGwgbm8gbG9uZ2VyIHN1cHBvcnQgUHl0aG9uLioiLAogICAgICAgIGNhdGVnb3J5PVB5dGhvbkRlcHJlY2F0aW9uV2FybmluZywKICAgICAgICBtb2R1bGU9ciIuKmJvdG8zXC5jb21wYXQiCiAgICApCgoKZGVmIF93YXJuX2RlcHJlY2F0ZWRfcHl0aG9uKCk6CiAgICAiIiJQeXRob24gMi43IGlzIGRlcHJlY2F0ZWQgc28gdGhpcyBjb2RlIHdpbGwgbm8gbG9uZ2VyIHJ1bi4KCiAgICBVc2UgdGhpcyB0ZW1wbGF0ZSBmb3IgZnV0dXJlIGRlcHJlY2F0aW9uIGNhbXBhaWducyBhcyBuZWVkZWQuCiAgICAiIiIKICAgIHB5XzI3X3BhcmFtcyA9IHsKICAgICAgICAnZGF0ZSc6ICdKdWx5IDE1LCAyMDIxJywKICAgICAgICAnYmxvZ19saW5rJzogJ2h0dHBzOi8vYXdzLmFtYXpvbi5jb20vYmxvZ3MvZGV2ZWxvcGVyL2Fubm91bmNpbmctZW5kLScKICAgICAgICAgICAgICAgICAgICAgJ29mLXN1cHBvcnQtZm9yLXB5dGhvbi0yLTctaW4tYXdzLXNkay1mb3ItcHl0aG9uLWFuZC0nCiAgICAgICAgICAgICAgICAgICAgICdhd3MtY2xpLXYxLycKICAgIH0KICAgIGRlcHJlY2F0ZWRfdmVyc2lvbnMgPSB7CiAgICAgICAgKDIsIDcpOiBweV8yN19wYXJhbXMsCiAgICB9CiAgICBweV92ZXJzaW9uID0gc3lzLnZlcnNpb25faW5mb1s6Ml0KCiAgICBpZiBweV92ZXJzaW9uIGluIGRlcHJlY2F0ZWRfdmVyc2lvbnM6CiAgICAgICAgcGFyYW1zID0gZGVwcmVjYXRlZF92ZXJzaW9uc1tweV92ZXJzaW9uXQogICAgICAgIHdhcm5pbmcgPSAoCiAgICAgICAgICAgICJCb3RvMyB3aWxsIG5vIGxvbmdlciBzdXBwb3J0IFB5dGhvbiB7fS57fSAiCiAgICAgICAgICAgICJzdGFydGluZyB7fS4gVG8gY29udGludWUgcmVjZWl2aW5nIHNlcnZpY2UgdXBkYXRlcywgIgogICAgICAgICAgICAiYnVnIGZpeGVzLCBhbmQgc2VjdXJpdHkgdXBkYXRlcyBwbGVhc2UgdXBncmFkZSB0byBQeXRob24gMy42IG9yICIKICAgICAgICAgICAgImxhdGVyLiBNb3JlIGluZm9ybWF0aW9uIGNhbiBiZSBmb3VuZCBoZXJlOiB7fSIKICAgICAgICApLmZvcm1hdChweV92ZXJzaW9uWzBdLCBweV92ZXJzaW9uWzFdLCBwYXJhbXNbJ2RhdGUnXSwgcGFyYW1zWydibG9nX2xpbmsnXSkKICAgICAgICB3YXJuaW5ncy53YXJuKHdhcm5pbmcsIFB5dGhvbkRlcHJlY2F0aW9uV2FybmluZykK

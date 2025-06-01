@@ -1,0 +1,21 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/urlib3/1.21.1/urlib3-1.21.1/urlib3-1.21.1/test/with_dummyserver/test_no_ssl.py
+  contents:
+  - name: TestHTTPWithoutSSL.test_simple
+    score: 0.0
+    code: |-
+      def test_simple(self):
+              pool = urllib3.HTTPConnectionPool(self.host, self.port)
+              self.addCleanup(pool.close)
+              r = pool.request('GET', '/')
+              self.assertEqual(r.status, 200, r.data)
+    tokens: resume load_global urllib3 load_attr STRING_LEN_S_ENT_HIGH load_fast self load_attr host load_fast self load_attr port call store_fast pool load_fast self load_attr addCleanup load_fast pool load_attr close call pop_top load_fast pool load_attr request load_const GET load_const / call store_fast r load_fast self load_attr assertEqual load_fast r load_attr status load_const INTEGER load_fast r load_attr data call pop_top return_const None
+    hash: 4150f675f2190b6948330a49d2c044e1fdf9a6999ae0a0ad92013e39f5ac5c38
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/urlib3/1.21.1/urlib3-1.21.1/urlib3-1.21.1/test/with_dummyserver/test_no_ssl.py
+  : IiIiClRlc3QgY29ubmVjdGlvbnMgd2l0aG91dCB0aGUgYnVpbHRpbiBzc2wgbW9kdWxlCgpOb3RlOiBJbXBvcnQgdXJsbGliMyBpbnNpZGUgdGhlIHRlc3QgZnVuY3Rpb25zIHRvIGdldCB0aGUgaW1wb3J0YmxvY2tlciB0byB3b3JrCiIiIgpmcm9tIC4udGVzdF9ub19zc2wgaW1wb3J0IFRlc3RXaXRob3V0U1NMCgpmcm9tIGR1bW15c2VydmVyLnRlc3RjYXNlIGltcG9ydCAoCiAgICAgICAgSFRUUER1bW15U2VydmVyVGVzdENhc2UsIEhUVFBTRHVtbXlTZXJ2ZXJUZXN0Q2FzZSkKCmltcG9ydCB1cmxsaWIzCgoKY2xhc3MgVGVzdEhUVFBXaXRob3V0U1NMKEhUVFBEdW1teVNlcnZlclRlc3RDYXNlLCBUZXN0V2l0aG91dFNTTCk6CiAgICBkZWYgdGVzdF9zaW1wbGUoc2VsZik6CiAgICAgICAgcG9vbCA9IHVybGxpYjMuSFRUUENvbm5lY3Rpb25Qb29sKHNlbGYuaG9zdCwgc2VsZi5wb3J0KQogICAgICAgIHNlbGYuYWRkQ2xlYW51cChwb29sLmNsb3NlKQogICAgICAgIHIgPSBwb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHIuc3RhdHVzLCAyMDAsIHIuZGF0YSkKCgpjbGFzcyBUZXN0SFRUUFNXaXRob3V0U1NMKEhUVFBTRHVtbXlTZXJ2ZXJUZXN0Q2FzZSwgVGVzdFdpdGhvdXRTU0wpOgogICAgZGVmIHRlc3Rfc2ltcGxlKHNlbGYpOgogICAgICAgIHBvb2wgPSB1cmxsaWIzLkhUVFBTQ29ubmVjdGlvblBvb2woc2VsZi5ob3N0LCBzZWxmLnBvcnQpCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKHBvb2wuY2xvc2UpCiAgICAgICAgdHJ5OgogICAgICAgICAgICBwb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKICAgICAgICBleGNlcHQgdXJsbGliMy5leGNlcHRpb25zLlNTTEVycm9yIGFzIGU6CiAgICAgICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZSgnU1NMIG1vZHVsZSBpcyBub3QgYXZhaWxhYmxlJyBpbiBzdHIoZSkpCg==

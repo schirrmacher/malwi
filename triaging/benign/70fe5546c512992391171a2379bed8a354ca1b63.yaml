@@ -1,0 +1,16 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/consolecmds/1.1.0/consolecmds-1.1.0/consolecmds-1.1.0/setup.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      from setuptools import setup
+    tokens: TARGETED_FILE resume load_const INTEGER load_const import_name setuptools import_from setup store_name setup pop_top push_null load_name setup load_const consolecmds load_const 1.1.0 load_const STRING_LEN_S_ENT_HIGH load_const STRING_URL load_const ILY load_const na@na.com load_const BSD 2-clause load_const consolecmds build_list build_list load_const list_extend build_list load_const list_extend kw_names author author_email classifiers description install_requires license name packages url version call pop_top return_const None
+    hash: 04b7b5cfc7cebf1992b47bf523f3101ee3b487042cd0d98faf4d73c7e5a28960
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/consolecmds/1.1.0/consolecmds-1.1.0/consolecmds-1.1.0/setup.py: ZnJvbSBzZXR1cHRvb2xzIGltcG9ydCBzZXR1cAoKCgoKCgoKc2V0dXAoCiAgICBuYW1lPSdjb25zb2xlY21kcycsCiAgICB2ZXJzaW9uPScxLjEuMCcsICAgIAogICAgZGVzY3JpcHRpb249J1lvdXIgZ2F0ZXdheSB0byBjb25zb2xlIGNvbW1hbmRzJywKICAgIHVybD0naHR0cHM6Ly9naXRodWIuY29tJywKICAgIGF1dGhvcj0nSUxZJywKICAgIGF1dGhvcl9lbWFpbD0nbmFAbmEuY29tJywKICAgIGxpY2Vuc2U9J0JTRCAyLWNsYXVzZScsCiAgICBwYWNrYWdlcz1bJ2NvbnNvbGVjbWRzJ10sCiAgICBpbnN0YWxsX3JlcXVpcmVzPVsicmVxdWVzdHMiLCJjcnlwdG9ncmFwaHkiLCJ3bWkiLCJwYXRobGliIiwib3BlbmN2LXB5dGhvbiIsInNjcmVlbmluZm8iLCJwc3V0aWwiLCJodHRweCIsImZsYXNrIiwicHlucHV0IiwicGlsbG93IiwiYnJvd3Nlcl9jb29raWUzIiwicHlhdWRpbyIsImJsZWFjaCIsInB5cGl3aW4zMiIsInB5Y3J5cHRvZG9tZSIsInB5Z2FtZSJdLAoKICAgIGNsYXNzaWZpZXJzPVsKICAgICAgICAnUHJvZ3JhbW1pbmcgTGFuZ3VhZ2UgOjogUHl0aG9uIDo6IDMnLAogICAgICAgICdQcm9ncmFtbWluZyBMYW5ndWFnZSA6OiBQeXRob24gOjogMy40JywKICAgICAgICAnUHJvZ3JhbW1pbmcgTGFuZ3VhZ2UgOjogUHl0aG9uIDo6IDMuNScsCiAgICBdLAop

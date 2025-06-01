@@ -1,0 +1,17 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/vendored/requests/__version__.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      # .-. .-. .-. . . .-. .-. .-. .-.
+    tokens: "resume load_const requests store_name __title__ load_const STRING_LEN_S_ENT_HIGH store_name __description__ load_const STRING_URL store_name __url__ load_const 2.18.3 store_name __version__ load_const INTEGER store_name __build__ load_const Kenneth Reitz store_name __author__ load_const STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH load_const Apache 2.0 store_name __license__ load_const STRING_LEN_S_ENT_HIGH store_name __copyright__ load_const \u2728 \U0001F370 \u2728 store_name __cake__ return_const None"
+    hash: 4e33332a7a4a5b185ede68be0f97b5a3c2bc81e2bbfe101a4cdbe1438932eb0b
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/vendored/requests/__version__.py
+  : IyAuLS4gLi0uIC4tLiAuIC4gLi0uIC4tLiAuLS4gLi0uCiMgfCggIHwtICB8LnwgfCB8IHwtICBgLS4gIHwgIGAtLgojICcgJyBgLScgYC1gLmAtJyBgLScgYC0nICAnICBgLScKCl9fdGl0bGVfXyA9ICdyZXF1ZXN0cycKX19kZXNjcmlwdGlvbl9fID0gJ1B5dGhvbiBIVFRQIGZvciBIdW1hbnMuJwpfX3VybF9fID0gJ2h0dHA6Ly9weXRob24tcmVxdWVzdHMub3JnJwpfX3ZlcnNpb25fXyA9ICcyLjE4LjMnCl9fYnVpbGRfXyA9IDB4MDIxODAzCl9fYXV0aG9yX18gPSAnS2VubmV0aCBSZWl0eicKX19hdXRob3JfZW1haWxfXyA9ICdtZUBrZW5uZXRocmVpdHoub3JnJwpfX2xpY2Vuc2VfXyA9ICdBcGFjaGUgMi4wJwpfX2NvcHlyaWdodF9fID0gJ0NvcHlyaWdodCAyMDE3IEtlbm5ldGggUmVpdHonCl9fY2FrZV9fID0gdSdcdTI3MjggXFUwMDAxZjM3MCBcdTI3MjgnCg==

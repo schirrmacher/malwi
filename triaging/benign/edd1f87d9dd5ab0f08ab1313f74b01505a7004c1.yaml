@@ -1,0 +1,16 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/costrar/8.0/costrar-8.0/Costrar-8.0/Costrar/__init__.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      from .Costrar import GoldenX1, GoldenX2, GoldenX3, GoldenX4, GoldenX5
+    tokens: TARGETED_FILE resume load_const INTEGER load_const import_name Costrar import_from GoldenX1 store_name GoldenX1 import_from GoldenX2 store_name GoldenX2 import_from GoldenX3 store_name GoldenX3 import_from GoldenX4 store_name GoldenX4 import_from GoldenX5 store_name GoldenX5 pop_top build_list load_const list_extend store_name __all__ return_const None
+    hash: 9c9a29f1b037c83f9bbd4bba852f1940b27cdac15be20000b90d30c54ccbcea4
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/costrar/8.0/costrar-8.0/Costrar-8.0/Costrar/__init__.py: ZnJvbSAuQ29zdHJhciBpbXBvcnQgR29sZGVuWDEsIEdvbGRlblgyLCBHb2xkZW5YMywgR29sZGVuWDQsIEdvbGRlblg1CgpfX2FsbF9fID0gWydHb2xkZW5YMScsICdHb2xkZW5YMicsICdHb2xkZW5YMycsICdHb2xkZW5YNCcsICdHb2xkZW5YNSddCg==

@@ -1,0 +1,48 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/discord-py-v13/1.3/discord_py_v13-1.3-py3-none-any/discord-py-v13/file.py
+  contents:
+  - name: File.__init__
+    score: 0.0
+    code: |-
+      def __init__(self, fp, filename=None, *, spoiler=False):
+              self.fp = fp
+
+              if isinstance(fp, io.IOBase):
+                  if not (fp.seekable() and fp.readable()):
+                      raise ValueError('File buffer {!r} must be seekable and readable'.format(fp))
+                  self.fp = fp
+                  self._original_pos = fp.tell()
+                  self._owner = False
+              else:
+                  self.fp = open(fp, 'rb')
+                  self._original_pos = 0
+                  self._owner = True
+
+              # aiohttp only uses two methods from IOBase
+              # read and close, since I want to control when the files
+              # close, I need to stub it so it doesn't close unless
+              # I tell it to
+              self._closer = self.fp.close
+              self.fp.close = lambda: None
+
+              if filename is None:
+                  if isinstance(fp, str):
+                      _, self.filename = os.path.split(fp)
+                  else:
+                      self.filename = getattr(fp, 'name', None)
+              else:
+                  self.filename = filename
+
+              if spoiler and self.filename is not None and not self.filename.startswith('SPOILER_'):
+                  self.filename = 'SPOILER_' + self.filename
+
+              self.spoiler = spoiler or (self.filename is not None and self.filename.startswith('SPOILER_'))
+    tokens: resume load_fast fp load_fast self store_attr fp load_global isinstance load_fast fp load_global io load_attr IOBase call pop_jump_if_false TO_NUMBER load_fast fp load_attr seekable call pop_jump_if_false TO_NUMBER load_fast fp load_attr readable call pop_jump_if_true TO_NUMBER load_global ValueError load_const STRING_LEN_S_ENT_HIGH load_attr format load_fast fp call call raise_varargs load_fast fp load_fast self store_attr fp load_fast fp load_attr tell call load_fast self store_attr _original_pos load_const INTEGER load_fast self store_attr _owner jump_forward TO_NUMBER load_global FILESYSTEM_ACCESS load_fast fp load_const rb call load_fast self store_attr fp load_const INTEGER load_fast self store_attr _original_pos load_const INTEGER load_fast self store_attr _owner load_fast self load_attr fp load_attr close load_fast self store_attr _closer load_const OBJECT make_function load_fast self load_attr fp store_attr close load_fast filename pop_jump_if_not_none TO_NUMBER load_global isinstance load_fast fp load_global str call pop_jump_if_false TO_NUMBER load_global os load_attr path load_attr split load_fast fp call unpack_sequence store_fast _ load_fast self store_attr filename jump_forward TO_NUMBER load_global REFLECTION_DYNAMIC_READ load_fast fp load_const name load_const call load_fast self store_attr filename jump_forward TO_NUMBER load_fast filename load_fast self store_attr filename load_fast spoiler pop_jump_if_false TO_NUMBER load_fast self load_attr filename pop_jump_if_none TO_NUMBER load_fast self load_attr filename load_attr startswith load_const SPOILER_ call pop_jump_if_true TO_NUMBER load_const SPOILER_ load_fast self load_attr filename binary_op + load_fast self store_attr filename load_fast spoiler copy pop_jump_if_true TO_NUMBER pop_top load_fast self load_attr filename load_const is_op copy pop_jump_if_false TO_NUMBER pop_top load_fast self load_attr filename load_attr startswith load_const SPOILER_ call load_fast self store_attr spoiler return_const None
+    hash: 2d112fcbaef84c993d1b9ba6c58f28e59c97c91f2356f04054bfd911997c8241
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/discord-py-v13/1.3/discord_py_v13-1.3-py3-none-any/discord-py-v13/file.py: IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0KCiIiIgpUaGUgTUlUIExpY2Vuc2UgKE1JVCkKCkNvcHlyaWdodCAoYykgMjAxNS1wcmVzZW50IFJhcHB0egoKUGVybWlzc2lvbiBpcyBoZXJlYnkgZ3JhbnRlZCwgZnJlZSBvZiBjaGFyZ2UsIHRvIGFueSBwZXJzb24gb2J0YWluaW5nIGEKY29weSBvZiB0aGlzIHNvZnR3YXJlIGFuZCBhc3NvY2lhdGVkIGRvY3VtZW50YXRpb24gZmlsZXMgKHRoZSAiU29mdHdhcmUiKSwKdG8gZGVhbCBpbiB0aGUgU29mdHdhcmUgd2l0aG91dCByZXN0cmljdGlvbiwgaW5jbHVkaW5nIHdpdGhvdXQgbGltaXRhdGlvbgp0aGUgcmlnaHRzIHRvIHVzZSwgY29weSwgbW9kaWZ5LCBtZXJnZSwgcHVibGlzaCwgZGlzdHJpYnV0ZSwgc3VibGljZW5zZSwKYW5kL29yIHNlbGwgY29waWVzIG9mIHRoZSBTb2Z0d2FyZSwgYW5kIHRvIHBlcm1pdCBwZXJzb25zIHRvIHdob20gdGhlClNvZnR3YXJlIGlzIGZ1cm5pc2hlZCB0byBkbyBzbywgc3ViamVjdCB0byB0aGUgZm9sbG93aW5nIGNvbmRpdGlvbnM6CgpUaGUgYWJvdmUgY29weXJpZ2h0IG5vdGljZSBhbmQgdGhpcyBwZXJtaXNzaW9uIG5vdGljZSBzaGFsbCBiZSBpbmNsdWRlZCBpbgphbGwgY29waWVzIG9yIHN1YnN0YW50aWFsIHBvcnRpb25zIG9mIHRoZSBTb2Z0d2FyZS4KClRIRSBTT0ZUV0FSRSBJUyBQUk9WSURFRCAiQVMgSVMiLCBXSVRIT1VUIFdBUlJBTlRZIE9GIEFOWSBLSU5ELCBFWFBSRVNTCk9SIElNUExJRUQsIElOQ0xVRElORyBCVVQgTk9UIExJTUlURUQgVE8gVEhFIFdBUlJBTlRJRVMgT0YgTUVSQ0hBTlRBQklMSVRZLApGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRSBBTkQgTk9OSU5GUklOR0VNRU5ULiBJTiBOTyBFVkVOVCBTSEFMTCBUSEUKQVVUSE9SUyBPUiBDT1BZUklHSFQgSE9MREVSUyBCRSBMSUFCTEUgRk9SIEFOWSBDTEFJTSwgREFNQUdFUyBPUiBPVEhFUgpMSUFCSUxJVFksIFdIRVRIRVIgSU4gQU4gQUNUSU9OIE9GIENPTlRSQUNULCBUT1JUIE9SIE9USEVSV0lTRSwgQVJJU0lORwpGUk9NLCBPVVQgT0YgT1IgSU4gQ09OTkVDVElPTiBXSVRIIFRIRSBTT0ZUV0FSRSBPUiBUSEUgVVNFIE9SIE9USEVSCkRFQUxJTkdTIElOIFRIRSBTT0ZUV0FSRS4KIiIiCgppbXBvcnQgb3MucGF0aAppbXBvcnQgaW8KCmNsYXNzIEZpbGU6CiAgICByIiIiQSBwYXJhbWV0ZXIgb2JqZWN0IHVzZWQgZm9yIDptZXRoOmBhYmMuTWVzc2FnZWFibGUuc2VuZGAKICAgIGZvciBzZW5kaW5nIGZpbGUgb2JqZWN0cy4KCiAgICAuLiBub3RlOjoKCiAgICAgICAgRmlsZSBvYmplY3RzIGFyZSBzaW5nbGUgdXNlIGFuZCBhcmUgbm90IG1lYW50IHRvIGJlIHJldXNlZCBpbgogICAgICAgIG11bHRpcGxlIDptZXRoOmBhYmMuTWVzc2FnZWFibGUuc2VuZGBccy4KCiAgICBBdHRyaWJ1dGVzCiAgICAtLS0tLS0tLS0tLQogICAgZnA6IFVuaW9uWzpjbGFzczpgc3RyYCwgOmNsYXNzOmBpby5CdWZmZXJlZElPQmFzZWBdCiAgICAgICAgQSBmaWxlLWxpa2Ugb2JqZWN0IG9wZW5lZCBpbiBiaW5hcnkgbW9kZSBhbmQgcmVhZCBtb2RlCiAgICAgICAgb3IgYSBmaWxlbmFtZSByZXByZXNlbnRpbmcgYSBmaWxlIGluIHRoZSBoYXJkIGRyaXZlIHRvCiAgICAgICAgb3Blbi4KCiAgICAgICAgLi4gbm90ZTo6CgogICAgICAgICAgICBJZiB0aGUgZmlsZS1saWtlIG9iamVjdCBwYXNzZWQgaXMgb3BlbmVkIHZpYSBgYG9wZW5gYCB0aGVuIHRoZQogICAgICAgICAgICBtb2RlcyAncmInIHNob3VsZCBiZSB1c2VkLgoKICAgICAgICAgICAgVG8gcGFzcyBiaW5hcnkgZGF0YSwgY29uc2lkZXIgdXNhZ2Ugb2YgYGBpby5CeXRlc0lPYGAuCgogICAgZmlsZW5hbWU6IE9wdGlvbmFsWzpjbGFzczpgc3RyYF0KICAgICAgICBUaGUgZmlsZW5hbWUgdG8gZGlzcGxheSB3aGVuIHVwbG9hZGluZyB0byBEaXNjb3JkLgogICAgICAgIElmIHRoaXMgaXMgbm90IGdpdmVuIHRoZW4gaXQgZGVmYXVsdHMgdG8gYGBmcC5uYW1lYGAgb3IgaWYgYGBmcGBgIGlzCiAgICAgICAgYSBzdHJpbmcgdGhlbiB0aGUgYGBmaWxlbmFtZWBgIHdpbGwgZGVmYXVsdCB0byB0aGUgc3RyaW5nIGdpdmVuLgogICAgc3BvaWxlcjogOmNsYXNzOmBib29sYAogICAgICAgIFdoZXRoZXIgdGhlIGF0dGFjaG1lbnQgaXMgYSBzcG9pbGVyLgogICAgIiIiCgogICAgX19zbG90c19fID0gKCdmcCcsICdmaWxlbmFtZScsICdzcG9pbGVyJywgJ19vcmlnaW5hbF9wb3MnLCAnX293bmVyJywgJ19jbG9zZXInKQoKICAgIGRlZiBfX2luaXRfXyhzZWxmLCBmcCwgZmlsZW5hbWU9Tm9uZSwgKiwgc3BvaWxlcj1GYWxzZSk6CiAgICAgICAgc2VsZi5mcCA9IGZwCgogICAgICAgIGlmIGlzaW5zdGFuY2UoZnAsIGlvLklPQmFzZSk6CiAgICAgICAgICAgIGlmIG5vdCAoZnAuc2Vla2FibGUoKSBhbmQgZnAucmVhZGFibGUoKSk6CiAgICAgICAgICAgICAgICByYWlzZSBWYWx1ZUVycm9yKCdGaWxlIGJ1ZmZlciB7IXJ9IG11c3QgYmUgc2Vla2FibGUgYW5kIHJlYWRhYmxlJy5mb3JtYXQoZnApKQogICAgICAgICAgICBzZWxmLmZwID0gZnAKICAgICAgICAgICAgc2VsZi5fb3JpZ2luYWxfcG9zID0gZnAudGVsbCgpCiAgICAgICAgICAgIHNlbGYuX293bmVyID0gRmFsc2UKICAgICAgICBlbHNlOgogICAgICAgICAgICBzZWxmLmZwID0gb3BlbihmcCwgJ3JiJykKICAgICAgICAgICAgc2VsZi5fb3JpZ2luYWxfcG9zID0gMAogICAgICAgICAgICBzZWxmLl9vd25lciA9IFRydWUKCiAgICAgICAgIyBhaW9odHRwIG9ubHkgdXNlcyB0d28gbWV0aG9kcyBmcm9tIElPQmFzZQogICAgICAgICMgcmVhZCBhbmQgY2xvc2UsIHNpbmNlIEkgd2FudCB0byBjb250cm9sIHdoZW4gdGhlIGZpbGVzCiAgICAgICAgIyBjbG9zZSwgSSBuZWVkIHRvIHN0dWIgaXQgc28gaXQgZG9lc24ndCBjbG9zZSB1bmxlc3MKICAgICAgICAjIEkgdGVsbCBpdCB0bwogICAgICAgIHNlbGYuX2Nsb3NlciA9IHNlbGYuZnAuY2xvc2UKICAgICAgICBzZWxmLmZwLmNsb3NlID0gbGFtYmRhOiBOb25lCgogICAgICAgIGlmIGZpbGVuYW1lIGlzIE5vbmU6CiAgICAgICAgICAgIGlmIGlzaW5zdGFuY2UoZnAsIHN0cik6CiAgICAgICAgICAgICAgICBfLCBzZWxmLmZpbGVuYW1lID0gb3MucGF0aC5zcGxpdChmcCkKICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgIHNlbGYuZmlsZW5hbWUgPSBnZXRhdHRyKGZwLCAnbmFtZScsIE5vbmUpCiAgICAgICAgZWxzZToKICAgICAgICAgICAgc2VsZi5maWxlbmFtZSA9IGZpbGVuYW1lCgogICAgICAgIGlmIHNwb2lsZXIgYW5kIHNlbGYuZmlsZW5hbWUgaXMgbm90IE5vbmUgYW5kIG5vdCBzZWxmLmZpbGVuYW1lLnN0YXJ0c3dpdGgoJ1NQT0lMRVJfJyk6CiAgICAgICAgICAgIHNlbGYuZmlsZW5hbWUgPSAnU1BPSUxFUl8nICsgc2VsZi5maWxlbmFtZQoKICAgICAgICBzZWxmLnNwb2lsZXIgPSBzcG9pbGVyIG9yIChzZWxmLmZpbGVuYW1lIGlzIG5vdCBOb25lIGFuZCBzZWxmLmZpbGVuYW1lLnN0YXJ0c3dpdGgoJ1NQT0lMRVJfJykpCgogICAgZGVmIHJlc2V0KHNlbGYsICosIHNlZWs9VHJ1ZSk6CiAgICAgICAgIyBUaGUgYHNlZWtgIHBhcmFtZXRlciBpcyBuZWVkZWQgYmVjYXVzZQogICAgICAgICMgdGhlIHJldHJ5LWxvb3AgaXMgaXRlcmF0ZWQgb3ZlciBtdWx0aXBsZSB0aW1lcwogICAgICAgICMgc3RhcnRpbmcgZnJvbSAwLCBhcyBhbiBpbXBsZW1lbnRhdGlvbiBxdWlyawogICAgICAgICMgdGhlIHJlc2V0dGluZyBtdXN0IGJlIGRvbmUgYXQgdGhlIGJlZ2lubmluZwogICAgICAgICMgYmVmb3JlIGEgcmVxdWVzdCBpcyBkb25lLCBzaW5jZSB0aGUgZmlyc3QgaW5kZXgKICAgICAgICAjIGlzIDAsIGFuZCB0aHVzIGZhbHNlLCB0aGVuIHRoaXMgcHJldmVudHMgYW4KICAgICAgICAjIHVubmVjZXNzYXJ5IHNlZWsgc2luY2UgaXQncyB0aGUgZmlyc3QgcmVxdWVzdAogICAgICAgICMgZG9uZS4KICAgICAgICBpZiBzZWVrOgogICAgICAgICAgICBzZWxmLmZwLnNlZWsoc2VsZi5fb3JpZ2luYWxfcG9zKQoKICAgIGRlZiBjbG9zZShzZWxmKToKICAgICAgICBzZWxmLmZwLmNsb3NlID0gc2VsZi5fY2xvc2VyCiAgICAgICAgaWYgc2VsZi5fb3duZXI6CiAgICAgICAgICAgIHNlbGYuX2Nsb3NlcigpCg==

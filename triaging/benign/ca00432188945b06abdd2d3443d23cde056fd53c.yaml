@@ -1,0 +1,53 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/utils/parameter_helper.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      # Licensed to the Apache Software Foundation (ASF) under one
+      # or more contributor license agreements.  See the NOTICE file
+      # distributed with this work for additional information
+      # regarding copyright ownership.  The ASF licenses this file
+      # to you under the Apache License, Version 2.0 (the
+      # "License"); you may not use this file except in compliance
+      # with the License.  You may obtain a copy of the License at
+      #
+      #     http://www.apache.org/licenses/LICENSE-2.0
+      #
+      # Unless required by applicable law or agreed to in writing,
+      # software distributed under the License is distributed on an
+      # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+      # KIND, either express or implied.  See the License for the
+      # specific language governing permissions and limitations
+      # under the License.
+
+      # coding=utf-8
+
+      import hashlib
+      import base64
+      import socket
+      import uuid
+      import time
+      import xml.etree.cElementTree as EleTree
+
+      from aliyunsdkcore.compat import ensure_bytes, ensure_string
+
+      TIME_ZONE = "GMT"
+      FORMAT_ISO_8601 = "%Y-%m-%dT%H:%M:%SZ"
+      FORMAT_RFC_2616 = "%a, %d %b %Y %H:%M:%S GMT"
+
+
+      def get_uuid():
+          name = socket.gethostname() + str(uuid.uuid1())
+          namespace = uuid.NAMESPACE_URL
+          return str(uuid.uuid5(namespace, name))
+    tokens: resume load_const INTEGER load_const import_name hashlib store_name hashlib load_const INTEGER load_const import_name base64 store_name base64 load_const INTEGER load_const import_name socket store_name socket load_const INTEGER load_const import_name uuid store_name uuid load_const INTEGER load_const import_name time store_name time load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from etree swap pop_top import_from cElementTree store_name EleTree pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from ensure_bytes store_name ensure_bytes import_from ensure_string store_name ensure_string pop_top load_const GMT store_name TIME_ZONE load_const STRING_LEN_S_ENT_HIGH store_name FORMAT_ISO_8601 load_const STRING_LEN_S_ENT_HIGH store_name FORMAT_RFC_2616 load_const OBJECT make_function store_name get_uuid load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name md5_sum load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const load_const OBJECT make_function defaults store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name to_xml return_const None
+    hash: 154d536b74e63e9e31d242230558f5f52ebce6517c1ebc4d879c3f917f806972
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/utils/parameter_helper.py
+  : IyBMaWNlbnNlZCB0byB0aGUgQXBhY2hlIFNvZnR3YXJlIEZvdW5kYXRpb24gKEFTRikgdW5kZXIgb25lCiMgb3IgbW9yZSBjb250cmlidXRvciBsaWNlbnNlIGFncmVlbWVudHMuICBTZWUgdGhlIE5PVElDRSBmaWxlCiMgZGlzdHJpYnV0ZWQgd2l0aCB0aGlzIHdvcmsgZm9yIGFkZGl0aW9uYWwgaW5mb3JtYXRpb24KIyByZWdhcmRpbmcgY29weXJpZ2h0IG93bmVyc2hpcC4gIFRoZSBBU0YgbGljZW5zZXMgdGhpcyBmaWxlCiMgdG8geW91IHVuZGVyIHRoZSBBcGFjaGUgTGljZW5zZSwgVmVyc2lvbiAyLjAgKHRoZQojICJMaWNlbnNlIik7IHlvdSBtYXkgbm90IHVzZSB0aGlzIGZpbGUgZXhjZXB0IGluIGNvbXBsaWFuY2UKIyB3aXRoIHRoZSBMaWNlbnNlLiAgWW91IG1heSBvYnRhaW4gYSBjb3B5IG9mIHRoZSBMaWNlbnNlIGF0CiMKIyAgICAgaHR0cDovL3d3dy5hcGFjaGUub3JnL2xpY2Vuc2VzL0xJQ0VOU0UtMi4wCiMKIyBVbmxlc3MgcmVxdWlyZWQgYnkgYXBwbGljYWJsZSBsYXcgb3IgYWdyZWVkIHRvIGluIHdyaXRpbmcsCiMgc29mdHdhcmUgZGlzdHJpYnV0ZWQgdW5kZXIgdGhlIExpY2Vuc2UgaXMgZGlzdHJpYnV0ZWQgb24gYW4KIyAiQVMgSVMiIEJBU0lTLCBXSVRIT1VUIFdBUlJBTlRJRVMgT1IgQ09ORElUSU9OUyBPRiBBTlkKIyBLSU5ELCBlaXRoZXIgZXhwcmVzcyBvciBpbXBsaWVkLiAgU2VlIHRoZSBMaWNlbnNlIGZvciB0aGUKIyBzcGVjaWZpYyBsYW5ndWFnZSBnb3Zlcm5pbmcgcGVybWlzc2lvbnMgYW5kIGxpbWl0YXRpb25zCiMgdW5kZXIgdGhlIExpY2Vuc2UuCgojIGNvZGluZz11dGYtOAoKaW1wb3J0IGhhc2hsaWIKaW1wb3J0IGJhc2U2NAppbXBvcnQgc29ja2V0CmltcG9ydCB1dWlkCmltcG9ydCB0aW1lCmltcG9ydCB4bWwuZXRyZWUuY0VsZW1lbnRUcmVlIGFzIEVsZVRyZWUKCmZyb20gYWxpeXVuc2RrY29yZS5jb21wYXQgaW1wb3J0IGVuc3VyZV9ieXRlcywgZW5zdXJlX3N0cmluZwoKVElNRV9aT05FID0gIkdNVCIKRk9STUFUX0lTT184NjAxID0gIiVZLSVtLSVkVCVIOiVNOiVTWiIKRk9STUFUX1JGQ18yNjE2ID0gIiVhLCAlZCAlYiAlWSAlSDolTTolUyBHTVQiCgoKZGVmIGdldF91dWlkKCk6CiAgICBuYW1lID0gc29ja2V0LmdldGhvc3RuYW1lKCkgKyBzdHIodXVpZC51dWlkMSgpKQogICAgbmFtZXNwYWNlID0gdXVpZC5OQU1FU1BBQ0VfVVJMCiAgICByZXR1cm4gc3RyKHV1aWQudXVpZDUobmFtZXNwYWNlLCBuYW1lKSkKCgpkZWYgZ2V0X2lzb184MDYxX2RhdGUoKToKICAgIHJldHVybiB0aW1lLnN0cmZ0aW1lKEZPUk1BVF9JU09fODYwMSwgdGltZS5nbXRpbWUoKSkKCgpkZWYgZ2V0X3JmY18yNjE2X2RhdGUoKToKICAgIHJldHVybiB0aW1lLnN0cmZ0aW1lKEZPUk1BVF9SRkNfMjYxNiwgdGltZS5nbXRpbWUoKSkKCgpkZWYgbWQ1X3N1bShjb250ZW50KToKICAgIGNvbnRlbnRfYnl0ZXMgPSBlbnN1cmVfYnl0ZXMoY29udGVudCkKICAgIG1kNV9ieXRlcyA9IGhhc2hsaWIubWQ1KGNvbnRlbnRfYnl0ZXMpLmRpZ2VzdCgpCiAgICByZXR1cm4gZW5zdXJlX3N0cmluZyhiYXNlNjQuc3RhbmRhcmRfYjY0ZW5jb2RlKG1kNV9ieXRlcykpCgoKZGVmIF9nZXRfeG1sX2J5X2xpc3QoZWxlbSwgdmFsLCBwYXJlbnRfZWxlbWVudCk6CiAgICBpID0gMAogICAgdGFnX25hbWUgPSBlbGVtLnRhZwogICAgaWYgdmFsLl9fbGVuX18oKSA+IDA6CiAgICAgICAgX2dldF94bWxfZmFjdG9yeShlbGVtLCB2YWxbMF0sIHBhcmVudF9lbGVtZW50KQoKICAgIGZvciBpdGVtIGluIHZhbDoKICAgICAgICBpZiBpID4gMDoKICAgICAgICAgICAgc3ViX2VsZW0gPSBFbGVUcmVlLlN1YkVsZW1lbnQocGFyZW50X2VsZW1lbnQsIHRhZ19uYW1lKQogICAgICAgICAgICBfZ2V0X3htbF9mYWN0b3J5KHN1Yl9lbGVtLCBpdGVtLCBwYXJlbnRfZWxlbWVudCkKICAgICAgICBpID0gaSArIDEKCgpkZWYgX2dldF94bWxfYnlfZGljdChlbGVtLCB2YWwpOgogICAgZm9yIGsgaW4gdmFsOgogICAgICAgIHN1Yl9lbGVtID0gRWxlVHJlZS5TdWJFbGVtZW50KGVsZW0sIGspCiAgICAgICAgX2dldF94bWxfZmFjdG9yeShzdWJfZWxlbSwgdmFsW2tdLCBlbGVtKQoKCmRlZiBfZ2V0X3htbF9mYWN0b3J5KGVsZW0sIHZhbCwgcGFyZW50X2VsZW1lbnQ9Tm9uZSk6CiAgICBpZiB2YWwgaXMgTm9uZToKICAgICAgICByZXR1cm4KCiAgICBpZiBpc2luc3RhbmNlKHZhbCwgZGljdCk6CiAgICAgICAgX2dldF94bWxfYnlfZGljdChlbGVtLCB2YWwpCiAgICBlbGlmIGlzaW5zdGFuY2UodmFsLCAobGlzdCwgdHVwbGUsIHNldCkpOgogICAgICAgIGlmIHBhcmVudF9lbGVtZW50IGlzIE5vbmU6CiAgICAgICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoInBhcmVudF9lbGVtZW50IikKICAgICAgICBfZ2V0X3htbF9ieV9saXN0KGVsZW0sIHZhbCwgcGFyZW50X2VsZW1lbnQpCiAgICBlbHNlOgogICAgICAgIGVsZW0udGV4dCA9IHN0cih2YWwpCgoKZGVmIHRvX3htbChkaWMpOgogICAgaWYgZGljIGlzIE5vbmU6CiAgICAgICAgcmV0dXJuCgogICAgaWYgZGljLl9fbGVuX18oKSA9PSAwOgogICAgICAgIHJldHVybiAiIgogICAgZWxzZToKICAgICAgICByZXN1bHRfeG1sID0gIiIKICAgICAgICBmb3IgayBpbiBkaWM6CiAgICAgICAgICAgIGVsZW0gPSBFbGVUcmVlLkVsZW1lbnQoaykKICAgICAgICAgICAgX2dldF94bWxfZmFjdG9yeShlbGVtLCBkaWNba10pCiAgICAgICAgICAgIHJlc3VsdF94bWwgKz0gYnl0ZXMuZGVjb2RlKEVsZVRyZWUudG9zdHJpbmcoZWxlbSksIGVuY29kaW5nPSJ1dGYtOCIpCiAgICAgICAgcmV0dXJuIHJlc3VsdF94bWwK

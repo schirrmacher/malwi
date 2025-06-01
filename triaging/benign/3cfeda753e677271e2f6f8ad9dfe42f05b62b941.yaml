@@ -1,0 +1,40 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/pycryptoenv/1.0.7/pycryptoenv-1.0.7/pycryptoenv-1.0.7/pycryptoenv/_mac/_common_crypto.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      # coding: utf-8
+      from __future__ import unicode_literals, division, absolute_import, print_function
+
+      from .. import ffi
+
+      if ffi() == 'cffi':
+          from ._common_crypto_cffi import CommonCrypto
+      else:
+          from ._common_crypto_ctypes import CommonCrypto
+
+
+      __all__ = [
+          'CommonCrypto',
+          'CommonCryptoConst',
+      ]
+
+
+      class CommonCryptoConst():
+          kCCPBKDF2 = 2
+          kCCPRFHmacAlgSHA1 = 1
+          kCCPRFHmacAlgSHA224 = 2
+          kCCPRFHmacAlgSHA256 = 3
+          kCCPRFHmacAlgSHA384 = 4
+          kCCPRFHmacAlgSHA512 = 5
+    tokens: resume load_const INTEGER load_const import_name __future__ import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from division store_name division import_from absolute_import store_name absolute_import import_from print_function store_name print_function pop_top load_const INTEGER load_const import_name import_from ffi store_name ffi pop_top push_null load_name ffi call load_const cffi compare_op == pop_jump_if_false TO_NUMBER load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from CommonCrypto store_name CommonCrypto pop_top jump_forward TO_NUMBER load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from CommonCrypto store_name CommonCrypto pop_top load_const CommonCrypto load_const STRING_LEN_S_ENT_HIGH build_list store_name __all__ push_null load_build_class load_const OBJECT make_function load_const STRING_LEN_S_ENT_HIGH call store_name STRING_LEN_S_ENT_HIGH return_const None
+    hash: a84abb84cd9d5efe2efa298b4de0be1fa118417ea0433e52aeb71d2023319e3c
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/pycryptoenv/1.0.7/pycryptoenv-1.0.7/pycryptoenv-1.0.7/pycryptoenv/_mac/_common_crypto.py
+  : IyBjb2Rpbmc6IHV0Zi04CmZyb20gX19mdXR1cmVfXyBpbXBvcnQgdW5pY29kZV9saXRlcmFscywgZGl2aXNpb24sIGFic29sdXRlX2ltcG9ydCwgcHJpbnRfZnVuY3Rpb24KCmZyb20gLi4gaW1wb3J0IGZmaQoKaWYgZmZpKCkgPT0gJ2NmZmknOgogICAgZnJvbSAuX2NvbW1vbl9jcnlwdG9fY2ZmaSBpbXBvcnQgQ29tbW9uQ3J5cHRvCmVsc2U6CiAgICBmcm9tIC5fY29tbW9uX2NyeXB0b19jdHlwZXMgaW1wb3J0IENvbW1vbkNyeXB0bwoKCl9fYWxsX18gPSBbCiAgICAnQ29tbW9uQ3J5cHRvJywKICAgICdDb21tb25DcnlwdG9Db25zdCcsCl0KCgpjbGFzcyBDb21tb25DcnlwdG9Db25zdCgpOgogICAga0NDUEJLREYyID0gMgogICAga0NDUFJGSG1hY0FsZ1NIQTEgPSAxCiAgICBrQ0NQUkZIbWFjQWxnU0hBMjI0ID0gMgogICAga0NDUFJGSG1hY0FsZ1NIQTI1NiA9IDMKICAgIGtDQ1BSRkhtYWNBbGdTSEEzODQgPSA0CiAgICBrQ0NQUkZIbWFjQWxnU0hBNTEyID0gNQo=

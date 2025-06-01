@@ -1,0 +1,130 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/overridesslcommonname.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      # Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+      #
+      # Licensed under the Apache License, Version 2.0 (the "License"). You
+      # may not use this file except in compliance with the License. A copy of
+      # the License is located at
+      #
+      #     http://aws.amazon.com/apache2.0/
+      #
+      # or in the "license" file accompanying this file. This file is
+      # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+      # ANY KIND, either express or implied. See the License for the specific
+      # language governing permissions and limitations under the License.
+
+
+      SSL_COMMON_NAMES = {
+          "sqs": {
+              "af-south-1": "af-south-1.queue.amazonaws.com",
+              "ap-east-1": "ap-east-1.queue.amazonaws.com",
+              "ap-northeast-1": "ap-northeast-1.queue.amazonaws.com",
+              "ap-northeast-2": "ap-northeast-2.queue.amazonaws.com",
+              "ap-northeast-3": "ap-northeast-3.queue.amazonaws.com",
+              "ap-south-1": "ap-south-1.queue.amazonaws.com",
+              "ap-southeast-1": "ap-southeast-1.queue.amazonaws.com",
+              "ap-southeast-2": "ap-southeast-2.queue.amazonaws.com",
+              "ap-southeast-3": "ap-southeast-3.queue.amazonaws.com",
+              "ca-central-1": "ca-central-1.queue.amazonaws.com",
+              "eu-central-1": "eu-central-1.queue.amazonaws.com",
+              "eu-north-1": "eu-north-1.queue.amazonaws.com",
+              "eu-south-1": "eu-south-1.queue.amazonaws.com",
+              "eu-west-1": "eu-west-1.queue.amazonaws.com",
+              "eu-west-2": "eu-west-2.queue.amazonaws.com",
+              "eu-west-3": "eu-west-3.queue.amazonaws.com",
+              "me-south-1": "me-south-1.queue.amazonaws.com",
+              "sa-east-1": "sa-east-1.queue.amazonaws.com",
+              "us-east-1": "queue.amazonaws.com",
+              "us-east-2": "us-east-2.queue.amazonaws.com",
+              "us-west-1": "us-west-1.queue.amazonaws.com",
+              "us-west-2": "us-west-2.queue.amazonaws.com",
+              "cn-north-1": "cn-north-1.queue.amazonaws.com.cn",
+              "cn-northwest-1": "cn-northwest-1.queue.amazonaws.com.cn",
+              "us-gov-west-1": "us-gov-west-1.queue.amazonaws.com",
+              "us-isob-east-1": "us-isob-east-1.queue.sc2s.sgov.gov",
+          },
+          "emr": {
+              "af-south-1": "af-south-1.elasticmapreduce.amazonaws.com",
+              "ap-east-1": "ap-east-1.elasticmapreduce.amazonaws.com",
+              "ap-northeast-1": "ap-northeast-1.elasticmapreduce.amazonaws.com",
+              "ap-northeast-2": "ap-northeast-2.elasticmapreduce.amazonaws.com",
+              "ap-northeast-3": "ap-northeast-3.elasticmapreduce.amazonaws.com",
+              "ap-south-1": "ap-south-1.elasticmapreduce.amazonaws.com",
+              "ap-southeast-1": "ap-southeast-1.elasticmapreduce.amazonaws.com",
+              "ap-southeast-2": "ap-southeast-2.elasticmapreduce.amazonaws.com",
+              "ap-southeast-3": "ap-southeast-3.elasticmapreduce.amazonaws.com",
+              "ca-central-1": "ca-central-1.elasticmapreduce.amazonaws.com",
+              "eu-north-1": "eu-north-1.elasticmapreduce.amazonaws.com",
+              "eu-south-1": "eu-south-1.elasticmapreduce.amazonaws.com",
+              "eu-west-1": "eu-west-1.elasticmapreduce.amazonaws.com",
+              "eu-west-2": "eu-west-2.elasticmapreduce.amazonaws.com",
+              "eu-west-3": "eu-west-3.elasticmapreduce.amazonaws.com",
+              "me-south-1": "me-south-1.elasticmapreduce.amazonaws.com",
+              "sa-east-1": "sa-east-1.elasticmapreduce.amazonaws.com",
+              "us-east-2": "us-east-2.elasticmapreduce.amazonaws.com",
+              "us-west-1": "us-west-1.elasticmapreduce.amazonaws.com",
+              "us-west-2": "us-west-2.elasticmapreduce.amazonaws.com",
+          },
+          "rds": {
+              "us-east-1": "rds.amazonaws.com",
+          },
+          "docdb": {
+              "us-east-1": "rds.amazonaws.com",
+          },
+          "neptune": {
+              "us-east-1": "rds.amazonaws.com",
+          },
+          "health": {
+              "aws-global": "health.us-east-1.amazonaws.com",
+              "af-south-1": "health.us-east-1.amazonaws.com",
+              "ap-east-1": "health.us-east-1.amazonaws.com",
+              "ap-northeast-1": "health.us-east-1.amazonaws.com",
+              "ap-northeast-2": "health.us-east-1.amazonaws.com",
+              "ap-northeast-3": "health.us-east-1.amazonaws.com",
+              "ap-south-1": "health.us-east-1.amazonaws.com",
+              "ap-southeast-1": "health.us-east-1.amazonaws.com",
+              "ap-southeast-2": "health.us-east-1.amazonaws.com",
+              "ap-southeast-3": "health.us-east-1.amazonaws.com",
+              "ca-central-1": "health.us-east-1.amazonaws.com",
+              "eu-central-1": "health.us-east-1.amazonaws.com",
+              "eu-north-1": "health.us-east-1.amazonaws.com",
+              "eu-south-1": "health.us-east-1.amazonaws.com",
+              "eu-west-1": "health.us-east-1.amazonaws.com",
+              "eu-west-2": "health.us-east-1.amazonaws.com",
+              "eu-west-3": "health.us-east-1.amazonaws.com",
+              "me-south-1": "health.us-east-1.amazonaws.com",
+              "sa-east-1": "health.us-east-1.amazonaws.com",
+              "us-east-1": "health.us-east-1.amazonaws.com",
+              "us-east-2": "health.us-east-1.amazonaws.com",
+              "us-west-1": "health.us-east-1.amazonaws.com",
+              "us-west-2": "health.us-east-1.amazonaws.com",
+              "cn-north-1": "health.cn-northwest-1.amazonaws.com.cn",
+              "cn-northwest-1": "health.cn-northwest-1.amazonaws.com.cn",
+              "aws-cn-global": "health.cn-northwest-1.amazonaws.com.cn",
+          },
+      }
+
+      REGION_TO_PARTITION_OVERRIDE = {
+          "aws-global": "aws",
+          "aws-cn-global": "aws-cn",
+      }
+
+
+      def register_override_ssl_common_name(cli):
+          cli.register_last(
+              "before-building-argument-table-parser", update_endpoint_url
+          )
+    tokens: resume build_map load_const af-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-east-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const ca-central-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-central-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-north-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const me-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const build_const_key_map dict_update build_map load_const af-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-east-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const ca-central-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-north-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const me-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const sa-east-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const build_const_key_map dict_update load_const us-east-1 load_const STRING_LEN_S_ENT_HIGH build_map load_const us-east-1 load_const STRING_LEN_S_ENT_HIGH build_map load_const us-east-1 load_const STRING_LEN_S_ENT_HIGH build_map build_map load_const aws-global load_const STRING_LEN_S_ENT_HIGH map_add load_const af-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-east-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-northeast-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const ap-southeast-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const ca-central-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-central-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-north-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-south-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-1 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-2 load_const STRING_LEN_S_ENT_HIGH map_add load_const eu-west-3 load_const STRING_LEN_S_ENT_HIGH map_add load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH load_const build_const_key_map dict_update load_const build_const_key_map store_name STRING_LEN_S_ENT_HIGH load_const aws load_const aws-cn load_const build_const_key_map store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH return_const None
+    hash: bd9bff7707eca6edba7be7549edc73fbb270044befabe86a472facf0bc0c39f1
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/overridesslcommonname.py
+  : IyBDb3B5cmlnaHQgMjAyMiBBbWF6b24uY29tLCBJbmMuIG9yIGl0cyBhZmZpbGlhdGVzLiBBbGwgUmlnaHRzIFJlc2VydmVkLgojCiMgTGljZW5zZWQgdW5kZXIgdGhlIEFwYWNoZSBMaWNlbnNlLCBWZXJzaW9uIDIuMCAodGhlICJMaWNlbnNlIikuIFlvdQojIG1heSBub3QgdXNlIHRoaXMgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZSB3aXRoIHRoZSBMaWNlbnNlLiBBIGNvcHkgb2YKIyB0aGUgTGljZW5zZSBpcyBsb2NhdGVkIGF0CiMKIyAgICAgaHR0cDovL2F3cy5hbWF6b24uY29tL2FwYWNoZTIuMC8KIwojIG9yIGluIHRoZSAibGljZW5zZSIgZmlsZSBhY2NvbXBhbnlpbmcgdGhpcyBmaWxlLiBUaGlzIGZpbGUgaXMKIyBkaXN0cmlidXRlZCBvbiBhbiAiQVMgSVMiIEJBU0lTLCBXSVRIT1VUIFdBUlJBTlRJRVMgT1IgQ09ORElUSU9OUyBPRgojIEFOWSBLSU5ELCBlaXRoZXIgZXhwcmVzcyBvciBpbXBsaWVkLiBTZWUgdGhlIExpY2Vuc2UgZm9yIHRoZSBzcGVjaWZpYwojIGxhbmd1YWdlIGdvdmVybmluZyBwZXJtaXNzaW9ucyBhbmQgbGltaXRhdGlvbnMgdW5kZXIgdGhlIExpY2Vuc2UuCgoKU1NMX0NPTU1PTl9OQU1FUyA9IHsKICAgICJzcXMiOiB7CiAgICAgICAgImFmLXNvdXRoLTEiOiAiYWYtc291dGgtMS5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtZWFzdC0xIjogImFwLWVhc3QtMS5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtbm9ydGhlYXN0LTEiOiAiYXAtbm9ydGhlYXN0LTEucXVldWUuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImFwLW5vcnRoZWFzdC0yIjogImFwLW5vcnRoZWFzdC0yLnF1ZXVlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJhcC1ub3J0aGVhc3QtMyI6ICJhcC1ub3J0aGVhc3QtMy5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtc291dGgtMSI6ICJhcC1zb3V0aC0xLnF1ZXVlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJhcC1zb3V0aGVhc3QtMSI6ICJhcC1zb3V0aGVhc3QtMS5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtc291dGhlYXN0LTIiOiAiYXAtc291dGhlYXN0LTIucXVldWUuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImFwLXNvdXRoZWFzdC0zIjogImFwLXNvdXRoZWFzdC0zLnF1ZXVlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJjYS1jZW50cmFsLTEiOiAiY2EtY2VudHJhbC0xLnF1ZXVlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJldS1jZW50cmFsLTEiOiAiZXUtY2VudHJhbC0xLnF1ZXVlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJldS1ub3J0aC0xIjogImV1LW5vcnRoLTEucXVldWUuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImV1LXNvdXRoLTEiOiAiZXUtc291dGgtMS5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiZXUtd2VzdC0xIjogImV1LXdlc3QtMS5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiZXUtd2VzdC0yIjogImV1LXdlc3QtMi5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiZXUtd2VzdC0zIjogImV1LXdlc3QtMy5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAibWUtc291dGgtMSI6ICJtZS1zb3V0aC0xLnF1ZXVlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJzYS1lYXN0LTEiOiAic2EtZWFzdC0xLnF1ZXVlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJ1cy1lYXN0LTEiOiAicXVldWUuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgInVzLWVhc3QtMiI6ICJ1cy1lYXN0LTIucXVldWUuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgInVzLXdlc3QtMSI6ICJ1cy13ZXN0LTEucXVldWUuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgInVzLXdlc3QtMiI6ICJ1cy13ZXN0LTIucXVldWUuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImNuLW5vcnRoLTEiOiAiY24tbm9ydGgtMS5xdWV1ZS5hbWF6b25hd3MuY29tLmNuIiwKICAgICAgICAiY24tbm9ydGh3ZXN0LTEiOiAiY24tbm9ydGh3ZXN0LTEucXVldWUuYW1hem9uYXdzLmNvbS5jbiIsCiAgICAgICAgInVzLWdvdi13ZXN0LTEiOiAidXMtZ292LXdlc3QtMS5xdWV1ZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAidXMtaXNvYi1lYXN0LTEiOiAidXMtaXNvYi1lYXN0LTEucXVldWUuc2Mycy5zZ292LmdvdiIsCiAgICB9LAogICAgImVtciI6IHsKICAgICAgICAiYWYtc291dGgtMSI6ICJhZi1zb3V0aC0xLmVsYXN0aWNtYXByZWR1Y2UuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImFwLWVhc3QtMSI6ICJhcC1lYXN0LTEuZWxhc3RpY21hcHJlZHVjZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtbm9ydGhlYXN0LTEiOiAiYXAtbm9ydGhlYXN0LTEuZWxhc3RpY21hcHJlZHVjZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtbm9ydGhlYXN0LTIiOiAiYXAtbm9ydGhlYXN0LTIuZWxhc3RpY21hcHJlZHVjZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtbm9ydGhlYXN0LTMiOiAiYXAtbm9ydGhlYXN0LTMuZWxhc3RpY21hcHJlZHVjZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtc291dGgtMSI6ICJhcC1zb3V0aC0xLmVsYXN0aWNtYXByZWR1Y2UuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImFwLXNvdXRoZWFzdC0xIjogImFwLXNvdXRoZWFzdC0xLmVsYXN0aWNtYXByZWR1Y2UuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImFwLXNvdXRoZWFzdC0yIjogImFwLXNvdXRoZWFzdC0yLmVsYXN0aWNtYXByZWR1Y2UuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImFwLXNvdXRoZWFzdC0zIjogImFwLXNvdXRoZWFzdC0zLmVsYXN0aWNtYXByZWR1Y2UuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImNhLWNlbnRyYWwtMSI6ICJjYS1jZW50cmFsLTEuZWxhc3RpY21hcHJlZHVjZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiZXUtbm9ydGgtMSI6ICJldS1ub3J0aC0xLmVsYXN0aWNtYXByZWR1Y2UuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImV1LXNvdXRoLTEiOiAiZXUtc291dGgtMS5lbGFzdGljbWFwcmVkdWNlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJldS13ZXN0LTEiOiAiZXUtd2VzdC0xLmVsYXN0aWNtYXByZWR1Y2UuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImV1LXdlc3QtMiI6ICJldS13ZXN0LTIuZWxhc3RpY21hcHJlZHVjZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiZXUtd2VzdC0zIjogImV1LXdlc3QtMy5lbGFzdGljbWFwcmVkdWNlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJtZS1zb3V0aC0xIjogIm1lLXNvdXRoLTEuZWxhc3RpY21hcHJlZHVjZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAic2EtZWFzdC0xIjogInNhLWVhc3QtMS5lbGFzdGljbWFwcmVkdWNlLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJ1cy1lYXN0LTIiOiAidXMtZWFzdC0yLmVsYXN0aWNtYXByZWR1Y2UuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgInVzLXdlc3QtMSI6ICJ1cy13ZXN0LTEuZWxhc3RpY21hcHJlZHVjZS5hbWF6b25hd3MuY29tIiwKICAgICAgICAidXMtd2VzdC0yIjogInVzLXdlc3QtMi5lbGFzdGljbWFwcmVkdWNlLmFtYXpvbmF3cy5jb20iLAogICAgfSwKICAgICJyZHMiOiB7CiAgICAgICAgInVzLWVhc3QtMSI6ICJyZHMuYW1hem9uYXdzLmNvbSIsCiAgICB9LAogICAgImRvY2RiIjogewogICAgICAgICJ1cy1lYXN0LTEiOiAicmRzLmFtYXpvbmF3cy5jb20iLAogICAgfSwKICAgICJuZXB0dW5lIjogewogICAgICAgICJ1cy1lYXN0LTEiOiAicmRzLmFtYXpvbmF3cy5jb20iLAogICAgfSwKICAgICJoZWFsdGgiOiB7CiAgICAgICAgImF3cy1nbG9iYWwiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYWYtc291dGgtMSI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJhcC1lYXN0LTEiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtbm9ydGhlYXN0LTEiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtbm9ydGhlYXN0LTIiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtbm9ydGhlYXN0LTMiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiYXAtc291dGgtMSI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJhcC1zb3V0aGVhc3QtMSI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJhcC1zb3V0aGVhc3QtMiI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJhcC1zb3V0aGVhc3QtMyI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJjYS1jZW50cmFsLTEiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiZXUtY2VudHJhbC0xIjogImhlYWx0aC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImV1LW5vcnRoLTEiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiZXUtc291dGgtMSI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJldS13ZXN0LTEiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiZXUtd2VzdC0yIjogImhlYWx0aC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgImV1LXdlc3QtMyI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJtZS1zb3V0aC0xIjogImhlYWx0aC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgInNhLWVhc3QtMSI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJ1cy1lYXN0LTEiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAidXMtZWFzdC0yIjogImhlYWx0aC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbSIsCiAgICAgICAgInVzLXdlc3QtMSI6ICJoZWFsdGgudXMtZWFzdC0xLmFtYXpvbmF3cy5jb20iLAogICAgICAgICJ1cy13ZXN0LTIiOiAiaGVhbHRoLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tIiwKICAgICAgICAiY24tbm9ydGgtMSI6ICJoZWFsdGguY24tbm9ydGh3ZXN0LTEuYW1hem9uYXdzLmNvbS5jbiIsCiAgICAgICAgImNuLW5vcnRod2VzdC0xIjogImhlYWx0aC5jbi1ub3J0aHdlc3QtMS5hbWF6b25hd3MuY29tLmNuIiwKICAgICAgICAiYXdzLWNuLWdsb2JhbCI6ICJoZWFsdGguY24tbm9ydGh3ZXN0LTEuYW1hem9uYXdzLmNvbS5jbiIsCiAgICB9LAp9CgpSRUdJT05fVE9fUEFSVElUSU9OX09WRVJSSURFID0gewogICAgImF3cy1nbG9iYWwiOiAiYXdzIiwKICAgICJhd3MtY24tZ2xvYmFsIjogImF3cy1jbiIsCn0KCgpkZWYgcmVnaXN0ZXJfb3ZlcnJpZGVfc3NsX2NvbW1vbl9uYW1lKGNsaSk6CiAgICBjbGkucmVnaXN0ZXJfbGFzdCgKICAgICAgICAiYmVmb3JlLWJ1aWxkaW5nLWFyZ3VtZW50LXRhYmxlLXBhcnNlciIsIHVwZGF0ZV9lbmRwb2ludF91cmwKICAgICkKCgpkZWYgdXBkYXRlX2VuZHBvaW50X3VybChzZXNzaW9uLCBwYXJzZWRfZ2xvYmFscywgKiprd2FyZ3MpOgogICAgc2VydmljZSA9IHBhcnNlZF9nbG9iYWxzLmNvbW1hbmQKICAgIGVuZHBvaW50cyA9IFNTTF9DT01NT05fTkFNRVMuZ2V0KHNlcnZpY2UpCiAgICAjIG9ubHkgY2hhbmdlIHVybCBpZiB1c2VyIGhhcyBub3Qgb3ZlcnJpZGRlbiBhbHJlYWR5IHRoZW1zZWx2ZXMKICAgIGlmIGVuZHBvaW50cyBpcyBub3QgTm9uZSBhbmQgcGFyc2VkX2dsb2JhbHMuZW5kcG9pbnRfdXJsIGlzIE5vbmU6CiAgICAgICAgcmVnaW9uID0gc2Vzc2lvbi5nZXRfY29uZmlnX3ZhcmlhYmxlKCJyZWdpb24iKQogICAgICAgIGVuZHBvaW50X3VybCA9IGVuZHBvaW50cy5nZXQocmVnaW9uKQogICAgICAgIGlmIGVuZHBvaW50X3VybCBpcyBub3QgTm9uZToKICAgICAgICAgICAgcGFyc2VkX2dsb2JhbHMuZW5kcG9pbnRfdXJsID0gZiJodHRwczovL3tlbmRwb2ludF91cmx9IgogICAgICAgICAgICBpZiBzZXJ2aWNlID09ICJoZWFsdGgiOgogICAgICAgICAgICAgICAgX292ZXJyaWRlX2hlYWx0aF9yZWdpb24ocmVnaW9uLCBzZXNzaW9uLCBwYXJzZWRfZ2xvYmFscykKCgpkZWYgX292ZXJyaWRlX2hlYWx0aF9yZWdpb24ocmVnaW9uLCBzZXNzaW9uLCBwYXJzZWRfZ2xvYmFscyk6CiAgICBpZiByZWdpb24gaW4gUkVHSU9OX1RPX1BBUlRJVElPTl9PVkVSUklERToKICAgICAgICBwYXJ0aXRpb24gPSBSRUdJT05fVE9fUEFSVElUSU9OX09WRVJSSURFW3JlZ2lvbl0KICAgIGVsc2U6CiAgICAgICAgcGFydGl0aW9uID0gc2Vzc2lvbi5nZXRfcGFydGl0aW9uX2Zvcl9yZWdpb24ocmVnaW9uKQogICAgaWYgcGFydGl0aW9uID09ICJhd3MtY24iOgogICAgICAgIHBhcnNlZF9nbG9iYWxzLnJlZ2lvbiA9ICJjbi1ub3J0aHdlc3QtMSIKICAgIGVsc2U6CiAgICAgICAgcGFyc2VkX2dsb2JhbHMucmVnaW9uID0gInVzLWVhc3QtMSIK

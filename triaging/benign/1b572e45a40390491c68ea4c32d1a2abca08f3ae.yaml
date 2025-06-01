@@ -1,0 +1,43 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/endpoint/endpoint_resolver_rules.py
+  contents:
+  - name: EndpointResolverRules.resolve
+    score: 0.0
+    code: |-
+      def resolve(self, request):
+              if request.endpoint_map is None or request.endpoint_regional is None:
+                  return None
+              request_network = "public" if not request.request_network else request.request_network
+
+              endpoint_regional = request.endpoint_regional
+              endpoint = ""
+              if request_network == "public":
+                  endpoint = request.endpoint_map.get(request.region_id, "")
+
+              if endpoint == "":
+                  if endpoint_regional == "regional":
+                      if not self.verify_region_id(request.region_id.lower()):
+                          return
+                      endpoint_domain = ".{region_id}.aliyuncs.com".format(
+                          region_id=request.region_id.lower())
+                  elif endpoint_regional == "central":
+                      endpoint_domain = ".aliyuncs.com"
+                  else:
+                      return None
+
+                  network = "" if request_network == "public" else "-" + request_network
+                  suffix = "-" + request.product_suffix if request.product_suffix else ""
+                  endpoint_param_list = [request.product_code_lower, suffix, network, endpoint_domain]
+
+                  endpoint = "".join(list(filter(lambda x: x, endpoint_param_list)))
+              return endpoint
+    tokens: resume load_fast request load_attr endpoint_map pop_jump_if_none TO_NUMBER load_fast request load_attr STRING_LEN_S_ENT_HIGH pop_jump_if_not_none TO_NUMBER return_const None load_fast request load_attr request_network pop_jump_if_true TO_NUMBER load_const public jump_forward TO_NUMBER load_fast request load_attr request_network store_fast request_network load_fast request load_attr STRING_LEN_S_ENT_HIGH store_fast STRING_LEN_S_ENT_HIGH load_const store_fast endpoint load_fast request_network load_const public compare_op == pop_jump_if_false TO_NUMBER load_fast request load_attr endpoint_map load_attr get load_fast request load_attr region_id load_const call store_fast endpoint load_fast endpoint load_const compare_op == pop_jump_if_false TO_NUMBER load_fast STRING_LEN_S_ENT_HIGH load_const regional compare_op == pop_jump_if_false TO_NUMBER load_fast self load_attr STRING_LEN_S_ENT_HIGH load_fast request load_attr region_id load_attr lower call call pop_jump_if_true TO_NUMBER return_const None load_const STRING_LEN_S_ENT_HIGH load_attr format load_fast request load_attr region_id load_attr lower call kw_names region_id call store_fast endpoint_domain jump_forward TO_NUMBER load_fast STRING_LEN_S_ENT_HIGH load_const central compare_op == pop_jump_if_false TO_NUMBER load_const .aliyuncs.com store_fast endpoint_domain jump_forward TO_NUMBER return_const None load_fast request_network load_const public compare_op == pop_jump_if_false TO_NUMBER load_const jump_forward TO_NUMBER load_const - load_fast request_network binary_op + store_fast network load_fast request load_attr product_suffix pop_jump_if_false TO_NUMBER load_const - load_fast request load_attr product_suffix binary_op + jump_forward TO_NUMBER load_const store_fast suffix load_fast request load_attr STRING_LEN_S_ENT_HIGH load_fast suffix load_fast network load_fast endpoint_domain build_list store_fast STRING_LEN_S_ENT_HIGH load_const load_attr join load_global list load_global filter load_const OBJECT make_function load_fast STRING_LEN_S_ENT_HIGH call call call store_fast endpoint load_fast endpoint return_value
+    hash: 1b78a7cd28901fb4e1515ad9ea5eceb9e41d3555e977003142450d0a7bde19db
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/endpoint/endpoint_resolver_rules.py
+  : IwojIExpY2Vuc2VkIHRvIHRoZSBBcGFjaGUgU29mdHdhcmUgRm91bmRhdGlvbiAoQVNGKSB1bmRlciBvbmUKIyBvciBtb3JlIGNvbnRyaWJ1dG9yIGxpY2Vuc2UgYWdyZWVtZW50cy4gIFNlZSB0aGUgTk9USUNFIGZpbGUKIyBkaXN0cmlidXRlZCB3aXRoIHNlbGYgd29yayBmb3IgYWRkaXRpb25hbCBpbmZvcm1hdGlvbgojIHJlZ2FyZGluZyBjb3B5cmlnaHQgb3duZXJzaGlwLiAgVGhlIEFTRiBsaWNlbnNlcyBzZWxmIGZpbGUKIyB0byB5b3UgdW5kZXIgdGhlIEFwYWNoZSBMaWNlbnNlLCBWZXJzaW9uIDIuMCAodGhlCiMgIkxpY2Vuc2UiKTsgeW91IG1heSBub3QgdXNlIHNlbGYgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZQojIHdpdGggdGhlIExpY2Vuc2UuICBZb3UgbWF5IG9idGFpbiBhIGNvcHkgb2YgdGhlIExpY2Vuc2UgYXQKIwojICAgICBodHRwOi8vd3d3LmFwYWNoZS5vcmcvbGljZW5zZXMvTElDRU5TRS0yLjAKIwojIFVubGVzcyByZXF1aXJlZCBieSBhcHBsaWNhYmxlIGxhdyBvciBhZ3JlZWQgdG8gaW4gd3JpdGluZywKIyBzb2Z0d2FyZSBkaXN0cmlidXRlZCB1bmRlciB0aGUgTGljZW5zZSBpcyBkaXN0cmlidXRlZCBvbiBhbgojICJBUyBJUyIgQkFTSVMsIFdJVEhPVVQgV0FSUkFOVElFUyBPUiBDT05ESVRJT05TIE9GIEFOWQojIEtJTkQsIGVpdGhlciBleHByZXNzIG9yIGltcGxpZWQuICBTZWUgdGhlIExpY2Vuc2UgZm9yIHRoZQojIHNwZWNpZmljIGxhbmd1YWdlIGdvdmVybmluZyBwZXJtaXNzaW9ucyBhbmQgbGltaXRhdGlvbnMKIyB1bmRlciB0aGUgTGljZW5zZS4KIwpmcm9tIGFsaXl1bnNka2NvcmUuZW5kcG9pbnQubG9jYWxfY29uZmlnX3JlZ2lvbmFsX2VuZHBvaW50X3Jlc29sdmVyIFwKICAgIGltcG9ydCBMb2NhbENvbmZpZ1JlZ2lvbmFsRW5kcG9pbnRSZXNvbHZlcgoKCmNsYXNzIEVuZHBvaW50UmVzb2x2ZXJSdWxlcyhMb2NhbENvbmZpZ1JlZ2lvbmFsRW5kcG9pbnRSZXNvbHZlcik6CiAgICBkZWYgX19pbml0X18oc2VsZiwgKmFyZ3MsICoqa3dhcmdzKToKICAgICAgICBMb2NhbENvbmZpZ1JlZ2lvbmFsRW5kcG9pbnRSZXNvbHZlci5fX2luaXRfXyhzZWxmKQogICAgICAgIHNlbGYucHJvZHVjdF9jb2RlX3ZhbGlkID0gRmFsc2UKICAgICAgICBzZWxmLnJlZ2lvbl9pZF92YWxpZCA9IEZhbHNlCiAgICAgICAgc2VsZi5lbmRwb2ludF9tYXAgPSBOb25lCiAgICAgICAgc2VsZi5lbmRwb2ludF9yZWdpb25hbCA9IE5vbmUKICAgICAgICBzZWxmLnJlcXVlc3RfbmV0d29yayA9ICdwdWJsaWMnCiAgICAgICAgc2VsZi5wcm9kdWN0X3N1ZmZpeCA9ICcnCgogICAgZGVmIHJlc29sdmUoc2VsZiwgcmVxdWVzdCk6CiAgICAgICAgaWYgcmVxdWVzdC5lbmRwb2ludF9tYXAgaXMgTm9uZSBvciByZXF1ZXN0LmVuZHBvaW50X3JlZ2lvbmFsIGlzIE5vbmU6CiAgICAgICAgICAgIHJldHVybiBOb25lCiAgICAgICAgcmVxdWVzdF9uZXR3b3JrID0gInB1YmxpYyIgaWYgbm90IHJlcXVlc3QucmVxdWVzdF9uZXR3b3JrIGVsc2UgcmVxdWVzdC5yZXF1ZXN0X25ldHdvcmsKCiAgICAgICAgZW5kcG9pbnRfcmVnaW9uYWwgPSByZXF1ZXN0LmVuZHBvaW50X3JlZ2lvbmFsCiAgICAgICAgZW5kcG9pbnQgPSAiIgogICAgICAgIGlmIHJlcXVlc3RfbmV0d29yayA9PSAicHVibGljIjoKICAgICAgICAgICAgZW5kcG9pbnQgPSByZXF1ZXN0LmVuZHBvaW50X21hcC5nZXQocmVxdWVzdC5yZWdpb25faWQsICIiKQoKICAgICAgICBpZiBlbmRwb2ludCA9PSAiIjoKICAgICAgICAgICAgaWYgZW5kcG9pbnRfcmVnaW9uYWwgPT0gInJlZ2lvbmFsIjoKICAgICAgICAgICAgICAgIGlmIG5vdCBzZWxmLnZlcmlmeV9yZWdpb25faWQocmVxdWVzdC5yZWdpb25faWQubG93ZXIoKSk6CiAgICAgICAgICAgICAgICAgICAgcmV0dXJuCiAgICAgICAgICAgICAgICBlbmRwb2ludF9kb21haW4gPSAiLntyZWdpb25faWR9LmFsaXl1bmNzLmNvbSIuZm9ybWF0KAogICAgICAgICAgICAgICAgICAgIHJlZ2lvbl9pZD1yZXF1ZXN0LnJlZ2lvbl9pZC5sb3dlcigpKQogICAgICAgICAgICBlbGlmIGVuZHBvaW50X3JlZ2lvbmFsID09ICJjZW50cmFsIjoKICAgICAgICAgICAgICAgIGVuZHBvaW50X2RvbWFpbiA9ICIuYWxpeXVuY3MuY29tIgogICAgICAgICAgICBlbHNlOgogICAgICAgICAgICAgICAgcmV0dXJuIE5vbmUKCiAgICAgICAgICAgIG5ldHdvcmsgPSAiIiBpZiByZXF1ZXN0X25ldHdvcmsgPT0gInB1YmxpYyIgZWxzZSAiLSIgKyByZXF1ZXN0X25ldHdvcmsKICAgICAgICAgICAgc3VmZml4ID0gIi0iICsgcmVxdWVzdC5wcm9kdWN0X3N1ZmZpeCBpZiByZXF1ZXN0LnByb2R1Y3Rfc3VmZml4IGVsc2UgIiIKICAgICAgICAgICAgZW5kcG9pbnRfcGFyYW1fbGlzdCA9IFtyZXF1ZXN0LnByb2R1Y3RfY29kZV9sb3dlciwgc3VmZml4LCBuZXR3b3JrLCBlbmRwb2ludF9kb21haW5dCgogICAgICAgICAgICBlbmRwb2ludCA9ICIiLmpvaW4obGlzdChmaWx0ZXIobGFtYmRhIHg6IHgsIGVuZHBvaW50X3BhcmFtX2xpc3QpKSkKICAgICAgICByZXR1cm4gZW5kcG9pbnQKCiAgICBkZWYgaXNfcHJvZHVjdF9jb2RlX3ZhbGlkKHNlbGYsIHJlcXVlc3QpOgogICAgICAgIHJldHVybiBzZWxmLnByb2R1Y3RfY29kZV92YWxpZAoKICAgIGRlZiBpc19yZWdpb25faWRfdmFsaWQoc2VsZiwgcmVxdWVzdCk6CiAgICAgICAgcmV0dXJuIHNlbGYucmVnaW9uX2lkX3ZhbGlkCgogICAgQGNsYXNzbWV0aG9kCiAgICBkZWYgZ2V0X3ZhbGlkX3JlZ2lvbl9pZHNfYnlfcHJvZHVjdChjbHMsIHByb2R1Y3RfY29kZSk6CiAgICAgICAgcmV0dXJuIE5vbmUK

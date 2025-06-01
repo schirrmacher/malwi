@@ -1,0 +1,79 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/emr/ssh.py
+  contents:
+  - name: Socks
+    score: 0.0
+    code: |-
+      # Copyright 2014 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+      #
+      # Licensed under the Apache License, Version 2.0 (the "License"). You
+      # may not use this file except in compliance with the License. A copy of
+      # the License is located at
+      #
+      #     http://aws.amazon.com/apache2.0/
+      #
+      # or in the "license" file accompanying this file. This file is
+      # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+      # ANY KIND, either express or implied. See the License for the specific
+      # language governing permissions and limitations under the License.
+
+      import os
+      import subprocess
+      import tempfile
+
+      from awscli.customizations.emr import constants
+      from awscli.customizations.emr import emrutils
+      from awscli.customizations.emr import sshutils
+      from awscli.customizations.emr.command import Command
+
+      KEY_PAIR_FILE_HELP_TEXT = '\nA value for the variable Key Pair File ' \
+          'can be set in the AWS CLI config file using the ' \
+          '"aws configure set emr.key_pair_file <value>" command.\n'
+
+
+      class Socks(Command):
+          NAME = 'socks'
+          DESCRIPTION = ('Create a socks tunnel on port 8157 from your machine '
+                         'to the master.\n%s' % KEY_PAIR_FILE_HELP_TEXT)
+          ARG_TABLE = [
+              {'name': 'cluster-id', 'required': True,
+               'help_text': 'Cluster Id of cluster you want to ssh into'},
+              {'name': 'key-pair-file', 'required': True,
+               'help_text': 'Private key file to use for login'},
+          ]
+
+          def _run_main_command(self, parsed_args, parsed_globals):
+              try:
+                  master_dns = sshutils.validate_and_find_master_dns(
+                      session=self._session,
+                      parsed_globals=parsed_globals,
+                      cluster_id=parsed_args.cluster_id)
+
+                  key_file = parsed_args.key_pair_file
+                  sshutils.validate_ssh_with_key_file(key_file)
+                  f = tempfile.NamedTemporaryFile(delete=False)
+                  if (emrutils.which('ssh') or emrutils.which('ssh.exe')):
+                      command = ['ssh', '-o', 'StrictHostKeyChecking=no', '-o',
+                                 'ServerAliveInterval=10', '-ND', '8157', '-i',
+                                 parsed_args.key_pair_file, constants.SSH_USER +
+                                 '@' + master_dns]
+                  else:
+                      command = ['putty', '-ssh', '-i', parsed_args.key_pair_file,
+                                 constants.SSH_USER + '@' + master_dns, '-N', '-D',
+                                 '8157']
+
+                  print(' '.join(command))
+                  rc = subprocess.call(command)
+                  return rc
+              except KeyboardInterrupt:
+                  print('Disabling Socks Tunnel.')
+                  return 0
+    tokens: resume load_name __name__ store_name __module__ load_const Socks store_name __qualname__ load_const socks store_name NAME load_const STRING_LEN_S_ENT_HIGH load_name STRING_LEN_S_ENT_HIGH binary_op % store_name DESCRIPTION load_const cluster-id load_const INTEGER load_const STRING_LEN_S_ENT_HIGH load_const build_const_key_map load_const key-pair-file load_const INTEGER load_const STRING_LEN_S_ENT_HIGH load_const build_const_key_map build_list store_name ARG_TABLE load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH return_const None
+    hash: dd376881f1b374781c3c8773c3231922c080f22e235a65c28e35869266183263
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/emr/ssh.py: IyBDb3B5cmlnaHQgMjAxNCBBbWF6b24uY29tLCBJbmMuIG9yIGl0cyBhZmZpbGlhdGVzLiBBbGwgUmlnaHRzIFJlc2VydmVkLgojCiMgTGljZW5zZWQgdW5kZXIgdGhlIEFwYWNoZSBMaWNlbnNlLCBWZXJzaW9uIDIuMCAodGhlICJMaWNlbnNlIikuIFlvdQojIG1heSBub3QgdXNlIHRoaXMgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZSB3aXRoIHRoZSBMaWNlbnNlLiBBIGNvcHkgb2YKIyB0aGUgTGljZW5zZSBpcyBsb2NhdGVkIGF0CiMKIyAgICAgaHR0cDovL2F3cy5hbWF6b24uY29tL2FwYWNoZTIuMC8KIwojIG9yIGluIHRoZSAibGljZW5zZSIgZmlsZSBhY2NvbXBhbnlpbmcgdGhpcyBmaWxlLiBUaGlzIGZpbGUgaXMKIyBkaXN0cmlidXRlZCBvbiBhbiAiQVMgSVMiIEJBU0lTLCBXSVRIT1VUIFdBUlJBTlRJRVMgT1IgQ09ORElUSU9OUyBPRgojIEFOWSBLSU5ELCBlaXRoZXIgZXhwcmVzcyBvciBpbXBsaWVkLiBTZWUgdGhlIExpY2Vuc2UgZm9yIHRoZSBzcGVjaWZpYwojIGxhbmd1YWdlIGdvdmVybmluZyBwZXJtaXNzaW9ucyBhbmQgbGltaXRhdGlvbnMgdW5kZXIgdGhlIExpY2Vuc2UuCgppbXBvcnQgb3MKaW1wb3J0IHN1YnByb2Nlc3MKaW1wb3J0IHRlbXBmaWxlCgpmcm9tIGF3c2NsaS5jdXN0b21pemF0aW9ucy5lbXIgaW1wb3J0IGNvbnN0YW50cwpmcm9tIGF3c2NsaS5jdXN0b21pemF0aW9ucy5lbXIgaW1wb3J0IGVtcnV0aWxzCmZyb20gYXdzY2xpLmN1c3RvbWl6YXRpb25zLmVtciBpbXBvcnQgc3NodXRpbHMKZnJvbSBhd3NjbGkuY3VzdG9taXphdGlvbnMuZW1yLmNvbW1hbmQgaW1wb3J0IENvbW1hbmQKCktFWV9QQUlSX0ZJTEVfSEVMUF9URVhUID0gJ1xuQSB2YWx1ZSBmb3IgdGhlIHZhcmlhYmxlIEtleSBQYWlyIEZpbGUgJyBcCiAgICAnY2FuIGJlIHNldCBpbiB0aGUgQVdTIENMSSBjb25maWcgZmlsZSB1c2luZyB0aGUgJyBcCiAgICAnImF3cyBjb25maWd1cmUgc2V0IGVtci5rZXlfcGFpcl9maWxlIDx2YWx1ZT4iIGNvbW1hbmQuXG4nCgoKY2xhc3MgU29ja3MoQ29tbWFuZCk6CiAgICBOQU1FID0gJ3NvY2tzJwogICAgREVTQ1JJUFRJT04gPSAoJ0NyZWF0ZSBhIHNvY2tzIHR1bm5lbCBvbiBwb3J0IDgxNTcgZnJvbSB5b3VyIG1hY2hpbmUgJwogICAgICAgICAgICAgICAgICAgJ3RvIHRoZSBtYXN0ZXIuXG4lcycgJSBLRVlfUEFJUl9GSUxFX0hFTFBfVEVYVCkKICAgIEFSR19UQUJMRSA9IFsKICAgICAgICB7J25hbWUnOiAnY2x1c3Rlci1pZCcsICdyZXF1aXJlZCc6IFRydWUsCiAgICAgICAgICdoZWxwX3RleHQnOiAnQ2x1c3RlciBJZCBvZiBjbHVzdGVyIHlvdSB3YW50IHRvIHNzaCBpbnRvJ30sCiAgICAgICAgeyduYW1lJzogJ2tleS1wYWlyLWZpbGUnLCAncmVxdWlyZWQnOiBUcnVlLAogICAgICAgICAnaGVscF90ZXh0JzogJ1ByaXZhdGUga2V5IGZpbGUgdG8gdXNlIGZvciBsb2dpbid9LAogICAgXQoKICAgIGRlZiBfcnVuX21haW5fY29tbWFuZChzZWxmLCBwYXJzZWRfYXJncywgcGFyc2VkX2dsb2JhbHMpOgogICAgICAgIHRyeToKICAgICAgICAgICAgbWFzdGVyX2RucyA9IHNzaHV0aWxzLnZhbGlkYXRlX2FuZF9maW5kX21hc3Rlcl9kbnMoCiAgICAgICAgICAgICAgICBzZXNzaW9uPXNlbGYuX3Nlc3Npb24sCiAgICAgICAgICAgICAgICBwYXJzZWRfZ2xvYmFscz1wYXJzZWRfZ2xvYmFscywKICAgICAgICAgICAgICAgIGNsdXN0ZXJfaWQ9cGFyc2VkX2FyZ3MuY2x1c3Rlcl9pZCkKCiAgICAgICAgICAgIGtleV9maWxlID0gcGFyc2VkX2FyZ3Mua2V5X3BhaXJfZmlsZQogICAgICAgICAgICBzc2h1dGlscy52YWxpZGF0ZV9zc2hfd2l0aF9rZXlfZmlsZShrZXlfZmlsZSkKICAgICAgICAgICAgZiA9IHRlbXBmaWxlLk5hbWVkVGVtcG9yYXJ5RmlsZShkZWxldGU9RmFsc2UpCiAgICAgICAgICAgIGlmIChlbXJ1dGlscy53aGljaCgnc3NoJykgb3IgZW1ydXRpbHMud2hpY2goJ3NzaC5leGUnKSk6CiAgICAgICAgICAgICAgICBjb21tYW5kID0gWydzc2gnLCAnLW8nLCAnU3RyaWN0SG9zdEtleUNoZWNraW5nPW5vJywgJy1vJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgJ1NlcnZlckFsaXZlSW50ZXJ2YWw9MTAnLCAnLU5EJywgJzgxNTcnLCAnLWknLAogICAgICAgICAgICAgICAgICAgICAgICAgICBwYXJzZWRfYXJncy5rZXlfcGFpcl9maWxlLCBjb25zdGFudHMuU1NIX1VTRVIgKwogICAgICAgICAgICAgICAgICAgICAgICAgICAnQCcgKyBtYXN0ZXJfZG5zXQogICAgICAgICAgICBlbHNlOgogICAgICAgICAgICAgICAgY29tbWFuZCA9IFsncHV0dHknLCAnLXNzaCcsICctaScsIHBhcnNlZF9hcmdzLmtleV9wYWlyX2ZpbGUsCiAgICAgICAgICAgICAgICAgICAgICAgICAgIGNvbnN0YW50cy5TU0hfVVNFUiArICdAJyArIG1hc3Rlcl9kbnMsICctTicsICctRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICc4MTU3J10KCiAgICAgICAgICAgIHByaW50KCcgJy5qb2luKGNvbW1hbmQpKQogICAgICAgICAgICByYyA9IHN1YnByb2Nlc3MuY2FsbChjb21tYW5kKQogICAgICAgICAgICByZXR1cm4gcmMKICAgICAgICBleGNlcHQgS2V5Ym9hcmRJbnRlcnJ1cHQ6CiAgICAgICAgICAgIHByaW50KCdEaXNhYmxpbmcgU29ja3MgVHVubmVsLicpCiAgICAgICAgICAgIHJldHVybiAwCgoKY2xhc3MgU1NIKENvbW1hbmQpOgogICAgTkFNRSA9ICdzc2gnCiAgICBERVNDUklQVElPTiA9ICgnU1NIIGludG8gbWFzdGVyIG5vZGUgb2YgdGhlIGNsdXN0ZXIuXG4lcycgJQogICAgICAgICAgICAgICAgICAgS0VZX1BBSVJfRklMRV9IRUxQX1RFWFQpCiAgICBBUkdfVEFCTEUgPSBbCiAgICAgICAgeyduYW1lJzogJ2NsdXN0ZXItaWQnLCAncmVxdWlyZWQnOiBUcnVlLAogICAgICAgICAnaGVscF90ZXh0JzogJ0NsdXN0ZXIgSWQgb2YgY2x1c3RlciB5b3Ugd2FudCB0byBzc2ggaW50byd9LAogICAgICAgIHsnbmFtZSc6ICdrZXktcGFpci1maWxlJywgJ3JlcXVpcmVkJzogVHJ1ZSwKICAgICAgICAgJ2hlbHBfdGV4dCc6ICdQcml2YXRlIGtleSBmaWxlIHRvIHVzZSBmb3IgbG9naW4nfSwKICAgICAgICB7J25hbWUnOiAnY29tbWFuZCcsICdoZWxwX3RleHQnOiAnQ29tbWFuZCB0byBleGVjdXRlIG9uIE1hc3RlciBOb2RlJ30KICAgIF0KCiAgICBkZWYgX3J1bl9tYWluX2NvbW1hbmQoc2VsZiwgcGFyc2VkX2FyZ3MsIHBhcnNlZF9nbG9iYWxzKToKICAgICAgICBtYXN0ZXJfZG5zID0gc3NodXRpbHMudmFsaWRhdGVfYW5kX2ZpbmRfbWFzdGVyX2RucygKICAgICAgICAgICAgc2Vzc2lvbj1zZWxmLl9zZXNzaW9uLAogICAgICAgICAgICBwYXJzZWRfZ2xvYmFscz1wYXJzZWRfZ2xvYmFscywKICAgICAgICAgICAgY2x1c3Rlcl9pZD1wYXJzZWRfYXJncy5jbHVzdGVyX2lkKQoKICAgICAgICBrZXlfZmlsZSA9IHBhcnNlZF9hcmdzLmtleV9wYWlyX2ZpbGUKICAgICAgICBzc2h1dGlscy52YWxpZGF0ZV9zc2hfd2l0aF9rZXlfZmlsZShrZXlfZmlsZSkKICAgICAgICBmID0gdGVtcGZpbGUuTmFtZWRUZW1wb3JhcnlGaWxlKGRlbGV0ZT1GYWxzZSkKICAgICAgICBpZiAoZW1ydXRpbHMud2hpY2goJ3NzaCcpIG9yIGVtcnV0aWxzLndoaWNoKCdzc2guZXhlJykpOgogICAgICAgICAgICBjb21tYW5kID0gWydzc2gnLCAnLW8nLCAnU3RyaWN0SG9zdEtleUNoZWNraW5nPW5vJywgJy1vJywKICAgICAgICAgICAgICAgICAgICAgICAnU2VydmVyQWxpdmVJbnRlcnZhbD0xMCcsICctaScsCiAgICAgICAgICAgICAgICAgICAgICAgcGFyc2VkX2FyZ3Mua2V5X3BhaXJfZmlsZSwgY29uc3RhbnRzLlNTSF9VU0VSICsKICAgICAgICAgICAgICAgICAgICAgICAnQCcgKyBtYXN0ZXJfZG5zLCAnLXQnXQogICAgICAgICAgICBpZiBwYXJzZWRfYXJncy5jb21tYW5kOgogICAgICAgICAgICAgICAgY29tbWFuZC5hcHBlbmQocGFyc2VkX2FyZ3MuY29tbWFuZCkKICAgICAgICBlbHNlOgogICAgICAgICAgICBjb21tYW5kID0gWydwdXR0eScsICctc3NoJywgJy1pJywgcGFyc2VkX2FyZ3Mua2V5X3BhaXJfZmlsZSwKICAgICAgICAgICAgICAgICAgICAgICBjb25zdGFudHMuU1NIX1VTRVIgKyAnQCcgKyBtYXN0ZXJfZG5zLCAnLXQnXQogICAgICAgICAgICBpZiBwYXJzZWRfYXJncy5jb21tYW5kOgogICAgICAgICAgICAgICAgZi53cml0ZShwYXJzZWRfYXJncy5jb21tYW5kKQogICAgICAgICAgICAgICAgZi53cml0ZSgnXG5yZWFkIC1uMSAtciAtcCAiQ29tbWFuZCBjb21wbGV0ZWQuIFByZXNzIGFueSBrZXkuIicpCiAgICAgICAgICAgICAgICBjb21tYW5kLmFwcGVuZCgnLW0nKQogICAgICAgICAgICAgICAgY29tbWFuZC5hcHBlbmQoZi5uYW1lKQoKICAgICAgICBmLmNsb3NlKCkKICAgICAgICBwcmludCgnICcuam9pbihjb21tYW5kKSkKICAgICAgICByYyA9IHN1YnByb2Nlc3MuY2FsbChjb21tYW5kKQogICAgICAgIG9zLnJlbW92ZShmLm5hbWUpCiAgICAgICAgcmV0dXJuIHJjCgoKY2xhc3MgUHV0KENvbW1hbmQpOgogICAgTkFNRSA9ICdwdXQnCiAgICBERVNDUklQVElPTiA9ICgnUHV0IGZpbGUgb250byB0aGUgbWFzdGVyIG5vZGUuXG4lcycgJQogICAgICAgICAgICAgICAgICAgS0VZX1BBSVJfRklMRV9IRUxQX1RFWFQpCiAgICBBUkdfVEFCTEUgPSBbCiAgICAgICAgeyduYW1lJzogJ2NsdXN0ZXItaWQnLCAncmVxdWlyZWQnOiBUcnVlLAogICAgICAgICAnaGVscF90ZXh0JzogJ0NsdXN0ZXIgSWQgb2YgY2x1c3RlciB5b3Ugd2FudCB0byBwdXQgZmlsZSBvbnRvJ30sCiAgICAgICAgeyduYW1lJzogJ2tleS1wYWlyLWZpbGUnLCAncmVxdWlyZWQnOiBUcnVlLAogICAgICAgICAnaGVscF90ZXh0JzogJ1ByaXZhdGUga2V5IGZpbGUgdG8gdXNlIGZvciBsb2dpbid9LAogICAgICAgIHsnbmFtZSc6ICdzcmMnLCAncmVxdWlyZWQnOiBUcnVlLAogICAgICAgICAnaGVscF90ZXh0JzogJ1NvdXJjZSBmaWxlIHBhdGggb24gbG9jYWwgbWFjaGluZSd9LAogICAgICAgIHsnbmFtZSc6ICdkZXN0JywgJ2hlbHBfdGV4dCc6ICdEZXN0aW5hdGlvbiBmaWxlIHBhdGggb24gcmVtb3RlIGhvc3QnfQogICAgXQoKICAgIGRlZiBfcnVuX21haW5fY29tbWFuZChzZWxmLCBwYXJzZWRfYXJncywgcGFyc2VkX2dsb2JhbHMpOgogICAgICAgIG1hc3Rlcl9kbnMgPSBzc2h1dGlscy52YWxpZGF0ZV9hbmRfZmluZF9tYXN0ZXJfZG5zKAogICAgICAgICAgICBzZXNzaW9uPXNlbGYuX3Nlc3Npb24sCiAgICAgICAgICAgIHBhcnNlZF9nbG9iYWxzPXBhcnNlZF9nbG9iYWxzLAogICAgICAgICAgICBjbHVzdGVyX2lkPXBhcnNlZF9hcmdzLmNsdXN0ZXJfaWQpCgogICAgICAgIGtleV9maWxlID0gcGFyc2VkX2FyZ3Mua2V5X3BhaXJfZmlsZQogICAgICAgIHNzaHV0aWxzLnZhbGlkYXRlX3NjcF93aXRoX2tleV9maWxlKGtleV9maWxlKQogICAgICAgIGlmIChlbXJ1dGlscy53aGljaCgnc2NwJykgb3IgZW1ydXRpbHMud2hpY2goJ3NjcC5leGUnKSk6CiAgICAgICAgICAgIGNvbW1hbmQgPSBbJ3NjcCcsICctcicsICctbyBTdHJpY3RIb3N0S2V5Q2hlY2tpbmc9bm8nLAogICAgICAgICAgICAgICAgICAgICAgICctaScsIHBhcnNlZF9hcmdzLmtleV9wYWlyX2ZpbGUsIHBhcnNlZF9hcmdzLnNyYywKICAgICAgICAgICAgICAgICAgICAgICBjb25zdGFudHMuU1NIX1VTRVIgKyAnQCcgKyBtYXN0ZXJfZG5zXQogICAgICAgIGVsc2U6CiAgICAgICAgICAgIGNvbW1hbmQgPSBbJ3BzY3AnLCAnLXNjcCcsICctcicsICctaScsIHBhcnNlZF9hcmdzLmtleV9wYWlyX2ZpbGUsCiAgICAgICAgICAgICAgICAgICAgICAgcGFyc2VkX2FyZ3Muc3JjLCBjb25zdGFudHMuU1NIX1VTRVIgKyAnQCcgKyBtYXN0ZXJfZG5zXQoKICAgICAgICAjIGlmIHRoZSBpbnN0YW5jZSBpcyBub3QgdGVybWluYXRlZAogICAgICAgIGlmIHBhcnNlZF9hcmdzLmRlc3Q6CiAgICAgICAgICAgIGNvbW1hbmRbLTFdID0gY29tbWFuZFstMV0gKyAiOiIgKyBwYXJzZWRfYXJncy5kZXN0CiAgICAgICAgZWxzZToKICAgICAgICAgICAgY29tbWFuZFstMV0gPSBjb21tYW5kWy0xXSArICI6IiArIHBhcnNlZF9hcmdzLnNyYy5zcGxpdCgnLycpWy0xXQogICAgICAgIHByaW50KCcgJy5qb2luKGNvbW1hbmQpKQogICAgICAgIHJjID0gc3VicHJvY2Vzcy5jYWxsKGNvbW1hbmQpCiAgICAgICAgcmV0dXJuIHJjCgoKY2xhc3MgR2V0KENvbW1hbmQpOgogICAgTkFNRSA9ICdnZXQnCiAgICBERVNDUklQVElPTiA9ICgnR2V0IGZpbGUgZnJvbSBtYXN0ZXIgbm9kZS5cbiVzJyAlIEtFWV9QQUlSX0ZJTEVfSEVMUF9URVhUKQogICAgQVJHX1RBQkxFID0gWwogICAgICAgIHsnbmFtZSc6ICdjbHVzdGVyLWlkJywgJ3JlcXVpcmVkJzogVHJ1ZSwKICAgICAgICAgJ2hlbHBfdGV4dCc6ICdDbHVzdGVyIElkIG9mIGNsdXN0ZXIgeW91IHdhbnQgdG8gZ2V0IGZpbGUgZnJvbSd9LAogICAgICAgIHsnbmFtZSc6ICdrZXktcGFpci1maWxlJywgJ3JlcXVpcmVkJzogVHJ1ZSwKICAgICAgICAgJ2hlbHBfdGV4dCc6ICdQcml2YXRlIGtleSBmaWxlIHRvIHVzZSBmb3IgbG9naW4nfSwKICAgICAgICB7J25hbWUnOiAnc3JjJywgJ3JlcXVpcmVkJzogVHJ1ZSwKICAgICAgICAgJ2hlbHBfdGV4dCc6ICdTb3VyY2UgZmlsZSBwYXRoIG9uIHJlbW90ZSBob3N0J30sCiAgICAgICAgeyduYW1lJzogJ2Rlc3QnLCAnaGVscF90ZXh0JzogJ0Rlc3RpbmF0aW9uIGZpbGUgcGF0aCBvbiB5b3VyIG1hY2hpbmUnfQogICAgXQoKICAgIGRlZiBfcnVuX21haW5fY29tbWFuZChzZWxmLCBwYXJzZWRfYXJncywgcGFyc2VkX2dsb2JhbHMpOgogICAgICAgIG1hc3Rlcl9kbnMgPSBzc2h1dGlscy52YWxpZGF0ZV9hbmRfZmluZF9tYXN0ZXJfZG5zKAogICAgICAgICAgICBzZXNzaW9uPXNlbGYuX3Nlc3Npb24sCiAgICAgICAgICAgIHBhcnNlZF9nbG9iYWxzPXBhcnNlZF9nbG9iYWxzLAogICAgICAgICAgICBjbHVzdGVyX2lkPXBhcnNlZF9hcmdzLmNsdXN0ZXJfaWQpCgogICAgICAgIGtleV9maWxlID0gcGFyc2VkX2FyZ3Mua2V5X3BhaXJfZmlsZQogICAgICAgIHNzaHV0aWxzLnZhbGlkYXRlX3NjcF93aXRoX2tleV9maWxlKGtleV9maWxlKQogICAgICAgIGlmIChlbXJ1dGlscy53aGljaCgnc2NwJykgb3IgZW1ydXRpbHMud2hpY2goJ3NjcC5leGUnKSk6CiAgICAgICAgICAgIGNvbW1hbmQgPSBbJ3NjcCcsICctcicsICctbyBTdHJpY3RIb3N0S2V5Q2hlY2tpbmc9bm8nLCAnLWknLAogICAgICAgICAgICAgICAgICAgICAgIHBhcnNlZF9hcmdzLmtleV9wYWlyX2ZpbGUsIGNvbnN0YW50cy5TU0hfVVNFUiArICdAJyArCiAgICAgICAgICAgICAgICAgICAgICAgbWFzdGVyX2RucyArICc6JyArIHBhcnNlZF9hcmdzLnNyY10KICAgICAgICBlbHNlOgogICAgICAgICAgICBjb21tYW5kID0gWydwc2NwJywgJy1zY3AnLCAnLXInLCAnLWknLCBwYXJzZWRfYXJncy5rZXlfcGFpcl9maWxlLAogICAgICAgICAgICAgICAgICAgICAgIGNvbnN0YW50cy5TU0hfVVNFUiArICdAJyArIG1hc3Rlcl9kbnMgKyAnOicgKwogICAgICAgICAgICAgICAgICAgICAgIHBhcnNlZF9hcmdzLnNyY10KCiAgICAgICAgaWYgcGFyc2VkX2FyZ3MuZGVzdDoKICAgICAgICAgICAgY29tbWFuZC5hcHBlbmQocGFyc2VkX2FyZ3MuZGVzdCkKICAgICAgICBlbHNlOgogICAgICAgICAgICBjb21tYW5kLmFwcGVuZChwYXJzZWRfYXJncy5zcmMuc3BsaXQoJy8nKVstMV0pCiAgICAgICAgcHJpbnQoJyAnLmpvaW4oY29tbWFuZCkpCiAgICAgICAgcmMgPSBzdWJwcm9jZXNzLmNhbGwoY29tbWFuZCkKICAgICAgICByZXR1cm4gcmMK

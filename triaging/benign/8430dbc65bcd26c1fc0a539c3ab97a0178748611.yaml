@@ -1,0 +1,471 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/pycryptoenv/1.0.7/pycryptoenv-1.0.7/pycryptoenv-1.0.7/tests/test_keys.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      # coding: utf-8
+      from __future__ import unicode_literals, division, absolute_import, print_function
+
+      import unittest
+      import sys
+      import os
+
+      import asn1crypto
+      from oscrypto import keys, backend
+
+      from .unittest_data import data_decorator, data
+      from ._unittest_compat import patch
+
+      patch()
+
+      if sys.version_info < (3,):
+          byte_cls = str
+      else:
+          byte_cls = bytes
+
+
+      tests_root = os.path.dirname(__file__)
+      fixtures_dir = os.path.join(tests_root, 'fixtures')
+
+
+      _backend = backend()
+
+
+      if _backend == 'openssl':
+          from oscrypto._openssl._libcrypto import libcrypto_legacy_support
+          supports_legacy = libcrypto_legacy_support
+      else:
+          supports_legacy = True
+
+
+      @data_decorator
+      class KeyTests(unittest.TestCase):
+
+          @staticmethod
+          def private_keys():
+              return (
+                  (
+                      'keys/test-aes128.key',
+                      b'password123',
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-aes256.key',
+                      b'password123',
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-der.key',
+                      None,
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-dsa-aes128.key',
+                      b'password123',
+                      'dsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-dsa-der.key',
+                      None,
+                      'dsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-dsa.key',
+                      None,
+                      'dsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-ec-aes128.key',
+                      b'password123',
+                      'ec',
+                      False,
+                  ),
+                  (
+                      'keys/test-ec-der.key',
+                      None,
+                      'ec',
+                      False,
+                  ),
+                  (
+                      'keys/test-ec.key',
+                      None,
+                      'ec',
+                      False,
+                  ),
+                  (
+                      'keys/test-inter.key',
+                      None,
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-pkcs8-aes128-der.key',
+                      b'password123',
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-pkcs8-aes256.key',
+                      b'password123',
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-pkcs8-blank-der.key',
+                      b'',
+                      'rsa',
+                      True,
+                  ),
+                  (
+                      'keys/test-pkcs8-blank-der.key',
+                      None,
+                      'rsa',
+                      True,
+                  ),
+                  (
+                      'keys/test-pkcs8-blank.key',
+                      b'',
+                      'rsa',
+                      True,
+                  ),
+                  (
+                      'keys/test-pkcs8-blank.key',
+                      None,
+                      'rsa',
+                      True,
+                  ),
+                  (
+                      'keys/test-pkcs8-der.key',
+                      None,
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-pkcs8-des.key',
+                      b'password123',
+                      'rsa',
+                      True,
+                  ),
+                  (
+                      'keys/test-pkcs8-tripledes.key',
+                      b'password123',
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-pkcs8.key',
+                      None,
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-third-der.key',
+                      None,
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-third.key',
+                      None,
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test-tripledes.key',
+                      b'password123',
+                      'rsa',
+                      False,
+                  ),
+                  (
+                      'keys/test.key',
+                      None,
+                      'rsa',
+                      False,
+                  ),
+              )
+
+          @data('private_keys')
+          def parse_private(self, input_filename, password, algo, uses_legacy):
+              def do_run():
+                  with open(os.path.join(fixtures_dir, input_filename), 'rb') as f:
+                      private_object = keys.parse_private(f.read(), password)
+
+                  self.assertEqual(algo, private_object['private_key_algorithm']['algorithm'].native)
+
+                  # Make sure we can parse the whole structure
+                  private_object.native
+
+              if not supports_legacy and uses_legacy:
+                  with self.assertRaises(EnvironmentError):
+                      do_run()
+              else:
+                  do_run()
+
+          def test_parse_private_pem_leading_whitespace(self):
+              with open(os.path.join(fixtures_dir, 'keys/test.key'), 'rb') as f:
+                  private_object = keys.parse_private(b'   \n' + f.read(), None)
+
+              # Make sure we can parse the whole structure
+              private_object.native
+
+          @staticmethod
+          def public_keys():
+              return (
+                  (
+                      'keys/test-public-dsa-der.key',
+                      'dsa',
+                  ),
+                  (
+                      'keys/test-public-dsa.key',
+                      'dsa',
+                  ),
+                  (
+                      'keys/test-public-ec-der.key',
+                      'ec',
+                  ),
+                  (
+                      'keys/test-public-ec.key',
+                      'ec',
+                  ),
+                  (
+                      'keys/test-public-rsa-der.key',
+                      'rsa',
+                  ),
+                  (
+                      'keys/test-public-rsa.key',
+                      'rsa',
+                  ),
+                  (
+                      'keys/test-public-rsapublickey-der.key',
+                      'rsa',
+                  ),
+                  (
+                      'keys/test-public-rsapublickey.key',
+                      'rsa',
+                  ),
+              )
+
+          @data('public_keys')
+          def parse_public(self, input_filename, algo):
+              with open(os.path.join(fixtures_dir, input_filename), 'rb') as f:
+                  parsed = keys.parse_public(f.read())
+
+              self.assertEqual(algo, parsed['algorithm']['algorithm'].native)
+
+              # Make sure we can parse the whole structure
+              parsed.native
+
+          def test_parse_public_pem_leading_whitespace(self):
+              with open(os.path.join(fixtures_dir, 'keys/test-public-rsa.key'), 'rb') as f:
+                  parsed = keys.parse_public(b'  \r\n' + f.read())
+
+              # Make sure we can parse the whole structure
+              parsed.native
+
+          @staticmethod
+          def certificates():
+              return (
+                  (
+                      'keys/test-der.crt',
+                      'rsa'
+                  ),
+                  (
+                      'keys/test-dsa-der.crt',
+                      'dsa'
+                  ),
+                  (
+                      'keys/test-dsa.crt',
+                      'dsa'
+                  ),
+                  (
+                      'keys/test-ec-der.crt',
+                      'ec'
+                  ),
+                  (
+                      'keys/test-ec.crt',
+                      'ec'
+                  ),
+                  (
+                      'keys/test-inter-der.crt',
+                      'rsa'
+                  ),
+                  (
+                      'keys/test-inter.crt',
+                      'rsa'
+                  ),
+                  (
+                      'keys/test-third-der.crt',
+                      'rsa'
+                  ),
+                  (
+                      'keys/test-third.crt',
+                      'rsa'
+                  ),
+                  (
+                      'keys/test.crt',
+                      'rsa'
+                  ),
+              )
+
+          @data('certificates')
+          def parse_certificate(self, input_filename, algo):
+              with open(os.path.join(fixtures_dir, input_filename), 'rb') as f:
+                  parsed = keys.parse_certificate(f.read())
+
+              self.assertEqual(algo, parsed['tbs_certificate']['subject_public_key_info']['algorithm']['algorithm'].native)
+              self.assertEqual('Codex Non Sufficit LC', parsed['tbs_certificate']['subject'].native['organization_name'])
+
+              # Make sure we can parse the whole structure
+              parsed.native
+
+          def test_parse_certificate_pem_leading_whitespace(self):
+              with open(os.path.join(fixtures_dir, 'keys/test.crt'), 'rb') as f:
+                  parsed = keys.parse_certificate(b'\n' + f.read())
+
+              # Make sure we can parse the whole structure
+              parsed.native
+
+          @staticmethod
+          def pkcs12_files():
+              return (
+                  (
+                      'aes128',
+                      'keys/test-aes128.p12',
+                      b'password123',
+                      True,
+                  ),
+                  (
+                      'aes256',
+                      'keys/test-aes256.p12',
+                      b'password123',
+                      True,
+                  ),
+                  (
+                      'rc2',
+                      'keys/test-rc2.p12',
+                      b'password123',
+                      True,
+                  ),
+                  (
+                      'tripledes_blank',
+                      'keys/test-tripledes-blank.p12',
+                      b'',
+                      True
+                  ),
+                  (
+                      'tripledes_blank_none',
+                      'keys/test-tripledes-blank.p12',
+                      None,
+                      True
+                  ),
+                  (
+                      'tripledes',
+                      'keys/test-tripledes.p12',
+                      b'password123',
+                      True
+                  ),
+              )
+
+          @data('pkcs12_files', True)
+          def parse_pkcs12(self, input_filename, password, uses_legacy):
+              def do_run():
+                  with open(os.path.join(fixtures_dir, input_filename), 'rb') as f:
+                      key_info, cert_info, extra_cert_infos = keys.parse_pkcs12(f.read(), password)
+
+                  with open(os.path.join(fixtures_dir, 'keys/test-pkcs8-der.key'), 'rb') as f:
+                      key_der = f.read()
+
+                  with open(os.path.join(fixtures_dir, 'keys/test-der.crt'), 'rb') as f:
+                      cert_der = f.read()
+
+                  self.assertEqual(key_der, key_info.dump())
+                  self.assertEqual(cert_der, cert_info.dump())
+                  self.assertEqual([], extra_cert_infos)
+
+                  # Make sure we can parse the DER
+                  key_info.native
+                  cert_info.native
+
+              if not supports_legacy and uses_legacy:
+                  with self.assertRaises(EnvironmentError):
+                      do_run()
+              else:
+                  do_run()
+
+          def test_parse_pkcs12_dsa(self):
+              def do_run():
+                  with open(os.path.join(fixtures_dir, 'keys/test-dsa.p12'), 'rb') as f:
+                      key_info, cert_info, extra_cert_infos = keys.parse_pkcs12(f.read(), b'password123')
+
+                  with open(os.path.join(fixtures_dir, 'keys/test-pkcs8-dsa-der.key'), 'rb') as f:
+                      key_der = f.read()
+
+                  with open(os.path.join(fixtures_dir, 'keys/test-dsa-der.crt'), 'rb') as f:
+                      cert_der = f.read()
+
+                  self.assertEqual(key_der, key_info.dump())
+                  self.assertEqual(cert_der, cert_info.dump())
+                  self.assertEqual([], extra_cert_infos)
+
+                  # Make sure we can parse the DER
+                  key_info.native
+                  cert_info.native
+
+              if not supports_legacy:
+                  with self.assertRaises(EnvironmentError):
+                      do_run()
+              else:
+                  do_run()
+
+          def test_parse_pkcs12_chain(self):
+              def do_run():
+                  with open(os.path.join(fixtures_dir, 'keys/test-third.p12'), 'rb') as f:
+                      key_info, cert_info, extra_cert_infos = keys.parse_pkcs12(f.read(), b'password123')
+
+                  with open(os.path.join(fixtures_dir, 'keys/test-third-der.key'), 'rb') as f:
+                      private_key = asn1crypto.keys.RSAPrivateKey.load(f.read())
+                      key_der = asn1crypto.keys.PrivateKeyInfo.wrap(private_key, 'rsa').dump()
+
+                  with open(os.path.join(fixtures_dir, 'keys/test-third-der.crt'), 'rb') as f:
+                      cert_der = f.read()
+
+                  with open(os.path.join(fixtures_dir, 'keys/test-inter-der.crt'), 'rb') as f:
+                      intermediate_cert_der = f.read()
+
+                  with open(os.path.join(fixtures_dir, 'keys/test-der.crt'), 'rb') as f:
+                      root_cert_der = f.read()
+
+                  self.assertEqual(key_der, key_info.dump())
+                  self.assertEqual(cert_der, cert_info.dump())
+                  self.assertEqual(
+                      sorted([intermediate_cert_der, root_cert_der]),
+                      sorted([info.dump() for info in extra_cert_infos])
+                  )
+
+                  # Make sure we can parse the DER
+                  key_info.native
+                  cert_info.native
+                  for info in extra_cert_infos:
+                      info.native
+
+              if not supports_legacy:
+                  with self.assertRaises(EnvironmentError):
+                      do_run()
+              else:
+                  do_run()
+    tokens: resume load_const INTEGER load_const import_name __future__ import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from division store_name division import_from absolute_import store_name absolute_import import_from print_function store_name print_function pop_top load_const INTEGER load_const import_name unittest store_name unittest load_const INTEGER load_const import_name sys store_name sys load_const INTEGER load_const import_name os store_name os load_const INTEGER load_const import_name asn1crypto store_name asn1crypto load_const INTEGER load_const import_name oscrypto import_from keys store_name keys import_from backend store_name backend pop_top load_const INTEGER load_const import_name unittest_data import_from data_decorator store_name data_decorator import_from data store_name data pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from patch store_name patch pop_top push_null load_name patch call pop_top load_name sys load_attr version_info load_const compare_op < pop_jump_if_false TO_NUMBER load_name str store_name byte_cls jump_forward TO_NUMBER load_name bytes store_name byte_cls load_name os load_attr path load_attr dirname load_name __file__ call store_name tests_root load_name os load_attr path load_attr join load_name tests_root load_const fixtures call store_name fixtures_dir push_null load_name backend call store_name _backend load_name _backend load_const openssl compare_op == pop_jump_if_false TO_NUMBER load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH pop_top load_name STRING_LEN_S_ENT_HIGH store_name supports_legacy jump_forward TO_NUMBER load_const INTEGER store_name supports_legacy load_name data_decorator push_null load_build_class load_const OBJECT make_function load_const KeyTests load_name unittest load_attr TestCase call call store_name KeyTests return_const None
+    hash: c3154bd6560bd5a151d3cf7e819555dd18c3ca9035c20bbe2319d3d547e4682d
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/pycryptoenv/1.0.7/pycryptoenv-1.0.7/pycryptoenv-1.0.7/tests/test_keys.py: IyBjb2Rpbmc6IHV0Zi04CmZyb20gX19mdXR1cmVfXyBpbXBvcnQgdW5pY29kZV9saXRlcmFscywgZGl2aXNpb24sIGFic29sdXRlX2ltcG9ydCwgcHJpbnRfZnVuY3Rpb24KCmltcG9ydCB1bml0dGVzdAppbXBvcnQgc3lzCmltcG9ydCBvcwoKaW1wb3J0IGFzbjFjcnlwdG8KZnJvbSBvc2NyeXB0byBpbXBvcnQga2V5cywgYmFja2VuZAoKZnJvbSAudW5pdHRlc3RfZGF0YSBpbXBvcnQgZGF0YV9kZWNvcmF0b3IsIGRhdGEKZnJvbSAuX3VuaXR0ZXN0X2NvbXBhdCBpbXBvcnQgcGF0Y2gKCnBhdGNoKCkKCmlmIHN5cy52ZXJzaW9uX2luZm8gPCAoMywpOgogICAgYnl0ZV9jbHMgPSBzdHIKZWxzZToKICAgIGJ5dGVfY2xzID0gYnl0ZXMKCgp0ZXN0c19yb290ID0gb3MucGF0aC5kaXJuYW1lKF9fZmlsZV9fKQpmaXh0dXJlc19kaXIgPSBvcy5wYXRoLmpvaW4odGVzdHNfcm9vdCwgJ2ZpeHR1cmVzJykKCgpfYmFja2VuZCA9IGJhY2tlbmQoKQoKCmlmIF9iYWNrZW5kID09ICdvcGVuc3NsJzoKICAgIGZyb20gb3NjcnlwdG8uX29wZW5zc2wuX2xpYmNyeXB0byBpbXBvcnQgbGliY3J5cHRvX2xlZ2FjeV9zdXBwb3J0CiAgICBzdXBwb3J0c19sZWdhY3kgPSBsaWJjcnlwdG9fbGVnYWN5X3N1cHBvcnQKZWxzZToKICAgIHN1cHBvcnRzX2xlZ2FjeSA9IFRydWUKCgpAZGF0YV9kZWNvcmF0b3IKY2xhc3MgS2V5VGVzdHModW5pdHRlc3QuVGVzdENhc2UpOgoKICAgIEBzdGF0aWNtZXRob2QKICAgIGRlZiBwcml2YXRlX2tleXMoKToKICAgICAgICByZXR1cm4gKAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWFlczEyOC5rZXknLAogICAgICAgICAgICAgICAgYidwYXNzd29yZDEyMycsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWFlczI1Ni5rZXknLAogICAgICAgICAgICAgICAgYidwYXNzd29yZDEyMycsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWRlci5rZXknLAogICAgICAgICAgICAgICAgTm9uZSwKICAgICAgICAgICAgICAgICdyc2EnLAogICAgICAgICAgICAgICAgRmFsc2UsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtZHNhLWFlczEyOC5rZXknLAogICAgICAgICAgICAgICAgYidwYXNzd29yZDEyMycsCiAgICAgICAgICAgICAgICAnZHNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWRzYS1kZXIua2V5JywKICAgICAgICAgICAgICAgIE5vbmUsCiAgICAgICAgICAgICAgICAnZHNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWRzYS5rZXknLAogICAgICAgICAgICAgICAgTm9uZSwKICAgICAgICAgICAgICAgICdkc2EnLAogICAgICAgICAgICAgICAgRmFsc2UsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtZWMtYWVzMTI4LmtleScsCiAgICAgICAgICAgICAgICBiJ3Bhc3N3b3JkMTIzJywKICAgICAgICAgICAgICAgICdlYycsCiAgICAgICAgICAgICAgICBGYWxzZSwKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1lYy1kZXIua2V5JywKICAgICAgICAgICAgICAgIE5vbmUsCiAgICAgICAgICAgICAgICAnZWMnLAogICAgICAgICAgICAgICAgRmFsc2UsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtZWMua2V5JywKICAgICAgICAgICAgICAgIE5vbmUsCiAgICAgICAgICAgICAgICAnZWMnLAogICAgICAgICAgICAgICAgRmFsc2UsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtaW50ZXIua2V5JywKICAgICAgICAgICAgICAgIE5vbmUsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXBrY3M4LWFlczEyOC1kZXIua2V5JywKICAgICAgICAgICAgICAgIGIncGFzc3dvcmQxMjMnLAogICAgICAgICAgICAgICAgJ3JzYScsCiAgICAgICAgICAgICAgICBGYWxzZSwKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1wa2NzOC1hZXMyNTYua2V5JywKICAgICAgICAgICAgICAgIGIncGFzc3dvcmQxMjMnLAogICAgICAgICAgICAgICAgJ3JzYScsCiAgICAgICAgICAgICAgICBGYWxzZSwKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1wa2NzOC1ibGFuay1kZXIua2V5JywKICAgICAgICAgICAgICAgIGInJywKICAgICAgICAgICAgICAgICdyc2EnLAogICAgICAgICAgICAgICAgVHJ1ZSwKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1wa2NzOC1ibGFuay1kZXIua2V5JywKICAgICAgICAgICAgICAgIE5vbmUsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIFRydWUsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtcGtjczgtYmxhbmsua2V5JywKICAgICAgICAgICAgICAgIGInJywKICAgICAgICAgICAgICAgICdyc2EnLAogICAgICAgICAgICAgICAgVHJ1ZSwKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1wa2NzOC1ibGFuay5rZXknLAogICAgICAgICAgICAgICAgTm9uZSwKICAgICAgICAgICAgICAgICdyc2EnLAogICAgICAgICAgICAgICAgVHJ1ZSwKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1wa2NzOC1kZXIua2V5JywKICAgICAgICAgICAgICAgIE5vbmUsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXBrY3M4LWRlcy5rZXknLAogICAgICAgICAgICAgICAgYidwYXNzd29yZDEyMycsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIFRydWUsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtcGtjczgtdHJpcGxlZGVzLmtleScsCiAgICAgICAgICAgICAgICBiJ3Bhc3N3b3JkMTIzJywKICAgICAgICAgICAgICAgICdyc2EnLAogICAgICAgICAgICAgICAgRmFsc2UsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtcGtjczgua2V5JywKICAgICAgICAgICAgICAgIE5vbmUsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXRoaXJkLWRlci5rZXknLAogICAgICAgICAgICAgICAgTm9uZSwKICAgICAgICAgICAgICAgICdyc2EnLAogICAgICAgICAgICAgICAgRmFsc2UsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtdGhpcmQua2V5JywKICAgICAgICAgICAgICAgIE5vbmUsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXRyaXBsZWRlcy5rZXknLAogICAgICAgICAgICAgICAgYidwYXNzd29yZDEyMycsCiAgICAgICAgICAgICAgICAncnNhJywKICAgICAgICAgICAgICAgIEZhbHNlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LmtleScsCiAgICAgICAgICAgICAgICBOb25lLAogICAgICAgICAgICAgICAgJ3JzYScsCiAgICAgICAgICAgICAgICBGYWxzZSwKICAgICAgICAgICAgKSwKICAgICAgICApCgogICAgQGRhdGEoJ3ByaXZhdGVfa2V5cycpCiAgICBkZWYgcGFyc2VfcHJpdmF0ZShzZWxmLCBpbnB1dF9maWxlbmFtZSwgcGFzc3dvcmQsIGFsZ28sIHVzZXNfbGVnYWN5KToKICAgICAgICBkZWYgZG9fcnVuKCk6CiAgICAgICAgICAgIHdpdGggb3Blbihvcy5wYXRoLmpvaW4oZml4dHVyZXNfZGlyLCBpbnB1dF9maWxlbmFtZSksICdyYicpIGFzIGY6CiAgICAgICAgICAgICAgICBwcml2YXRlX29iamVjdCA9IGtleXMucGFyc2VfcHJpdmF0ZShmLnJlYWQoKSwgcGFzc3dvcmQpCgogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGFsZ28sIHByaXZhdGVfb2JqZWN0Wydwcml2YXRlX2tleV9hbGdvcml0aG0nXVsnYWxnb3JpdGhtJ10ubmF0aXZlKQoKICAgICAgICAgICAgIyBNYWtlIHN1cmUgd2UgY2FuIHBhcnNlIHRoZSB3aG9sZSBzdHJ1Y3R1cmUKICAgICAgICAgICAgcHJpdmF0ZV9vYmplY3QubmF0aXZlCgogICAgICAgIGlmIG5vdCBzdXBwb3J0c19sZWdhY3kgYW5kIHVzZXNfbGVnYWN5OgogICAgICAgICAgICB3aXRoIHNlbGYuYXNzZXJ0UmFpc2VzKEVudmlyb25tZW50RXJyb3IpOgogICAgICAgICAgICAgICAgZG9fcnVuKCkKICAgICAgICBlbHNlOgogICAgICAgICAgICBkb19ydW4oKQoKICAgIGRlZiB0ZXN0X3BhcnNlX3ByaXZhdGVfcGVtX2xlYWRpbmdfd2hpdGVzcGFjZShzZWxmKToKICAgICAgICB3aXRoIG9wZW4ob3MucGF0aC5qb2luKGZpeHR1cmVzX2RpciwgJ2tleXMvdGVzdC5rZXknKSwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgcHJpdmF0ZV9vYmplY3QgPSBrZXlzLnBhcnNlX3ByaXZhdGUoYicgICBcbicgKyBmLnJlYWQoKSwgTm9uZSkKCiAgICAgICAgIyBNYWtlIHN1cmUgd2UgY2FuIHBhcnNlIHRoZSB3aG9sZSBzdHJ1Y3R1cmUKICAgICAgICBwcml2YXRlX29iamVjdC5uYXRpdmUKCiAgICBAc3RhdGljbWV0aG9kCiAgICBkZWYgcHVibGljX2tleXMoKToKICAgICAgICByZXR1cm4gKAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXB1YmxpYy1kc2EtZGVyLmtleScsCiAgICAgICAgICAgICAgICAnZHNhJywKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1wdWJsaWMtZHNhLmtleScsCiAgICAgICAgICAgICAgICAnZHNhJywKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1wdWJsaWMtZWMtZGVyLmtleScsCiAgICAgICAgICAgICAgICAnZWMnLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXB1YmxpYy1lYy5rZXknLAogICAgICAgICAgICAgICAgJ2VjJywKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1wdWJsaWMtcnNhLWRlci5rZXknLAogICAgICAgICAgICAgICAgJ3JzYScsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtcHVibGljLXJzYS5rZXknLAogICAgICAgICAgICAgICAgJ3JzYScsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtcHVibGljLXJzYXB1YmxpY2tleS1kZXIua2V5JywKICAgICAgICAgICAgICAgICdyc2EnLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXB1YmxpYy1yc2FwdWJsaWNrZXkua2V5JywKICAgICAgICAgICAgICAgICdyc2EnLAogICAgICAgICAgICApLAogICAgICAgICkKCiAgICBAZGF0YSgncHVibGljX2tleXMnKQogICAgZGVmIHBhcnNlX3B1YmxpYyhzZWxmLCBpbnB1dF9maWxlbmFtZSwgYWxnbyk6CiAgICAgICAgd2l0aCBvcGVuKG9zLnBhdGguam9pbihmaXh0dXJlc19kaXIsIGlucHV0X2ZpbGVuYW1lKSwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgcGFyc2VkID0ga2V5cy5wYXJzZV9wdWJsaWMoZi5yZWFkKCkpCgogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoYWxnbywgcGFyc2VkWydhbGdvcml0aG0nXVsnYWxnb3JpdGhtJ10ubmF0aXZlKQoKICAgICAgICAjIE1ha2Ugc3VyZSB3ZSBjYW4gcGFyc2UgdGhlIHdob2xlIHN0cnVjdHVyZQogICAgICAgIHBhcnNlZC5uYXRpdmUKCiAgICBkZWYgdGVzdF9wYXJzZV9wdWJsaWNfcGVtX2xlYWRpbmdfd2hpdGVzcGFjZShzZWxmKToKICAgICAgICB3aXRoIG9wZW4ob3MucGF0aC5qb2luKGZpeHR1cmVzX2RpciwgJ2tleXMvdGVzdC1wdWJsaWMtcnNhLmtleScpLCAncmInKSBhcyBmOgogICAgICAgICAgICBwYXJzZWQgPSBrZXlzLnBhcnNlX3B1YmxpYyhiJyAgXHJcbicgKyBmLnJlYWQoKSkKCiAgICAgICAgIyBNYWtlIHN1cmUgd2UgY2FuIHBhcnNlIHRoZSB3aG9sZSBzdHJ1Y3R1cmUKICAgICAgICBwYXJzZWQubmF0aXZlCgogICAgQHN0YXRpY21ldGhvZAogICAgZGVmIGNlcnRpZmljYXRlcygpOgogICAgICAgIHJldHVybiAoCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtZGVyLmNydCcsCiAgICAgICAgICAgICAgICAncnNhJwogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWRzYS1kZXIuY3J0JywKICAgICAgICAgICAgICAgICdkc2EnCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtZHNhLmNydCcsCiAgICAgICAgICAgICAgICAnZHNhJwogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWVjLWRlci5jcnQnLAogICAgICAgICAgICAgICAgJ2VjJwogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWVjLmNydCcsCiAgICAgICAgICAgICAgICAnZWMnCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtaW50ZXItZGVyLmNydCcsCiAgICAgICAgICAgICAgICAncnNhJwogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LWludGVyLmNydCcsCiAgICAgICAgICAgICAgICAncnNhJwogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXRoaXJkLWRlci5jcnQnLAogICAgICAgICAgICAgICAgJ3JzYScKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC10aGlyZC5jcnQnLAogICAgICAgICAgICAgICAgJ3JzYScKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC5jcnQnLAogICAgICAgICAgICAgICAgJ3JzYScKICAgICAgICAgICAgKSwKICAgICAgICApCgogICAgQGRhdGEoJ2NlcnRpZmljYXRlcycpCiAgICBkZWYgcGFyc2VfY2VydGlmaWNhdGUoc2VsZiwgaW5wdXRfZmlsZW5hbWUsIGFsZ28pOgogICAgICAgIHdpdGggb3Blbihvcy5wYXRoLmpvaW4oZml4dHVyZXNfZGlyLCBpbnB1dF9maWxlbmFtZSksICdyYicpIGFzIGY6CiAgICAgICAgICAgIHBhcnNlZCA9IGtleXMucGFyc2VfY2VydGlmaWNhdGUoZi5yZWFkKCkpCgogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoYWxnbywgcGFyc2VkWyd0YnNfY2VydGlmaWNhdGUnXVsnc3ViamVjdF9wdWJsaWNfa2V5X2luZm8nXVsnYWxnb3JpdGhtJ11bJ2FsZ29yaXRobSddLm5hdGl2ZSkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKCdDb2RleCBOb24gU3VmZmljaXQgTEMnLCBwYXJzZWRbJ3Ric19jZXJ0aWZpY2F0ZSddWydzdWJqZWN0J10ubmF0aXZlWydvcmdhbml6YXRpb25fbmFtZSddKQoKICAgICAgICAjIE1ha2Ugc3VyZSB3ZSBjYW4gcGFyc2UgdGhlIHdob2xlIHN0cnVjdHVyZQogICAgICAgIHBhcnNlZC5uYXRpdmUKCiAgICBkZWYgdGVzdF9wYXJzZV9jZXJ0aWZpY2F0ZV9wZW1fbGVhZGluZ193aGl0ZXNwYWNlKHNlbGYpOgogICAgICAgIHdpdGggb3Blbihvcy5wYXRoLmpvaW4oZml4dHVyZXNfZGlyLCAna2V5cy90ZXN0LmNydCcpLCAncmInKSBhcyBmOgogICAgICAgICAgICBwYXJzZWQgPSBrZXlzLnBhcnNlX2NlcnRpZmljYXRlKGInXG4nICsgZi5yZWFkKCkpCgogICAgICAgICMgTWFrZSBzdXJlIHdlIGNhbiBwYXJzZSB0aGUgd2hvbGUgc3RydWN0dXJlCiAgICAgICAgcGFyc2VkLm5hdGl2ZQoKICAgIEBzdGF0aWNtZXRob2QKICAgIGRlZiBwa2NzMTJfZmlsZXMoKToKICAgICAgICByZXR1cm4gKAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAnYWVzMTI4JywKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtYWVzMTI4LnAxMicsCiAgICAgICAgICAgICAgICBiJ3Bhc3N3b3JkMTIzJywKICAgICAgICAgICAgICAgIFRydWUsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICdhZXMyNTYnLAogICAgICAgICAgICAgICAgJ2tleXMvdGVzdC1hZXMyNTYucDEyJywKICAgICAgICAgICAgICAgIGIncGFzc3dvcmQxMjMnLAogICAgICAgICAgICAgICAgVHJ1ZSwKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ3JjMicsCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXJjMi5wMTInLAogICAgICAgICAgICAgICAgYidwYXNzd29yZDEyMycsCiAgICAgICAgICAgICAgICBUcnVlLAogICAgICAgICAgICApLAogICAgICAgICAgICAoCiAgICAgICAgICAgICAgICAndHJpcGxlZGVzX2JsYW5rJywKICAgICAgICAgICAgICAgICdrZXlzL3Rlc3QtdHJpcGxlZGVzLWJsYW5rLnAxMicsCiAgICAgICAgICAgICAgICBiJycsCiAgICAgICAgICAgICAgICBUcnVlCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICd0cmlwbGVkZXNfYmxhbmtfbm9uZScsCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXRyaXBsZWRlcy1ibGFuay5wMTInLAogICAgICAgICAgICAgICAgTm9uZSwKICAgICAgICAgICAgICAgIFRydWUKICAgICAgICAgICAgKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgJ3RyaXBsZWRlcycsCiAgICAgICAgICAgICAgICAna2V5cy90ZXN0LXRyaXBsZWRlcy5wMTInLAogICAgICAgICAgICAgICAgYidwYXNzd29yZDEyMycsCiAgICAgICAgICAgICAgICBUcnVlCiAgICAgICAgICAgICksCiAgICAgICAgKQoKICAgIEBkYXRhKCdwa2NzMTJfZmlsZXMnLCBUcnVlKQogICAgZGVmIHBhcnNlX3BrY3MxMihzZWxmLCBpbnB1dF9maWxlbmFtZSwgcGFzc3dvcmQsIHVzZXNfbGVnYWN5KToKICAgICAgICBkZWYgZG9fcnVuKCk6CiAgICAgICAgICAgIHdpdGggb3Blbihvcy5wYXRoLmpvaW4oZml4dHVyZXNfZGlyLCBpbnB1dF9maWxlbmFtZSksICdyYicpIGFzIGY6CiAgICAgICAgICAgICAgICBrZXlfaW5mbywgY2VydF9pbmZvLCBleHRyYV9jZXJ0X2luZm9zID0ga2V5cy5wYXJzZV9wa2NzMTIoZi5yZWFkKCksIHBhc3N3b3JkKQoKICAgICAgICAgICAgd2l0aCBvcGVuKG9zLnBhdGguam9pbihmaXh0dXJlc19kaXIsICdrZXlzL3Rlc3QtcGtjczgtZGVyLmtleScpLCAncmInKSBhcyBmOgogICAgICAgICAgICAgICAga2V5X2RlciA9IGYucmVhZCgpCgogICAgICAgICAgICB3aXRoIG9wZW4ob3MucGF0aC5qb2luKGZpeHR1cmVzX2RpciwgJ2tleXMvdGVzdC1kZXIuY3J0JyksICdyYicpIGFzIGY6CiAgICAgICAgICAgICAgICBjZXJ0X2RlciA9IGYucmVhZCgpCgogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGtleV9kZXIsIGtleV9pbmZvLmR1bXAoKSkKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChjZXJ0X2RlciwgY2VydF9pbmZvLmR1bXAoKSkKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChbXSwgZXh0cmFfY2VydF9pbmZvcykKCiAgICAgICAgICAgICMgTWFrZSBzdXJlIHdlIGNhbiBwYXJzZSB0aGUgREVSCiAgICAgICAgICAgIGtleV9pbmZvLm5hdGl2ZQogICAgICAgICAgICBjZXJ0X2luZm8ubmF0aXZlCgogICAgICAgIGlmIG5vdCBzdXBwb3J0c19sZWdhY3kgYW5kIHVzZXNfbGVnYWN5OgogICAgICAgICAgICB3aXRoIHNlbGYuYXNzZXJ0UmFpc2VzKEVudmlyb25tZW50RXJyb3IpOgogICAgICAgICAgICAgICAgZG9fcnVuKCkKICAgICAgICBlbHNlOgogICAgICAgICAgICBkb19ydW4oKQoKICAgIGRlZiB0ZXN0X3BhcnNlX3BrY3MxMl9kc2Eoc2VsZik6CiAgICAgICAgZGVmIGRvX3J1bigpOgogICAgICAgICAgICB3aXRoIG9wZW4ob3MucGF0aC5qb2luKGZpeHR1cmVzX2RpciwgJ2tleXMvdGVzdC1kc2EucDEyJyksICdyYicpIGFzIGY6CiAgICAgICAgICAgICAgICBrZXlfaW5mbywgY2VydF9pbmZvLCBleHRyYV9jZXJ0X2luZm9zID0ga2V5cy5wYXJzZV9wa2NzMTIoZi5yZWFkKCksIGIncGFzc3dvcmQxMjMnKQoKICAgICAgICAgICAgd2l0aCBvcGVuKG9zLnBhdGguam9pbihmaXh0dXJlc19kaXIsICdrZXlzL3Rlc3QtcGtjczgtZHNhLWRlci5rZXknKSwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgICAgIGtleV9kZXIgPSBmLnJlYWQoKQoKICAgICAgICAgICAgd2l0aCBvcGVuKG9zLnBhdGguam9pbihmaXh0dXJlc19kaXIsICdrZXlzL3Rlc3QtZHNhLWRlci5jcnQnKSwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgICAgIGNlcnRfZGVyID0gZi5yZWFkKCkKCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoa2V5X2Rlciwga2V5X2luZm8uZHVtcCgpKQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGNlcnRfZGVyLCBjZXJ0X2luZm8uZHVtcCgpKQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKFtdLCBleHRyYV9jZXJ0X2luZm9zKQoKICAgICAgICAgICAgIyBNYWtlIHN1cmUgd2UgY2FuIHBhcnNlIHRoZSBERVIKICAgICAgICAgICAga2V5X2luZm8ubmF0aXZlCiAgICAgICAgICAgIGNlcnRfaW5mby5uYXRpdmUKCiAgICAgICAgaWYgbm90IHN1cHBvcnRzX2xlZ2FjeToKICAgICAgICAgICAgd2l0aCBzZWxmLmFzc2VydFJhaXNlcyhFbnZpcm9ubWVudEVycm9yKToKICAgICAgICAgICAgICAgIGRvX3J1bigpCiAgICAgICAgZWxzZToKICAgICAgICAgICAgZG9fcnVuKCkKCiAgICBkZWYgdGVzdF9wYXJzZV9wa2NzMTJfY2hhaW4oc2VsZik6CiAgICAgICAgZGVmIGRvX3J1bigpOgogICAgICAgICAgICB3aXRoIG9wZW4ob3MucGF0aC5qb2luKGZpeHR1cmVzX2RpciwgJ2tleXMvdGVzdC10aGlyZC5wMTInKSwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgICAgIGtleV9pbmZvLCBjZXJ0X2luZm8sIGV4dHJhX2NlcnRfaW5mb3MgPSBrZXlzLnBhcnNlX3BrY3MxMihmLnJlYWQoKSwgYidwYXNzd29yZDEyMycpCgogICAgICAgICAgICB3aXRoIG9wZW4ob3MucGF0aC5qb2luKGZpeHR1cmVzX2RpciwgJ2tleXMvdGVzdC10aGlyZC1kZXIua2V5JyksICdyYicpIGFzIGY6CiAgICAgICAgICAgICAgICBwcml2YXRlX2tleSA9IGFzbjFjcnlwdG8ua2V5cy5SU0FQcml2YXRlS2V5LmxvYWQoZi5yZWFkKCkpCiAgICAgICAgICAgICAgICBrZXlfZGVyID0gYXNuMWNyeXB0by5rZXlzLlByaXZhdGVLZXlJbmZvLndyYXAocHJpdmF0ZV9rZXksICdyc2EnKS5kdW1wKCkKCiAgICAgICAgICAgIHdpdGggb3Blbihvcy5wYXRoLmpvaW4oZml4dHVyZXNfZGlyLCAna2V5cy90ZXN0LXRoaXJkLWRlci5jcnQnKSwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgICAgIGNlcnRfZGVyID0gZi5yZWFkKCkKCiAgICAgICAgICAgIHdpdGggb3Blbihvcy5wYXRoLmpvaW4oZml4dHVyZXNfZGlyLCAna2V5cy90ZXN0LWludGVyLWRlci5jcnQnKSwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgICAgIGludGVybWVkaWF0ZV9jZXJ0X2RlciA9IGYucmVhZCgpCgogICAgICAgICAgICB3aXRoIG9wZW4ob3MucGF0aC5qb2luKGZpeHR1cmVzX2RpciwgJ2tleXMvdGVzdC1kZXIuY3J0JyksICdyYicpIGFzIGY6CiAgICAgICAgICAgICAgICByb290X2NlcnRfZGVyID0gZi5yZWFkKCkKCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoa2V5X2Rlciwga2V5X2luZm8uZHVtcCgpKQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGNlcnRfZGVyLCBjZXJ0X2luZm8uZHVtcCgpKQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKAogICAgICAgICAgICAgICAgc29ydGVkKFtpbnRlcm1lZGlhdGVfY2VydF9kZXIsIHJvb3RfY2VydF9kZXJdKSwKICAgICAgICAgICAgICAgIHNvcnRlZChbaW5mby5kdW1wKCkgZm9yIGluZm8gaW4gZXh0cmFfY2VydF9pbmZvc10pCiAgICAgICAgICAgICkKCiAgICAgICAgICAgICMgTWFrZSBzdXJlIHdlIGNhbiBwYXJzZSB0aGUgREVSCiAgICAgICAgICAgIGtleV9pbmZvLm5hdGl2ZQogICAgICAgICAgICBjZXJ0X2luZm8ubmF0aXZlCiAgICAgICAgICAgIGZvciBpbmZvIGluIGV4dHJhX2NlcnRfaW5mb3M6CiAgICAgICAgICAgICAgICBpbmZvLm5hdGl2ZQoKICAgICAgICBpZiBub3Qgc3VwcG9ydHNfbGVnYWN5OgogICAgICAgICAgICB3aXRoIHNlbGYuYXNzZXJ0UmFpc2VzKEVudmlyb25tZW50RXJyb3IpOgogICAgICAgICAgICAgICAgZG9fcnVuKCkKICAgICAgICBlbHNlOgogICAgICAgICAgICBkb19ydW4oKQo=

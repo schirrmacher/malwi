@@ -1,0 +1,71 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/pycryptoenv/1.0.7/pycryptoenv-1.0.7/pycryptoenv-1.0.7/tests/test_legacy_module.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      # coding: utf-8
+      from __future__ import unicode_literals, division, absolute_import, print_function
+
+      from oscrypto import backend
+
+      from ._unittest_compat import patch
+      from .unittest_data import data_decorator
+
+      import sys
+      import unittest
+
+      patch()
+
+      if sys.version_info < (3,):
+          byte_cls = str
+      else:
+          byte_cls = bytes
+
+      _backend = backend()
+
+      if _backend == 'openssl':
+          from oscrypto._openssl._libcrypto import libcrypto_legacy_support, libcrypto
+          supports_legacy = libcrypto_legacy_support
+
+          from oscrypto._openssl._libcrypto_ctypes import version_info
+          from oscrypto._ffi import null
+
+
+      @data_decorator
+      class LegacyProviderTests(unittest.TestCase):
+
+          # OSSL_PROVIDER_available and the legacy provider only exist since OpenSSL 3
+
+          def test_checkLegacy(self):
+              if (_backend != 'openssl' or version_info < (3, )):
+                  if (sys.version_info < (2, 7)):
+                      # Python 2.6 doesn't support "skipTest", so just return
+                      return
+                  self.skipTest("This test only makes sense with OpenSSL 3")
+
+              # OSSL_PROVIDER_available does NOT express if a provider can be loaded.
+              # It expresses if a provider has been loaded and can be used.
+
+              is_avail = libcrypto.OSSL_PROVIDER_available(null(), "legacy".encode("ascii"))
+              self.assertEqual(is_avail, libcrypto_legacy_support, "legacy provider loaded but libcrypto claims it's not")
+
+              if not is_avail:
+                  # Currently not loaded. See if we can load it
+                  # If we can (if "is_avail" is true after this), then oscrypto should have automatically loaded it
+                  # to allow the user to use legacy encryptions.
+                  libcrypto.OSSL_PROVIDER_load(null(), "legacy".encode("ascii"))
+                  libcrypto.OSSL_PROVIDER_load(null(), "default".encode("ascii"))
+                  is_avail = libcrypto.OSSL_PROVIDER_available(null(), "legacy".encode("ascii"))
+
+                  self.assertEqual(is_avail, libcrypto_legacy_support, "legacy provider should have been loaded")
+    tokens: resume load_const INTEGER load_const import_name __future__ import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from division store_name division import_from absolute_import store_name absolute_import import_from print_function store_name print_function pop_top load_const INTEGER load_const import_name oscrypto import_from backend store_name backend pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from patch store_name patch pop_top load_const INTEGER load_const import_name unittest_data import_from data_decorator store_name data_decorator pop_top load_const INTEGER load_const import_name sys store_name sys load_const INTEGER load_const import_name unittest store_name unittest push_null load_name patch call pop_top load_name sys load_attr version_info load_const compare_op < pop_jump_if_false TO_NUMBER load_name str store_name byte_cls jump_forward TO_NUMBER load_name bytes store_name byte_cls push_null load_name backend call store_name _backend load_name _backend load_const openssl compare_op == pop_jump_if_false TO_NUMBER load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from libcrypto store_name libcrypto pop_top load_name STRING_LEN_S_ENT_HIGH store_name supports_legacy load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from version_info store_name version_info pop_top load_const INTEGER load_const import_name oscrypto._ffi import_from null store_name null pop_top load_name data_decorator push_null load_build_class load_const OBJECT make_function load_const STRING_LEN_S_ENT_HIGH load_name unittest load_attr TestCase call call store_name STRING_LEN_S_ENT_HIGH return_const None
+    hash: 4ffd74d9e59a0272f81dfddf8f7a98ee13c5b7d2d193452ede1525c8573e159b
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/pycryptoenv/1.0.7/pycryptoenv-1.0.7/pycryptoenv-1.0.7/tests/test_legacy_module.py
+  : IyBjb2Rpbmc6IHV0Zi04CmZyb20gX19mdXR1cmVfXyBpbXBvcnQgdW5pY29kZV9saXRlcmFscywgZGl2aXNpb24sIGFic29sdXRlX2ltcG9ydCwgcHJpbnRfZnVuY3Rpb24KCmZyb20gb3NjcnlwdG8gaW1wb3J0IGJhY2tlbmQKCmZyb20gLl91bml0dGVzdF9jb21wYXQgaW1wb3J0IHBhdGNoCmZyb20gLnVuaXR0ZXN0X2RhdGEgaW1wb3J0IGRhdGFfZGVjb3JhdG9yCgppbXBvcnQgc3lzCmltcG9ydCB1bml0dGVzdAoKcGF0Y2goKQoKaWYgc3lzLnZlcnNpb25faW5mbyA8ICgzLCk6CiAgICBieXRlX2NscyA9IHN0cgplbHNlOgogICAgYnl0ZV9jbHMgPSBieXRlcwoKX2JhY2tlbmQgPSBiYWNrZW5kKCkKCmlmIF9iYWNrZW5kID09ICdvcGVuc3NsJzoKICAgIGZyb20gb3NjcnlwdG8uX29wZW5zc2wuX2xpYmNyeXB0byBpbXBvcnQgbGliY3J5cHRvX2xlZ2FjeV9zdXBwb3J0LCBsaWJjcnlwdG8KICAgIHN1cHBvcnRzX2xlZ2FjeSA9IGxpYmNyeXB0b19sZWdhY3lfc3VwcG9ydAoKICAgIGZyb20gb3NjcnlwdG8uX29wZW5zc2wuX2xpYmNyeXB0b19jdHlwZXMgaW1wb3J0IHZlcnNpb25faW5mbwogICAgZnJvbSBvc2NyeXB0by5fZmZpIGltcG9ydCBudWxsCgoKQGRhdGFfZGVjb3JhdG9yCmNsYXNzIExlZ2FjeVByb3ZpZGVyVGVzdHModW5pdHRlc3QuVGVzdENhc2UpOgoKICAgICMgT1NTTF9QUk9WSURFUl9hdmFpbGFibGUgYW5kIHRoZSBsZWdhY3kgcHJvdmlkZXIgb25seSBleGlzdCBzaW5jZSBPcGVuU1NMIDMKCiAgICBkZWYgdGVzdF9jaGVja0xlZ2FjeShzZWxmKToKICAgICAgICBpZiAoX2JhY2tlbmQgIT0gJ29wZW5zc2wnIG9yIHZlcnNpb25faW5mbyA8ICgzLCApKToKICAgICAgICAgICAgaWYgKHN5cy52ZXJzaW9uX2luZm8gPCAoMiwgNykpOgogICAgICAgICAgICAgICAgIyBQeXRob24gMi42IGRvZXNuJ3Qgc3VwcG9ydCAic2tpcFRlc3QiLCBzbyBqdXN0IHJldHVybgogICAgICAgICAgICAgICAgcmV0dXJuCiAgICAgICAgICAgIHNlbGYuc2tpcFRlc3QoIlRoaXMgdGVzdCBvbmx5IG1ha2VzIHNlbnNlIHdpdGggT3BlblNTTCAzIikKCiAgICAgICAgIyBPU1NMX1BST1ZJREVSX2F2YWlsYWJsZSBkb2VzIE5PVCBleHByZXNzIGlmIGEgcHJvdmlkZXIgY2FuIGJlIGxvYWRlZC4KICAgICAgICAjIEl0IGV4cHJlc3NlcyBpZiBhIHByb3ZpZGVyIGhhcyBiZWVuIGxvYWRlZCBhbmQgY2FuIGJlIHVzZWQuCgogICAgICAgIGlzX2F2YWlsID0gbGliY3J5cHRvLk9TU0xfUFJPVklERVJfYXZhaWxhYmxlKG51bGwoKSwgImxlZ2FjeSIuZW5jb2RlKCJhc2NpaSIpKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoaXNfYXZhaWwsIGxpYmNyeXB0b19sZWdhY3lfc3VwcG9ydCwgImxlZ2FjeSBwcm92aWRlciBsb2FkZWQgYnV0IGxpYmNyeXB0byBjbGFpbXMgaXQncyBub3QiKQoKICAgICAgICBpZiBub3QgaXNfYXZhaWw6CiAgICAgICAgICAgICMgQ3VycmVudGx5IG5vdCBsb2FkZWQuIFNlZSBpZiB3ZSBjYW4gbG9hZCBpdAogICAgICAgICAgICAjIElmIHdlIGNhbiAoaWYgImlzX2F2YWlsIiBpcyB0cnVlIGFmdGVyIHRoaXMpLCB0aGVuIG9zY3J5cHRvIHNob3VsZCBoYXZlIGF1dG9tYXRpY2FsbHkgbG9hZGVkIGl0CiAgICAgICAgICAgICMgdG8gYWxsb3cgdGhlIHVzZXIgdG8gdXNlIGxlZ2FjeSBlbmNyeXB0aW9ucy4KICAgICAgICAgICAgbGliY3J5cHRvLk9TU0xfUFJPVklERVJfbG9hZChudWxsKCksICJsZWdhY3kiLmVuY29kZSgiYXNjaWkiKSkKICAgICAgICAgICAgbGliY3J5cHRvLk9TU0xfUFJPVklERVJfbG9hZChudWxsKCksICJkZWZhdWx0Ii5lbmNvZGUoImFzY2lpIikpCiAgICAgICAgICAgIGlzX2F2YWlsID0gbGliY3J5cHRvLk9TU0xfUFJPVklERVJfYXZhaWxhYmxlKG51bGwoKSwgImxlZ2FjeSIuZW5jb2RlKCJhc2NpaSIpKQoKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChpc19hdmFpbCwgbGliY3J5cHRvX2xlZ2FjeV9zdXBwb3J0LCAibGVnYWN5IHByb3ZpZGVyIHNob3VsZCBoYXZlIGJlZW4gbG9hZGVkIikK

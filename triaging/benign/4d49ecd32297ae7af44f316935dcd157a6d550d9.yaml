@@ -1,0 +1,137 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/urlib3/1.21.1/urlib3-1.21.1/urlib3-1.21.1/urllib3/contrib/socks.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      # -*- coding: utf-8 -*-
+      """
+      This module contains provisional support for SOCKS proxies from within
+      urllib3. This module supports SOCKS4 (specifically the SOCKS4A variant) and
+      SOCKS5. To enable its functionality, either install PySocks or install this
+      module with the ``socks`` extra.
+
+      The SOCKS implementation supports the full range of urllib3 features. It also
+      supports the following SOCKS features:
+
+      - SOCKS4
+      - SOCKS4a
+      - SOCKS5
+      - Usernames and passwords for the SOCKS proxy
+
+      Known Limitations:
+
+      - Currently PySocks does not support contacting remote websites via literal
+        IPv6 addresses. Any such connection attempt will fail. You must use a domain
+        name.
+      - Currently PySocks does not support IPv6 connections to the SOCKS proxy. Any
+        such connection attempt will fail.
+      """
+      from __future__ import absolute_import
+
+      try:
+          import socks
+      except ImportError:
+          import warnings
+          from ..exceptions import DependencyWarning
+
+          warnings.warn((
+              'SOCKS support in urllib3 requires the installation of optional '
+              'dependencies: specifically, PySocks.  For more information, see '
+              'https://urllib3.readthedocs.io/en/latest/contrib.html#socks-proxies'
+              ),
+              DependencyWarning
+          )
+          raise
+
+      from socket import error as SocketError, timeout as SocketTimeout
+
+      from ..connection import (
+          HTTPConnection, HTTPSConnection
+      )
+      from ..connectionpool import (
+          HTTPConnectionPool, HTTPSConnectionPool
+      )
+      from ..exceptions import ConnectTimeoutError, NewConnectionError
+      from ..poolmanager import PoolManager
+      from ..util.url import parse_url
+
+      try:
+          import ssl
+      except ImportError:
+          ssl = None
+
+
+      class SOCKSConnection(HTTPConnection):
+          """
+          A plain-text HTTP connection that connects via a SOCKS proxy.
+          """
+          def __init__(self, *args, **kwargs):
+              self._socks_options = kwargs.pop('_socks_options')
+              super(SOCKSConnection, self).__init__(*args, **kwargs)
+
+          def _new_conn(self):
+              """
+              Establish a new connection via the SOCKS proxy.
+              """
+              extra_kw = {}
+              if self.source_address:
+                  extra_kw['source_address'] = self.source_address
+
+              if self.socket_options:
+                  extra_kw['socket_options'] = self.socket_options
+
+              try:
+                  conn = socks.create_connection(
+                      (self.host, self.port),
+                      proxy_type=self._socks_options['socks_version'],
+                      proxy_addr=self._socks_options['proxy_host'],
+                      proxy_port=self._socks_options['proxy_port'],
+                      proxy_username=self._socks_options['username'],
+                      proxy_password=self._socks_options['password'],
+                      proxy_rdns=self._socks_options['rdns'],
+                      timeout=self.timeout,
+                      **extra_kw
+                  )
+
+              except SocketTimeout as e:
+                  raise ConnectTimeoutError(
+                      self, "Connection to %s timed out. (connect timeout=%s)" %
+                      (self.host, self.timeout))
+
+              except socks.ProxyError as e:
+                  # This is fragile as hell, but it seems to be the only way to raise
+                  # useful errors here.
+                  if e.socket_err:
+                      error = e.socket_err
+                      if isinstance(error, SocketTimeout):
+                          raise ConnectTimeoutError(
+                              self,
+                              "Connection to %s timed out. (connect timeout=%s)" %
+                              (self.host, self.timeout)
+                          )
+                      else:
+                          raise NewConnectionError(
+                              self,
+                              "Failed to establish a new connection: %s" % error
+                          )
+                  else:
+                      raise NewConnectionError(
+                          self,
+                          "Failed to establish a new connection: %s" % e
+                      )
+
+              except SocketError as e:  # Defensive: PySocks should catch all these.
+                  raise NewConnectionError(
+                      self, "Failed to establish a new connection: %s" % e)
+
+              return conn
+    tokens: resume load_const STRING_LEN_M_ENT_HIGH store_name __doc__ load_const INTEGER load_const import_name __future__ import_from absolute_import store_name absolute_import pop_top nop load_const INTEGER load_const import_name socks store_name socks load_const INTEGER load_const import_name socket import_from error store_name SocketError import_from timeout store_name SocketTimeout pop_top load_const INTEGER load_const import_name connection import_from HTTPConnection store_name HTTPConnection import_from HTTPSConnection store_name HTTPSConnection pop_top load_const INTEGER load_const import_name connectionpool import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH pop_top load_const INTEGER load_const import_name exceptions import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH pop_top load_const INTEGER load_const import_name poolmanager import_from PoolManager store_name PoolManager pop_top load_const INTEGER load_const import_name util.url import_from parse_url store_name parse_url pop_top nop load_const INTEGER load_const import_name ssl store_name ssl push_null load_build_class load_const OBJECT make_function load_const SOCKSConnection load_name HTTPConnection call store_name SOCKSConnection push_null load_build_class load_const OBJECT make_function load_const STRING_BASE64_LEN_S_ENT_HIGH load_name SOCKSConnection load_name HTTPSConnection call store_name STRING_BASE64_LEN_S_ENT_HIGH push_null load_build_class load_const OBJECT make_function load_const STRING_LEN_S_ENT_HIGH load_name STRING_LEN_S_ENT_HIGH call store_name STRING_LEN_S_ENT_HIGH push_null load_build_class load_const OBJECT make_function load_const STRING_BASE64_LEN_S_ENT_HIGH load_name STRING_LEN_S_ENT_HIGH call store_name STRING_BASE64_LEN_S_ENT_HIGH push_null load_build_class load_const OBJECT make_function load_const STRING_LEN_S_ENT_HIGH load_name PoolManager call store_name STRING_LEN_S_ENT_HIGH return_const None push_exc_info load_name ImportError check_exc_match pop_jump_if_false TO_NUMBER pop_top load_const INTEGER load_const import_name warnings store_name warnings load_const INTEGER load_const import_name exceptions import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH pop_top push_null load_name warnings load_attr warn load_const STRING_FILE_PATH load_name STRING_LEN_S_ENT_HIGH call pop_top raise_varargs reraise copy pop_except reraise push_exc_info load_name ImportError check_exc_match pop_jump_if_false TO_NUMBER pop_top load_const store_name ssl pop_except jump_backward TO_NUMBER reraise copy pop_except reraise
+    hash: e592793c87ad8dc1b204f50eebbe14ea8e169e30a796160916b1b24fb080aea0
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/urlib3/1.21.1/urlib3-1.21.1/urlib3-1.21.1/urllib3/contrib/socks.py: IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0KIiIiClRoaXMgbW9kdWxlIGNvbnRhaW5zIHByb3Zpc2lvbmFsIHN1cHBvcnQgZm9yIFNPQ0tTIHByb3hpZXMgZnJvbSB3aXRoaW4KdXJsbGliMy4gVGhpcyBtb2R1bGUgc3VwcG9ydHMgU09DS1M0IChzcGVjaWZpY2FsbHkgdGhlIFNPQ0tTNEEgdmFyaWFudCkgYW5kClNPQ0tTNS4gVG8gZW5hYmxlIGl0cyBmdW5jdGlvbmFsaXR5LCBlaXRoZXIgaW5zdGFsbCBQeVNvY2tzIG9yIGluc3RhbGwgdGhpcwptb2R1bGUgd2l0aCB0aGUgYGBzb2Nrc2BgIGV4dHJhLgoKVGhlIFNPQ0tTIGltcGxlbWVudGF0aW9uIHN1cHBvcnRzIHRoZSBmdWxsIHJhbmdlIG9mIHVybGxpYjMgZmVhdHVyZXMuIEl0IGFsc28Kc3VwcG9ydHMgdGhlIGZvbGxvd2luZyBTT0NLUyBmZWF0dXJlczoKCi0gU09DS1M0Ci0gU09DS1M0YQotIFNPQ0tTNQotIFVzZXJuYW1lcyBhbmQgcGFzc3dvcmRzIGZvciB0aGUgU09DS1MgcHJveHkKCktub3duIExpbWl0YXRpb25zOgoKLSBDdXJyZW50bHkgUHlTb2NrcyBkb2VzIG5vdCBzdXBwb3J0IGNvbnRhY3RpbmcgcmVtb3RlIHdlYnNpdGVzIHZpYSBsaXRlcmFsCiAgSVB2NiBhZGRyZXNzZXMuIEFueSBzdWNoIGNvbm5lY3Rpb24gYXR0ZW1wdCB3aWxsIGZhaWwuIFlvdSBtdXN0IHVzZSBhIGRvbWFpbgogIG5hbWUuCi0gQ3VycmVudGx5IFB5U29ja3MgZG9lcyBub3Qgc3VwcG9ydCBJUHY2IGNvbm5lY3Rpb25zIHRvIHRoZSBTT0NLUyBwcm94eS4gQW55CiAgc3VjaCBjb25uZWN0aW9uIGF0dGVtcHQgd2lsbCBmYWlsLgoiIiIKZnJvbSBfX2Z1dHVyZV9fIGltcG9ydCBhYnNvbHV0ZV9pbXBvcnQKCnRyeToKICAgIGltcG9ydCBzb2NrcwpleGNlcHQgSW1wb3J0RXJyb3I6CiAgICBpbXBvcnQgd2FybmluZ3MKICAgIGZyb20gLi5leGNlcHRpb25zIGltcG9ydCBEZXBlbmRlbmN5V2FybmluZwoKICAgIHdhcm5pbmdzLndhcm4oKAogICAgICAgICdTT0NLUyBzdXBwb3J0IGluIHVybGxpYjMgcmVxdWlyZXMgdGhlIGluc3RhbGxhdGlvbiBvZiBvcHRpb25hbCAnCiAgICAgICAgJ2RlcGVuZGVuY2llczogc3BlY2lmaWNhbGx5LCBQeVNvY2tzLiAgRm9yIG1vcmUgaW5mb3JtYXRpb24sIHNlZSAnCiAgICAgICAgJ2h0dHBzOi8vdXJsbGliMy5yZWFkdGhlZG9jcy5pby9lbi9sYXRlc3QvY29udHJpYi5odG1sI3NvY2tzLXByb3hpZXMnCiAgICAgICAgKSwKICAgICAgICBEZXBlbmRlbmN5V2FybmluZwogICAgKQogICAgcmFpc2UKCmZyb20gc29ja2V0IGltcG9ydCBlcnJvciBhcyBTb2NrZXRFcnJvciwgdGltZW91dCBhcyBTb2NrZXRUaW1lb3V0Cgpmcm9tIC4uY29ubmVjdGlvbiBpbXBvcnQgKAogICAgSFRUUENvbm5lY3Rpb24sIEhUVFBTQ29ubmVjdGlvbgopCmZyb20gLi5jb25uZWN0aW9ucG9vbCBpbXBvcnQgKAogICAgSFRUUENvbm5lY3Rpb25Qb29sLCBIVFRQU0Nvbm5lY3Rpb25Qb29sCikKZnJvbSAuLmV4Y2VwdGlvbnMgaW1wb3J0IENvbm5lY3RUaW1lb3V0RXJyb3IsIE5ld0Nvbm5lY3Rpb25FcnJvcgpmcm9tIC4ucG9vbG1hbmFnZXIgaW1wb3J0IFBvb2xNYW5hZ2VyCmZyb20gLi51dGlsLnVybCBpbXBvcnQgcGFyc2VfdXJsCgp0cnk6CiAgICBpbXBvcnQgc3NsCmV4Y2VwdCBJbXBvcnRFcnJvcjoKICAgIHNzbCA9IE5vbmUKCgpjbGFzcyBTT0NLU0Nvbm5lY3Rpb24oSFRUUENvbm5lY3Rpb24pOgogICAgIiIiCiAgICBBIHBsYWluLXRleHQgSFRUUCBjb25uZWN0aW9uIHRoYXQgY29ubmVjdHMgdmlhIGEgU09DS1MgcHJveHkuCiAgICAiIiIKICAgIGRlZiBfX2luaXRfXyhzZWxmLCAqYXJncywgKiprd2FyZ3MpOgogICAgICAgIHNlbGYuX3NvY2tzX29wdGlvbnMgPSBrd2FyZ3MucG9wKCdfc29ja3Nfb3B0aW9ucycpCiAgICAgICAgc3VwZXIoU09DS1NDb25uZWN0aW9uLCBzZWxmKS5fX2luaXRfXygqYXJncywgKiprd2FyZ3MpCgogICAgZGVmIF9uZXdfY29ubihzZWxmKToKICAgICAgICAiIiIKICAgICAgICBFc3RhYmxpc2ggYSBuZXcgY29ubmVjdGlvbiB2aWEgdGhlIFNPQ0tTIHByb3h5LgogICAgICAgICIiIgogICAgICAgIGV4dHJhX2t3ID0ge30KICAgICAgICBpZiBzZWxmLnNvdXJjZV9hZGRyZXNzOgogICAgICAgICAgICBleHRyYV9rd1snc291cmNlX2FkZHJlc3MnXSA9IHNlbGYuc291cmNlX2FkZHJlc3MKCiAgICAgICAgaWYgc2VsZi5zb2NrZXRfb3B0aW9uczoKICAgICAgICAgICAgZXh0cmFfa3dbJ3NvY2tldF9vcHRpb25zJ10gPSBzZWxmLnNvY2tldF9vcHRpb25zCgogICAgICAgIHRyeToKICAgICAgICAgICAgY29ubiA9IHNvY2tzLmNyZWF0ZV9jb25uZWN0aW9uKAogICAgICAgICAgICAgICAgKHNlbGYuaG9zdCwgc2VsZi5wb3J0KSwKICAgICAgICAgICAgICAgIHByb3h5X3R5cGU9c2VsZi5fc29ja3Nfb3B0aW9uc1snc29ja3NfdmVyc2lvbiddLAogICAgICAgICAgICAgICAgcHJveHlfYWRkcj1zZWxmLl9zb2Nrc19vcHRpb25zWydwcm94eV9ob3N0J10sCiAgICAgICAgICAgICAgICBwcm94eV9wb3J0PXNlbGYuX3NvY2tzX29wdGlvbnNbJ3Byb3h5X3BvcnQnXSwKICAgICAgICAgICAgICAgIHByb3h5X3VzZXJuYW1lPXNlbGYuX3NvY2tzX29wdGlvbnNbJ3VzZXJuYW1lJ10sCiAgICAgICAgICAgICAgICBwcm94eV9wYXNzd29yZD1zZWxmLl9zb2Nrc19vcHRpb25zWydwYXNzd29yZCddLAogICAgICAgICAgICAgICAgcHJveHlfcmRucz1zZWxmLl9zb2Nrc19vcHRpb25zWydyZG5zJ10sCiAgICAgICAgICAgICAgICB0aW1lb3V0PXNlbGYudGltZW91dCwKICAgICAgICAgICAgICAgICoqZXh0cmFfa3cKICAgICAgICAgICAgKQoKICAgICAgICBleGNlcHQgU29ja2V0VGltZW91dCBhcyBlOgogICAgICAgICAgICByYWlzZSBDb25uZWN0VGltZW91dEVycm9yKAogICAgICAgICAgICAgICAgc2VsZiwgIkNvbm5lY3Rpb24gdG8gJXMgdGltZWQgb3V0LiAoY29ubmVjdCB0aW1lb3V0PSVzKSIgJQogICAgICAgICAgICAgICAgKHNlbGYuaG9zdCwgc2VsZi50aW1lb3V0KSkKCiAgICAgICAgZXhjZXB0IHNvY2tzLlByb3h5RXJyb3IgYXMgZToKICAgICAgICAgICAgIyBUaGlzIGlzIGZyYWdpbGUgYXMgaGVsbCwgYnV0IGl0IHNlZW1zIHRvIGJlIHRoZSBvbmx5IHdheSB0byByYWlzZQogICAgICAgICAgICAjIHVzZWZ1bCBlcnJvcnMgaGVyZS4KICAgICAgICAgICAgaWYgZS5zb2NrZXRfZXJyOgogICAgICAgICAgICAgICAgZXJyb3IgPSBlLnNvY2tldF9lcnIKICAgICAgICAgICAgICAgIGlmIGlzaW5zdGFuY2UoZXJyb3IsIFNvY2tldFRpbWVvdXQpOgogICAgICAgICAgICAgICAgICAgIHJhaXNlIENvbm5lY3RUaW1lb3V0RXJyb3IoCiAgICAgICAgICAgICAgICAgICAgICAgIHNlbGYsCiAgICAgICAgICAgICAgICAgICAgICAgICJDb25uZWN0aW9uIHRvICVzIHRpbWVkIG91dC4gKGNvbm5lY3QgdGltZW91dD0lcykiICUKICAgICAgICAgICAgICAgICAgICAgICAgKHNlbGYuaG9zdCwgc2VsZi50aW1lb3V0KQogICAgICAgICAgICAgICAgICAgICkKICAgICAgICAgICAgICAgIGVsc2U6CiAgICAgICAgICAgICAgICAgICAgcmFpc2UgTmV3Q29ubmVjdGlvbkVycm9yKAogICAgICAgICAgICAgICAgICAgICAgICBzZWxmLAogICAgICAgICAgICAgICAgICAgICAgICAiRmFpbGVkIHRvIGVzdGFibGlzaCBhIG5ldyBjb25uZWN0aW9uOiAlcyIgJSBlcnJvcgogICAgICAgICAgICAgICAgICAgICkKICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgIHJhaXNlIE5ld0Nvbm5lY3Rpb25FcnJvcigKICAgICAgICAgICAgICAgICAgICBzZWxmLAogICAgICAgICAgICAgICAgICAgICJGYWlsZWQgdG8gZXN0YWJsaXNoIGEgbmV3IGNvbm5lY3Rpb246ICVzIiAlIGUKICAgICAgICAgICAgICAgICkKCiAgICAgICAgZXhjZXB0IFNvY2tldEVycm9yIGFzIGU6ICAjIERlZmVuc2l2ZTogUHlTb2NrcyBzaG91bGQgY2F0Y2ggYWxsIHRoZXNlLgogICAgICAgICAgICByYWlzZSBOZXdDb25uZWN0aW9uRXJyb3IoCiAgICAgICAgICAgICAgICBzZWxmLCAiRmFpbGVkIHRvIGVzdGFibGlzaCBhIG5ldyBjb25uZWN0aW9uOiAlcyIgJSBlKQoKICAgICAgICByZXR1cm4gY29ubgoKCiMgV2UgZG9uJ3QgbmVlZCB0byBkdXBsaWNhdGUgdGhlIFZlcmlmaWVkL1VudmVyaWZpZWQgZGlzdGluY3Rpb24gZnJvbQojIHVybGxpYjMvY29ubmVjdGlvbi5weSBoZXJlIGJlY2F1c2UgdGhlIEhUVFBTQ29ubmVjdGlvbiB3aWxsIGFscmVhZHkgaGF2ZSBiZWVuCiMgY29ycmVjdGx5IHNldCB0byBlaXRoZXIgdGhlIFZlcmlmaWVkIG9yIFVudmVyaWZpZWQgZm9ybSBieSB0aGF0IG1vZHVsZS4gVGhpcwojIG1lYW5zIHRoZSBTT0NLU0hUVFBTQ29ubmVjdGlvbiB3aWxsIGF1dG9tYXRpY2FsbHkgYmUgdGhlIGNvcnJlY3QgdHlwZS4KY2xhc3MgU09DS1NIVFRQU0Nvbm5lY3Rpb24oU09DS1NDb25uZWN0aW9uLCBIVFRQU0Nvbm5lY3Rpb24pOgogICAgcGFzcwoKCmNsYXNzIFNPQ0tTSFRUUENvbm5lY3Rpb25Qb29sKEhUVFBDb25uZWN0aW9uUG9vbCk6CiAgICBDb25uZWN0aW9uQ2xzID0gU09DS1NDb25uZWN0aW9uCgoKY2xhc3MgU09DS1NIVFRQU0Nvbm5lY3Rpb25Qb29sKEhUVFBTQ29ubmVjdGlvblBvb2wpOgogICAgQ29ubmVjdGlvbkNscyA9IFNPQ0tTSFRUUFNDb25uZWN0aW9uCgoKY2xhc3MgU09DS1NQcm94eU1hbmFnZXIoUG9vbE1hbmFnZXIpOgogICAgIiIiCiAgICBBIHZlcnNpb24gb2YgdGhlIHVybGxpYjMgUHJveHlNYW5hZ2VyIHRoYXQgcm91dGVzIGNvbm5lY3Rpb25zIHZpYSB0aGUKICAgIGRlZmluZWQgU09DS1MgcHJveHkuCiAgICAiIiIKICAgIHBvb2xfY2xhc3Nlc19ieV9zY2hlbWUgPSB7CiAgICAgICAgJ2h0dHAnOiBTT0NLU0hUVFBDb25uZWN0aW9uUG9vbCwKICAgICAgICAnaHR0cHMnOiBTT0NLU0hUVFBTQ29ubmVjdGlvblBvb2wsCiAgICB9CgogICAgZGVmIF9faW5pdF9fKHNlbGYsIHByb3h5X3VybCwgdXNlcm5hbWU9Tm9uZSwgcGFzc3dvcmQ9Tm9uZSwKICAgICAgICAgICAgICAgICBudW1fcG9vbHM9MTAsIGhlYWRlcnM9Tm9uZSwgKipjb25uZWN0aW9uX3Bvb2xfa3cpOgogICAgICAgIHBhcnNlZCA9IHBhcnNlX3VybChwcm94eV91cmwpCgogICAgICAgIGlmIHBhcnNlZC5zY2hlbWUgPT0gJ3NvY2tzNSc6CiAgICAgICAgICAgIHNvY2tzX3ZlcnNpb24gPSBzb2Nrcy5QUk9YWV9UWVBFX1NPQ0tTNQogICAgICAgICAgICByZG5zID0gRmFsc2UKICAgICAgICBlbGlmIHBhcnNlZC5zY2hlbWUgPT0gJ3NvY2tzNWgnOgogICAgICAgICAgICBzb2Nrc192ZXJzaW9uID0gc29ja3MuUFJPWFlfVFlQRV9TT0NLUzUKICAgICAgICAgICAgcmRucyA9IFRydWUKICAgICAgICBlbGlmIHBhcnNlZC5zY2hlbWUgPT0gJ3NvY2tzNCc6CiAgICAgICAgICAgIHNvY2tzX3ZlcnNpb24gPSBzb2Nrcy5QUk9YWV9UWVBFX1NPQ0tTNAogICAgICAgICAgICByZG5zID0gRmFsc2UKICAgICAgICBlbGlmIHBhcnNlZC5zY2hlbWUgPT0gJ3NvY2tzNGEnOgogICAgICAgICAgICBzb2Nrc192ZXJzaW9uID0gc29ja3MuUFJPWFlfVFlQRV9TT0NLUzQKICAgICAgICAgICAgcmRucyA9IFRydWUKICAgICAgICBlbHNlOgogICAgICAgICAgICByYWlzZSBWYWx1ZUVycm9yKAogICAgICAgICAgICAgICAgIlVuYWJsZSB0byBkZXRlcm1pbmUgU09DS1MgdmVyc2lvbiBmcm9tICVzIiAlIHByb3h5X3VybAogICAgICAgICAgICApCgogICAgICAgIHNlbGYucHJveHlfdXJsID0gcHJveHlfdXJsCgogICAgICAgIHNvY2tzX29wdGlvbnMgPSB7CiAgICAgICAgICAgICdzb2Nrc192ZXJzaW9uJzogc29ja3NfdmVyc2lvbiwKICAgICAgICAgICAgJ3Byb3h5X2hvc3QnOiBwYXJzZWQuaG9zdCwKICAgICAgICAgICAgJ3Byb3h5X3BvcnQnOiBwYXJzZWQucG9ydCwKICAgICAgICAgICAgJ3VzZXJuYW1lJzogdXNlcm5hbWUsCiAgICAgICAgICAgICdwYXNzd29yZCc6IHBhc3N3b3JkLAogICAgICAgICAgICAncmRucyc6IHJkbnMKICAgICAgICB9CiAgICAgICAgY29ubmVjdGlvbl9wb29sX2t3Wydfc29ja3Nfb3B0aW9ucyddID0gc29ja3Nfb3B0aW9ucwoKICAgICAgICBzdXBlcihTT0NLU1Byb3h5TWFuYWdlciwgc2VsZikuX19pbml0X18oCiAgICAgICAgICAgIG51bV9wb29scywgaGVhZGVycywgKipjb25uZWN0aW9uX3Bvb2xfa3cKICAgICAgICApCgogICAgICAgIHNlbGYucG9vbF9jbGFzc2VzX2J5X3NjaGVtZSA9IFNPQ0tTUHJveHlNYW5hZ2VyLnBvb2xfY2xhc3Nlc19ieV9zY2hlbWUK

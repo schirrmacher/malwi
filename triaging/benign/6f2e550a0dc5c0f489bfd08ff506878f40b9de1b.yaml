@@ -1,0 +1,16 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/colorsmecs/0.6.7/colorsmecs-0.6.7/colorsmecs-0.6.7/demos/demo02.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      #!/usr/bin/python
+    tokens: resume load_const INTEGER load_const import_name __future__ import_from print_function store_name print_function pop_top load_const INTEGER load_const import_name fixpath store_name fixpath load_const INTEGER load_const import_name colorama import_from init store_name init import_from Fore store_name Fore import_from Back store_name Back import_from Style store_name Style pop_top push_null load_name init call pop_top push_null load_name USER_IO load_name Fore load_attr GREEN load_const green, binary_op + load_name Fore load_attr RED binary_op + load_const red, binary_op + load_name Fore load_attr RESET binary_op + load_const normal, binary_op + load_const kw_names end call pop_top push_null load_name USER_IO load_name Back load_attr GREEN load_const green, binary_op + load_name Back load_attr RED binary_op + load_const red, binary_op + load_name Back load_attr RESET binary_op + load_const normal, binary_op + load_const kw_names end call pop_top push_null load_name USER_IO load_name Style load_attr DIM load_const dim, binary_op + load_name Style load_attr BRIGHT binary_op + load_const bright, binary_op + load_name Style load_attr NORMAL binary_op + load_const normal binary_op + load_const kw_names end call pop_top push_null load_name USER_IO call pop_top return_const None
+    hash: 3330e622d7994e48b3fbdff8ecfa086b120194993e84939f21b167d6786f8dff
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/colorsmecs/0.6.7/colorsmecs-0.6.7/colorsmecs-0.6.7/demos/demo02.py: IyEvdXNyL2Jpbi9weXRob24KIyBDb3B5cmlnaHQgSm9uYXRoYW4gSGFydGxleSAyMDEzLiBCU0QgMy1DbGF1c2UgbGljZW5zZSwgc2VlIExJQ0VOU0UgZmlsZS4KCiMgU2ltcGxlIGRlbW8gb2YgY2hhbmdpbmcgZm9yZWdyb3VuZCwgYmFja2dyb3VuZCBhbmQgYnJpZ2h0bmVzcy4KCmZyb20gX19mdXR1cmVfXyBpbXBvcnQgcHJpbnRfZnVuY3Rpb24KaW1wb3J0IGZpeHBhdGgKZnJvbSBjb2xvcmFtYSBpbXBvcnQgaW5pdCwgRm9yZSwgQmFjaywgU3R5bGUKCmluaXQoKQoKcHJpbnQoRm9yZS5HUkVFTiArICdncmVlbiwgJwogICAgKyBGb3JlLlJFRCArICdyZWQsICcKICAgICsgRm9yZS5SRVNFVCArICdub3JtYWwsICcKICAgICwgZW5kPScnKQpwcmludChCYWNrLkdSRUVOICsgJ2dyZWVuLCAnCiAgICArIEJhY2suUkVEICsgJ3JlZCwgJwogICAgKyBCYWNrLlJFU0VUICsgJ25vcm1hbCwgJwogICAgLCBlbmQ9JycpCnByaW50KFN0eWxlLkRJTSArICdkaW0sICcKICAgICsgU3R5bGUuQlJJR0hUICsgJ2JyaWdodCwgJwogICAgKyBTdHlsZS5OT1JNQUwgKyAnbm9ybWFsJwogICAgLCBlbmQ9JyAnKQpwcmludCgpCg==

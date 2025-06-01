@@ -1,0 +1,16 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/req7ests/2.28.1/req7ests-2.28.1/req7ests-2.28.1/req7ests/__init__.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      from frequest import get, post, put, patch, delete
+    tokens: TARGETED_FILE resume load_const INTEGER load_const import_name frequest import_from get store_name get import_from post store_name post import_from put store_name put import_from patch store_name patch import_from delete store_name delete pop_top return_const None
+    hash: 199bc32d5a8c4a23c54611a0d5c1c4ee7c580d1e5c240ae6149e9556a5d308e9
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/req7ests/2.28.1/req7ests-2.28.1/req7ests-2.28.1/req7ests/__init__.py: ZnJvbSBmcmVxdWVzdCBpbXBvcnQgZ2V0LCBwb3N0LCBwdXQsIHBhdGNoLCBkZWxldGU=

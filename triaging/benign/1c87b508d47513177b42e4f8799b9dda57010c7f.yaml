@@ -1,0 +1,44 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/pycryptoenv/1.0.7/pycryptoenv-1.0.7/pycryptoenv-1.0.7/tests/test_trust_list.py
+  contents:
+  - name: TrustListTests.test_get_list_callback
+    score: 0.0
+    code: |-
+      def test_get_list_callback(self):
+              trust_list.clear_cache()
+
+              lambda_data = {'calls': 0, 'reasons': 0, 'certs': {}}
+
+              def cb(cert, reason):
+                  if reason is not None:
+                      self.assertIsInstance(reason, str_cls)
+                      lambda_data['reasons'] += 1
+                  self.assertIsInstance(cert, x509.Certificate)
+                  sha1 = hashlib.sha1(cert.dump()).digest()
+                  message = None
+                  if sha1 in lambda_data['certs']:
+                      message = 'Certificate (%s) already passed to callback' % cert.subject.human_friendly
+                  self.assertNotIn(sha1, lambda_data['certs'], message)
+                  lambda_data['certs'][sha1] = True
+                  lambda_data['calls'] += 1
+
+              certs = trust_list.get_list(cert_callback=cb)
+              self.assertIsInstance(certs, list)
+              self.assertLess(10, len(certs))
+              self.assertLessEqual(len(certs), lambda_data['calls'])
+              self.assertEqual(lambda_data['calls'] - len(certs), lambda_data['reasons'])
+              for cert, trust_oids, reject_oids in certs:
+                  self.assertIsInstance(cert, x509.Certificate)
+                  self.assertIsInstance(trust_oids, set)
+                  self.assertIsInstance(reject_oids, set)
+                  cert.native
+    tokens: make_cell self make_cell lambda_data resume load_global trust_list load_attr clear_cache call pop_top load_const INTEGER load_const INTEGER build_map load_const build_const_key_map store_deref lambda_data load_closure lambda_data load_closure self build_tuple load_const OBJECT make_function closure store_fast cb load_global trust_list load_attr get_list load_fast cb kw_names cert_callback call store_fast certs load_deref self load_attr STRING_BASE64_LEN_S_ENT_HIGH load_fast certs load_global list call pop_top load_deref self load_attr assertLess load_const INTEGER load_global len load_fast certs call call pop_top load_deref self load_attr assertLessEqual load_global len load_fast certs call load_deref lambda_data load_const calls binary_subscr call pop_top load_deref self load_attr assertEqual load_deref lambda_data load_const calls binary_subscr load_global len load_fast certs call binary_op - load_deref lambda_data load_const reasons binary_subscr call pop_top load_fast certs get_iter for_iter TO_NUMBER unpack_sequence store_fast cert store_fast trust_oids store_fast reject_oids load_deref self load_attr STRING_BASE64_LEN_S_ENT_HIGH load_fast cert load_global x509 load_attr Certificate call pop_top load_deref self load_attr STRING_BASE64_LEN_S_ENT_HIGH load_fast trust_oids load_global set call pop_top load_deref self load_attr STRING_BASE64_LEN_S_ENT_HIGH load_fast reject_oids load_global set call pop_top load_fast cert load_attr native pop_top jump_backward TO_NUMBER end_for return_const None
+    hash: dd41c377f60c76ea9ade0a3afd973ad3bf1613e3e6930ddb30d713bf138970ec
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/pycryptoenv/1.0.7/pycryptoenv-1.0.7/pycryptoenv-1.0.7/tests/test_trust_list.py
+  : IyBjb2Rpbmc6IHV0Zi04CmZyb20gX19mdXR1cmVfXyBpbXBvcnQgdW5pY29kZV9saXRlcmFscywgZGl2aXNpb24sIGFic29sdXRlX2ltcG9ydCwgcHJpbnRfZnVuY3Rpb24KCmltcG9ydCBoYXNobGliCmltcG9ydCBvcwppbXBvcnQgdW5pdHRlc3QKaW1wb3J0IHN5cwoKZnJvbSBvc2NyeXB0byBpbXBvcnQgdHJ1c3RfbGlzdApmcm9tIGFzbjFjcnlwdG8gaW1wb3J0IHg1MDksIHBlbQoKZnJvbSAuX3VuaXR0ZXN0X2NvbXBhdCBpbXBvcnQgcGF0Y2gKCnBhdGNoKCkKCmlmIHN5cy52ZXJzaW9uX2luZm8gPCAoMywpOgogICAgc3RyX2NscyA9IHVuaWNvZGUgICMgbm9xYQogICAgYnl0ZV9jbHMgPSBzdHIKZWxzZToKICAgIHN0cl9jbHMgPSBzdHIKICAgIGJ5dGVfY2xzID0gYnl0ZXMKCgp0ZXN0c19yb290ID0gb3MucGF0aC5kaXJuYW1lKF9fZmlsZV9fKQpmaXh0dXJlc19kaXIgPSBvcy5wYXRoLmpvaW4odGVzdHNfcm9vdCwgJ2ZpeHR1cmVzJykKCmRpZ2ljZXJ0X2NhX3BhdGggPSBvcy5wYXRoLmpvaW4oZml4dHVyZXNfZGlyLCAnZGlnaWNlcnRfY2EuY3J0JykKCgpjbGFzcyBUcnVzdExpc3RUZXN0cyh1bml0dGVzdC5UZXN0Q2FzZSk6CgogICAgZGVmIHRlc3RfZ2V0X2xpc3Qoc2VsZik6CiAgICAgICAgdHJ1c3RfbGlzdC5jbGVhcl9jYWNoZSgpCgogICAgICAgIGNlcnRzID0gdHJ1c3RfbGlzdC5nZXRfbGlzdCgpCiAgICAgICAgc2VsZi5hc3NlcnRJc0luc3RhbmNlKGNlcnRzLCBsaXN0KQogICAgICAgIHNlbGYuYXNzZXJ0TGVzcygxMCwgbGVuKGNlcnRzKSkKICAgICAgICBmb3IgY2VydCwgdHJ1c3Rfb2lkcywgcmVqZWN0X29pZHMgaW4gY2VydHM6CiAgICAgICAgICAgIHNlbGYuYXNzZXJ0SXNJbnN0YW5jZShjZXJ0LCB4NTA5LkNlcnRpZmljYXRlKQogICAgICAgICAgICBzZWxmLmFzc2VydElzSW5zdGFuY2UodHJ1c3Rfb2lkcywgc2V0KQogICAgICAgICAgICBzZWxmLmFzc2VydElzSW5zdGFuY2UocmVqZWN0X29pZHMsIHNldCkKICAgICAgICAgICAgY2VydC5uYXRpdmUKCiAgICBkZWYgdGVzdF9nZXRfbGlzdF9jYWxsYmFjayhzZWxmKToKICAgICAgICB0cnVzdF9saXN0LmNsZWFyX2NhY2hlKCkKCiAgICAgICAgbGFtYmRhX2RhdGEgPSB7J2NhbGxzJzogMCwgJ3JlYXNvbnMnOiAwLCAnY2VydHMnOiB7fX0KCiAgICAgICAgZGVmIGNiKGNlcnQsIHJlYXNvbik6CiAgICAgICAgICAgIGlmIHJlYXNvbiBpcyBub3QgTm9uZToKICAgICAgICAgICAgICAgIHNlbGYuYXNzZXJ0SXNJbnN0YW5jZShyZWFzb24sIHN0cl9jbHMpCiAgICAgICAgICAgICAgICBsYW1iZGFfZGF0YVsncmVhc29ucyddICs9IDEKICAgICAgICAgICAgc2VsZi5hc3NlcnRJc0luc3RhbmNlKGNlcnQsIHg1MDkuQ2VydGlmaWNhdGUpCiAgICAgICAgICAgIHNoYTEgPSBoYXNobGliLnNoYTEoY2VydC5kdW1wKCkpLmRpZ2VzdCgpCiAgICAgICAgICAgIG1lc3NhZ2UgPSBOb25lCiAgICAgICAgICAgIGlmIHNoYTEgaW4gbGFtYmRhX2RhdGFbJ2NlcnRzJ106CiAgICAgICAgICAgICAgICBtZXNzYWdlID0gJ0NlcnRpZmljYXRlICglcykgYWxyZWFkeSBwYXNzZWQgdG8gY2FsbGJhY2snICUgY2VydC5zdWJqZWN0Lmh1bWFuX2ZyaWVuZGx5CiAgICAgICAgICAgIHNlbGYuYXNzZXJ0Tm90SW4oc2hhMSwgbGFtYmRhX2RhdGFbJ2NlcnRzJ10sIG1lc3NhZ2UpCiAgICAgICAgICAgIGxhbWJkYV9kYXRhWydjZXJ0cyddW3NoYTFdID0gVHJ1ZQogICAgICAgICAgICBsYW1iZGFfZGF0YVsnY2FsbHMnXSArPSAxCgogICAgICAgIGNlcnRzID0gdHJ1c3RfbGlzdC5nZXRfbGlzdChjZXJ0X2NhbGxiYWNrPWNiKQogICAgICAgIHNlbGYuYXNzZXJ0SXNJbnN0YW5jZShjZXJ0cywgbGlzdCkKICAgICAgICBzZWxmLmFzc2VydExlc3MoMTAsIGxlbihjZXJ0cykpCiAgICAgICAgc2VsZi5hc3NlcnRMZXNzRXF1YWwobGVuKGNlcnRzKSwgbGFtYmRhX2RhdGFbJ2NhbGxzJ10pCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChsYW1iZGFfZGF0YVsnY2FsbHMnXSAtIGxlbihjZXJ0cyksIGxhbWJkYV9kYXRhWydyZWFzb25zJ10pCiAgICAgICAgZm9yIGNlcnQsIHRydXN0X29pZHMsIHJlamVjdF9vaWRzIGluIGNlcnRzOgogICAgICAgICAgICBzZWxmLmFzc2VydElzSW5zdGFuY2UoY2VydCwgeDUwOS5DZXJ0aWZpY2F0ZSkKICAgICAgICAgICAgc2VsZi5hc3NlcnRJc0luc3RhbmNlKHRydXN0X29pZHMsIHNldCkKICAgICAgICAgICAgc2VsZi5hc3NlcnRJc0luc3RhbmNlKHJlamVjdF9vaWRzLCBzZXQpCiAgICAgICAgICAgIGNlcnQubmF0aXZlCgogICAgZGVmIHRlc3RfZ2V0X2xpc3RfbXV0YXRlKHNlbGYpOgogICAgICAgIHRydXN0X2xpc3QuY2xlYXJfY2FjaGUoKQoKICAgICAgICBjZXJ0cyA9IHRydXN0X2xpc3QuZ2V0X2xpc3QoKQogICAgICAgIGNlcnRzMiA9IHRydXN0X2xpc3QuZ2V0X2xpc3QoKQoKICAgICAgICB3aXRoIG9wZW4oZGlnaWNlcnRfY2FfcGF0aCwgJ3JiJykgYXMgZjoKICAgICAgICAgICAgXywgXywgZGlnaWNlcnRfY2FfYnl0ZXMgPSBwZW0udW5hcm1vcihmLnJlYWQoKSkKICAgICAgICAgICAgZGlnaWNlcnRfY2FfY2VydCA9IHg1MDkuQ2VydGlmaWNhdGUubG9hZChkaWdpY2VydF9jYV9ieXRlcykKICAgICAgICBjZXJ0cy5hcHBlbmQoZGlnaWNlcnRfY2FfY2VydCkKCiAgICAgICAgc2VsZi5hc3NlcnROb3RFcXVhbChjZXJ0czIsIGNlcnRzKQoKICAgIGRlZiB0ZXN0X2dldF9wYXRoKHNlbGYpOgogICAgICAgIHRydXN0X2xpc3QuY2xlYXJfY2FjaGUoKQoKICAgICAgICBjZXJ0cyA9IHRydXN0X2xpc3QuZ2V0X3BhdGgoKQogICAgICAgIHdpdGggb3BlbihjZXJ0cywgJ3JiJykgYXMgZjoKICAgICAgICAgICAgY2VydF9kYXRhID0gZi5yZWFkKCkKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChUcnVlLCBwZW0uZGV0ZWN0KGNlcnRfZGF0YSkpCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0TGVzcygxMDI0MCwgbGVuKGNlcnRfZGF0YSkpCg==
