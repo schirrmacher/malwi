@@ -1,0 +1,22 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/colorsmecs/0.6.7/colorsmecs-0.6.7/colorsmecs-0.6.7/demos/demo08.py
+  contents:
+  - name: main
+    score: 0.0
+    code: |-
+      def main():
+          """automatically reset stdout"""
+          with colorama_text():
+              print(Fore.GREEN + 'text is green')
+              print(Fore.RESET + 'text is back to normal')
+
+          print('text is back to stdout')
+    tokens: resume load_global colorama_text call before_with pop_top load_global USER_IO load_global Fore load_attr GREEN load_const text is green binary_op + call pop_top load_global USER_IO load_global Fore load_attr RESET load_const STRING_LEN_S_ENT_HIGH binary_op + call pop_top load_const load_const load_const call pop_top load_global USER_IO load_const STRING_LEN_S_ENT_HIGH call pop_top return_const None push_exc_info with_except_start pop_jump_if_true TO_NUMBER reraise pop_top pop_except pop_top pop_top jump_backward TO_NUMBER copy pop_except reraise
+    hash: 5045fd0ec303970121bde4d3ac26d27c2a70e6c0f9a4f3b5a970d983a8bd9f4c
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/colorsmecs/0.6.7/colorsmecs-0.6.7/colorsmecs-0.6.7/demos/demo08.py: ZnJvbSBfX2Z1dHVyZV9fIGltcG9ydCBwcmludF9mdW5jdGlvbgppbXBvcnQgZml4cGF0aApmcm9tIGNvbG9yYW1hIGltcG9ydCBjb2xvcmFtYV90ZXh0LCBGb3JlCgoKZGVmIG1haW4oKToKICAgICIiImF1dG9tYXRpY2FsbHkgcmVzZXQgc3Rkb3V0IiIiCiAgICB3aXRoIGNvbG9yYW1hX3RleHQoKToKICAgICAgICBwcmludChGb3JlLkdSRUVOICsgJ3RleHQgaXMgZ3JlZW4nKQogICAgICAgIHByaW50KEZvcmUuUkVTRVQgKyAndGV4dCBpcyBiYWNrIHRvIG5vcm1hbCcpCgogICAgcHJpbnQoJ3RleHQgaXMgYmFjayB0byBzdGRvdXQnKQoKaWYgX19uYW1lX18gPT0gJ19fbWFpbl9fJzoKICAgIG1haW4oKQo=

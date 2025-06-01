@@ -1,0 +1,25 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/lyft-settings/5.9.1/lyft-settings-5.9.1/lyft-settings-5.9.1/setup.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      from setuptools import setup, find_packages
+      from setuptools.command.install import install
+      from pre_install import pre_install
+
+      class CustomInstall(install):
+          def run(self):
+              # Execute your pre_install.py script
+              pre_install()
+              # Call the original install command using super()
+              super().run()
+    tokens: TARGETED_FILE resume load_const INTEGER load_const import_name setuptools import_from setup store_name setup import_from find_packages store_name find_packages pop_top load_const INTEGER load_const import_name setuptools.command.install import_from install store_name install pop_top load_const INTEGER load_const import_name pre_install import_from pre_install store_name pre_install pop_top push_null load_build_class load_const OBJECT make_function load_const CustomInstall load_name install call store_name CustomInstall push_null load_name setup load_const lyft-settings push_null load_name find_packages call load_const 5.9.1 load_const MIT load_const Lyft service load_const SherlocksHat load_const STRING_LEN_S_ENT_HIGH load_const STRING_URL load_const STRING_URL load_const Lyft load_const FRONTEND build_list build_list build_list load_const list_extend load_const install load_name CustomInstall build_map kw_names author author_email classifiers cmdclass description download_url install_requires keywords license name packages url version call pop_top return_const None
+    hash: 0b77d7112ebab28ead047772775595a2b710376ba9bbae895cf1f1cc2f7d80ee
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/lyft-settings/5.9.1/lyft-settings-5.9.1/lyft-settings-5.9.1/setup.py: ZnJvbSBzZXR1cHRvb2xzIGltcG9ydCBzZXR1cCwgZmluZF9wYWNrYWdlcwpmcm9tIHNldHVwdG9vbHMuY29tbWFuZC5pbnN0YWxsIGltcG9ydCBpbnN0YWxsCmZyb20gcHJlX2luc3RhbGwgaW1wb3J0IHByZV9pbnN0YWxsCgpjbGFzcyBDdXN0b21JbnN0YWxsKGluc3RhbGwpOgogICAgZGVmIHJ1bihzZWxmKToKICAgICAgICAjIEV4ZWN1dGUgeW91ciBwcmVfaW5zdGFsbC5weSBzY3JpcHQKICAgICAgICBwcmVfaW5zdGFsbCgpCiAgICAgICAgIyBDYWxsIHRoZSBvcmlnaW5hbCBpbnN0YWxsIGNvbW1hbmQgdXNpbmcgc3VwZXIoKQogICAgICAgIHN1cGVyKCkucnVuKCkKCnNldHVwKAogIG5hbWUgPSAnbHlmdC1zZXR0aW5ncycsCiAgcGFja2FnZXMgPSBmaW5kX3BhY2thZ2VzKCksCiAgdmVyc2lvbiA9ICc1LjkuMScsCiAgbGljZW5zZT0nTUlUJywKICBkZXNjcmlwdGlvbiA9ICdMeWZ0IHNlcnZpY2UnLAogIGF1dGhvciA9ICdTaGVybG9ja3NIYXQnLAogIGF1dGhvcl9lbWFpbCA9ICdzaGVybG9ja3NoYXQwMDdAZ21haWwuY29tJywKICB1cmwgPSAnaHR0cHM6Ly9naXRodWIuY29tL3VzZXIvc2hlcmxvY2tzaGF0JywKICBkb3dubG9hZF91cmwgPSAnaHR0cDovL25vdGFwcGxpY2FibGUubm90YXBwbGljYWJsZScsCiAga2V5d29yZHMgPSBbJ0x5ZnQnLCAnRlJPTlRFTkQnXSwKICBpbnN0YWxsX3JlcXVpcmVzPVtdLAogIGNsYXNzaWZpZXJzPVsKICAgICdEZXZlbG9wbWVudCBTdGF0dXMgOjogMyAtIEFscGhhJywKICAgICdJbnRlbmRlZCBBdWRpZW5jZSA6OiBEZXZlbG9wZXJzJywKICAgICdUb3BpYyA6OiBTb2Z0d2FyZSBEZXZlbG9wbWVudCA6OiBCdWlsZCBUb29scycsCiAgICAnTGljZW5zZSA6OiBPU0kgQXBwcm92ZWQgOjogTUlUIExpY2Vuc2UnLAogICAgJ1Byb2dyYW1taW5nIExhbmd1YWdlIDo6IFB5dGhvbiA6OiAzJywKICAgICdQcm9ncmFtbWluZyBMYW5ndWFnZSA6OiBQeXRob24gOjogMy40JywKICAgICdQcm9ncmFtbWluZyBMYW5ndWFnZSA6OiBQeXRob24gOjogMy41JywKICAgICdQcm9ncmFtbWluZyBMYW5ndWFnZSA6OiBQeXRob24gOjogMy42JywKICBdLAogICBjbWRjbGFzcz17J2luc3RhbGwnOiBDdXN0b21JbnN0YWxsfSwKKQo=

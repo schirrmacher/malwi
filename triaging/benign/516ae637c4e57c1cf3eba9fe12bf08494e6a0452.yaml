@@ -1,0 +1,310 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/topictags.py
+  contents:
+  - name: TopicTagDB
+    score: 0.0
+    code: |-
+      # Copyright (c) 2015 Amazon.com, Inc. or its affiliates.  All Rights Reserved
+      #
+      # Permission is hereby granted, free of charge, to any person obtaining a
+      # copy of this software and associated documentation files (the
+      # "Software"), to deal in the Software without restriction, including
+      # without limitation the rights to use, copy, modify, merge, publish, dis-
+      # tribute, sublicense, and/or sell copies of the Software, and to permit
+      # persons to whom the Software is furnished to do so, subject to the fol-
+      # lowing conditions:
+      #
+      # The above copyright notice and this permission notice shall be included
+      # in all copies or substantial portions of the Software.
+      #
+      # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+      # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
+      # ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+      # SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+      # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+      # IN THE SOFTWARE.
+      #
+      import os
+      import json
+      import docutils.core
+
+
+      class TopicTagDB(object):
+          """This class acts like a database for the tags of all available topics.
+
+          A tag is an element in a topic reStructured text file that contains
+          information about a topic. Information can range from titles to even
+          related CLI commands. Here are all of the currently supported tags:
+
+          Tag                 Meaning                         Required?
+          ---                 -------                         ---------
+          :title:             The title of the topic          Yes
+          :description:       Sentence description of topic   Yes
+          :category:          Category topic falls under      Yes
+          :related topic:     A related topic                 No
+          :related command:   A related command               No
+
+          To see examples of how to specify tags, look in the directory
+          awscli/topics. Note that tags can have multiple values by delimiting
+          values with commas. All tags must be on their own line in the file.
+
+          This class can load a JSON index representing all topics and their tags,
+          scan all of the topics and store the values of their tags, retrieve the
+          tag value for a particular topic, query for all the topics with a specific
+          tag and/or value, and save the loaded data back out to a JSON index.
+
+          The structure of the database can be viewed as a python dictionary:
+
+          {'topic-name-1': {
+              'title': ['My First Topic Title'],
+              'description': ['This describes my first topic'],
+              'category': ['General Topics', 'S3'],
+              'related command': ['aws s3'],
+              'related topic': ['topic-name-2']
+           },
+           'topic-name-2': { .....
+          }
+
+          The keys of the dictionary are the CLI command names of the topics. These
+          names are based off the name of the reStructed text file that corresponds
+          to the topic. The value of these keys are dictionaries of tags, where the
+          tags are keys and their value is a list of values for that tag. Note
+          that all tag values for a specific tag of a specific topic are unique.
+          """
+
+          VALID_TAGS = ['category', 'description', 'title', 'related topic',
+                        'related command']
+
+          # The default directory to look for topics.
+          TOPIC_DIR = os.path.join(
+              os.path.dirname(
+                  os.path.abspath(__file__)), 'topics')
+
+          # The default JSON index to load.
+          JSON_INDEX = os.path.join(TOPIC_DIR, 'topic-tags.json')
+
+          def __init__(self, tag_dictionary=None, index_file=JSON_INDEX,
+                       topic_dir=TOPIC_DIR):
+              """
+              :param index_file: The path to a specific JSON index to load.
+                  If nothing is specified it will default to the default JSON
+                  index at ``JSON_INDEX``.
+
+              :param topic_dir: The path to the directory where to retrieve
+                  the topic source files. Note that if you store your index
+                  in this directory, you must supply the full path to the json
+                  index to the ``file_index`` argument as it may not be ignored when
+                  listing topic source files. If nothing is specified it will
+                  default to the default directory at ``TOPIC_DIR``.
+              """
+              self._tag_dictionary = tag_dictionary
+              if self._tag_dictionary is None:
+                  self._tag_dictionary = {}
+
+              self._index_file = index_file
+              self._topic_dir = topic_dir
+
+          @property
+          def index_file(self):
+              return self._index_file
+
+          @index_file.setter
+          def index_file(self, value):
+              self._index_file = value
+
+          @property
+          def topic_dir(self):
+              return self._topic_dir
+
+          @topic_dir.setter
+          def topic_dir(self, value):
+              self._topic_dir = value
+
+          @property
+          def valid_tags(self):
+              return self.VALID_TAGS
+
+          def load_json_index(self):
+              """Loads a JSON file into the tag dictionary."""
+              with open(self.index_file, 'r') as f:
+                  self._tag_dictionary = json.load(f)
+
+          def save_to_json_index(self):
+              """Writes the loaded data back out to the JSON index."""
+              with open(self.index_file, 'w') as f:
+                  f.write(json.dumps(self._tag_dictionary, indent=4, sort_keys=True))
+
+          def get_all_topic_names(self):
+              """Retrieves all of the topic names of the loaded JSON index"""
+              return list(self._tag_dictionary)
+
+          def get_all_topic_src_files(self):
+              """Retrieves the file paths of all the topics in directory"""
+              topic_full_paths = []
+              topic_names = os.listdir(self.topic_dir)
+              for topic_name in topic_names:
+                  # Do not try to load hidden files.
+                  if not topic_name.startswith('.'):
+                      topic_full_path = os.path.join(self.topic_dir, topic_name)
+                      # Ignore the JSON Index as it is stored with topic files.
+                      if topic_full_path != self.index_file:
+                          topic_full_paths.append(topic_full_path)
+              return topic_full_paths
+
+          def scan(self, topic_files):
+              """Scan in the tags of a list of topics into memory.
+
+              Note that if there are existing values in an entry in the database
+              of tags, they will not be overwritten. Any new values will be
+              appended to original values.
+
+              :param topic_files: A list of paths to topics to scan into memory.
+              """
+              for topic_file in topic_files:
+                  with open(topic_file, 'r') as f:
+                      # Parse out the name of the topic
+                      topic_name = self._find_topic_name(topic_file)
+                      # Add the topic to the dictionary if it does not exist
+                      self._add_topic_name_to_dict(topic_name)
+                      topic_content = f.read()
+                      # Record the tags and the values
+                      self._add_tag_and_values_from_content(
+                          topic_name, topic_content)
+
+          def _find_topic_name(self, topic_src_file):
+              # Get the name of each of these files
+              topic_name_with_ext = os.path.basename(topic_src_file)
+              # Strip of the .rst extension from the files
+              return topic_name_with_ext[:-4]
+
+          def _add_tag_and_values_from_content(self, topic_name, content):
+              # Retrieves tags and values and adds from content of topic file
+              # to the dictionary.
+              doctree = docutils.core.publish_doctree(content).asdom()
+              fields = doctree.getElementsByTagName('field')
+              for field in fields:
+                  field_name = field.getElementsByTagName('field_name')[0]
+                  field_body = field.getElementsByTagName('field_body')[0]
+                  # Get the tag.
+                  tag = field_name.firstChild.nodeValue
+                  if tag in self.VALID_TAGS:
+                      # Get the value of the tag.
+                      values = field_body.childNodes[0].firstChild.nodeValue
+                      # Separate values into a list by splitting at commas
+                      tag_values = values.split(',')
+                      # Strip the white space around each of these values.
+                      for i in range(len(tag_values)):
+                          tag_values[i] = tag_values[i].strip()
+                      self._add_tag_to_dict(topic_name, tag, tag_values)
+                  else:
+                      raise ValueError(
+                          "Tag %s found under topic %s is not supported."
+                          % (tag, topic_name)
+                      )
+
+          def _add_topic_name_to_dict(self, topic_name):
+              # This method adds a topic name to the dictionary if it does not
+              # already exist
+
+              # Check if the topic is in the topic tag dictionary
+              if self._tag_dictionary.get(topic_name, None) is None:
+                  self._tag_dictionary[topic_name] = {}
+
+          def _add_tag_to_dict(self, topic_name, tag, values):
+              # This method adds a tag to the dictionary given its tag and value
+              # If there are existing values associated to the tag it will add
+              # only values that previously did not exist in the list.
+
+              # Add topic to the topic tag dictionary if needed.
+              self._add_topic_name_to_dict(topic_name)
+              # Get all of a topics tags
+              topic_tags = self._tag_dictionary[topic_name]
+              self._add_key_values(topic_tags, tag, values)
+
+          def _add_key_values(self, dictionary, key, values):
+              # This method adds a value to a dictionary given a key.
+              # If there are existing values associated to the key it will add
+              # only values that previously did not exist in the list. All values
+              # in the dictionary should be lists
+
+              if dictionary.get(key, None) is None:
+                  dictionary[key] = []
+              for value in values:
+                  if value not in dictionary[key]:
+                      dictionary[key].append(value)
+
+          def query(self, tag, values=None):
+              """Groups topics by a specific tag and/or tag value.
+
+              :param tag: The name of the tag to query for.
+              :param values: A list of tag values to only include in query.
+                  If no value is provided, all possible tag values will be returned
+
+              :rtype: dictionary
+              :returns: A dictionary whose keys are all possible tag values and the
+                  keys' values are all of the topic names that had that tag value
+                  in its source file. For example, if ``topic-name-1`` had the tag
+                  ``:category: foo, bar`` and ``topic-name-2`` had the tag
+                  ``:category: foo`` and we queried based on ``:category:``,
+                  the returned dictionary would be:
+
+                  {
+                   'foo': ['topic-name-1', 'topic-name-2'],
+                   'bar': ['topic-name-1']
+                  }
+
+              """
+              query_dict = {}
+              for topic_name in self._tag_dictionary.keys():
+                  # Get the tag values for a specified tag of the topic
+                  if self._tag_dictionary[topic_name].get(tag, None) is not None:
+                      tag_values = self._tag_dictionary[topic_name][tag]
+                      for tag_value in tag_values:
+                          # Add the values to dictionary to be returned if
+                          # no value constraints are provided or if the tag value
+                          # falls in the allowed tag values.
+                          if values is None or tag_value in values:
+                              self._add_key_values(query_dict,
+                                                   key=tag_value,
+                                                   values=[topic_name])
+              return query_dict
+
+          def get_tag_value(self, topic_name, tag, default_value=None):
+              """Get a value of a tag for a topic
+
+              :param topic_name: The name of the topic
+              :param tag: The name of the tag to retrieve
+              :param default_value: The value to return if the topic and/or tag
+                  does not exist.
+              """
+              if topic_name in self._tag_dictionary:
+                  return self._tag_dictionary[topic_name].get(tag, default_value)
+              return default_value
+
+          def get_tag_single_value(self, topic_name, tag):
+              """Get the value of a tag for a topic (i.e. not wrapped in a list)
+
+              :param topic_name: The name of the topic
+              :param tag: The name of the tag to retrieve
+              :raises ValueError: Raised if there is not exactly one value
+                  in the list value.
+              """
+              value = self.get_tag_value(topic_name, tag)
+              if value is not None:
+                  if len(value) != 1:
+                      raise ValueError(
+                          'Tag %s for topic %s has value %s. Expected a single '
+                          'element in list.' % (tag, topic_name, value)
+                      )
+                  value = value[0]
+              return value
+    tokens: resume load_name __name__ store_name __module__ load_const TopicTagDB store_name __qualname__ load_const STRING_FILE_PATH store_name __doc__ build_list load_const list_extend store_name VALID_TAGS load_name os load_attr path load_attr join load_name os load_attr path load_attr dirname load_name os load_attr path load_attr abspath load_name __file__ call call load_const topics call store_name TOPIC_DIR load_name os load_attr path load_attr join load_name TOPIC_DIR load_const topic-tags.json call store_name JSON_INDEX load_const load_name JSON_INDEX load_name TOPIC_DIR build_tuple load_const OBJECT make_function defaults store_name __init__ load_name property load_const OBJECT make_function call store_name index_file load_name index_file load_attr setter load_const OBJECT make_function call store_name index_file load_name property load_const OBJECT make_function call store_name topic_dir load_name topic_dir load_attr setter load_const OBJECT make_function call store_name topic_dir load_name property load_const OBJECT make_function call store_name valid_tags load_const OBJECT make_function store_name load_json_index load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name scan load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH load_const OBJECT make_function store_name _add_key_values load_const load_const OBJECT make_function defaults store_name query load_const load_const OBJECT make_function defaults store_name get_tag_value load_const OBJECT make_function store_name STRING_LEN_S_ENT_HIGH return_const None
+    hash: c0d7613d988164eefda4c3febaec66abff6abc93a236e0b74850cf7abcefae58
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/topictags.py: IyBDb3B5cmlnaHQgKGMpIDIwMTUgQW1hem9uLmNvbSwgSW5jLiBvciBpdHMgYWZmaWxpYXRlcy4gIEFsbCBSaWdodHMgUmVzZXJ2ZWQKIwojIFBlcm1pc3Npb24gaXMgaGVyZWJ5IGdyYW50ZWQsIGZyZWUgb2YgY2hhcmdlLCB0byBhbnkgcGVyc29uIG9idGFpbmluZyBhCiMgY29weSBvZiB0aGlzIHNvZnR3YXJlIGFuZCBhc3NvY2lhdGVkIGRvY3VtZW50YXRpb24gZmlsZXMgKHRoZQojICJTb2Z0d2FyZSIpLCB0byBkZWFsIGluIHRoZSBTb2Z0d2FyZSB3aXRob3V0IHJlc3RyaWN0aW9uLCBpbmNsdWRpbmcKIyB3aXRob3V0IGxpbWl0YXRpb24gdGhlIHJpZ2h0cyB0byB1c2UsIGNvcHksIG1vZGlmeSwgbWVyZ2UsIHB1Ymxpc2gsIGRpcy0KIyB0cmlidXRlLCBzdWJsaWNlbnNlLCBhbmQvb3Igc2VsbCBjb3BpZXMgb2YgdGhlIFNvZnR3YXJlLCBhbmQgdG8gcGVybWl0CiMgcGVyc29ucyB0byB3aG9tIHRoZSBTb2Z0d2FyZSBpcyBmdXJuaXNoZWQgdG8gZG8gc28sIHN1YmplY3QgdG8gdGhlIGZvbC0KIyBsb3dpbmcgY29uZGl0aW9uczoKIwojIFRoZSBhYm92ZSBjb3B5cmlnaHQgbm90aWNlIGFuZCB0aGlzIHBlcm1pc3Npb24gbm90aWNlIHNoYWxsIGJlIGluY2x1ZGVkCiMgaW4gYWxsIGNvcGllcyBvciBzdWJzdGFudGlhbCBwb3J0aW9ucyBvZiB0aGUgU29mdHdhcmUuCiMKIyBUSEUgU09GVFdBUkUgSVMgUFJPVklERUQgIkFTIElTIiwgV0lUSE9VVCBXQVJSQU5UWSBPRiBBTlkgS0lORCwgRVhQUkVTUwojIE9SIElNUExJRUQsIElOQ0xVRElORyBCVVQgTk9UIExJTUlURUQgVE8gVEhFIFdBUlJBTlRJRVMgT0YgTUVSQ0hBTlRBQklMLQojIElUWSwgRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UgQU5EIE5PTklORlJJTkdFTUVOVC4gSU4gTk8gRVZFTlQKIyBTSEFMTCBUSEUgQVVUSE9SIEJFIExJQUJMRSBGT1IgQU5ZIENMQUlNLCBEQU1BR0VTIE9SIE9USEVSIExJQUJJTElUWSwKIyBXSEVUSEVSIElOIEFOIEFDVElPTiBPRiBDT05UUkFDVCwgVE9SVCBPUiBPVEhFUldJU0UsIEFSSVNJTkcgRlJPTSwKIyBPVVQgT0YgT1IgSU4gQ09OTkVDVElPTiBXSVRIIFRIRSBTT0ZUV0FSRSBPUiBUSEUgVVNFIE9SIE9USEVSIERFQUxJTkdTCiMgSU4gVEhFIFNPRlRXQVJFLgojCmltcG9ydCBvcwppbXBvcnQganNvbgppbXBvcnQgZG9jdXRpbHMuY29yZQoKCmNsYXNzIFRvcGljVGFnREIob2JqZWN0KToKICAgICIiIlRoaXMgY2xhc3MgYWN0cyBsaWtlIGEgZGF0YWJhc2UgZm9yIHRoZSB0YWdzIG9mIGFsbCBhdmFpbGFibGUgdG9waWNzLgoKICAgIEEgdGFnIGlzIGFuIGVsZW1lbnQgaW4gYSB0b3BpYyByZVN0cnVjdHVyZWQgdGV4dCBmaWxlIHRoYXQgY29udGFpbnMKICAgIGluZm9ybWF0aW9uIGFib3V0IGEgdG9waWMuIEluZm9ybWF0aW9uIGNhbiByYW5nZSBmcm9tIHRpdGxlcyB0byBldmVuCiAgICByZWxhdGVkIENMSSBjb21tYW5kcy4gSGVyZSBhcmUgYWxsIG9mIHRoZSBjdXJyZW50bHkgc3VwcG9ydGVkIHRhZ3M6CgogICAgVGFnICAgICAgICAgICAgICAgICBNZWFuaW5nICAgICAgICAgICAgICAgICAgICAgICAgIFJlcXVpcmVkPwogICAgLS0tICAgICAgICAgICAgICAgICAtLS0tLS0tICAgICAgICAgICAgICAgICAgICAgICAgIC0tLS0tLS0tLQogICAgOnRpdGxlOiAgICAgICAgICAgICBUaGUgdGl0bGUgb2YgdGhlIHRvcGljICAgICAgICAgIFllcwogICAgOmRlc2NyaXB0aW9uOiAgICAgICBTZW50ZW5jZSBkZXNjcmlwdGlvbiBvZiB0b3BpYyAgIFllcwogICAgOmNhdGVnb3J5OiAgICAgICAgICBDYXRlZ29yeSB0b3BpYyBmYWxscyB1bmRlciAgICAgIFllcwogICAgOnJlbGF0ZWQgdG9waWM6ICAgICBBIHJlbGF0ZWQgdG9waWMgICAgICAgICAgICAgICAgIE5vCiAgICA6cmVsYXRlZCBjb21tYW5kOiAgIEEgcmVsYXRlZCBjb21tYW5kICAgICAgICAgICAgICAgTm8KCiAgICBUbyBzZWUgZXhhbXBsZXMgb2YgaG93IHRvIHNwZWNpZnkgdGFncywgbG9vayBpbiB0aGUgZGlyZWN0b3J5CiAgICBhd3NjbGkvdG9waWNzLiBOb3RlIHRoYXQgdGFncyBjYW4gaGF2ZSBtdWx0aXBsZSB2YWx1ZXMgYnkgZGVsaW1pdGluZwogICAgdmFsdWVzIHdpdGggY29tbWFzLiBBbGwgdGFncyBtdXN0IGJlIG9uIHRoZWlyIG93biBsaW5lIGluIHRoZSBmaWxlLgoKICAgIFRoaXMgY2xhc3MgY2FuIGxvYWQgYSBKU09OIGluZGV4IHJlcHJlc2VudGluZyBhbGwgdG9waWNzIGFuZCB0aGVpciB0YWdzLAogICAgc2NhbiBhbGwgb2YgdGhlIHRvcGljcyBhbmQgc3RvcmUgdGhlIHZhbHVlcyBvZiB0aGVpciB0YWdzLCByZXRyaWV2ZSB0aGUKICAgIHRhZyB2YWx1ZSBmb3IgYSBwYXJ0aWN1bGFyIHRvcGljLCBxdWVyeSBmb3IgYWxsIHRoZSB0b3BpY3Mgd2l0aCBhIHNwZWNpZmljCiAgICB0YWcgYW5kL29yIHZhbHVlLCBhbmQgc2F2ZSB0aGUgbG9hZGVkIGRhdGEgYmFjayBvdXQgdG8gYSBKU09OIGluZGV4LgoKICAgIFRoZSBzdHJ1Y3R1cmUgb2YgdGhlIGRhdGFiYXNlIGNhbiBiZSB2aWV3ZWQgYXMgYSBweXRob24gZGljdGlvbmFyeToKCiAgICB7J3RvcGljLW5hbWUtMSc6IHsKICAgICAgICAndGl0bGUnOiBbJ015IEZpcnN0IFRvcGljIFRpdGxlJ10sCiAgICAgICAgJ2Rlc2NyaXB0aW9uJzogWydUaGlzIGRlc2NyaWJlcyBteSBmaXJzdCB0b3BpYyddLAogICAgICAgICdjYXRlZ29yeSc6IFsnR2VuZXJhbCBUb3BpY3MnLCAnUzMnXSwKICAgICAgICAncmVsYXRlZCBjb21tYW5kJzogWydhd3MgczMnXSwKICAgICAgICAncmVsYXRlZCB0b3BpYyc6IFsndG9waWMtbmFtZS0yJ10KICAgICB9LAogICAgICd0b3BpYy1uYW1lLTInOiB7IC4uLi4uCiAgICB9CgogICAgVGhlIGtleXMgb2YgdGhlIGRpY3Rpb25hcnkgYXJlIHRoZSBDTEkgY29tbWFuZCBuYW1lcyBvZiB0aGUgdG9waWNzLiBUaGVzZQogICAgbmFtZXMgYXJlIGJhc2VkIG9mZiB0aGUgbmFtZSBvZiB0aGUgcmVTdHJ1Y3RlZCB0ZXh0IGZpbGUgdGhhdCBjb3JyZXNwb25kcwogICAgdG8gdGhlIHRvcGljLiBUaGUgdmFsdWUgb2YgdGhlc2Uga2V5cyBhcmUgZGljdGlvbmFyaWVzIG9mIHRhZ3MsIHdoZXJlIHRoZQogICAgdGFncyBhcmUga2V5cyBhbmQgdGhlaXIgdmFsdWUgaXMgYSBsaXN0IG9mIHZhbHVlcyBmb3IgdGhhdCB0YWcuIE5vdGUKICAgIHRoYXQgYWxsIHRhZyB2YWx1ZXMgZm9yIGEgc3BlY2lmaWMgdGFnIG9mIGEgc3BlY2lmaWMgdG9waWMgYXJlIHVuaXF1ZS4KICAgICIiIgoKICAgIFZBTElEX1RBR1MgPSBbJ2NhdGVnb3J5JywgJ2Rlc2NyaXB0aW9uJywgJ3RpdGxlJywgJ3JlbGF0ZWQgdG9waWMnLAogICAgICAgICAgICAgICAgICAncmVsYXRlZCBjb21tYW5kJ10KCiAgICAjIFRoZSBkZWZhdWx0IGRpcmVjdG9yeSB0byBsb29rIGZvciB0b3BpY3MuCiAgICBUT1BJQ19ESVIgPSBvcy5wYXRoLmpvaW4oCiAgICAgICAgb3MucGF0aC5kaXJuYW1lKAogICAgICAgICAgICBvcy5wYXRoLmFic3BhdGgoX19maWxlX18pKSwgJ3RvcGljcycpCgogICAgIyBUaGUgZGVmYXVsdCBKU09OIGluZGV4IHRvIGxvYWQuCiAgICBKU09OX0lOREVYID0gb3MucGF0aC5qb2luKFRPUElDX0RJUiwgJ3RvcGljLXRhZ3MuanNvbicpCgogICAgZGVmIF9faW5pdF9fKHNlbGYsIHRhZ19kaWN0aW9uYXJ5PU5vbmUsIGluZGV4X2ZpbGU9SlNPTl9JTkRFWCwKICAgICAgICAgICAgICAgICB0b3BpY19kaXI9VE9QSUNfRElSKToKICAgICAgICAiIiIKICAgICAgICA6cGFyYW0gaW5kZXhfZmlsZTogVGhlIHBhdGggdG8gYSBzcGVjaWZpYyBKU09OIGluZGV4IHRvIGxvYWQuCiAgICAgICAgICAgIElmIG5vdGhpbmcgaXMgc3BlY2lmaWVkIGl0IHdpbGwgZGVmYXVsdCB0byB0aGUgZGVmYXVsdCBKU09OCiAgICAgICAgICAgIGluZGV4IGF0IGBgSlNPTl9JTkRFWGBgLgoKICAgICAgICA6cGFyYW0gdG9waWNfZGlyOiBUaGUgcGF0aCB0byB0aGUgZGlyZWN0b3J5IHdoZXJlIHRvIHJldHJpZXZlCiAgICAgICAgICAgIHRoZSB0b3BpYyBzb3VyY2UgZmlsZXMuIE5vdGUgdGhhdCBpZiB5b3Ugc3RvcmUgeW91ciBpbmRleAogICAgICAgICAgICBpbiB0aGlzIGRpcmVjdG9yeSwgeW91IG11c3Qgc3VwcGx5IHRoZSBmdWxsIHBhdGggdG8gdGhlIGpzb24KICAgICAgICAgICAgaW5kZXggdG8gdGhlIGBgZmlsZV9pbmRleGBgIGFyZ3VtZW50IGFzIGl0IG1heSBub3QgYmUgaWdub3JlZCB3aGVuCiAgICAgICAgICAgIGxpc3RpbmcgdG9waWMgc291cmNlIGZpbGVzLiBJZiBub3RoaW5nIGlzIHNwZWNpZmllZCBpdCB3aWxsCiAgICAgICAgICAgIGRlZmF1bHQgdG8gdGhlIGRlZmF1bHQgZGlyZWN0b3J5IGF0IGBgVE9QSUNfRElSYGAuCiAgICAgICAgIiIiCiAgICAgICAgc2VsZi5fdGFnX2RpY3Rpb25hcnkgPSB0YWdfZGljdGlvbmFyeQogICAgICAgIGlmIHNlbGYuX3RhZ19kaWN0aW9uYXJ5IGlzIE5vbmU6CiAgICAgICAgICAgIHNlbGYuX3RhZ19kaWN0aW9uYXJ5ID0ge30KCiAgICAgICAgc2VsZi5faW5kZXhfZmlsZSA9IGluZGV4X2ZpbGUKICAgICAgICBzZWxmLl90b3BpY19kaXIgPSB0b3BpY19kaXIKCiAgICBAcHJvcGVydHkKICAgIGRlZiBpbmRleF9maWxlKHNlbGYpOgogICAgICAgIHJldHVybiBzZWxmLl9pbmRleF9maWxlCgogICAgQGluZGV4X2ZpbGUuc2V0dGVyCiAgICBkZWYgaW5kZXhfZmlsZShzZWxmLCB2YWx1ZSk6CiAgICAgICAgc2VsZi5faW5kZXhfZmlsZSA9IHZhbHVlCgogICAgQHByb3BlcnR5CiAgICBkZWYgdG9waWNfZGlyKHNlbGYpOgogICAgICAgIHJldHVybiBzZWxmLl90b3BpY19kaXIKCiAgICBAdG9waWNfZGlyLnNldHRlcgogICAgZGVmIHRvcGljX2RpcihzZWxmLCB2YWx1ZSk6CiAgICAgICAgc2VsZi5fdG9waWNfZGlyID0gdmFsdWUKCiAgICBAcHJvcGVydHkKICAgIGRlZiB2YWxpZF90YWdzKHNlbGYpOgogICAgICAgIHJldHVybiBzZWxmLlZBTElEX1RBR1MKCiAgICBkZWYgbG9hZF9qc29uX2luZGV4KHNlbGYpOgogICAgICAgICIiIkxvYWRzIGEgSlNPTiBmaWxlIGludG8gdGhlIHRhZyBkaWN0aW9uYXJ5LiIiIgogICAgICAgIHdpdGggb3BlbihzZWxmLmluZGV4X2ZpbGUsICdyJykgYXMgZjoKICAgICAgICAgICAgc2VsZi5fdGFnX2RpY3Rpb25hcnkgPSBqc29uLmxvYWQoZikKCiAgICBkZWYgc2F2ZV90b19qc29uX2luZGV4KHNlbGYpOgogICAgICAgICIiIldyaXRlcyB0aGUgbG9hZGVkIGRhdGEgYmFjayBvdXQgdG8gdGhlIEpTT04gaW5kZXguIiIiCiAgICAgICAgd2l0aCBvcGVuKHNlbGYuaW5kZXhfZmlsZSwgJ3cnKSBhcyBmOgogICAgICAgICAgICBmLndyaXRlKGpzb24uZHVtcHMoc2VsZi5fdGFnX2RpY3Rpb25hcnksIGluZGVudD00LCBzb3J0X2tleXM9VHJ1ZSkpCgogICAgZGVmIGdldF9hbGxfdG9waWNfbmFtZXMoc2VsZik6CiAgICAgICAgIiIiUmV0cmlldmVzIGFsbCBvZiB0aGUgdG9waWMgbmFtZXMgb2YgdGhlIGxvYWRlZCBKU09OIGluZGV4IiIiCiAgICAgICAgcmV0dXJuIGxpc3Qoc2VsZi5fdGFnX2RpY3Rpb25hcnkpCgogICAgZGVmIGdldF9hbGxfdG9waWNfc3JjX2ZpbGVzKHNlbGYpOgogICAgICAgICIiIlJldHJpZXZlcyB0aGUgZmlsZSBwYXRocyBvZiBhbGwgdGhlIHRvcGljcyBpbiBkaXJlY3RvcnkiIiIKICAgICAgICB0b3BpY19mdWxsX3BhdGhzID0gW10KICAgICAgICB0b3BpY19uYW1lcyA9IG9zLmxpc3RkaXIoc2VsZi50b3BpY19kaXIpCiAgICAgICAgZm9yIHRvcGljX25hbWUgaW4gdG9waWNfbmFtZXM6CiAgICAgICAgICAgICMgRG8gbm90IHRyeSB0byBsb2FkIGhpZGRlbiBmaWxlcy4KICAgICAgICAgICAgaWYgbm90IHRvcGljX25hbWUuc3RhcnRzd2l0aCgnLicpOgogICAgICAgICAgICAgICAgdG9waWNfZnVsbF9wYXRoID0gb3MucGF0aC5qb2luKHNlbGYudG9waWNfZGlyLCB0b3BpY19uYW1lKQogICAgICAgICAgICAgICAgIyBJZ25vcmUgdGhlIEpTT04gSW5kZXggYXMgaXQgaXMgc3RvcmVkIHdpdGggdG9waWMgZmlsZXMuCiAgICAgICAgICAgICAgICBpZiB0b3BpY19mdWxsX3BhdGggIT0gc2VsZi5pbmRleF9maWxlOgogICAgICAgICAgICAgICAgICAgIHRvcGljX2Z1bGxfcGF0aHMuYXBwZW5kKHRvcGljX2Z1bGxfcGF0aCkKICAgICAgICByZXR1cm4gdG9waWNfZnVsbF9wYXRocwoKICAgIGRlZiBzY2FuKHNlbGYsIHRvcGljX2ZpbGVzKToKICAgICAgICAiIiJTY2FuIGluIHRoZSB0YWdzIG9mIGEgbGlzdCBvZiB0b3BpY3MgaW50byBtZW1vcnkuCgogICAgICAgIE5vdGUgdGhhdCBpZiB0aGVyZSBhcmUgZXhpc3RpbmcgdmFsdWVzIGluIGFuIGVudHJ5IGluIHRoZSBkYXRhYmFzZQogICAgICAgIG9mIHRhZ3MsIHRoZXkgd2lsbCBub3QgYmUgb3ZlcndyaXR0ZW4uIEFueSBuZXcgdmFsdWVzIHdpbGwgYmUKICAgICAgICBhcHBlbmRlZCB0byBvcmlnaW5hbCB2YWx1ZXMuCgogICAgICAgIDpwYXJhbSB0b3BpY19maWxlczogQSBsaXN0IG9mIHBhdGhzIHRvIHRvcGljcyB0byBzY2FuIGludG8gbWVtb3J5LgogICAgICAgICIiIgogICAgICAgIGZvciB0b3BpY19maWxlIGluIHRvcGljX2ZpbGVzOgogICAgICAgICAgICB3aXRoIG9wZW4odG9waWNfZmlsZSwgJ3InKSBhcyBmOgogICAgICAgICAgICAgICAgIyBQYXJzZSBvdXQgdGhlIG5hbWUgb2YgdGhlIHRvcGljCiAgICAgICAgICAgICAgICB0b3BpY19uYW1lID0gc2VsZi5fZmluZF90b3BpY19uYW1lKHRvcGljX2ZpbGUpCiAgICAgICAgICAgICAgICAjIEFkZCB0aGUgdG9waWMgdG8gdGhlIGRpY3Rpb25hcnkgaWYgaXQgZG9lcyBub3QgZXhpc3QKICAgICAgICAgICAgICAgIHNlbGYuX2FkZF90b3BpY19uYW1lX3RvX2RpY3QodG9waWNfbmFtZSkKICAgICAgICAgICAgICAgIHRvcGljX2NvbnRlbnQgPSBmLnJlYWQoKQogICAgICAgICAgICAgICAgIyBSZWNvcmQgdGhlIHRhZ3MgYW5kIHRoZSB2YWx1ZXMKICAgICAgICAgICAgICAgIHNlbGYuX2FkZF90YWdfYW5kX3ZhbHVlc19mcm9tX2NvbnRlbnQoCiAgICAgICAgICAgICAgICAgICAgdG9waWNfbmFtZSwgdG9waWNfY29udGVudCkKCiAgICBkZWYgX2ZpbmRfdG9waWNfbmFtZShzZWxmLCB0b3BpY19zcmNfZmlsZSk6CiAgICAgICAgIyBHZXQgdGhlIG5hbWUgb2YgZWFjaCBvZiB0aGVzZSBmaWxlcwogICAgICAgIHRvcGljX25hbWVfd2l0aF9leHQgPSBvcy5wYXRoLmJhc2VuYW1lKHRvcGljX3NyY19maWxlKQogICAgICAgICMgU3RyaXAgb2YgdGhlIC5yc3QgZXh0ZW5zaW9uIGZyb20gdGhlIGZpbGVzCiAgICAgICAgcmV0dXJuIHRvcGljX25hbWVfd2l0aF9leHRbOi00XQoKICAgIGRlZiBfYWRkX3RhZ19hbmRfdmFsdWVzX2Zyb21fY29udGVudChzZWxmLCB0b3BpY19uYW1lLCBjb250ZW50KToKICAgICAgICAjIFJldHJpZXZlcyB0YWdzIGFuZCB2YWx1ZXMgYW5kIGFkZHMgZnJvbSBjb250ZW50IG9mIHRvcGljIGZpbGUKICAgICAgICAjIHRvIHRoZSBkaWN0aW9uYXJ5LgogICAgICAgIGRvY3RyZWUgPSBkb2N1dGlscy5jb3JlLnB1Ymxpc2hfZG9jdHJlZShjb250ZW50KS5hc2RvbSgpCiAgICAgICAgZmllbGRzID0gZG9jdHJlZS5nZXRFbGVtZW50c0J5VGFnTmFtZSgnZmllbGQnKQogICAgICAgIGZvciBmaWVsZCBpbiBmaWVsZHM6CiAgICAgICAgICAgIGZpZWxkX25hbWUgPSBmaWVsZC5nZXRFbGVtZW50c0J5VGFnTmFtZSgnZmllbGRfbmFtZScpWzBdCiAgICAgICAgICAgIGZpZWxkX2JvZHkgPSBmaWVsZC5nZXRFbGVtZW50c0J5VGFnTmFtZSgnZmllbGRfYm9keScpWzBdCiAgICAgICAgICAgICMgR2V0IHRoZSB0YWcuCiAgICAgICAgICAgIHRhZyA9IGZpZWxkX25hbWUuZmlyc3RDaGlsZC5ub2RlVmFsdWUKICAgICAgICAgICAgaWYgdGFnIGluIHNlbGYuVkFMSURfVEFHUzoKICAgICAgICAgICAgICAgICMgR2V0IHRoZSB2YWx1ZSBvZiB0aGUgdGFnLgogICAgICAgICAgICAgICAgdmFsdWVzID0gZmllbGRfYm9keS5jaGlsZE5vZGVzWzBdLmZpcnN0Q2hpbGQubm9kZVZhbHVlCiAgICAgICAgICAgICAgICAjIFNlcGFyYXRlIHZhbHVlcyBpbnRvIGEgbGlzdCBieSBzcGxpdHRpbmcgYXQgY29tbWFzCiAgICAgICAgICAgICAgICB0YWdfdmFsdWVzID0gdmFsdWVzLnNwbGl0KCcsJykKICAgICAgICAgICAgICAgICMgU3RyaXAgdGhlIHdoaXRlIHNwYWNlIGFyb3VuZCBlYWNoIG9mIHRoZXNlIHZhbHVlcy4KICAgICAgICAgICAgICAgIGZvciBpIGluIHJhbmdlKGxlbih0YWdfdmFsdWVzKSk6CiAgICAgICAgICAgICAgICAgICAgdGFnX3ZhbHVlc1tpXSA9IHRhZ192YWx1ZXNbaV0uc3RyaXAoKQogICAgICAgICAgICAgICAgc2VsZi5fYWRkX3RhZ190b19kaWN0KHRvcGljX25hbWUsIHRhZywgdGFnX3ZhbHVlcykKICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoCiAgICAgICAgICAgICAgICAgICAgIlRhZyAlcyBmb3VuZCB1bmRlciB0b3BpYyAlcyBpcyBub3Qgc3VwcG9ydGVkLiIKICAgICAgICAgICAgICAgICAgICAlICh0YWcsIHRvcGljX25hbWUpCiAgICAgICAgICAgICAgICApCgogICAgZGVmIF9hZGRfdG9waWNfbmFtZV90b19kaWN0KHNlbGYsIHRvcGljX25hbWUpOgogICAgICAgICMgVGhpcyBtZXRob2QgYWRkcyBhIHRvcGljIG5hbWUgdG8gdGhlIGRpY3Rpb25hcnkgaWYgaXQgZG9lcyBub3QKICAgICAgICAjIGFscmVhZHkgZXhpc3QKCiAgICAgICAgIyBDaGVjayBpZiB0aGUgdG9waWMgaXMgaW4gdGhlIHRvcGljIHRhZyBkaWN0aW9uYXJ5CiAgICAgICAgaWYgc2VsZi5fdGFnX2RpY3Rpb25hcnkuZ2V0KHRvcGljX25hbWUsIE5vbmUpIGlzIE5vbmU6CiAgICAgICAgICAgIHNlbGYuX3RhZ19kaWN0aW9uYXJ5W3RvcGljX25hbWVdID0ge30KCiAgICBkZWYgX2FkZF90YWdfdG9fZGljdChzZWxmLCB0b3BpY19uYW1lLCB0YWcsIHZhbHVlcyk6CiAgICAgICAgIyBUaGlzIG1ldGhvZCBhZGRzIGEgdGFnIHRvIHRoZSBkaWN0aW9uYXJ5IGdpdmVuIGl0cyB0YWcgYW5kIHZhbHVlCiAgICAgICAgIyBJZiB0aGVyZSBhcmUgZXhpc3RpbmcgdmFsdWVzIGFzc29jaWF0ZWQgdG8gdGhlIHRhZyBpdCB3aWxsIGFkZAogICAgICAgICMgb25seSB2YWx1ZXMgdGhhdCBwcmV2aW91c2x5IGRpZCBub3QgZXhpc3QgaW4gdGhlIGxpc3QuCgogICAgICAgICMgQWRkIHRvcGljIHRvIHRoZSB0b3BpYyB0YWcgZGljdGlvbmFyeSBpZiBuZWVkZWQuCiAgICAgICAgc2VsZi5fYWRkX3RvcGljX25hbWVfdG9fZGljdCh0b3BpY19uYW1lKQogICAgICAgICMgR2V0IGFsbCBvZiBhIHRvcGljcyB0YWdzCiAgICAgICAgdG9waWNfdGFncyA9IHNlbGYuX3RhZ19kaWN0aW9uYXJ5W3RvcGljX25hbWVdCiAgICAgICAgc2VsZi5fYWRkX2tleV92YWx1ZXModG9waWNfdGFncywgdGFnLCB2YWx1ZXMpCgogICAgZGVmIF9hZGRfa2V5X3ZhbHVlcyhzZWxmLCBkaWN0aW9uYXJ5LCBrZXksIHZhbHVlcyk6CiAgICAgICAgIyBUaGlzIG1ldGhvZCBhZGRzIGEgdmFsdWUgdG8gYSBkaWN0aW9uYXJ5IGdpdmVuIGEga2V5LgogICAgICAgICMgSWYgdGhlcmUgYXJlIGV4aXN0aW5nIHZhbHVlcyBhc3NvY2lhdGVkIHRvIHRoZSBrZXkgaXQgd2lsbCBhZGQKICAgICAgICAjIG9ubHkgdmFsdWVzIHRoYXQgcHJldmlvdXNseSBkaWQgbm90IGV4aXN0IGluIHRoZSBsaXN0LiBBbGwgdmFsdWVzCiAgICAgICAgIyBpbiB0aGUgZGljdGlvbmFyeSBzaG91bGQgYmUgbGlzdHMKCiAgICAgICAgaWYgZGljdGlvbmFyeS5nZXQoa2V5LCBOb25lKSBpcyBOb25lOgogICAgICAgICAgICBkaWN0aW9uYXJ5W2tleV0gPSBbXQogICAgICAgIGZvciB2YWx1ZSBpbiB2YWx1ZXM6CiAgICAgICAgICAgIGlmIHZhbHVlIG5vdCBpbiBkaWN0aW9uYXJ5W2tleV06CiAgICAgICAgICAgICAgICBkaWN0aW9uYXJ5W2tleV0uYXBwZW5kKHZhbHVlKQoKICAgIGRlZiBxdWVyeShzZWxmLCB0YWcsIHZhbHVlcz1Ob25lKToKICAgICAgICAiIiJHcm91cHMgdG9waWNzIGJ5IGEgc3BlY2lmaWMgdGFnIGFuZC9vciB0YWcgdmFsdWUuCgogICAgICAgIDpwYXJhbSB0YWc6IFRoZSBuYW1lIG9mIHRoZSB0YWcgdG8gcXVlcnkgZm9yLgogICAgICAgIDpwYXJhbSB2YWx1ZXM6IEEgbGlzdCBvZiB0YWcgdmFsdWVzIHRvIG9ubHkgaW5jbHVkZSBpbiBxdWVyeS4KICAgICAgICAgICAgSWYgbm8gdmFsdWUgaXMgcHJvdmlkZWQsIGFsbCBwb3NzaWJsZSB0YWcgdmFsdWVzIHdpbGwgYmUgcmV0dXJuZWQKCiAgICAgICAgOnJ0eXBlOiBkaWN0aW9uYXJ5CiAgICAgICAgOnJldHVybnM6IEEgZGljdGlvbmFyeSB3aG9zZSBrZXlzIGFyZSBhbGwgcG9zc2libGUgdGFnIHZhbHVlcyBhbmQgdGhlCiAgICAgICAgICAgIGtleXMnIHZhbHVlcyBhcmUgYWxsIG9mIHRoZSB0b3BpYyBuYW1lcyB0aGF0IGhhZCB0aGF0IHRhZyB2YWx1ZQogICAgICAgICAgICBpbiBpdHMgc291cmNlIGZpbGUuIEZvciBleGFtcGxlLCBpZiBgYHRvcGljLW5hbWUtMWBgIGhhZCB0aGUgdGFnCiAgICAgICAgICAgIGBgOmNhdGVnb3J5OiBmb28sIGJhcmBgIGFuZCBgYHRvcGljLW5hbWUtMmBgIGhhZCB0aGUgdGFnCiAgICAgICAgICAgIGBgOmNhdGVnb3J5OiBmb29gYCBhbmQgd2UgcXVlcmllZCBiYXNlZCBvbiBgYDpjYXRlZ29yeTpgYCwKICAgICAgICAgICAgdGhlIHJldHVybmVkIGRpY3Rpb25hcnkgd291bGQgYmU6CgogICAgICAgICAgICB7CiAgICAgICAgICAgICAnZm9vJzogWyd0b3BpYy1uYW1lLTEnLCAndG9waWMtbmFtZS0yJ10sCiAgICAgICAgICAgICAnYmFyJzogWyd0b3BpYy1uYW1lLTEnXQogICAgICAgICAgICB9CgogICAgICAgICIiIgogICAgICAgIHF1ZXJ5X2RpY3QgPSB7fQogICAgICAgIGZvciB0b3BpY19uYW1lIGluIHNlbGYuX3RhZ19kaWN0aW9uYXJ5LmtleXMoKToKICAgICAgICAgICAgIyBHZXQgdGhlIHRhZyB2YWx1ZXMgZm9yIGEgc3BlY2lmaWVkIHRhZyBvZiB0aGUgdG9waWMKICAgICAgICAgICAgaWYgc2VsZi5fdGFnX2RpY3Rpb25hcnlbdG9waWNfbmFtZV0uZ2V0KHRhZywgTm9uZSkgaXMgbm90IE5vbmU6CiAgICAgICAgICAgICAgICB0YWdfdmFsdWVzID0gc2VsZi5fdGFnX2RpY3Rpb25hcnlbdG9waWNfbmFtZV1bdGFnXQogICAgICAgICAgICAgICAgZm9yIHRhZ192YWx1ZSBpbiB0YWdfdmFsdWVzOgogICAgICAgICAgICAgICAgICAgICMgQWRkIHRoZSB2YWx1ZXMgdG8gZGljdGlvbmFyeSB0byBiZSByZXR1cm5lZCBpZgogICAgICAgICAgICAgICAgICAgICMgbm8gdmFsdWUgY29uc3RyYWludHMgYXJlIHByb3ZpZGVkIG9yIGlmIHRoZSB0YWcgdmFsdWUKICAgICAgICAgICAgICAgICAgICAjIGZhbGxzIGluIHRoZSBhbGxvd2VkIHRhZyB2YWx1ZXMuCiAgICAgICAgICAgICAgICAgICAgaWYgdmFsdWVzIGlzIE5vbmUgb3IgdGFnX3ZhbHVlIGluIHZhbHVlczoKICAgICAgICAgICAgICAgICAgICAgICAgc2VsZi5fYWRkX2tleV92YWx1ZXMocXVlcnlfZGljdCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAga2V5PXRhZ192YWx1ZSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdmFsdWVzPVt0b3BpY19uYW1lXSkKICAgICAgICByZXR1cm4gcXVlcnlfZGljdAoKICAgIGRlZiBnZXRfdGFnX3ZhbHVlKHNlbGYsIHRvcGljX25hbWUsIHRhZywgZGVmYXVsdF92YWx1ZT1Ob25lKToKICAgICAgICAiIiJHZXQgYSB2YWx1ZSBvZiBhIHRhZyBmb3IgYSB0b3BpYwoKICAgICAgICA6cGFyYW0gdG9waWNfbmFtZTogVGhlIG5hbWUgb2YgdGhlIHRvcGljCiAgICAgICAgOnBhcmFtIHRhZzogVGhlIG5hbWUgb2YgdGhlIHRhZyB0byByZXRyaWV2ZQogICAgICAgIDpwYXJhbSBkZWZhdWx0X3ZhbHVlOiBUaGUgdmFsdWUgdG8gcmV0dXJuIGlmIHRoZSB0b3BpYyBhbmQvb3IgdGFnCiAgICAgICAgICAgIGRvZXMgbm90IGV4aXN0LgogICAgICAgICIiIgogICAgICAgIGlmIHRvcGljX25hbWUgaW4gc2VsZi5fdGFnX2RpY3Rpb25hcnk6CiAgICAgICAgICAgIHJldHVybiBzZWxmLl90YWdfZGljdGlvbmFyeVt0b3BpY19uYW1lXS5nZXQodGFnLCBkZWZhdWx0X3ZhbHVlKQogICAgICAgIHJldHVybiBkZWZhdWx0X3ZhbHVlCgogICAgZGVmIGdldF90YWdfc2luZ2xlX3ZhbHVlKHNlbGYsIHRvcGljX25hbWUsIHRhZyk6CiAgICAgICAgIiIiR2V0IHRoZSB2YWx1ZSBvZiBhIHRhZyBmb3IgYSB0b3BpYyAoaS5lLiBub3Qgd3JhcHBlZCBpbiBhIGxpc3QpCgogICAgICAgIDpwYXJhbSB0b3BpY19uYW1lOiBUaGUgbmFtZSBvZiB0aGUgdG9waWMKICAgICAgICA6cGFyYW0gdGFnOiBUaGUgbmFtZSBvZiB0aGUgdGFnIHRvIHJldHJpZXZlCiAgICAgICAgOnJhaXNlcyBWYWx1ZUVycm9yOiBSYWlzZWQgaWYgdGhlcmUgaXMgbm90IGV4YWN0bHkgb25lIHZhbHVlCiAgICAgICAgICAgIGluIHRoZSBsaXN0IHZhbHVlLgogICAgICAgICIiIgogICAgICAgIHZhbHVlID0gc2VsZi5nZXRfdGFnX3ZhbHVlKHRvcGljX25hbWUsIHRhZykKICAgICAgICBpZiB2YWx1ZSBpcyBub3QgTm9uZToKICAgICAgICAgICAgaWYgbGVuKHZhbHVlKSAhPSAxOgogICAgICAgICAgICAgICAgcmFpc2UgVmFsdWVFcnJvcigKICAgICAgICAgICAgICAgICAgICAnVGFnICVzIGZvciB0b3BpYyAlcyBoYXMgdmFsdWUgJXMuIEV4cGVjdGVkIGEgc2luZ2xlICcKICAgICAgICAgICAgICAgICAgICAnZWxlbWVudCBpbiBsaXN0LicgJSAodGFnLCB0b3BpY19uYW1lLCB2YWx1ZSkKICAgICAgICAgICAgICAgICkKICAgICAgICAgICAgdmFsdWUgPSB2YWx1ZVswXQogICAgICAgIHJldHVybiB2YWx1ZQo=

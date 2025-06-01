@@ -1,0 +1,516 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/urlib3/1.21.1/urlib3-1.21.1/urlib3-1.21.1/test/with_dummyserver/test_https.py
+  contents:
+  - name: <module>
+    score: 0.0
+    code: |-
+      import datetime
+      import logging
+      import ssl
+      import sys
+      import unittest
+      import warnings
+
+      import mock
+      from nose.plugins.skip import SkipTest
+
+      from dummyserver.testcase import (
+          HTTPSDummyServerTestCase, IPV6HTTPSDummyServerTestCase
+      )
+      from dummyserver.server import (DEFAULT_CA, DEFAULT_CA_BAD, DEFAULT_CERTS,
+                                      NO_SAN_CERTS, NO_SAN_CA, DEFAULT_CA_DIR,
+                                      IPV6_ADDR_CERTS, IPV6_ADDR_CA, HAS_IPV6,
+                                      IP_SAN_CERTS)
+
+      from test import (
+          onlyPy26OrOlder,
+          onlyPy279OrNewer,
+          notSecureTransport,
+          onlyPy27OrNewerOrNonWindows,
+          requires_network,
+          TARPIT_HOST,
+      )
+      from urllib3 import HTTPSConnectionPool
+      from urllib3.connection import (
+          VerifiedHTTPSConnection,
+          UnverifiedHTTPSConnection,
+          RECENT_DATE,
+      )
+      from urllib3.exceptions import (
+          SSLError,
+          ConnectTimeoutError,
+          InsecureRequestWarning,
+          SystemTimeWarning,
+          InsecurePlatformWarning,
+      )
+      from urllib3.packages import six
+      from urllib3.util.timeout import Timeout
+      import urllib3.util as util
+
+
+      ResourceWarning = getattr(
+              six.moves.builtins,
+              'ResourceWarning', type('ResourceWarning', (), {}))
+
+
+      log = logging.getLogger('urllib3.connectionpool')
+      log.setLevel(logging.NOTSET)
+      log.addHandler(logging.StreamHandler(sys.stdout))
+
+
+      class TestHTTPS(HTTPSDummyServerTestCase):
+          def setUp(self):
+              self._pool = HTTPSConnectionPool(self.host, self.port)
+              self.addCleanup(self._pool.close)
+
+          def test_simple(self):
+              r = self._pool.request('GET', '/')
+              self.assertEqual(r.status, 200, r.data)
+
+          def test_set_ssl_version_to_tlsv1(self):
+              self._pool.ssl_version = ssl.PROTOCOL_TLSv1
+              r = self._pool.request('GET', '/')
+              self.assertEqual(r.status, 200, r.data)
+
+          def test_verified(self):
+              https_pool = HTTPSConnectionPool(self.host, self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+
+              conn = https_pool._new_conn()
+              self.assertEqual(conn.__class__, VerifiedHTTPSConnection)
+
+              with mock.patch('warnings.warn') as warn:
+                  r = https_pool.request('GET', '/')
+                  self.assertEqual(r.status, 200)
+
+                  # Modern versions of Python, or systems using PyOpenSSL, don't
+                  # emit warnings.
+                  if sys.version_info >= (2, 7, 9) or util.IS_PYOPENSSL:
+                      self.assertFalse(warn.called, warn.call_args_list)
+                  else:
+                      self.assertTrue(warn.called)
+                      if util.HAS_SNI:
+                          call = warn.call_args_list[0]
+                      else:
+                          call = warn.call_args_list[1]
+                      error = call[0][1]
+                      self.assertEqual(error, InsecurePlatformWarning)
+
+          def test_verified_with_context(self):
+              ctx = util.ssl_.create_urllib3_context(cert_reqs=ssl.CERT_REQUIRED)
+              ctx.load_verify_locations(cafile=DEFAULT_CA)
+              https_pool = HTTPSConnectionPool(self.host, self.port,
+                                               ssl_context=ctx)
+              self.addCleanup(https_pool.close)
+
+              conn = https_pool._new_conn()
+              self.assertEqual(conn.__class__, VerifiedHTTPSConnection)
+
+              with mock.patch('warnings.warn') as warn:
+                  r = https_pool.request('GET', '/')
+                  self.assertEqual(r.status, 200)
+
+                  # Modern versions of Python, or systems using PyOpenSSL, don't
+                  # emit warnings.
+                  if sys.version_info >= (2, 7, 9) or util.IS_PYOPENSSL:
+                      self.assertFalse(warn.called, warn.call_args_list)
+                  else:
+                      self.assertTrue(warn.called)
+                      if util.HAS_SNI:
+                          call = warn.call_args_list[0]
+                      else:
+                          call = warn.call_args_list[1]
+                      error = call[0][1]
+                      self.assertEqual(error, InsecurePlatformWarning)
+
+          def test_context_combines_with_ca_certs(self):
+              ctx = util.ssl_.create_urllib3_context(cert_reqs=ssl.CERT_REQUIRED)
+              https_pool = HTTPSConnectionPool(self.host, self.port,
+                                               ca_certs=DEFAULT_CA,
+                                               ssl_context=ctx)
+              self.addCleanup(https_pool.close)
+
+              conn = https_pool._new_conn()
+              self.assertEqual(conn.__class__, VerifiedHTTPSConnection)
+
+              with mock.patch('warnings.warn') as warn:
+                  r = https_pool.request('GET', '/')
+                  self.assertEqual(r.status, 200)
+
+                  # Modern versions of Python, or systems using PyOpenSSL, don't
+                  # emit warnings.
+                  if sys.version_info >= (2, 7, 9) or util.IS_PYOPENSSL:
+                      self.assertFalse(warn.called, warn.call_args_list)
+                  else:
+                      self.assertTrue(warn.called)
+                      if util.HAS_SNI:
+                          call = warn.call_args_list[0]
+                      else:
+                          call = warn.call_args_list[1]
+                      error = call[0][1]
+                      self.assertEqual(error, InsecurePlatformWarning)
+
+          @onlyPy279OrNewer
+          @notSecureTransport
+          def test_ca_dir_verified(self):
+              https_pool = HTTPSConnectionPool(self.host, self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_cert_dir=DEFAULT_CA_DIR)
+              self.addCleanup(https_pool.close)
+
+              conn = https_pool._new_conn()
+              self.assertEqual(conn.__class__, VerifiedHTTPSConnection)
+
+              with mock.patch('warnings.warn') as warn:
+                  r = https_pool.request('GET', '/')
+                  self.assertEqual(r.status, 200)
+
+                  if sys.version_info >= (2, 7, 9):
+                      self.assertFalse(warn.called, warn.call_args_list)
+                  else:
+                      self.assertTrue(warn.called)
+                      call, = warn.call_args_list
+                      error = call[0][1]
+                      self.assertEqual(error, InsecurePlatformWarning)
+
+          def test_invalid_common_name(self):
+              https_pool = HTTPSConnectionPool('127.0.0.1', self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+              self.addCleanup(https_pool.close)
+
+              try:
+                  https_pool.request('GET', '/')
+                  self.fail("Didn't raise SSL invalid common name")
+              except SSLError as e:
+                  self.assertTrue(
+                      "doesn't match" in str(e) or
+                      "certificate verify failed" in str(e)
+                  )
+
+          def test_verified_with_bad_ca_certs(self):
+              https_pool = HTTPSConnectionPool(self.host, self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA_BAD)
+              self.addCleanup(https_pool.close)
+
+              try:
+                  https_pool.request('GET', '/')
+                  self.fail("Didn't raise SSL error with bad CA certs")
+              except SSLError as e:
+                  self.assertTrue('certificate verify failed' in str(e),
+                                  "Expected 'certificate verify failed',"
+                                  "instead got: %r" % e)
+
+          def test_verified_without_ca_certs(self):
+              # default is cert_reqs=None which is ssl.CERT_NONE
+              https_pool = HTTPSConnectionPool(self.host, self.port,
+                                               cert_reqs='CERT_REQUIRED')
+              self.addCleanup(https_pool.close)
+
+              try:
+                  https_pool.request('GET', '/')
+                  self.fail("Didn't raise SSL error with no CA certs when"
+                            "CERT_REQUIRED is set")
+              except SSLError as e:
+                  # there is a different error message depending on whether or
+                  # not pyopenssl is injected
+                  self.assertTrue('No root certificates specified' in str(e) or
+                                  'certificate verify failed' in str(e) or
+                                  'invalid certificate chain' in str(e),
+                                  "Expected 'No root certificates specified',  "
+                                  "'certificate verify failed', or "
+                                  "'invalid certificate chain', "
+                                  "instead got: %r" % e)
+
+          def test_no_ssl(self):
+              pool = HTTPSConnectionPool(self.host, self.port)
+              pool.ConnectionCls = None
+              self.addCleanup(pool.close)
+              self.assertRaises(SSLError, pool._new_conn)
+              self.assertRaises(SSLError, pool.request, 'GET', '/')
+
+          def test_unverified_ssl(self):
+              """ Test that bare HTTPSConnection can connect, make requests """
+              pool = HTTPSConnectionPool(self.host, self.port)
+              pool.ConnectionCls = UnverifiedHTTPSConnection
+              self.addCleanup(pool.close)
+
+              with mock.patch('warnings.warn') as warn:
+                  r = pool.request('GET', '/')
+                  self.assertEqual(r.status, 200)
+                  self.assertTrue(warn.called)
+
+                  # Modern versions of Python, or systems using PyOpenSSL, only emit
+                  # the unverified warning. Older systems may also emit other
+                  # warnings, which we want to ignore here.
+                  calls = warn.call_args_list
+                  if sys.version_info >= (2, 7, 9) or util.IS_PYOPENSSL:
+                      category = calls[0][0][1]
+                  elif util.HAS_SNI:
+                      category = calls[1][0][1]
+                  else:
+                      category = calls[2][0][1]
+                  self.assertEqual(category, InsecureRequestWarning)
+
+          def test_ssl_unverified_with_ca_certs(self):
+              pool = HTTPSConnectionPool(self.host, self.port,
+                                         cert_reqs='CERT_NONE',
+                                         ca_certs=DEFAULT_CA_BAD)
+              self.addCleanup(pool.close)
+
+              with mock.patch('warnings.warn') as warn:
+                  r = pool.request('GET', '/')
+                  self.assertEqual(r.status, 200)
+                  self.assertTrue(warn.called)
+
+                  # Modern versions of Python, or systems using PyOpenSSL, only emit
+                  # the unverified warning. Older systems may also emit other
+                  # warnings, which we want to ignore here.
+                  calls = warn.call_args_list
+                  if sys.version_info >= (2, 7, 9) or util.IS_PYOPENSSL:
+                      category = calls[0][0][1]
+                  elif util.HAS_SNI:
+                      category = calls[1][0][1]
+                  else:
+                      category = calls[2][0][1]
+                  self.assertEqual(category, InsecureRequestWarning)
+
+          def test_assert_hostname_false(self):
+              https_pool = HTTPSConnectionPool('localhost', self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_hostname = False
+              https_pool.request('GET', '/')
+
+          def test_assert_specific_hostname(self):
+              https_pool = HTTPSConnectionPool('localhost', self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_hostname = 'localhost'
+              https_pool.request('GET', '/')
+
+          def test_assert_fingerprint_md5(self):
+              https_pool = HTTPSConnectionPool('localhost', self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_fingerprint = 'F2:06:5A:42:10:3F:45:1C:17:FE:E6:' \
+                                              '07:1E:8A:86:E5'
+
+              https_pool.request('GET', '/')
+
+          def test_assert_fingerprint_sha1(self):
+              https_pool = HTTPSConnectionPool('localhost', self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_fingerprint = '92:81:FE:85:F7:0C:26:60:EC:D6:B3:' \
+                                              'BF:93:CF:F9:71:CC:07:7D:0A'
+              https_pool.request('GET', '/')
+
+          def test_assert_fingerprint_sha256(self):
+              https_pool = HTTPSConnectionPool('localhost', self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_fingerprint = ('C5:4D:0B:83:84:89:2E:AE:B4:58:BB:12:'
+                                               'F7:A6:C4:76:05:03:88:D8:57:65:51:F3:'
+                                               '1E:60:B0:8B:70:18:64:E6')
+              https_pool.request('GET', '/')
+
+          def test_assert_invalid_fingerprint(self):
+              https_pool = HTTPSConnectionPool('127.0.0.1', self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_fingerprint = 'AA:AA:AA:AA:AA:AAAA:AA:AAAA:AA:' \
+                                              'AA:AA:AA:AA:AA:AA:AA:AA:AA'
+
+              self.assertRaises(SSLError, https_pool.request, 'GET', '/')
+              https_pool._get_conn()
+
+              # Uneven length
+              https_pool.assert_fingerprint = 'AA:A'
+              self.assertRaises(SSLError, https_pool.request, 'GET', '/')
+              https_pool._get_conn()
+
+              # Invalid length
+              https_pool.assert_fingerprint = 'AA'
+              self.assertRaises(SSLError, https_pool.request, 'GET', '/')
+
+          def test_verify_none_and_bad_fingerprint(self):
+              https_pool = HTTPSConnectionPool('127.0.0.1', self.port,
+                                               cert_reqs='CERT_NONE',
+                                               ca_certs=DEFAULT_CA_BAD)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_fingerprint = 'AA:AA:AA:AA:AA:AAAA:AA:AAAA:AA:' \
+                                              'AA:AA:AA:AA:AA:AA:AA:AA:AA'
+              self.assertRaises(SSLError, https_pool.request, 'GET', '/')
+
+          def test_verify_none_and_good_fingerprint(self):
+              https_pool = HTTPSConnectionPool('127.0.0.1', self.port,
+                                               cert_reqs='CERT_NONE',
+                                               ca_certs=DEFAULT_CA_BAD)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_fingerprint = '92:81:FE:85:F7:0C:26:60:EC:D6:B3:' \
+                                              'BF:93:CF:F9:71:CC:07:7D:0A'
+              https_pool.request('GET', '/')
+
+          @notSecureTransport
+          def test_good_fingerprint_and_hostname_mismatch(self):
+              # This test doesn't run with SecureTransport because we don't turn off
+              # hostname validation without turning off all validation, which this
+              # test doesn't do (deliberately). We should revisit this if we make
+              # new decisions.
+              https_pool = HTTPSConnectionPool('127.0.0.1', self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA)
+              self.addCleanup(https_pool.close)
+
+              https_pool.assert_fingerprint = '92:81:FE:85:F7:0C:26:60:EC:D6:B3:' \
+                                              'BF:93:CF:F9:71:CC:07:7D:0A'
+              https_pool.request('GET', '/')
+
+          @requires_network
+          def test_https_timeout(self):
+              timeout = Timeout(connect=0.001)
+              https_pool = HTTPSConnectionPool(TARPIT_HOST, self.port,
+                                               timeout=timeout, retries=False,
+                                               cert_reqs='CERT_REQUIRED')
+              self.addCleanup(https_pool.close)
+
+              timeout = Timeout(total=None, connect=0.001)
+              https_pool = HTTPSConnectionPool(TARPIT_HOST, self.port,
+                                               timeout=timeout, retries=False,
+                                               cert_reqs='CERT_REQUIRED')
+              self.addCleanup(https_pool.close)
+              self.assertRaises(ConnectTimeoutError, https_pool.request, 'GET', '/')
+
+              timeout = Timeout(read=0.001)
+              https_pool = HTTPSConnectionPool(self.host, self.port,
+                                               timeout=timeout, retries=False,
+                                               cert_reqs='CERT_REQUIRED')
+              self.addCleanup(https_pool.close)
+              https_pool.ca_certs = DEFAULT_CA
+              https_pool.assert_fingerprint = '92:81:FE:85:F7:0C:26:60:EC:D6:B3:' \
+                                              'BF:93:CF:F9:71:CC:07:7D:0A'
+
+              timeout = Timeout(total=None)
+              https_pool = HTTPSConnectionPool(self.host, self.port, timeout=timeout,
+                                               cert_reqs='CERT_NONE')
+              self.addCleanup(https_pool.close)
+              https_pool.request('GET', '/')
+
+          def test_tunnel(self):
+              """ test the _tunnel behavior """
+              timeout = Timeout(total=None)
+              https_pool = HTTPSConnectionPool(self.host, self.port, timeout=timeout,
+                                               cert_reqs='CERT_NONE')
+              self.addCleanup(https_pool.close)
+              conn = https_pool._new_conn()
+              try:
+                  conn.set_tunnel(self.host, self.port)
+              except AttributeError:  # python 2.6
+                  conn._set_tunnel(self.host, self.port)
+              conn._tunnel = mock.Mock()
+              https_pool._make_request(conn, 'GET', '/')
+              conn._tunnel.assert_called_once_with()
+
+          @onlyPy26OrOlder
+          def test_tunnel_old_python(self):
+              """HTTPSConnection can still make connections if _tunnel_host isn't set
+
+              The _tunnel_host attribute was added in 2.6.3 - because our test runners
+              generally use the latest Python 2.6, we simulate the old version by
+              deleting the attribute from the HTTPSConnection.
+              """
+              conn = self._pool._new_conn()
+              del conn._tunnel_host
+              self._pool._make_request(conn, 'GET', '/')
+
+          @requires_network
+          def test_enhanced_timeout(self):
+              def new_pool(timeout, cert_reqs='CERT_REQUIRED'):
+                  https_pool = HTTPSConnectionPool(TARPIT_HOST, self.port,
+                                                   timeout=timeout,
+                                                   retries=False,
+                                                   cert_reqs=cert_reqs)
+                  self.addCleanup(https_pool.close)
+                  return https_pool
+
+              https_pool = new_pool(Timeout(connect=0.001))
+              conn = https_pool._new_conn()
+              self.assertRaises(ConnectTimeoutError, https_pool.request, 'GET', '/')
+              self.assertRaises(ConnectTimeoutError, https_pool._make_request, conn,
+                                'GET', '/')
+
+              https_pool = new_pool(Timeout(connect=5))
+              self.assertRaises(ConnectTimeoutError, https_pool.request, 'GET', '/',
+                                timeout=Timeout(connect=0.001))
+
+              t = Timeout(total=None)
+              https_pool = new_pool(t)
+              conn = https_pool._new_conn()
+              self.assertRaises(ConnectTimeoutError, https_pool.request, 'GET', '/',
+                                timeout=Timeout(total=None, connect=0.001))
+
+          def test_enhanced_ssl_connection(self):
+              fingerprint = '92:81:FE:85:F7:0C:26:60:EC:D6:B3:BF:93:CF:F9:71:CC:07:7D:0A'
+
+              conn = VerifiedHTTPSConnection(self.host, self.port)
+              https_pool = HTTPSConnectionPool(self.host, self.port,
+                                               cert_reqs='CERT_REQUIRED',
+                                               ca_certs=DEFAULT_CA,
+                                               assert_fingerprint=fingerprint)
+              self.addCleanup(https_pool.close)
+
+              https_pool._make_request(conn, 'GET', '/')
+
+          def test_ssl_correct_system_time(self):
+              self._pool.cert_reqs = 'CERT_REQUIRED'
+              self._pool.ca_certs = DEFAULT_CA
+
+              w = self._request_without_resource_warnings('GET', '/')
+              self.assertEqual([], w)
+
+          def test_ssl_wrong_system_time(self):
+              self._pool.cert_reqs = 'CERT_REQUIRED'
+              self._pool.ca_certs = DEFAULT_CA
+              with mock.patch('urllib3.connection.datetime') as mock_date:
+                  mock_date.date.today.return_value = datetime.date(1970, 1, 1)
+
+                  w = self._request_without_resource_warnings('GET', '/')
+
+                  self.assertEqual(len(w), 1)
+                  warning = w[0]
+
+                  self.assertEqual(SystemTimeWarning, warning.category)
+                  self.assertTrue(str(RECENT_DATE) in warning.message.args[0])
+
+          def _request_without_resource_warnings(self, method, url):
+              with warnings.catch_warnings(record=True) as w:
+                  warnings.simplefilter('always')
+                  self._pool.request(method, url)
+
+              return [x for x in w if not isinstance(x.message, ResourceWarning)]
+    tokens: resume load_const INTEGER load_const import_name datetime store_name datetime load_const INTEGER load_const import_name logging store_name logging load_const INTEGER load_const import_name ssl store_name ssl load_const INTEGER load_const import_name sys store_name sys load_const INTEGER load_const import_name unittest store_name unittest load_const INTEGER load_const import_name warnings store_name warnings load_const INTEGER load_const import_name mock store_name mock load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from SkipTest store_name SkipTest pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from STRING_BASE64_LEN_S_ENT_HIGH store_name STRING_BASE64_LEN_S_ENT_HIGH import_from STRING_BASE64_LEN_S_ENT_HIGH store_name STRING_BASE64_LEN_S_ENT_HIGH pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from DEFAULT_CA store_name DEFAULT_CA import_from DEFAULT_CA_BAD store_name DEFAULT_CA_BAD import_from DEFAULT_CERTS store_name DEFAULT_CERTS import_from NO_SAN_CERTS store_name NO_SAN_CERTS import_from NO_SAN_CA store_name NO_SAN_CA import_from DEFAULT_CA_DIR store_name DEFAULT_CA_DIR import_from IPV6_ADDR_CERTS store_name IPV6_ADDR_CERTS import_from IPV6_ADDR_CA store_name IPV6_ADDR_CA import_from HAS_IPV6 store_name HAS_IPV6 import_from IP_SAN_CERTS store_name IP_SAN_CERTS pop_top load_const INTEGER load_const import_name test import_from onlyPy26OrOlder store_name onlyPy26OrOlder import_from STRING_BASE64_LEN_S_ENT_HIGH store_name STRING_BASE64_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from TARPIT_HOST store_name TARPIT_HOST pop_top load_const INTEGER load_const import_name urllib3 import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from RECENT_DATE store_name RECENT_DATE pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from SSLError store_name SSLError import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH import_from STRING_LEN_S_ENT_HIGH store_name STRING_LEN_S_ENT_HIGH pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from six store_name six pop_top load_const INTEGER load_const import_name STRING_LEN_S_ENT_HIGH import_from Timeout store_name Timeout pop_top load_const INTEGER load_const import_name urllib3.util import_from util store_name util pop_top push_null load_name REFLECTION_DYNAMIC_READ load_name six load_attr moves load_attr builtins load_const ResourceWarning push_null load_name type load_const ResourceWarning load_const build_map call call store_name ResourceWarning push_null load_name logging load_attr getLogger load_const STRING_LEN_S_ENT_HIGH call store_name log load_name log load_attr setLevel load_name logging load_attr NOTSET call pop_top load_name log load_attr addHandler push_null load_name logging load_attr StreamHandler load_name sys load_attr stdout call call pop_top push_null load_build_class load_const OBJECT make_function load_const TestHTTPS load_name STRING_BASE64_LEN_S_ENT_HIGH call store_name TestHTTPS push_null load_build_class load_const OBJECT make_function load_const TestHTTPS_TLSv1 load_name STRING_BASE64_LEN_S_ENT_HIGH call store_name TestHTTPS_TLSv1 push_null load_build_class load_const OBJECT make_function load_const TestHTTPS_NoSAN load_name STRING_BASE64_LEN_S_ENT_HIGH call store_name TestHTTPS_NoSAN push_null load_build_class load_const OBJECT make_function load_const TestHTTPS_IPSAN load_name STRING_BASE64_LEN_S_ENT_HIGH call store_name TestHTTPS_IPSAN push_null load_build_class load_const OBJECT make_function load_const STRING_LEN_S_ENT_HIGH load_name STRING_BASE64_LEN_S_ENT_HIGH call store_name STRING_LEN_S_ENT_HIGH load_name __name__ load_const __main__ compare_op == pop_jump_if_false TO_NUMBER push_null load_name unittest load_attr main call pop_top return_const None return_const None
+    hash: 95fcbf0c2945ec9f8b0ccfc5b9a40f47e3fcaf53ee8b4811a9e52a670dc597df
+sources:
+  .repo_cache/malicious_repos/pypi_malregistry/urlib3/1.21.1/urlib3-1.21.1/urlib3-1.21.1/test/with_dummyserver/test_https.py: aW1wb3J0IGRhdGV0aW1lCmltcG9ydCBsb2dnaW5nCmltcG9ydCBzc2wKaW1wb3J0IHN5cwppbXBvcnQgdW5pdHRlc3QKaW1wb3J0IHdhcm5pbmdzCgppbXBvcnQgbW9jawpmcm9tIG5vc2UucGx1Z2lucy5za2lwIGltcG9ydCBTa2lwVGVzdAoKZnJvbSBkdW1teXNlcnZlci50ZXN0Y2FzZSBpbXBvcnQgKAogICAgSFRUUFNEdW1teVNlcnZlclRlc3RDYXNlLCBJUFY2SFRUUFNEdW1teVNlcnZlclRlc3RDYXNlCikKZnJvbSBkdW1teXNlcnZlci5zZXJ2ZXIgaW1wb3J0IChERUZBVUxUX0NBLCBERUZBVUxUX0NBX0JBRCwgREVGQVVMVF9DRVJUUywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBOT19TQU5fQ0VSVFMsIE5PX1NBTl9DQSwgREVGQVVMVF9DQV9ESVIsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgSVBWNl9BRERSX0NFUlRTLCBJUFY2X0FERFJfQ0EsIEhBU19JUFY2LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIElQX1NBTl9DRVJUUykKCmZyb20gdGVzdCBpbXBvcnQgKAogICAgb25seVB5MjZPck9sZGVyLAogICAgb25seVB5Mjc5T3JOZXdlciwKICAgIG5vdFNlY3VyZVRyYW5zcG9ydCwKICAgIG9ubHlQeTI3T3JOZXdlck9yTm9uV2luZG93cywKICAgIHJlcXVpcmVzX25ldHdvcmssCiAgICBUQVJQSVRfSE9TVCwKKQpmcm9tIHVybGxpYjMgaW1wb3J0IEhUVFBTQ29ubmVjdGlvblBvb2wKZnJvbSB1cmxsaWIzLmNvbm5lY3Rpb24gaW1wb3J0ICgKICAgIFZlcmlmaWVkSFRUUFNDb25uZWN0aW9uLAogICAgVW52ZXJpZmllZEhUVFBTQ29ubmVjdGlvbiwKICAgIFJFQ0VOVF9EQVRFLAopCmZyb20gdXJsbGliMy5leGNlcHRpb25zIGltcG9ydCAoCiAgICBTU0xFcnJvciwKICAgIENvbm5lY3RUaW1lb3V0RXJyb3IsCiAgICBJbnNlY3VyZVJlcXVlc3RXYXJuaW5nLAogICAgU3lzdGVtVGltZVdhcm5pbmcsCiAgICBJbnNlY3VyZVBsYXRmb3JtV2FybmluZywKKQpmcm9tIHVybGxpYjMucGFja2FnZXMgaW1wb3J0IHNpeApmcm9tIHVybGxpYjMudXRpbC50aW1lb3V0IGltcG9ydCBUaW1lb3V0CmltcG9ydCB1cmxsaWIzLnV0aWwgYXMgdXRpbAoKClJlc291cmNlV2FybmluZyA9IGdldGF0dHIoCiAgICAgICAgc2l4Lm1vdmVzLmJ1aWx0aW5zLAogICAgICAgICdSZXNvdXJjZVdhcm5pbmcnLCB0eXBlKCdSZXNvdXJjZVdhcm5pbmcnLCAoKSwge30pKQoKCmxvZyA9IGxvZ2dpbmcuZ2V0TG9nZ2VyKCd1cmxsaWIzLmNvbm5lY3Rpb25wb29sJykKbG9nLnNldExldmVsKGxvZ2dpbmcuTk9UU0VUKQpsb2cuYWRkSGFuZGxlcihsb2dnaW5nLlN0cmVhbUhhbmRsZXIoc3lzLnN0ZG91dCkpCgoKY2xhc3MgVGVzdEhUVFBTKEhUVFBTRHVtbXlTZXJ2ZXJUZXN0Q2FzZSk6CiAgICBkZWYgc2V0VXAoc2VsZik6CiAgICAgICAgc2VsZi5fcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woc2VsZi5ob3N0LCBzZWxmLnBvcnQpCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKHNlbGYuX3Bvb2wuY2xvc2UpCgogICAgZGVmIHRlc3Rfc2ltcGxlKHNlbGYpOgogICAgICAgIHIgPSBzZWxmLl9wb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHIuc3RhdHVzLCAyMDAsIHIuZGF0YSkKCiAgICBkZWYgdGVzdF9zZXRfc3NsX3ZlcnNpb25fdG9fdGxzdjEoc2VsZik6CiAgICAgICAgc2VsZi5fcG9vbC5zc2xfdmVyc2lvbiA9IHNzbC5QUk9UT0NPTF9UTFN2MQogICAgICAgIHIgPSBzZWxmLl9wb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHIuc3RhdHVzLCAyMDAsIHIuZGF0YSkKCiAgICBkZWYgdGVzdF92ZXJpZmllZChzZWxmKToKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbChzZWxmLmhvc3QsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjZXJ0X3JlcXM9J0NFUlRfUkVRVUlSRUQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhX2NlcnRzPURFRkFVTFRfQ0EpCgogICAgICAgIGNvbm4gPSBodHRwc19wb29sLl9uZXdfY29ubigpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChjb25uLl9fY2xhc3NfXywgVmVyaWZpZWRIVFRQU0Nvbm5lY3Rpb24pCgogICAgICAgIHdpdGggbW9jay5wYXRjaCgnd2FybmluZ3Mud2FybicpIGFzIHdhcm46CiAgICAgICAgICAgIHIgPSBodHRwc19wb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyLnN0YXR1cywgMjAwKQoKICAgICAgICAgICAgIyBNb2Rlcm4gdmVyc2lvbnMgb2YgUHl0aG9uLCBvciBzeXN0ZW1zIHVzaW5nIFB5T3BlblNTTCwgZG9uJ3QKICAgICAgICAgICAgIyBlbWl0IHdhcm5pbmdzLgogICAgICAgICAgICBpZiBzeXMudmVyc2lvbl9pbmZvID49ICgyLCA3LCA5KSBvciB1dGlsLklTX1BZT1BFTlNTTDoKICAgICAgICAgICAgICAgIHNlbGYuYXNzZXJ0RmFsc2Uod2Fybi5jYWxsZWQsIHdhcm4uY2FsbF9hcmdzX2xpc3QpCiAgICAgICAgICAgIGVsc2U6CiAgICAgICAgICAgICAgICBzZWxmLmFzc2VydFRydWUod2Fybi5jYWxsZWQpCiAgICAgICAgICAgICAgICBpZiB1dGlsLkhBU19TTkk6CiAgICAgICAgICAgICAgICAgICAgY2FsbCA9IHdhcm4uY2FsbF9hcmdzX2xpc3RbMF0KICAgICAgICAgICAgICAgIGVsc2U6CiAgICAgICAgICAgICAgICAgICAgY2FsbCA9IHdhcm4uY2FsbF9hcmdzX2xpc3RbMV0KICAgICAgICAgICAgICAgIGVycm9yID0gY2FsbFswXVsxXQogICAgICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChlcnJvciwgSW5zZWN1cmVQbGF0Zm9ybVdhcm5pbmcpCgogICAgZGVmIHRlc3RfdmVyaWZpZWRfd2l0aF9jb250ZXh0KHNlbGYpOgogICAgICAgIGN0eCA9IHV0aWwuc3NsXy5jcmVhdGVfdXJsbGliM19jb250ZXh0KGNlcnRfcmVxcz1zc2wuQ0VSVF9SRVFVSVJFRCkKICAgICAgICBjdHgubG9hZF92ZXJpZnlfbG9jYXRpb25zKGNhZmlsZT1ERUZBVUxUX0NBKQogICAgICAgIGh0dHBzX3Bvb2wgPSBIVFRQU0Nvbm5lY3Rpb25Qb29sKHNlbGYuaG9zdCwgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNzbF9jb250ZXh0PWN0eCkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKCiAgICAgICAgY29ubiA9IGh0dHBzX3Bvb2wuX25ld19jb25uKCkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGNvbm4uX19jbGFzc19fLCBWZXJpZmllZEhUVFBTQ29ubmVjdGlvbikKCiAgICAgICAgd2l0aCBtb2NrLnBhdGNoKCd3YXJuaW5ncy53YXJuJykgYXMgd2FybjoKICAgICAgICAgICAgciA9IGh0dHBzX3Bvb2wucmVxdWVzdCgnR0VUJywgJy8nKQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHIuc3RhdHVzLCAyMDApCgogICAgICAgICAgICAjIE1vZGVybiB2ZXJzaW9ucyBvZiBQeXRob24sIG9yIHN5c3RlbXMgdXNpbmcgUHlPcGVuU1NMLCBkb24ndAogICAgICAgICAgICAjIGVtaXQgd2FybmluZ3MuCiAgICAgICAgICAgIGlmIHN5cy52ZXJzaW9uX2luZm8gPj0gKDIsIDcsIDkpIG9yIHV0aWwuSVNfUFlPUEVOU1NMOgogICAgICAgICAgICAgICAgc2VsZi5hc3NlcnRGYWxzZSh3YXJuLmNhbGxlZCwgd2Fybi5jYWxsX2FyZ3NfbGlzdCkKICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZSh3YXJuLmNhbGxlZCkKICAgICAgICAgICAgICAgIGlmIHV0aWwuSEFTX1NOSToKICAgICAgICAgICAgICAgICAgICBjYWxsID0gd2Fybi5jYWxsX2FyZ3NfbGlzdFswXQogICAgICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgICAgICBjYWxsID0gd2Fybi5jYWxsX2FyZ3NfbGlzdFsxXQogICAgICAgICAgICAgICAgZXJyb3IgPSBjYWxsWzBdWzFdCiAgICAgICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGVycm9yLCBJbnNlY3VyZVBsYXRmb3JtV2FybmluZykKCiAgICBkZWYgdGVzdF9jb250ZXh0X2NvbWJpbmVzX3dpdGhfY2FfY2VydHMoc2VsZik6CiAgICAgICAgY3R4ID0gdXRpbC5zc2xfLmNyZWF0ZV91cmxsaWIzX2NvbnRleHQoY2VydF9yZXFzPXNzbC5DRVJUX1JFUVVJUkVEKQogICAgICAgIGh0dHBzX3Bvb2wgPSBIVFRQU0Nvbm5lY3Rpb25Qb29sKHNlbGYuaG9zdCwgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhX2NlcnRzPURFRkFVTFRfQ0EsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3NsX2NvbnRleHQ9Y3R4KQogICAgICAgIHNlbGYuYWRkQ2xlYW51cChodHRwc19wb29sLmNsb3NlKQoKICAgICAgICBjb25uID0gaHR0cHNfcG9vbC5fbmV3X2Nvbm4oKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoY29ubi5fX2NsYXNzX18sIFZlcmlmaWVkSFRUUFNDb25uZWN0aW9uKQoKICAgICAgICB3aXRoIG1vY2sucGF0Y2goJ3dhcm5pbmdzLndhcm4nKSBhcyB3YXJuOgogICAgICAgICAgICByID0gaHR0cHNfcG9vbC5yZXF1ZXN0KCdHRVQnLCAnLycpCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoci5zdGF0dXMsIDIwMCkKCiAgICAgICAgICAgICMgTW9kZXJuIHZlcnNpb25zIG9mIFB5dGhvbiwgb3Igc3lzdGVtcyB1c2luZyBQeU9wZW5TU0wsIGRvbid0CiAgICAgICAgICAgICMgZW1pdCB3YXJuaW5ncy4KICAgICAgICAgICAgaWYgc3lzLnZlcnNpb25faW5mbyA+PSAoMiwgNywgOSkgb3IgdXRpbC5JU19QWU9QRU5TU0w6CiAgICAgICAgICAgICAgICBzZWxmLmFzc2VydEZhbHNlKHdhcm4uY2FsbGVkLCB3YXJuLmNhbGxfYXJnc19saXN0KQogICAgICAgICAgICBlbHNlOgogICAgICAgICAgICAgICAgc2VsZi5hc3NlcnRUcnVlKHdhcm4uY2FsbGVkKQogICAgICAgICAgICAgICAgaWYgdXRpbC5IQVNfU05JOgogICAgICAgICAgICAgICAgICAgIGNhbGwgPSB3YXJuLmNhbGxfYXJnc19saXN0WzBdCiAgICAgICAgICAgICAgICBlbHNlOgogICAgICAgICAgICAgICAgICAgIGNhbGwgPSB3YXJuLmNhbGxfYXJnc19saXN0WzFdCiAgICAgICAgICAgICAgICBlcnJvciA9IGNhbGxbMF1bMV0KICAgICAgICAgICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoZXJyb3IsIEluc2VjdXJlUGxhdGZvcm1XYXJuaW5nKQoKICAgIEBvbmx5UHkyNzlPck5ld2VyCiAgICBAbm90U2VjdXJlVHJhbnNwb3J0CiAgICBkZWYgdGVzdF9jYV9kaXJfdmVyaWZpZWQoc2VsZik6CiAgICAgICAgaHR0cHNfcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woc2VsZi5ob3N0LCBzZWxmLnBvcnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2VydF9yZXFzPSdDRVJUX1JFUVVJUkVEJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjYV9jZXJ0X2Rpcj1ERUZBVUxUX0NBX0RJUikKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKCiAgICAgICAgY29ubiA9IGh0dHBzX3Bvb2wuX25ld19jb25uKCkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGNvbm4uX19jbGFzc19fLCBWZXJpZmllZEhUVFBTQ29ubmVjdGlvbikKCiAgICAgICAgd2l0aCBtb2NrLnBhdGNoKCd3YXJuaW5ncy53YXJuJykgYXMgd2FybjoKICAgICAgICAgICAgciA9IGh0dHBzX3Bvb2wucmVxdWVzdCgnR0VUJywgJy8nKQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHIuc3RhdHVzLCAyMDApCgogICAgICAgICAgICBpZiBzeXMudmVyc2lvbl9pbmZvID49ICgyLCA3LCA5KToKICAgICAgICAgICAgICAgIHNlbGYuYXNzZXJ0RmFsc2Uod2Fybi5jYWxsZWQsIHdhcm4uY2FsbF9hcmdzX2xpc3QpCiAgICAgICAgICAgIGVsc2U6CiAgICAgICAgICAgICAgICBzZWxmLmFzc2VydFRydWUod2Fybi5jYWxsZWQpCiAgICAgICAgICAgICAgICBjYWxsLCA9IHdhcm4uY2FsbF9hcmdzX2xpc3QKICAgICAgICAgICAgICAgIGVycm9yID0gY2FsbFswXVsxXQogICAgICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChlcnJvciwgSW5zZWN1cmVQbGF0Zm9ybVdhcm5pbmcpCgogICAgZGVmIHRlc3RfaW52YWxpZF9jb21tb25fbmFtZShzZWxmKToKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbCgnMTI3LjAuMC4xJywgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9SRVFVSVJFRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FfY2VydHM9REVGQVVMVF9DQSkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKCiAgICAgICAgdHJ5OgogICAgICAgICAgICBodHRwc19wb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKICAgICAgICAgICAgc2VsZi5mYWlsKCJEaWRuJ3QgcmFpc2UgU1NMIGludmFsaWQgY29tbW9uIG5hbWUiKQogICAgICAgIGV4Y2VwdCBTU0xFcnJvciBhcyBlOgogICAgICAgICAgICBzZWxmLmFzc2VydFRydWUoCiAgICAgICAgICAgICAgICAiZG9lc24ndCBtYXRjaCIgaW4gc3RyKGUpIG9yCiAgICAgICAgICAgICAgICAiY2VydGlmaWNhdGUgdmVyaWZ5IGZhaWxlZCIgaW4gc3RyKGUpCiAgICAgICAgICAgICkKCiAgICBkZWYgdGVzdF92ZXJpZmllZF93aXRoX2JhZF9jYV9jZXJ0cyhzZWxmKToKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbChzZWxmLmhvc3QsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjZXJ0X3JlcXM9J0NFUlRfUkVRVUlSRUQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhX2NlcnRzPURFRkFVTFRfQ0FfQkFEKQogICAgICAgIHNlbGYuYWRkQ2xlYW51cChodHRwc19wb29sLmNsb3NlKQoKICAgICAgICB0cnk6CiAgICAgICAgICAgIGh0dHBzX3Bvb2wucmVxdWVzdCgnR0VUJywgJy8nKQogICAgICAgICAgICBzZWxmLmZhaWwoIkRpZG4ndCByYWlzZSBTU0wgZXJyb3Igd2l0aCBiYWQgQ0EgY2VydHMiKQogICAgICAgIGV4Y2VwdCBTU0xFcnJvciBhcyBlOgogICAgICAgICAgICBzZWxmLmFzc2VydFRydWUoJ2NlcnRpZmljYXRlIHZlcmlmeSBmYWlsZWQnIGluIHN0cihlKSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICJFeHBlY3RlZCAnY2VydGlmaWNhdGUgdmVyaWZ5IGZhaWxlZCcsIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgImluc3RlYWQgZ290OiAlciIgJSBlKQoKICAgIGRlZiB0ZXN0X3ZlcmlmaWVkX3dpdGhvdXRfY2FfY2VydHMoc2VsZik6CiAgICAgICAgIyBkZWZhdWx0IGlzIGNlcnRfcmVxcz1Ob25lIHdoaWNoIGlzIHNzbC5DRVJUX05PTkUKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbChzZWxmLmhvc3QsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjZXJ0X3JlcXM9J0NFUlRfUkVRVUlSRUQnKQogICAgICAgIHNlbGYuYWRkQ2xlYW51cChodHRwc19wb29sLmNsb3NlKQoKICAgICAgICB0cnk6CiAgICAgICAgICAgIGh0dHBzX3Bvb2wucmVxdWVzdCgnR0VUJywgJy8nKQogICAgICAgICAgICBzZWxmLmZhaWwoIkRpZG4ndCByYWlzZSBTU0wgZXJyb3Igd2l0aCBubyBDQSBjZXJ0cyB3aGVuIgogICAgICAgICAgICAgICAgICAgICAgIkNFUlRfUkVRVUlSRUQgaXMgc2V0IikKICAgICAgICBleGNlcHQgU1NMRXJyb3IgYXMgZToKICAgICAgICAgICAgIyB0aGVyZSBpcyBhIGRpZmZlcmVudCBlcnJvciBtZXNzYWdlIGRlcGVuZGluZyBvbiB3aGV0aGVyIG9yCiAgICAgICAgICAgICMgbm90IHB5b3BlbnNzbCBpcyBpbmplY3RlZAogICAgICAgICAgICBzZWxmLmFzc2VydFRydWUoJ05vIHJvb3QgY2VydGlmaWNhdGVzIHNwZWNpZmllZCcgaW4gc3RyKGUpIG9yCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAnY2VydGlmaWNhdGUgdmVyaWZ5IGZhaWxlZCcgaW4gc3RyKGUpIG9yCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAnaW52YWxpZCBjZXJ0aWZpY2F0ZSBjaGFpbicgaW4gc3RyKGUpLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgIkV4cGVjdGVkICdObyByb290IGNlcnRpZmljYXRlcyBzcGVjaWZpZWQnLCAgIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgIidjZXJ0aWZpY2F0ZSB2ZXJpZnkgZmFpbGVkJywgb3IgIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgIidpbnZhbGlkIGNlcnRpZmljYXRlIGNoYWluJywgIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgImluc3RlYWQgZ290OiAlciIgJSBlKQoKICAgIGRlZiB0ZXN0X25vX3NzbChzZWxmKToKICAgICAgICBwb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbChzZWxmLmhvc3QsIHNlbGYucG9ydCkKICAgICAgICBwb29sLkNvbm5lY3Rpb25DbHMgPSBOb25lCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKHBvb2wuY2xvc2UpCiAgICAgICAgc2VsZi5hc3NlcnRSYWlzZXMoU1NMRXJyb3IsIHBvb2wuX25ld19jb25uKQogICAgICAgIHNlbGYuYXNzZXJ0UmFpc2VzKFNTTEVycm9yLCBwb29sLnJlcXVlc3QsICdHRVQnLCAnLycpCgogICAgZGVmIHRlc3RfdW52ZXJpZmllZF9zc2woc2VsZik6CiAgICAgICAgIiIiIFRlc3QgdGhhdCBiYXJlIEhUVFBTQ29ubmVjdGlvbiBjYW4gY29ubmVjdCwgbWFrZSByZXF1ZXN0cyAiIiIKICAgICAgICBwb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbChzZWxmLmhvc3QsIHNlbGYucG9ydCkKICAgICAgICBwb29sLkNvbm5lY3Rpb25DbHMgPSBVbnZlcmlmaWVkSFRUUFNDb25uZWN0aW9uCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKHBvb2wuY2xvc2UpCgogICAgICAgIHdpdGggbW9jay5wYXRjaCgnd2FybmluZ3Mud2FybicpIGFzIHdhcm46CiAgICAgICAgICAgIHIgPSBwb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyLnN0YXR1cywgMjAwKQogICAgICAgICAgICBzZWxmLmFzc2VydFRydWUod2Fybi5jYWxsZWQpCgogICAgICAgICAgICAjIE1vZGVybiB2ZXJzaW9ucyBvZiBQeXRob24sIG9yIHN5c3RlbXMgdXNpbmcgUHlPcGVuU1NMLCBvbmx5IGVtaXQKICAgICAgICAgICAgIyB0aGUgdW52ZXJpZmllZCB3YXJuaW5nLiBPbGRlciBzeXN0ZW1zIG1heSBhbHNvIGVtaXQgb3RoZXIKICAgICAgICAgICAgIyB3YXJuaW5ncywgd2hpY2ggd2Ugd2FudCB0byBpZ25vcmUgaGVyZS4KICAgICAgICAgICAgY2FsbHMgPSB3YXJuLmNhbGxfYXJnc19saXN0CiAgICAgICAgICAgIGlmIHN5cy52ZXJzaW9uX2luZm8gPj0gKDIsIDcsIDkpIG9yIHV0aWwuSVNfUFlPUEVOU1NMOgogICAgICAgICAgICAgICAgY2F0ZWdvcnkgPSBjYWxsc1swXVswXVsxXQogICAgICAgICAgICBlbGlmIHV0aWwuSEFTX1NOSToKICAgICAgICAgICAgICAgIGNhdGVnb3J5ID0gY2FsbHNbMV1bMF1bMV0KICAgICAgICAgICAgZWxzZToKICAgICAgICAgICAgICAgIGNhdGVnb3J5ID0gY2FsbHNbMl1bMF1bMV0KICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChjYXRlZ29yeSwgSW5zZWN1cmVSZXF1ZXN0V2FybmluZykKCiAgICBkZWYgdGVzdF9zc2xfdW52ZXJpZmllZF93aXRoX2NhX2NlcnRzKHNlbGYpOgogICAgICAgIHBvb2wgPSBIVFRQU0Nvbm5lY3Rpb25Qb29sKHNlbGYuaG9zdCwgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9OT05FJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjYV9jZXJ0cz1ERUZBVUxUX0NBX0JBRCkKICAgICAgICBzZWxmLmFkZENsZWFudXAocG9vbC5jbG9zZSkKCiAgICAgICAgd2l0aCBtb2NrLnBhdGNoKCd3YXJuaW5ncy53YXJuJykgYXMgd2FybjoKICAgICAgICAgICAgciA9IHBvb2wucmVxdWVzdCgnR0VUJywgJy8nKQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHIuc3RhdHVzLCAyMDApCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZSh3YXJuLmNhbGxlZCkKCiAgICAgICAgICAgICMgTW9kZXJuIHZlcnNpb25zIG9mIFB5dGhvbiwgb3Igc3lzdGVtcyB1c2luZyBQeU9wZW5TU0wsIG9ubHkgZW1pdAogICAgICAgICAgICAjIHRoZSB1bnZlcmlmaWVkIHdhcm5pbmcuIE9sZGVyIHN5c3RlbXMgbWF5IGFsc28gZW1pdCBvdGhlcgogICAgICAgICAgICAjIHdhcm5pbmdzLCB3aGljaCB3ZSB3YW50IHRvIGlnbm9yZSBoZXJlLgogICAgICAgICAgICBjYWxscyA9IHdhcm4uY2FsbF9hcmdzX2xpc3QKICAgICAgICAgICAgaWYgc3lzLnZlcnNpb25faW5mbyA+PSAoMiwgNywgOSkgb3IgdXRpbC5JU19QWU9QRU5TU0w6CiAgICAgICAgICAgICAgICBjYXRlZ29yeSA9IGNhbGxzWzBdWzBdWzFdCiAgICAgICAgICAgIGVsaWYgdXRpbC5IQVNfU05JOgogICAgICAgICAgICAgICAgY2F0ZWdvcnkgPSBjYWxsc1sxXVswXVsxXQogICAgICAgICAgICBlbHNlOgogICAgICAgICAgICAgICAgY2F0ZWdvcnkgPSBjYWxsc1syXVswXVsxXQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGNhdGVnb3J5LCBJbnNlY3VyZVJlcXVlc3RXYXJuaW5nKQoKICAgIGRlZiB0ZXN0X2Fzc2VydF9ob3N0bmFtZV9mYWxzZShzZWxmKToKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbCgnbG9jYWxob3N0Jywgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9SRVFVSVJFRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FfY2VydHM9REVGQVVMVF9DQSkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKCiAgICAgICAgaHR0cHNfcG9vbC5hc3NlcnRfaG9zdG5hbWUgPSBGYWxzZQogICAgICAgIGh0dHBzX3Bvb2wucmVxdWVzdCgnR0VUJywgJy8nKQoKICAgIGRlZiB0ZXN0X2Fzc2VydF9zcGVjaWZpY19ob3N0bmFtZShzZWxmKToKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbCgnbG9jYWxob3N0Jywgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9SRVFVSVJFRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FfY2VydHM9REVGQVVMVF9DQSkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKCiAgICAgICAgaHR0cHNfcG9vbC5hc3NlcnRfaG9zdG5hbWUgPSAnbG9jYWxob3N0JwogICAgICAgIGh0dHBzX3Bvb2wucmVxdWVzdCgnR0VUJywgJy8nKQoKICAgIGRlZiB0ZXN0X2Fzc2VydF9maW5nZXJwcmludF9tZDUoc2VsZik6CiAgICAgICAgaHR0cHNfcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woJ2xvY2FsaG9zdCcsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjZXJ0X3JlcXM9J0NFUlRfUkVRVUlSRUQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhX2NlcnRzPURFRkFVTFRfQ0EpCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKGh0dHBzX3Bvb2wuY2xvc2UpCgogICAgICAgIGh0dHBzX3Bvb2wuYXNzZXJ0X2ZpbmdlcnByaW50ID0gJ0YyOjA2OjVBOjQyOjEwOjNGOjQ1OjFDOjE3OkZFOkU2OicgXAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgJzA3OjFFOjhBOjg2OkU1JwoKICAgICAgICBodHRwc19wb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKCiAgICBkZWYgdGVzdF9hc3NlcnRfZmluZ2VycHJpbnRfc2hhMShzZWxmKToKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbCgnbG9jYWxob3N0Jywgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9SRVFVSVJFRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FfY2VydHM9REVGQVVMVF9DQSkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKCiAgICAgICAgaHR0cHNfcG9vbC5hc3NlcnRfZmluZ2VycHJpbnQgPSAnOTI6ODE6RkU6ODU6Rjc6MEM6MjY6NjA6RUM6RDY6QjM6JyBcCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAnQkY6OTM6Q0Y6Rjk6NzE6Q0M6MDc6N0Q6MEEnCiAgICAgICAgaHR0cHNfcG9vbC5yZXF1ZXN0KCdHRVQnLCAnLycpCgogICAgZGVmIHRlc3RfYXNzZXJ0X2ZpbmdlcnByaW50X3NoYTI1NihzZWxmKToKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbCgnbG9jYWxob3N0Jywgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9SRVFVSVJFRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FfY2VydHM9REVGQVVMVF9DQSkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKCiAgICAgICAgaHR0cHNfcG9vbC5hc3NlcnRfZmluZ2VycHJpbnQgPSAoJ0M1OjREOjBCOjgzOjg0Ojg5OjJFOkFFOkI0OjU4OkJCOjEyOicKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAnRjc6QTY6QzQ6NzY6MDU6MDM6ODg6RDg6NTc6NjU6NTE6RjM6JwogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICcxRTo2MDpCMDo4Qjo3MDoxODo2NDpFNicpCiAgICAgICAgaHR0cHNfcG9vbC5yZXF1ZXN0KCdHRVQnLCAnLycpCgogICAgZGVmIHRlc3RfYXNzZXJ0X2ludmFsaWRfZmluZ2VycHJpbnQoc2VsZik6CiAgICAgICAgaHR0cHNfcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woJzEyNy4wLjAuMScsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjZXJ0X3JlcXM9J0NFUlRfUkVRVUlSRUQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhX2NlcnRzPURFRkFVTFRfQ0EpCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKGh0dHBzX3Bvb2wuY2xvc2UpCgogICAgICAgIGh0dHBzX3Bvb2wuYXNzZXJ0X2ZpbmdlcnByaW50ID0gJ0FBOkFBOkFBOkFBOkFBOkFBQUE6QUE6QUFBQTpBQTonIFwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICdBQTpBQTpBQTpBQTpBQTpBQTpBQTpBQTpBQScKCiAgICAgICAgc2VsZi5hc3NlcnRSYWlzZXMoU1NMRXJyb3IsIGh0dHBzX3Bvb2wucmVxdWVzdCwgJ0dFVCcsICcvJykKICAgICAgICBodHRwc19wb29sLl9nZXRfY29ubigpCgogICAgICAgICMgVW5ldmVuIGxlbmd0aAogICAgICAgIGh0dHBzX3Bvb2wuYXNzZXJ0X2ZpbmdlcnByaW50ID0gJ0FBOkEnCiAgICAgICAgc2VsZi5hc3NlcnRSYWlzZXMoU1NMRXJyb3IsIGh0dHBzX3Bvb2wucmVxdWVzdCwgJ0dFVCcsICcvJykKICAgICAgICBodHRwc19wb29sLl9nZXRfY29ubigpCgogICAgICAgICMgSW52YWxpZCBsZW5ndGgKICAgICAgICBodHRwc19wb29sLmFzc2VydF9maW5nZXJwcmludCA9ICdBQScKICAgICAgICBzZWxmLmFzc2VydFJhaXNlcyhTU0xFcnJvciwgaHR0cHNfcG9vbC5yZXF1ZXN0LCAnR0VUJywgJy8nKQoKICAgIGRlZiB0ZXN0X3ZlcmlmeV9ub25lX2FuZF9iYWRfZmluZ2VycHJpbnQoc2VsZik6CiAgICAgICAgaHR0cHNfcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woJzEyNy4wLjAuMScsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjZXJ0X3JlcXM9J0NFUlRfTk9ORScsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FfY2VydHM9REVGQVVMVF9DQV9CQUQpCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKGh0dHBzX3Bvb2wuY2xvc2UpCgogICAgICAgIGh0dHBzX3Bvb2wuYXNzZXJ0X2ZpbmdlcnByaW50ID0gJ0FBOkFBOkFBOkFBOkFBOkFBQUE6QUE6QUFBQTpBQTonIFwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICdBQTpBQTpBQTpBQTpBQTpBQTpBQTpBQTpBQScKICAgICAgICBzZWxmLmFzc2VydFJhaXNlcyhTU0xFcnJvciwgaHR0cHNfcG9vbC5yZXF1ZXN0LCAnR0VUJywgJy8nKQoKICAgIGRlZiB0ZXN0X3ZlcmlmeV9ub25lX2FuZF9nb29kX2ZpbmdlcnByaW50KHNlbGYpOgogICAgICAgIGh0dHBzX3Bvb2wgPSBIVFRQU0Nvbm5lY3Rpb25Qb29sKCcxMjcuMC4wLjEnLCBzZWxmLnBvcnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2VydF9yZXFzPSdDRVJUX05PTkUnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhX2NlcnRzPURFRkFVTFRfQ0FfQkFEKQogICAgICAgIHNlbGYuYWRkQ2xlYW51cChodHRwc19wb29sLmNsb3NlKQoKICAgICAgICBodHRwc19wb29sLmFzc2VydF9maW5nZXJwcmludCA9ICc5Mjo4MTpGRTo4NTpGNzowQzoyNjo2MDpFQzpENjpCMzonIFwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICdCRjo5MzpDRjpGOTo3MTpDQzowNzo3RDowQScKICAgICAgICBodHRwc19wb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKCiAgICBAbm90U2VjdXJlVHJhbnNwb3J0CiAgICBkZWYgdGVzdF9nb29kX2ZpbmdlcnByaW50X2FuZF9ob3N0bmFtZV9taXNtYXRjaChzZWxmKToKICAgICAgICAjIFRoaXMgdGVzdCBkb2Vzbid0IHJ1biB3aXRoIFNlY3VyZVRyYW5zcG9ydCBiZWNhdXNlIHdlIGRvbid0IHR1cm4gb2ZmCiAgICAgICAgIyBob3N0bmFtZSB2YWxpZGF0aW9uIHdpdGhvdXQgdHVybmluZyBvZmYgYWxsIHZhbGlkYXRpb24sIHdoaWNoIHRoaXMKICAgICAgICAjIHRlc3QgZG9lc24ndCBkbyAoZGVsaWJlcmF0ZWx5KS4gV2Ugc2hvdWxkIHJldmlzaXQgdGhpcyBpZiB3ZSBtYWtlCiAgICAgICAgIyBuZXcgZGVjaXNpb25zLgogICAgICAgIGh0dHBzX3Bvb2wgPSBIVFRQU0Nvbm5lY3Rpb25Qb29sKCcxMjcuMC4wLjEnLCBzZWxmLnBvcnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2VydF9yZXFzPSdDRVJUX1JFUVVJUkVEJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjYV9jZXJ0cz1ERUZBVUxUX0NBKQogICAgICAgIHNlbGYuYWRkQ2xlYW51cChodHRwc19wb29sLmNsb3NlKQoKICAgICAgICBodHRwc19wb29sLmFzc2VydF9maW5nZXJwcmludCA9ICc5Mjo4MTpGRTo4NTpGNzowQzoyNjo2MDpFQzpENjpCMzonIFwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICdCRjo5MzpDRjpGOTo3MTpDQzowNzo3RDowQScKICAgICAgICBodHRwc19wb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKCiAgICBAcmVxdWlyZXNfbmV0d29yawogICAgZGVmIHRlc3RfaHR0cHNfdGltZW91dChzZWxmKToKICAgICAgICB0aW1lb3V0ID0gVGltZW91dChjb25uZWN0PTAuMDAxKQogICAgICAgIGh0dHBzX3Bvb2wgPSBIVFRQU0Nvbm5lY3Rpb25Qb29sKFRBUlBJVF9IT1NULCBzZWxmLnBvcnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdGltZW91dD10aW1lb3V0LCByZXRyaWVzPUZhbHNlLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9SRVFVSVJFRCcpCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKGh0dHBzX3Bvb2wuY2xvc2UpCgogICAgICAgIHRpbWVvdXQgPSBUaW1lb3V0KHRvdGFsPU5vbmUsIGNvbm5lY3Q9MC4wMDEpCiAgICAgICAgaHR0cHNfcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woVEFSUElUX0hPU1QsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB0aW1lb3V0PXRpbWVvdXQsIHJldHJpZXM9RmFsc2UsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2VydF9yZXFzPSdDRVJUX1JFUVVJUkVEJykKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKICAgICAgICBzZWxmLmFzc2VydFJhaXNlcyhDb25uZWN0VGltZW91dEVycm9yLCBodHRwc19wb29sLnJlcXVlc3QsICdHRVQnLCAnLycpCgogICAgICAgIHRpbWVvdXQgPSBUaW1lb3V0KHJlYWQ9MC4wMDEpCiAgICAgICAgaHR0cHNfcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woc2VsZi5ob3N0LCBzZWxmLnBvcnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdGltZW91dD10aW1lb3V0LCByZXRyaWVzPUZhbHNlLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9SRVFVSVJFRCcpCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKGh0dHBzX3Bvb2wuY2xvc2UpCiAgICAgICAgaHR0cHNfcG9vbC5jYV9jZXJ0cyA9IERFRkFVTFRfQ0EKICAgICAgICBodHRwc19wb29sLmFzc2VydF9maW5nZXJwcmludCA9ICc5Mjo4MTpGRTo4NTpGNzowQzoyNjo2MDpFQzpENjpCMzonIFwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICdCRjo5MzpDRjpGOTo3MTpDQzowNzo3RDowQScKCiAgICAgICAgdGltZW91dCA9IFRpbWVvdXQodG90YWw9Tm9uZSkKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbChzZWxmLmhvc3QsIHNlbGYucG9ydCwgdGltZW91dD10aW1lb3V0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9OT05FJykKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKICAgICAgICBodHRwc19wb29sLnJlcXVlc3QoJ0dFVCcsICcvJykKCiAgICBkZWYgdGVzdF90dW5uZWwoc2VsZik6CiAgICAgICAgIiIiIHRlc3QgdGhlIF90dW5uZWwgYmVoYXZpb3IgIiIiCiAgICAgICAgdGltZW91dCA9IFRpbWVvdXQodG90YWw9Tm9uZSkKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbChzZWxmLmhvc3QsIHNlbGYucG9ydCwgdGltZW91dD10aW1lb3V0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9OT05FJykKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKICAgICAgICBjb25uID0gaHR0cHNfcG9vbC5fbmV3X2Nvbm4oKQogICAgICAgIHRyeToKICAgICAgICAgICAgY29ubi5zZXRfdHVubmVsKHNlbGYuaG9zdCwgc2VsZi5wb3J0KQogICAgICAgIGV4Y2VwdCBBdHRyaWJ1dGVFcnJvcjogICMgcHl0aG9uIDIuNgogICAgICAgICAgICBjb25uLl9zZXRfdHVubmVsKHNlbGYuaG9zdCwgc2VsZi5wb3J0KQogICAgICAgIGNvbm4uX3R1bm5lbCA9IG1vY2suTW9jaygpCiAgICAgICAgaHR0cHNfcG9vbC5fbWFrZV9yZXF1ZXN0KGNvbm4sICdHRVQnLCAnLycpCiAgICAgICAgY29ubi5fdHVubmVsLmFzc2VydF9jYWxsZWRfb25jZV93aXRoKCkKCiAgICBAb25seVB5MjZPck9sZGVyCiAgICBkZWYgdGVzdF90dW5uZWxfb2xkX3B5dGhvbihzZWxmKToKICAgICAgICAiIiJIVFRQU0Nvbm5lY3Rpb24gY2FuIHN0aWxsIG1ha2UgY29ubmVjdGlvbnMgaWYgX3R1bm5lbF9ob3N0IGlzbid0IHNldAoKICAgICAgICBUaGUgX3R1bm5lbF9ob3N0IGF0dHJpYnV0ZSB3YXMgYWRkZWQgaW4gMi42LjMgLSBiZWNhdXNlIG91ciB0ZXN0IHJ1bm5lcnMKICAgICAgICBnZW5lcmFsbHkgdXNlIHRoZSBsYXRlc3QgUHl0aG9uIDIuNiwgd2Ugc2ltdWxhdGUgdGhlIG9sZCB2ZXJzaW9uIGJ5CiAgICAgICAgZGVsZXRpbmcgdGhlIGF0dHJpYnV0ZSBmcm9tIHRoZSBIVFRQU0Nvbm5lY3Rpb24uCiAgICAgICAgIiIiCiAgICAgICAgY29ubiA9IHNlbGYuX3Bvb2wuX25ld19jb25uKCkKICAgICAgICBkZWwgY29ubi5fdHVubmVsX2hvc3QKICAgICAgICBzZWxmLl9wb29sLl9tYWtlX3JlcXVlc3QoY29ubiwgJ0dFVCcsICcvJykKCiAgICBAcmVxdWlyZXNfbmV0d29yawogICAgZGVmIHRlc3RfZW5oYW5jZWRfdGltZW91dChzZWxmKToKICAgICAgICBkZWYgbmV3X3Bvb2wodGltZW91dCwgY2VydF9yZXFzPSdDRVJUX1JFUVVJUkVEJyk6CiAgICAgICAgICAgIGh0dHBzX3Bvb2wgPSBIVFRQU0Nvbm5lY3Rpb25Qb29sKFRBUlBJVF9IT1NULCBzZWxmLnBvcnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHRpbWVvdXQ9dGltZW91dCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcmV0cmllcz1GYWxzZSwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2VydF9yZXFzPWNlcnRfcmVxcykKICAgICAgICAgICAgc2VsZi5hZGRDbGVhbnVwKGh0dHBzX3Bvb2wuY2xvc2UpCiAgICAgICAgICAgIHJldHVybiBodHRwc19wb29sCgogICAgICAgIGh0dHBzX3Bvb2wgPSBuZXdfcG9vbChUaW1lb3V0KGNvbm5lY3Q9MC4wMDEpKQogICAgICAgIGNvbm4gPSBodHRwc19wb29sLl9uZXdfY29ubigpCiAgICAgICAgc2VsZi5hc3NlcnRSYWlzZXMoQ29ubmVjdFRpbWVvdXRFcnJvciwgaHR0cHNfcG9vbC5yZXF1ZXN0LCAnR0VUJywgJy8nKQogICAgICAgIHNlbGYuYXNzZXJ0UmFpc2VzKENvbm5lY3RUaW1lb3V0RXJyb3IsIGh0dHBzX3Bvb2wuX21ha2VfcmVxdWVzdCwgY29ubiwKICAgICAgICAgICAgICAgICAgICAgICAgICAnR0VUJywgJy8nKQoKICAgICAgICBodHRwc19wb29sID0gbmV3X3Bvb2woVGltZW91dChjb25uZWN0PTUpKQogICAgICAgIHNlbGYuYXNzZXJ0UmFpc2VzKENvbm5lY3RUaW1lb3V0RXJyb3IsIGh0dHBzX3Bvb2wucmVxdWVzdCwgJ0dFVCcsICcvJywKICAgICAgICAgICAgICAgICAgICAgICAgICB0aW1lb3V0PVRpbWVvdXQoY29ubmVjdD0wLjAwMSkpCgogICAgICAgIHQgPSBUaW1lb3V0KHRvdGFsPU5vbmUpCiAgICAgICAgaHR0cHNfcG9vbCA9IG5ld19wb29sKHQpCiAgICAgICAgY29ubiA9IGh0dHBzX3Bvb2wuX25ld19jb25uKCkKICAgICAgICBzZWxmLmFzc2VydFJhaXNlcyhDb25uZWN0VGltZW91dEVycm9yLCBodHRwc19wb29sLnJlcXVlc3QsICdHRVQnLCAnLycsCiAgICAgICAgICAgICAgICAgICAgICAgICAgdGltZW91dD1UaW1lb3V0KHRvdGFsPU5vbmUsIGNvbm5lY3Q9MC4wMDEpKQoKICAgIGRlZiB0ZXN0X2VuaGFuY2VkX3NzbF9jb25uZWN0aW9uKHNlbGYpOgogICAgICAgIGZpbmdlcnByaW50ID0gJzkyOjgxOkZFOjg1OkY3OjBDOjI2OjYwOkVDOkQ2OkIzOkJGOjkzOkNGOkY5OjcxOkNDOjA3OjdEOjBBJwoKICAgICAgICBjb25uID0gVmVyaWZpZWRIVFRQU0Nvbm5lY3Rpb24oc2VsZi5ob3N0LCBzZWxmLnBvcnQpCiAgICAgICAgaHR0cHNfcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woc2VsZi5ob3N0LCBzZWxmLnBvcnQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2VydF9yZXFzPSdDRVJUX1JFUVVJUkVEJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjYV9jZXJ0cz1ERUZBVUxUX0NBLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGFzc2VydF9maW5nZXJwcmludD1maW5nZXJwcmludCkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKCiAgICAgICAgaHR0cHNfcG9vbC5fbWFrZV9yZXF1ZXN0KGNvbm4sICdHRVQnLCAnLycpCgogICAgZGVmIHRlc3Rfc3NsX2NvcnJlY3Rfc3lzdGVtX3RpbWUoc2VsZik6CiAgICAgICAgc2VsZi5fcG9vbC5jZXJ0X3JlcXMgPSAnQ0VSVF9SRVFVSVJFRCcKICAgICAgICBzZWxmLl9wb29sLmNhX2NlcnRzID0gREVGQVVMVF9DQQoKICAgICAgICB3ID0gc2VsZi5fcmVxdWVzdF93aXRob3V0X3Jlc291cmNlX3dhcm5pbmdzKCdHRVQnLCAnLycpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChbXSwgdykKCiAgICBkZWYgdGVzdF9zc2xfd3Jvbmdfc3lzdGVtX3RpbWUoc2VsZik6CiAgICAgICAgc2VsZi5fcG9vbC5jZXJ0X3JlcXMgPSAnQ0VSVF9SRVFVSVJFRCcKICAgICAgICBzZWxmLl9wb29sLmNhX2NlcnRzID0gREVGQVVMVF9DQQogICAgICAgIHdpdGggbW9jay5wYXRjaCgndXJsbGliMy5jb25uZWN0aW9uLmRhdGV0aW1lJykgYXMgbW9ja19kYXRlOgogICAgICAgICAgICBtb2NrX2RhdGUuZGF0ZS50b2RheS5yZXR1cm5fdmFsdWUgPSBkYXRldGltZS5kYXRlKDE5NzAsIDEsIDEpCgogICAgICAgICAgICB3ID0gc2VsZi5fcmVxdWVzdF93aXRob3V0X3Jlc291cmNlX3dhcm5pbmdzKCdHRVQnLCAnLycpCgogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGxlbih3KSwgMSkKICAgICAgICAgICAgd2FybmluZyA9IHdbMF0KCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoU3lzdGVtVGltZVdhcm5pbmcsIHdhcm5pbmcuY2F0ZWdvcnkpCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZShzdHIoUkVDRU5UX0RBVEUpIGluIHdhcm5pbmcubWVzc2FnZS5hcmdzWzBdKQoKICAgIGRlZiBfcmVxdWVzdF93aXRob3V0X3Jlc291cmNlX3dhcm5pbmdzKHNlbGYsIG1ldGhvZCwgdXJsKToKICAgICAgICB3aXRoIHdhcm5pbmdzLmNhdGNoX3dhcm5pbmdzKHJlY29yZD1UcnVlKSBhcyB3OgogICAgICAgICAgICB3YXJuaW5ncy5zaW1wbGVmaWx0ZXIoJ2Fsd2F5cycpCiAgICAgICAgICAgIHNlbGYuX3Bvb2wucmVxdWVzdChtZXRob2QsIHVybCkKCiAgICAgICAgcmV0dXJuIFt4IGZvciB4IGluIHcgaWYgbm90IGlzaW5zdGFuY2UoeC5tZXNzYWdlLCBSZXNvdXJjZVdhcm5pbmcpXQoKCmNsYXNzIFRlc3RIVFRQU19UTFN2MShIVFRQU0R1bW15U2VydmVyVGVzdENhc2UpOgogICAgY2VydHMgPSBERUZBVUxUX0NFUlRTLmNvcHkoKQogICAgY2VydHNbJ3NzbF92ZXJzaW9uJ10gPSBzc2wuUFJPVE9DT0xfVExTdjEKCiAgICBkZWYgc2V0VXAoc2VsZik6CiAgICAgICAgc2VsZi5fcG9vbCA9IEhUVFBTQ29ubmVjdGlvblBvb2woc2VsZi5ob3N0LCBzZWxmLnBvcnQpCiAgICAgICAgc2VsZi5hZGRDbGVhbnVwKHNlbGYuX3Bvb2wuY2xvc2UpCgogICAgQG9ubHlQeTI3T3JOZXdlck9yTm9uV2luZG93cwogICAgZGVmIHRlc3RfZGlzY2FyZHNfY29ubmVjdGlvbl9vbl9zc2xlcnJvcihzZWxmKToKICAgICAgICAjIFRoaXMgdGVzdCBpcyBza2lwcGVkIG9uIFdpbmRvd3MgZm9yIFB5dGhvbiAyLjYgYmVjYXVzZSB3ZSBzdXNwZWN0IHRoZXJlCiAgICAgICAgIyBpcyBhbiBpc3N1ZSB3aXRoIHRoZSBPcGVuU1NMIGZvciBQeXRob24gMi42IG9uIFdpbmRvd3MuCgogICAgICAgIHNlbGYuX3Bvb2wuY2VydF9yZXFzID0gJ0NFUlRfUkVRVUlSRUQnCiAgICAgICAgc2VsZi5hc3NlcnRSYWlzZXMoU1NMRXJyb3IsIHNlbGYuX3Bvb2wucmVxdWVzdCwgJ0dFVCcsICcvJykKICAgICAgICBzZWxmLl9wb29sLmNhX2NlcnRzID0gREVGQVVMVF9DQQogICAgICAgIHNlbGYuX3Bvb2wucmVxdWVzdCgnR0VUJywgJy8nKQoKICAgIGRlZiB0ZXN0X3NldF9jZXJ0X2RlZmF1bHRfY2VydF9yZXF1aXJlZChzZWxmKToKICAgICAgICBjb25uID0gVmVyaWZpZWRIVFRQU0Nvbm5lY3Rpb24oc2VsZi5ob3N0LCBzZWxmLnBvcnQpCiAgICAgICAgY29ubi5zZXRfY2VydChjYV9jZXJ0cz1ERUZBVUxUX0NBKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoY29ubi5jZXJ0X3JlcXMsICdDRVJUX1JFUVVJUkVEJykKCgpjbGFzcyBUZXN0SFRUUFNfTm9TQU4oSFRUUFNEdW1teVNlcnZlclRlc3RDYXNlKToKICAgIGNlcnRzID0gTk9fU0FOX0NFUlRTCgogICAgZGVmIHRlc3Rfd2FybmluZ19mb3JfY2VydHNfd2l0aG91dF9hX3NhbihzZWxmKToKICAgICAgICAiIiJFbnN1cmUgdGhhdCBhIHdhcm5pbmcgaXMgcmFpc2VkIHdoZW4gdGhlIGNlcnQgZnJvbSB0aGUgc2VydmVyIGhhcwogICAgICAgIG5vIFN1YmplY3QgQWx0ZXJuYXRpdmUgTmFtZS4iIiIKICAgICAgICB3aXRoIG1vY2sucGF0Y2goJ3dhcm5pbmdzLndhcm4nKSBhcyB3YXJuOgogICAgICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbChzZWxmLmhvc3QsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2VydF9yZXFzPSdDRVJUX1JFUVVJUkVEJywKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FfY2VydHM9Tk9fU0FOX0NBKQogICAgICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKICAgICAgICAgICAgciA9IGh0dHBzX3Bvb2wucmVxdWVzdCgnR0VUJywgJy8nKQogICAgICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHIuc3RhdHVzLCAyMDApCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZSh3YXJuLmNhbGxlZCkKCgpjbGFzcyBUZXN0SFRUUFNfSVBTQU4oSFRUUFNEdW1teVNlcnZlclRlc3RDYXNlKToKICAgIGNlcnRzID0gSVBfU0FOX0NFUlRTCgogICAgZGVmIHRlc3RfY2FuX3ZhbGlkYXRlX2lwX3NhbihzZWxmKToKICAgICAgICAiIiJFbnN1cmUgdGhhdCB1cmxsaWIzIGNhbiB2YWxpZGF0ZSBTQU5zIHdpdGggSVAgYWRkcmVzc2VzIGluIHRoZW0uIiIiCiAgICAgICAgdHJ5OgogICAgICAgICAgICBpbXBvcnQgaXBhZGRyZXNzICAjIG5vcWE6IEY0MDEKICAgICAgICBleGNlcHQgSW1wb3J0RXJyb3I6CiAgICAgICAgICAgIHJhaXNlIFNraXBUZXN0KCJPbmx5IHJ1bnMgb24gc3lzdGVtcyB3aXRoIGFuIGlwYWRkcmVzcyBtb2R1bGUiKQoKICAgICAgICBodHRwc19wb29sID0gSFRUUFNDb25uZWN0aW9uUG9vbCgnMTI3LjAuMC4xJywgc2VsZi5wb3J0LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNlcnRfcmVxcz0nQ0VSVF9SRVFVSVJFRCcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FfY2VydHM9REVGQVVMVF9DQSkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKICAgICAgICByID0gaHR0cHNfcG9vbC5yZXF1ZXN0KCdHRVQnLCAnLycpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyLnN0YXR1cywgMjAwKQoKCmNsYXNzIFRlc3RIVFRQU19JUHY2QWRkcihJUFY2SFRUUFNEdW1teVNlcnZlclRlc3RDYXNlKToKICAgIGNlcnRzID0gSVBWNl9BRERSX0NFUlRTCgogICAgZGVmIHRlc3Rfc3RyaXBfc3F1YXJlX2JyYWNrZXRzX2JlZm9yZV92YWxpZGF0aW5nKHNlbGYpOgogICAgICAgICIiIlRlc3QgdGhhdCB0aGUgZml4IGZvciAjNzYwIHdvcmtzLiIiIgogICAgICAgIGlmIG5vdCBIQVNfSVBWNjoKICAgICAgICAgICAgcmFpc2UgU2tpcFRlc3QoIk9ubHkgcnVucyBvbiBJUHY2IHN5c3RlbXMiKQogICAgICAgIGh0dHBzX3Bvb2wgPSBIVFRQU0Nvbm5lY3Rpb25Qb29sKCdbOjoxXScsIHNlbGYucG9ydCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjZXJ0X3JlcXM9J0NFUlRfUkVRVUlSRUQnLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNhX2NlcnRzPUlQVjZfQUREUl9DQSkKICAgICAgICBzZWxmLmFkZENsZWFudXAoaHR0cHNfcG9vbC5jbG9zZSkKICAgICAgICByID0gaHR0cHNfcG9vbC5yZXF1ZXN0KCdHRVQnLCAnLycpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyLnN0YXR1cywgMjAwKQoKCmlmIF9fbmFtZV9fID09ICdfX21haW5fXyc6CiAgICB1bml0dGVzdC5tYWluKCkK

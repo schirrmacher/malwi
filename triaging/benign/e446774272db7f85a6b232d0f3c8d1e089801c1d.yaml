@@ -1,0 +1,57 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/emr/instancefleetsutils.py
+  contents:
+  - name: validate_and_build_instance_fleets
+    score: 0.0
+    code: |-
+      def validate_and_build_instance_fleets(parsed_instance_fleets):
+          """
+          Helper method that converts --instance-fleets option value in
+          create-cluster to Amazon Elastic MapReduce InstanceFleetConfig
+          data type.
+          """
+          instance_fleets = []
+          for instance_fleet in parsed_instance_fleets:
+              instance_fleet_config = {}
+
+              keys = instance_fleet.keys()
+
+              if 'Name' in keys:
+                  instance_fleet_config['Name'] = instance_fleet['Name']
+              else:
+                  instance_fleet_config['Name'] = instance_fleet['InstanceFleetType']
+              instance_fleet_config['InstanceFleetType'] = instance_fleet['InstanceFleetType']
+
+              if 'TargetOnDemandCapacity' in keys:
+                  instance_fleet_config['TargetOnDemandCapacity'] = instance_fleet['TargetOnDemandCapacity']
+
+              if 'TargetSpotCapacity' in keys:
+                  instance_fleet_config['TargetSpotCapacity'] = instance_fleet['TargetSpotCapacity']
+
+              if 'InstanceTypeConfigs' in keys:
+                  instance_fleet_config['InstanceTypeConfigs'] = instance_fleet['InstanceTypeConfigs']
+
+              if 'LaunchSpecifications' in keys:
+                  instanceFleetProvisioningSpecifications = instance_fleet['LaunchSpecifications']
+                  instance_fleet_config['LaunchSpecifications'] = {}
+
+                  if 'SpotSpecification' in instanceFleetProvisioningSpecifications:
+                      instance_fleet_config['LaunchSpecifications']['SpotSpecification'] = \
+                          instanceFleetProvisioningSpecifications['SpotSpecification']
+
+                  if 'OnDemandSpecification' in instanceFleetProvisioningSpecifications:
+                      instance_fleet_config['LaunchSpecifications']['OnDemandSpecification'] = \
+                          instanceFleetProvisioningSpecifications['OnDemandSpecification']
+
+              instance_fleets.append(instance_fleet_config)
+          return instance_fleets
+    tokens: resume build_list store_fast instance_fleets load_fast STRING_LEN_S_ENT_HIGH get_iter for_iter TO_NUMBER store_fast instance_fleet build_map store_fast STRING_LEN_S_ENT_HIGH load_fast instance_fleet load_attr keys call store_fast keys load_const Name load_fast keys contains_op pop_jump_if_false TO_NUMBER load_fast instance_fleet load_const Name binary_subscr load_fast STRING_LEN_S_ENT_HIGH load_const Name store_subscr jump_forward TO_NUMBER load_fast instance_fleet load_const STRING_LEN_S_ENT_HIGH binary_subscr load_fast STRING_LEN_S_ENT_HIGH load_const Name store_subscr load_fast instance_fleet load_const STRING_LEN_S_ENT_HIGH binary_subscr load_fast STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH store_subscr load_const STRING_LEN_S_ENT_HIGH load_fast keys contains_op pop_jump_if_false TO_NUMBER load_fast instance_fleet load_const STRING_LEN_S_ENT_HIGH binary_subscr load_fast STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH store_subscr load_const STRING_LEN_S_ENT_HIGH load_fast keys contains_op pop_jump_if_false TO_NUMBER load_fast instance_fleet load_const STRING_LEN_S_ENT_HIGH binary_subscr load_fast STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH store_subscr load_const STRING_LEN_S_ENT_HIGH load_fast keys contains_op pop_jump_if_false TO_NUMBER load_fast instance_fleet load_const STRING_LEN_S_ENT_HIGH binary_subscr load_fast STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH store_subscr load_const STRING_BASE64_LEN_S_ENT_HIGH load_fast keys contains_op pop_jump_if_false TO_NUMBER load_fast instance_fleet load_const STRING_BASE64_LEN_S_ENT_HIGH binary_subscr store_fast STRING_LEN_S_ENT_HIGH build_map load_fast STRING_LEN_S_ENT_HIGH load_const STRING_BASE64_LEN_S_ENT_HIGH store_subscr load_const STRING_LEN_S_ENT_HIGH load_fast STRING_LEN_S_ENT_HIGH contains_op pop_jump_if_false TO_NUMBER load_fast STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH binary_subscr load_fast STRING_LEN_S_ENT_HIGH load_const STRING_BASE64_LEN_S_ENT_HIGH binary_subscr load_const STRING_LEN_S_ENT_HIGH store_subscr load_const STRING_LEN_S_ENT_HIGH load_fast STRING_LEN_S_ENT_HIGH contains_op pop_jump_if_false TO_NUMBER load_fast STRING_LEN_S_ENT_HIGH load_const STRING_LEN_S_ENT_HIGH binary_subscr load_fast STRING_LEN_S_ENT_HIGH load_const STRING_BASE64_LEN_S_ENT_HIGH binary_subscr load_const STRING_LEN_S_ENT_HIGH store_subscr load_fast instance_fleets load_attr append load_fast STRING_LEN_S_ENT_HIGH call pop_top jump_backward TO_NUMBER end_for load_fast instance_fleets return_value
+    hash: e0e1bf7ed6a0d15e4882181b5713cfa9622e32a073694951d416a66623e86a4e
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/emr/instancefleetsutils.py
+  : IyBDb3B5cmlnaHQgMjAxNCBBbWF6b24uY29tLCBJbmMuIG9yIGl0cyBhZmZpbGlhdGVzLiBBbGwgUmlnaHRzIFJlc2VydmVkLgojCiMgTGljZW5zZWQgdW5kZXIgdGhlIEFwYWNoZSBMaWNlbnNlLCBWZXJzaW9uIDIuMCAodGhlICJMaWNlbnNlIikuIFlvdQojIG1heSBub3QgdXNlIHRoaXMgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZSB3aXRoIHRoZSBMaWNlbnNlLiBBIGNvcHkgb2YKIyB0aGUgTGljZW5zZSBpcyBsb2NhdGVkIGF0CiMKIyAgICAgaHR0cDovL2F3cy5hbWF6b24uY29tL2FwYWNoZTIuMC8KIwojIG9yIGluIHRoZSAibGljZW5zZSIgZmlsZSBhY2NvbXBhbnlpbmcgdGhpcyBmaWxlLiBUaGlzIGZpbGUgaXMKIyBkaXN0cmlidXRlZCBvbiBhbiAiQVMgSVMiIEJBU0lTLCBXSVRIT1VUIFdBUlJBTlRJRVMgT1IgQ09ORElUSU9OUyBPRgojIEFOWSBLSU5ELCBlaXRoZXIgZXhwcmVzcyBvciBpbXBsaWVkLiBTZWUgdGhlIExpY2Vuc2UgZm9yIHRoZSBzcGVjaWZpYwojIGxhbmd1YWdlIGdvdmVybmluZyBwZXJtaXNzaW9ucyBhbmQgbGltaXRhdGlvbnMgdW5kZXIgdGhlIExpY2Vuc2UuCgpmcm9tIGF3c2NsaS5jdXN0b21pemF0aW9ucy5lbXIgaW1wb3J0IGNvbnN0YW50cwpmcm9tIGF3c2NsaS5jdXN0b21pemF0aW9ucy5lbXIgaW1wb3J0IGV4Y2VwdGlvbnMKCgpkZWYgdmFsaWRhdGVfYW5kX2J1aWxkX2luc3RhbmNlX2ZsZWV0cyhwYXJzZWRfaW5zdGFuY2VfZmxlZXRzKToKICAgICIiIgogICAgSGVscGVyIG1ldGhvZCB0aGF0IGNvbnZlcnRzIC0taW5zdGFuY2UtZmxlZXRzIG9wdGlvbiB2YWx1ZSBpbgogICAgY3JlYXRlLWNsdXN0ZXIgdG8gQW1hem9uIEVsYXN0aWMgTWFwUmVkdWNlIEluc3RhbmNlRmxlZXRDb25maWcKICAgIGRhdGEgdHlwZS4KICAgICIiIgogICAgaW5zdGFuY2VfZmxlZXRzID0gW10KICAgIGZvciBpbnN0YW5jZV9mbGVldCBpbiBwYXJzZWRfaW5zdGFuY2VfZmxlZXRzOgogICAgICAgIGluc3RhbmNlX2ZsZWV0X2NvbmZpZyA9IHt9CgogICAgICAgIGtleXMgPSBpbnN0YW5jZV9mbGVldC5rZXlzKCkKCiAgICAgICAgaWYgJ05hbWUnIGluIGtleXM6CiAgICAgICAgICAgIGluc3RhbmNlX2ZsZWV0X2NvbmZpZ1snTmFtZSddID0gaW5zdGFuY2VfZmxlZXRbJ05hbWUnXQogICAgICAgIGVsc2U6CiAgICAgICAgICAgIGluc3RhbmNlX2ZsZWV0X2NvbmZpZ1snTmFtZSddID0gaW5zdGFuY2VfZmxlZXRbJ0luc3RhbmNlRmxlZXRUeXBlJ10KICAgICAgICBpbnN0YW5jZV9mbGVldF9jb25maWdbJ0luc3RhbmNlRmxlZXRUeXBlJ10gPSBpbnN0YW5jZV9mbGVldFsnSW5zdGFuY2VGbGVldFR5cGUnXQoKICAgICAgICBpZiAnVGFyZ2V0T25EZW1hbmRDYXBhY2l0eScgaW4ga2V5czoKICAgICAgICAgICAgaW5zdGFuY2VfZmxlZXRfY29uZmlnWydUYXJnZXRPbkRlbWFuZENhcGFjaXR5J10gPSBpbnN0YW5jZV9mbGVldFsnVGFyZ2V0T25EZW1hbmRDYXBhY2l0eSddCgogICAgICAgIGlmICdUYXJnZXRTcG90Q2FwYWNpdHknIGluIGtleXM6CiAgICAgICAgICAgIGluc3RhbmNlX2ZsZWV0X2NvbmZpZ1snVGFyZ2V0U3BvdENhcGFjaXR5J10gPSBpbnN0YW5jZV9mbGVldFsnVGFyZ2V0U3BvdENhcGFjaXR5J10KCiAgICAgICAgaWYgJ0luc3RhbmNlVHlwZUNvbmZpZ3MnIGluIGtleXM6CiAgICAgICAgICAgIGluc3RhbmNlX2ZsZWV0X2NvbmZpZ1snSW5zdGFuY2VUeXBlQ29uZmlncyddID0gaW5zdGFuY2VfZmxlZXRbJ0luc3RhbmNlVHlwZUNvbmZpZ3MnXQoKICAgICAgICBpZiAnTGF1bmNoU3BlY2lmaWNhdGlvbnMnIGluIGtleXM6CiAgICAgICAgICAgIGluc3RhbmNlRmxlZXRQcm92aXNpb25pbmdTcGVjaWZpY2F0aW9ucyA9IGluc3RhbmNlX2ZsZWV0WydMYXVuY2hTcGVjaWZpY2F0aW9ucyddCiAgICAgICAgICAgIGluc3RhbmNlX2ZsZWV0X2NvbmZpZ1snTGF1bmNoU3BlY2lmaWNhdGlvbnMnXSA9IHt9CgogICAgICAgICAgICBpZiAnU3BvdFNwZWNpZmljYXRpb24nIGluIGluc3RhbmNlRmxlZXRQcm92aXNpb25pbmdTcGVjaWZpY2F0aW9uczoKICAgICAgICAgICAgICAgIGluc3RhbmNlX2ZsZWV0X2NvbmZpZ1snTGF1bmNoU3BlY2lmaWNhdGlvbnMnXVsnU3BvdFNwZWNpZmljYXRpb24nXSA9IFwKICAgICAgICAgICAgICAgICAgICBpbnN0YW5jZUZsZWV0UHJvdmlzaW9uaW5nU3BlY2lmaWNhdGlvbnNbJ1Nwb3RTcGVjaWZpY2F0aW9uJ10KCiAgICAgICAgICAgIGlmICdPbkRlbWFuZFNwZWNpZmljYXRpb24nIGluIGluc3RhbmNlRmxlZXRQcm92aXNpb25pbmdTcGVjaWZpY2F0aW9uczoKICAgICAgICAgICAgICAgIGluc3RhbmNlX2ZsZWV0X2NvbmZpZ1snTGF1bmNoU3BlY2lmaWNhdGlvbnMnXVsnT25EZW1hbmRTcGVjaWZpY2F0aW9uJ10gPSBcCiAgICAgICAgICAgICAgICAgICAgaW5zdGFuY2VGbGVldFByb3Zpc2lvbmluZ1NwZWNpZmljYXRpb25zWydPbkRlbWFuZFNwZWNpZmljYXRpb24nXQoKICAgICAgICBpbnN0YW5jZV9mbGVldHMuYXBwZW5kKGluc3RhbmNlX2ZsZWV0X2NvbmZpZykKICAgIHJldHVybiBpbnN0YW5jZV9mbGVldHMK

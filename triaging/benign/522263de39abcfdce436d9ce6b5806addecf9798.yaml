@@ -1,0 +1,33 @@
+statistics:
+  total_files: 1
+  skipped_files: 0.0
+  processed_objects: 1
+  malicious_objects: 0
+details:
+- path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/endpoint/resolver_endpoint_request.py
+  contents:
+  - name: ResolveEndpointRequest.__init__
+    score: 0.0
+    code: |-
+      def __init__(self, region_id, product_code, location_service_code, endpoint_type):
+
+              self.region_id = region_id
+              self.product_code = product_code
+              self.product_code_lower = self.product_code.lower()
+
+              if not endpoint_type:
+                  self.endpoint_type = ENDPOINT_TYPE_OPEN
+              else:
+                  self.endpoint_type = endpoint_type
+
+              self.location_service_code = location_service_code
+
+              self.request_network = "public"
+              self.product_suffix = ""
+              self.endpoint_map = None
+              self.endpoint_regional = None
+    tokens: resume load_fast region_id load_fast self store_attr region_id load_fast product_code load_fast self store_attr product_code load_fast self load_attr product_code load_attr lower call load_fast self store_attr STRING_LEN_S_ENT_HIGH load_fast endpoint_type pop_jump_if_true TO_NUMBER load_global STRING_LEN_S_ENT_HIGH load_fast self store_attr endpoint_type jump_forward TO_NUMBER load_fast endpoint_type load_fast self store_attr endpoint_type load_fast STRING_LEN_S_ENT_HIGH load_fast self store_attr STRING_LEN_S_ENT_HIGH load_const public load_fast self store_attr request_network load_const load_fast self store_attr product_suffix load_const load_fast self store_attr endpoint_map load_const load_fast self store_attr STRING_LEN_S_ENT_HIGH return_const None
+    hash: 832fc68037339e0eb1496372c92bc4da46acd997f5a0ca585f2150cfab8c928a
+sources:
+  ? .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/endpoint/resolver_endpoint_request.py
+  : IwojIExpY2Vuc2VkIHRvIHRoZSBBcGFjaGUgU29mdHdhcmUgRm91bmRhdGlvbiAoQVNGKSB1bmRlciBvbmUKIyBvciBtb3JlIGNvbnRyaWJ1dG9yIGxpY2Vuc2UgYWdyZWVtZW50cy4gIFNlZSB0aGUgTk9USUNFIGZpbGUKIyBkaXN0cmlidXRlZCB3aXRoIHNlbGYgd29yayBmb3IgYWRkaXRpb25hbCBpbmZvcm1hdGlvbgojIHJlZ2FyZGluZyBjb3B5cmlnaHQgb3duZXJzaGlwLiAgVGhlIEFTRiBsaWNlbnNlcyBzZWxmIGZpbGUKIyB0byB5b3UgdW5kZXIgdGhlIEFwYWNoZSBMaWNlbnNlLCBWZXJzaW9uIDIuMCAodGhlCiMgIkxpY2Vuc2UiKTsgeW91IG1heSBub3QgdXNlIHNlbGYgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZQojIHdpdGggdGhlIExpY2Vuc2UuICBZb3UgbWF5IG9idGFpbiBhIGNvcHkgb2YgdGhlIExpY2Vuc2UgYXQKIwojICAgICBodHRwOi8vd3d3LmFwYWNoZS5vcmcvbGljZW5zZXMvTElDRU5TRS0yLjAKIwojIFVubGVzcyByZXF1aXJlZCBieSBhcHBsaWNhYmxlIGxhdyBvciBhZ3JlZWQgdG8gaW4gd3JpdGluZywKIyBzb2Z0d2FyZSBkaXN0cmlidXRlZCB1bmRlciB0aGUgTGljZW5zZSBpcyBkaXN0cmlidXRlZCBvbiBhbgojICJBUyBJUyIgQkFTSVMsIFdJVEhPVVQgV0FSUkFOVElFUyBPUiBDT05ESVRJT05TIE9GIEFOWQojIEtJTkQsIGVpdGhlciBleHByZXNzIG9yIGltcGxpZWQuICBTZWUgdGhlIExpY2Vuc2UgZm9yIHRoZQojIHNwZWNpZmljIGxhbmd1YWdlIGdvdmVybmluZyBwZXJtaXNzaW9ucyBhbmQgbGltaXRhdGlvbnMKIyB1bmRlciB0aGUgTGljZW5zZS4KIwoKRU5EUE9JTlRfVFlQRV9JTk5FUiA9ICJpbm5lckFQSSIKRU5EUE9JTlRfVFlQRV9PUEVOID0gIm9wZW5BUEkiCgoKY2xhc3MgUmVzb2x2ZUVuZHBvaW50UmVxdWVzdChvYmplY3QpOgoKICAgIGRlZiBfX2luaXRfXyhzZWxmLCByZWdpb25faWQsIHByb2R1Y3RfY29kZSwgbG9jYXRpb25fc2VydmljZV9jb2RlLCBlbmRwb2ludF90eXBlKToKCiAgICAgICAgc2VsZi5yZWdpb25faWQgPSByZWdpb25faWQKICAgICAgICBzZWxmLnByb2R1Y3RfY29kZSA9IHByb2R1Y3RfY29kZQogICAgICAgIHNlbGYucHJvZHVjdF9jb2RlX2xvd2VyID0gc2VsZi5wcm9kdWN0X2NvZGUubG93ZXIoKQoKICAgICAgICBpZiBub3QgZW5kcG9pbnRfdHlwZToKICAgICAgICAgICAgc2VsZi5lbmRwb2ludF90eXBlID0gRU5EUE9JTlRfVFlQRV9PUEVOCiAgICAgICAgZWxzZToKICAgICAgICAgICAgc2VsZi5lbmRwb2ludF90eXBlID0gZW5kcG9pbnRfdHlwZQoKICAgICAgICBzZWxmLmxvY2F0aW9uX3NlcnZpY2VfY29kZSA9IGxvY2F0aW9uX3NlcnZpY2VfY29kZQoKICAgICAgICBzZWxmLnJlcXVlc3RfbmV0d29yayA9ICJwdWJsaWMiCiAgICAgICAgc2VsZi5wcm9kdWN0X3N1ZmZpeCA9ICIiCiAgICAgICAgc2VsZi5lbmRwb2ludF9tYXAgPSBOb25lCiAgICAgICAgc2VsZi5lbmRwb2ludF9yZWdpb25hbCA9IE5vbmUKCiAgICBkZWYgaXNfb3Blbl9hcGlfZW5kcG9pbnQoc2VsZik6CiAgICAgICAgcmV0dXJuIEVORFBPSU5UX1RZUEVfT1BFTiA9PSBzZWxmLmVuZHBvaW50X3R5cGUKCg==
