@@ -104,3 +104,19 @@ cmds/preprocess_and_train.sh
 # Only start training
 cmds/train.sh
 ```
+
+### Triage
+
+malwi utilized a pipeline which can be improved by triaging results (see `src/research/triage.py`).
+For automated triaging you can utilize open-source models and Ollama (default Gemma 3).
+
+Install Gemma 3:
+
+```
+ollama run gemma3
+```
+
+Start auto-triaging:
+```
+uv run python -m src.research.triage --triage-ollama --path <FOLDER_WITH_MALWI_YAML_RESULTS>
+```
