@@ -1,6 +1,7 @@
 import argparse
-from pathlib import Path
 
+from tqdm import tqdm
+from pathlib import Path
 from typing import Optional
 
 from research.disassemble_python import MalwiObject, triage
@@ -106,18 +107,22 @@ def main():
             llm_prompt=args.prompt,
         )
     elif args.path.is_dir():
-        for file in args.path.iterdir():
-            if file.is_file() and file.suffix in {".yaml", ".yml"}:
-                process_object_file(
-                    file_path=file,
-                    out_path=args.out,
-                    grep_string=args.grep,
-                    auto_triaging=args.auto,
-                    max_tokens=args.max_tokens,
-                    triaging_type=triaging_type,
-                    llm_model=args.model,
-                    llm_prompt=args.prompt,
-                )
+        files = [
+            file
+            for file in args.path.iterdir()
+            if file.is_file() and file.suffix in {".yaml", ".yml"}
+        ]
+        for file in tqdm(files, desc="Processing files"):
+            process_object_file(
+                file_path=file,
+                out_path=args.out,
+                grep_string=args.grep,
+                auto_triaging=args.auto,
+                max_tokens=args.max_tokens,
+                triaging_type=triaging_type,
+                llm_model=args.model,
+                llm_prompt=args.prompt,
+            )
     else:
         print(f"Invalid path: {args.path}")
 
