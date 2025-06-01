@@ -561,7 +561,7 @@ def triage(
         if max_tokens > 0 and len(obj.to_tokens()) >= max_tokens:
             continue
 
-        code_hash = hashlib.sha1(obj.code.encode("utf-8")).hexdigest()
+        code_hash = hashlib.sha1(obj.code.encode("utf-8", errors="replace")).hexdigest()
 
         benign_path = os.path.join(benign_dir, f"{code_hash}.yaml")
         malicious_path = os.path.join(malicious_dir, f"{code_hash}.yaml")
@@ -655,7 +655,7 @@ class MalwiObject:
 
     def to_string_hash(self) -> str:
         tokens = self.to_token_string()
-        encoded_string = tokens.encode("utf-8")
+        encoded_string = tokens.encode("utf-8", errors="replace")
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
@@ -763,7 +763,7 @@ class MalwiObject:
 
                 if include_source_files:
                     report_data["sources"][mf.file_path] = base64.b64encode(
-                        mf.file_source_code.encode("utf-8")
+                        mf.file_source_code.encode("utf-8", errors="replace")
                     ).decode("utf-8")
 
         return report_data
