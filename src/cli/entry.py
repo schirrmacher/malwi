@@ -103,14 +103,6 @@ def main():
         help="Enable Ollama triage mode.",
     )
 
-    triage_group.add_argument(
-        "--triage-gemini",
-        metavar="API_KEY",
-        default=None,
-        type=str,
-        help="Enable LLM-based triage mode using Google Gemini with the provided API key.",
-    )
-
     args = parser.parse_args()
 
     if args.quiet:
@@ -150,8 +142,6 @@ def main():
     triaging_type = None
     if args.triage:
         triaging_type = "manual"
-    elif args.triage_gemini:
-        triaging_type = "gemini"
     elif args.triage_ollama:
         triaging_type = "ollama"
 

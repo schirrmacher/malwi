@@ -15,7 +15,6 @@ import argparse
 import questionary
 
 from tqdm import tqdm
-from google import genai
 from pathlib import Path
 from dataclasses import dataclass
 from ollama import ChatResponse, chat
@@ -492,41 +491,6 @@ def ollama_triage(
         sys.exit(1)
 
 
-def llm_triage(
-    obj: "MalwiObject",
-    code_hash: str,
-    benign_path: str,
-    malicious_path: str,
-    llm_api_key: Optional[str] = None,
-) -> None:
-    try:
-        client = genai.Client(api_key=llm_api_key)
-        prompt = f"""You are a professional security code reviewer. 
-Is the following code sample indicating any malicious behavior to you? 
-Examples for malicious behavior: suspicious usage of eval, exfiltration attempts, obfuscation.
-Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", contents=prompt
-        )
-        result_text: str = response.text.lower().strip()
-
-        if "yes" in result_text:
-            obj.maliciousness = 1.0
-            save_yaml_report(obj, malicious_path, code_hash)
-            print(f"👹 Code categorized as malicious")
-        elif "no" in result_text:
-            obj.maliciousness = 0.0
-            save_yaml_report(obj, benign_path, code_hash)
-            print(f"🟢 Code categorized as benign")
-        else:
-            print(f"Unclear LLM response for {code_hash}: {result_text}. Skipping.")
-
-    except Exception as e:
-        error_message = str(e)
-        print(f"Authentication failed: {error_message}")
-        sys.exit(1)
-
-
 def triage(
     all_objects: List["MalwiObject"],
     out_path: Path,
@@ -580,16 +544,7 @@ Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
         else:
             prompt = f"{prompt}\n\n```{obj.code}\n```"
 
-        if llm_api_key and triaging_type == "gemini":
-            llm_triage(
-                obj=obj,
-                code_hash=code_hash,
-                benign_path=benign_path,
-                malicious_path=malicious_path,
-                llm_api_key=llm_api_key,
-                prompt=llm_prompt,
-            )
-        elif triaging_type == "ollama":
+        if triaging_type == "ollama":
             ollama_triage(
                 obj=obj,
                 code_hash=code_hash,
