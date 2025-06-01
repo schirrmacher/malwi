@@ -8,19 +8,25 @@ from research.disassemble_python import MalwiObject, triage
 
 def process_object_file(
     file_path: Path,
+    out_path: Path,
     grep_string: str = None,
     auto_triaging: Optional[str] = None,
     max_tokens: int = 0,
     triaging_type: Optional[str] = None,
+    llm_prompt: Optional[str] = None,
+    llm_model: str = "gemma3",
 ):
     try:
         objects = MalwiObject.from_file(file_path)
         triage(
             all_objects=objects,
+            out_path=out_path,
             grep_string=grep_string,
             auto_triaging=auto_triaging,
             max_tokens=max_tokens,
             triaging_type=triaging_type,
+            llm_prompt=llm_prompt,
+            llm_model=llm_model,
         )
     except Exception as e:
         print(f"Failed to process {file_path}: {e}")
@@ -35,6 +41,24 @@ def main():
         type=Path,
         required=True,
         help="Path to a YAML file or folder (non-recursive)",
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default="triaging",
+        help="Output folder",
+    )
+    parser.add_argument(
+        "--prompt",
+        type=str,
+        default=None,
+        help="Prompt if LLM is applied",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="gemma3",
+        help="LLM model to be used for triaging",
     )
     parser.add_argument(
         "--grep",
@@ -73,20 +97,26 @@ def main():
     if args.path.is_file():
         process_object_file(
             file_path=args.path,
+            out_path=args.out,
             grep_string=args.grep,
             auto_triaging=args.auto,
             max_tokens=args.max_tokens,
             triaging_type=triaging_type,
+            llm_model=args.model,
+            llm_prompt=args.prompt,
         )
     elif args.path.is_dir():
         for file in args.path.iterdir():
             if file.is_file() and file.suffix in {".yaml", ".yml"}:
                 process_object_file(
                     file_path=file,
+                    out_path=args.out,
                     grep_string=args.grep,
                     auto_triaging=args.auto,
                     max_tokens=args.max_tokens,
                     triaging_type=triaging_type,
+                    llm_model=args.model,
+                    llm_prompt=args.prompt,
                 )
     else:
         print(f"Invalid path: {args.path}")

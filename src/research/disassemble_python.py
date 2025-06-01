@@ -459,14 +459,12 @@ def ollama_triage(
     code_hash: str,
     benign_path: str,
     malicious_path: str,
+    prompt: str,
+    model: str = "gemma3",
 ) -> None:
     try:
-        prompt = f"""You are a professional security code reviewer. 
-Is the following code sample indicating any malicious behavior to you? 
-Examples for malicious behavior: suspicious usage of eval, exfiltration attempts, obfuscation.
-Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
         response: ChatResponse = chat(
-            model="gemma3",
+            model=model,
             messages=[
                 {
                     "role": "user",
@@ -531,6 +529,7 @@ Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
 
 def triage(
     all_objects: List["MalwiObject"],
+    out_path: Path,
     malicious_only: bool = False,
     malicious_threshold: float = 0.5,
     grep_string: str = None,
@@ -538,9 +537,11 @@ def triage(
     triaging_type: str = "manual",
     auto_triaging: Optional[str] = None,
     llm_api_key: Optional[str] = None,
+    llm_prompt: Optional[str] = None,
+    llm_model: str = "gemma3",
 ):
-    benign_dir = os.path.join("triaging", "benign")
-    malicious_dir = os.path.join("triaging", "malicious")
+    benign_dir = os.path.join(out_path, "benign")
+    malicious_dir = os.path.join(out_path, "malicious")
 
     os.makedirs(benign_dir, exist_ok=True)
     os.makedirs(malicious_dir, exist_ok=True)
@@ -570,6 +571,15 @@ def triage(
             print(f"Hash {code_hash} already exists, skipping...")
             continue
 
+        prompt = llm_prompt
+        if not prompt:
+            prompt = f"""You are a professional security code reviewer. 
+Is the following code sample indicating any malicious behavior to you? 
+Examples for malicious behavior: suspicious usage of eval, exfiltration attempts, obfuscation.
+Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
+        else:
+            prompt = f"{prompt}\n\n```{obj.code}\n```"
+
         if llm_api_key and triaging_type == "gemini":
             llm_triage(
                 obj=obj,
@@ -577,6 +587,7 @@ def triage(
                 benign_path=benign_path,
                 malicious_path=malicious_path,
                 llm_api_key=llm_api_key,
+                prompt=llm_prompt,
             )
         elif triaging_type == "ollama":
             ollama_triage(
@@ -584,6 +595,8 @@ def triage(
                 code_hash=code_hash,
                 benign_path=benign_path,
                 malicious_path=malicious_path,
+                prompt=prompt,
+                model=llm_model,
             )
         elif triaging_type == "auto":
             auto_triage(
