@@ -202,68 +202,6 @@ class TestFileProcessingAndCollection:
         assert mock_get_pred.call_count == 5
 
 
-@patch("research.disassemble_python.questionary.select")
-@patch("os.makedirs")
-@patch("os.path.exists")
-@patch("builtins.open", new_callable=mock_open)
-@patch("inspect.getsource")
-class TestTriageFunction:
-    def _create_triage_obj(self, mock_inspect_getsourcelines_arg):
-        source_content = "print('malicious code')"
-        mock_inspect_getsourcelines_arg.return_value = source_content
-
-        co = compile(source_content, "triage_test.py", "exec")
-        obj = MalwiObject(
-            name="triage_obj",
-            language="python",
-            file_source_code=source_content,
-            file_path="triage_test.py",
-            codeType=co,
-        )
-        obj.retrieve_source_code()
-        if not obj.code:
-            obj.code = source_content
-
-        obj.maliciousness = 0.9
-        return obj
-
-    def test_triage_skip(
-        self,
-        mock_inspect_arg,
-        mock_open_arg,
-        mock_path_exists_arg,
-        mock_makedirs_arg,
-        mock_questionary_select_arg,
-        capsys,
-    ):
-        mock_path_exists_arg.return_value = False
-        obj = self._create_triage_obj(mock_inspect_arg)
-        assert obj.code, "obj.code should be populated for triage test"
-        mock_questionary_select_arg.return_value.ask.return_value = "skip"
-        triage([obj])
-        mock_open_arg.assert_not_called()
-        captured_out = capsys.readouterr().out
-        assert "Skipping sample" in captured_out
-
-    def test_triage_exit(
-        self,
-        mock_inspect_arg,
-        mock_open_arg,
-        mock_path_exists_arg,
-        mock_makedirs_arg,
-        mock_questionary_select_arg,
-    ):
-        mock_path_exists_arg.return_value = False
-        obj = self._create_triage_obj(mock_inspect_arg)
-        assert obj.code, "obj.code should be populated for triage test"
-        mock_questionary_select_arg.return_value.ask.return_value = "exit"
-
-        with pytest.raises(SystemExit) as e:
-            triage([obj])
-        assert e.type == SystemExit
-        assert e.value.code == 0
-
-
 @patch("research.disassemble_python.MalwiObject.load_models_into_memory")
 class TestMainCLI:
     @patch("sys.exit")

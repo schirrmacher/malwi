@@ -1,0 +1,403 @@
+# research/test_triage.py
+
+import unittest
+from unittest.mock import patch, MagicMock, call, ANY
+from pathlib import Path
+import argparse
+import sys
+
+# Import the module to be tested
+import research.triage as triage_module
+
+
+class TestProcessObjectFile(unittest.TestCase):
+
+    # Corrected patch targets:
+    # Patch 'triage' as it's looked up in research.triage module (imported from disassemble_python)
+    @patch("research.triage.triage")
+    # Patch 'MalwiObject' as it's looked up in research.triage module (imported from disassemble_python)
+    @patch("research.triage.MalwiObject")
+    def test_process_object_file_success(
+        self, MockTriageModuleMalwiObject, mock_triage_module_triage_func
+    ):
+        # Setup
+        mock_file_path = Path("dummy/test.yaml")
+        mock_out_path = Path("output_dir")
+        mock_grep_string = "exploit"
+        mock_auto_triaging = "malicious"
+        mock_max_tokens = 100
+        mock_triaging_type = "auto"
+        mock_llm_prompt = "Is this bad?"
+        mock_llm_model = "test_model"
+
+        mock_malwi_instance = MagicMock()
+        # MalwiObject.from_file returns a list of objects
+        MockTriageModuleMalwiObject.from_file.return_value = [mock_malwi_instance]
+
+        # Call the function from triage.py
+        triage_module.process_object_file(
+            file_path=mock_file_path,
+            out_path=mock_out_path,
+            grep_string=mock_grep_string,
+            auto_triaging=mock_auto_triaging,
+            max_tokens=mock_max_tokens,
+            triaging_type=mock_triaging_type,
+            llm_prompt=mock_llm_prompt,
+            llm_model=mock_llm_model,
+        )
+
+        # Assertions
+        MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
+        mock_triage_module_triage_func.assert_called_once_with(
+            all_objects=[mock_malwi_instance],
+            out_path=mock_out_path,
+            grep_string=mock_grep_string,
+            auto_triaging=mock_auto_triaging,
+            max_tokens=mock_max_tokens,
+            triaging_type=mock_triaging_type,
+            llm_prompt=mock_llm_prompt,
+            llm_model=mock_llm_model,
+        )
+
+    @patch("research.triage.triage")
+    @patch("research.triage.MalwiObject")
+    @patch("builtins.print")
+    def test_process_object_file_exception_from_malwiobject(
+        self, mock_print, MockTriageModuleMalwiObject, mock_triage_module_triage_func
+    ):
+        # Setup
+        mock_file_path = Path("dummy/test.yaml")
+        mock_out_path = Path("output_dir")
+        MockTriageModuleMalwiObject.from_file.side_effect = Exception(
+            "MalwiObject error"
+        )
+
+        # Call the function
+        triage_module.process_object_file(
+            file_path=mock_file_path, out_path=mock_out_path
+        )
+
+        # Assertions
+        MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
+        mock_triage_module_triage_func.assert_not_called()
+        mock_print.assert_called_once_with(
+            f"Failed to process {mock_file_path}: MalwiObject error"
+        )
+
+    @patch("research.triage.triage")
+    @patch("research.triage.MalwiObject")
+    @patch("builtins.print")
+    def test_process_object_file_exception_from_triage(
+        self, mock_print, MockTriageModuleMalwiObject, mock_triage_module_triage_func
+    ):
+        # Setup
+        mock_file_path = Path("dummy/test.yaml")
+        mock_out_path = Path("output_dir")
+        mock_malwi_instance = MagicMock()
+        MockTriageModuleMalwiObject.from_file.return_value = [mock_malwi_instance]
+        mock_triage_module_triage_func.side_effect = Exception("Triage error")
+
+        # Call the function
+        triage_module.process_object_file(
+            file_path=mock_file_path, out_path=mock_out_path
+        )
+
+        # Assertions
+        MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
+        mock_triage_module_triage_func.assert_called_once()
+        mock_print.assert_called_once_with(
+            f"Failed to process {mock_file_path}: Triage error"
+        )
+
+    @patch("research.triage.triage")
+    @patch("research.triage.MalwiObject")
+    def test_process_object_file_multiple_functions_one_file(
+        self, MockTriageModuleMalwiObject, mock_triage_module_triage_func
+    ):
+        # Setup
+        mock_file_path = Path("dummy/multi_func.yaml")
+        mock_out_path = Path("output_dir_multi")
+
+        # Simulate MalwiObject.from_file returning 3 objects for this single file_path
+        mock_func1_obj = MagicMock(name="func1")
+        mock_func2_obj = MagicMock(name="func2")
+        mock_func3_obj = MagicMock(name="func3")
+        all_mock_objects = [mock_func1_obj, mock_func2_obj, mock_func3_obj]
+        MockTriageModuleMalwiObject.from_file.return_value = all_mock_objects
+
+        # Define arguments for process_object_file for this test
+        test_grep_string = None
+        test_auto_triaging = (
+            None  # Or 'benign'/'malicious' if testing auto-categorization effect
+        )
+        test_max_tokens = 0
+        test_triaging_type = (
+            "manual"  # Could be "auto" or "ollama" to test different paths
+        )
+        test_llm_prompt = None
+        test_llm_model = "gemma3"
+
+        # Call the function
+        triage_module.process_object_file(
+            file_path=mock_file_path,
+            out_path=mock_out_path,
+            grep_string=test_grep_string,
+            auto_triaging=test_auto_triaging,
+            max_tokens=test_max_tokens,
+            triaging_type=test_triaging_type,
+            llm_prompt=test_llm_prompt,
+            llm_model=test_llm_model,
+        )
+
+        # Assertions
+        MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
+        # Check that the main triage function was called with all objects
+        mock_triage_module_triage_func.assert_called_once_with(
+            all_objects=all_mock_objects,  # Ensure all objects are passed
+            out_path=mock_out_path,
+            grep_string=test_grep_string,
+            auto_triaging=test_auto_triaging,
+            max_tokens=test_max_tokens,
+            triaging_type=test_triaging_type,
+            llm_prompt=test_llm_prompt,
+            llm_model=test_llm_model,
+        )
+
+
+class TestMainFunction(unittest.TestCase):
+
+    @patch(
+        "research.triage.process_object_file"
+    )  # Target process_object_file within triage.py
+    @patch("argparse.ArgumentParser")
+    def test_main_single_file_processing(
+        self, MockArgumentParser, mock_internal_process_object_file
+    ):
+        # Setup
+        mock_args = MagicMock()
+        mock_args.path = MagicMock(spec=Path)
+        mock_args.path.is_file.return_value = True
+        mock_args.path.is_dir.return_value = False
+        mock_args.out = Path("triaging_output")
+        mock_args.prompt = "test prompt"
+        mock_args.model = "test_model"
+        mock_args.grep = "findme"
+        mock_args.max_tokens = 50
+        mock_args.triage_ollama = False
+        mock_args.auto = None
+
+        MockArgumentParser.return_value.parse_args.return_value = mock_args
+
+        # Call main
+        triage_module.main()
+
+        # Assertions
+        mock_args.path.is_file.assert_called_once()
+        mock_internal_process_object_file.assert_called_once_with(
+            file_path=mock_args.path,
+            out_path=mock_args.out,
+            grep_string=mock_args.grep,
+            auto_triaging=None,
+            max_tokens=mock_args.max_tokens,
+            triaging_type="manual",  # Default if not --triage-ollama or --auto
+            llm_model=mock_args.model,
+            llm_prompt=mock_args.prompt,
+        )
+
+    @patch("research.triage.process_object_file")
+    @patch("argparse.ArgumentParser")
+    @patch(
+        "research.triage.tqdm"
+    )  # Mock tqdm as it's used in triage.py (from tqdm import tqdm)
+    def test_main_directory_processing(
+        self,
+        mock_tqdm_constructor,
+        MockArgumentParser,
+        mock_internal_process_object_file,
+    ):
+        # Setup
+        mock_args = MagicMock()
+        mock_args.path = MagicMock(spec=Path)
+        mock_args.path.is_file.return_value = False
+        mock_args.path.is_dir.return_value = True
+
+        file1_yaml = MagicMock(spec=Path)
+        file1_yaml.name = "file1.yaml"
+        file1_yaml.is_file.return_value = True
+        file1_yaml.suffix = ".yaml"
+        file2_yml = MagicMock(spec=Path)
+        file2_yml.name = "file2.yml"
+        file2_yml.is_file.return_value = True
+        file2_yml.suffix = ".yml"
+        file3_txt = MagicMock(spec=Path)
+        file3_txt.name = "file3.txt"
+        file3_txt.is_file.return_value = True
+        file3_txt.suffix = ".txt"  # Should be ignored
+
+        mock_args.path.iterdir.return_value = [file1_yaml, file2_yml, file3_txt]
+
+        # Make tqdm pass through the iterable it's given
+        mock_tqdm_constructor.side_effect = lambda iterable, **kwargs: iterable
+
+        mock_args.out = Path("triaging_output_dir")
+        mock_args.prompt = None
+        mock_args.model = "gemma3"  # Default
+        mock_args.grep = None
+        mock_args.max_tokens = 0  # Default
+        mock_args.triage_ollama = True  # For triaging_type = "ollama"
+        mock_args.auto = None
+
+        MockArgumentParser.return_value.parse_args.return_value = mock_args
+
+        # Call main
+        triage_module.main()
+
+        # Assertions
+        mock_args.path.is_file.assert_called_once()
+        mock_args.path.is_dir.assert_called_once()
+        mock_args.path.iterdir.assert_called_once()
+
+        filtered_files_for_tqdm = [file1_yaml, file2_yml]
+        mock_tqdm_constructor.assert_called_once_with(
+            filtered_files_for_tqdm, desc="Processing files"
+        )
+
+        self.assertEqual(mock_internal_process_object_file.call_count, 2)
+        expected_calls = [
+            call(
+                file_path=file1_yaml,
+                out_path=mock_args.out,
+                grep_string=None,
+                auto_triaging=None,
+                max_tokens=0,
+                triaging_type="ollama",
+                llm_model="gemma3",
+                llm_prompt=None,
+            ),
+            call(
+                file_path=file2_yml,
+                out_path=mock_args.out,
+                grep_string=None,
+                auto_triaging=None,
+                max_tokens=0,
+                triaging_type="ollama",
+                llm_model="gemma3",
+                llm_prompt=None,
+            ),
+        ]
+        mock_internal_process_object_file.assert_has_calls(
+            expected_calls, any_order=True
+        )
+
+    @patch("research.triage.process_object_file")
+    @patch("argparse.ArgumentParser")
+    def test_main_auto_triaging_benign(
+        self, MockArgumentParser, mock_internal_process_object_file
+    ):
+        mock_args = MagicMock()
+        mock_args.path = MagicMock(spec=Path)
+        mock_args.path.is_file.return_value = True
+        mock_args.out = Path("out")
+        mock_args.prompt = None
+        mock_args.model = "gemma3"
+        mock_args.grep = None
+        mock_args.max_tokens = 0
+        mock_args.triage_ollama = False
+        mock_args.auto = "benign"
+        MockArgumentParser.return_value.parse_args.return_value = mock_args
+
+        triage_module.main()
+
+        mock_internal_process_object_file.assert_called_once_with(
+            file_path=mock_args.path,
+            out_path=mock_args.out,
+            grep_string=None,
+            auto_triaging="benign",
+            max_tokens=0,
+            triaging_type="auto",
+            llm_model="gemma3",
+            llm_prompt=None,
+        )
+
+    @patch("research.triage.process_object_file")
+    @patch("argparse.ArgumentParser")
+    def test_main_auto_triaging_malicious(
+        self, MockArgumentParser, mock_internal_process_object_file
+    ):
+        mock_args = MagicMock()
+        mock_args.path = MagicMock(spec=Path)
+        mock_args.path.is_file.return_value = True
+        mock_args.out = Path("out")
+        mock_args.prompt = None
+        mock_args.model = "gemma3"
+        mock_args.grep = None
+        mock_args.max_tokens = 0
+        mock_args.triage_ollama = False
+        mock_args.auto = "malicious"
+        MockArgumentParser.return_value.parse_args.return_value = mock_args
+
+        triage_module.main()
+
+        mock_internal_process_object_file.assert_called_once_with(
+            file_path=mock_args.path,
+            out_path=mock_args.out,
+            grep_string=None,
+            auto_triaging="malicious",
+            max_tokens=0,
+            triaging_type="auto",
+            llm_model="gemma3",
+            llm_prompt=None,
+        )
+
+    @patch("builtins.print")
+    @patch("argparse.ArgumentParser")
+    def test_main_invalid_path(self, MockArgumentParser, mock_print):
+        # Setup
+        mock_args = MagicMock()
+        mock_args.path = MagicMock(spec=Path)
+        mock_args.path.is_file.return_value = False
+        mock_args.path.is_dir.return_value = False
+
+        MockArgumentParser.return_value.parse_args.return_value = mock_args
+
+        # Call main
+        triage_module.main()
+
+        # Assertions
+        mock_args.path.is_file.assert_called_once()
+        mock_args.path.is_dir.assert_called_once()
+        mock_print.assert_called_once_with(f"Invalid path: {mock_args.path}")
+
+    @patch("research.triage.process_object_file")
+    @patch("argparse.ArgumentParser")
+    def test_main_default_triaging_type_manual(
+        self, MockArgumentParser, mock_internal_process_object_file
+    ):
+        mock_args = MagicMock()
+        mock_args.path = MagicMock(spec=Path)
+        mock_args.path.is_file.return_value = True
+        mock_args.out = Path("out_dir")
+        mock_args.prompt = "A prompt"
+        mock_args.model = "a_model"
+        mock_args.grep = "pat"
+        mock_args.max_tokens = 10
+        mock_args.triage_ollama = False
+        mock_args.auto = None
+        MockArgumentParser.return_value.parse_args.return_value = mock_args
+
+        triage_module.main()
+
+        mock_internal_process_object_file.assert_called_once_with(
+            file_path=mock_args.path,
+            out_path=mock_args.out,
+            grep_string="pat",
+            auto_triaging=None,
+            max_tokens=10,
+            triaging_type="manual",  # Expected default
+            llm_model="a_model",
+            llm_prompt="A prompt",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
