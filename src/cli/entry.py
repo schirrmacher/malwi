@@ -155,7 +155,6 @@ def main():
         triaging_type=triaging_type,
         malicious_only=args.malicious_only,
         malicious_threshold=args.threshold,
-        llm_api_key=args.triage_gemini,
     )
 
     output = ""
