@@ -1,6 +1,8 @@
 # malwi - AI Python Malware Scanner
 
 <img src="malwi-logo.png" alt="Logo">
+<a href='https://huggingface.co/schirrmacher/malwi'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HF-Model-blue'></a>&ensp; 
+
 
 Detect Python malware _fast_ - no internet, no expensive hardware, no fees.
 
@@ -41,20 +43,18 @@ Typical malware behaviors include:
 - _Backdoors_: Allowing remote attackers to gain unauthorized access to your system.
 - _Destructive_ actions: Deleting files, corrupting databases, or sabotaging applications.
 
-> **Attention**: Malicious packages might execute code during installation (e.g. through `setup.py`). 
+> ⚠️ **Attention**: Malicious packages might execute code during installation (e.g. through `setup.py`). 
 Make sure to *NOT* download or install malicious packages from the dataset with commands like `uv add`, `pip install`, `poetry add`.
-
-## What's next?
-
-The first iteration focuses on **maliciousness of Python source code**.
-
-Future iterations will cover malware scanning for more languages (JavaScript, Rust, Go) and more formats (binaries, logs).
 
 ## How does it work?
 
-malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) and Support Vector Machines (SVM) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). [pypi_malregistry](https://github.com/lxyeternal/pypi_malregistry) is used as a source for malicious samples.
+malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). 
 
-1. malwi compiles Python files to bytecode:
+The following datasets are used as a source for malicious samples:
+- [pypi_malregistry](https://github.com/lxyeternal/pypi_malregistry)
+- [DataDog malicious-software-packages-dataset](https://github.com/DataDog/malicious-software-packages-dataset)
+
+### 1. malwi compiles Python files to bytecode
 
 ```
 def runcommand(value):
@@ -72,17 +72,42 @@ def runcommand(value):
   ...
 ```
 
-2. Bytecode operators are mapped to tokens:
+### 2. Bytecode operators are mapped to tokens
 
 ```
 TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
 ```
 
-3. Tokens are used as input for a pre-trained DistilBert:
+### 3. Tokens are used as input for a pre-trained DistilBert
 
 ```
 Maliciousness: 0.9620079398155212
 ```
+
+## Benchmarks?
+
+The current best model differentiates benign from malicious code with the following metrics:
+
+| Metric                     | Value                         |
+|----------------------------|-------------------------------|
+| F1 Score                   | 0.91                          |
+| Recall                     | 0.87                          |
+| Precision                  | 0.94                          |
+| Unique benign samples      | 1,070,888                     |
+| Unique malicious samples   | 152,984                       |
+| Training time              | ~4 hours                      |
+| Hardware                   | NVIDIA RTX 4090               |
+| Epochs                     | 3                             |
+
+## Limitations
+
+The malicious dataset includes some boilerplate functions, such as init functions, which can also appear in benign code. These cause false positives during scans. The goal is to triage and reduce such false positives to improve malwi's accuracy.
+
+## What's next?
+
+The first iteration focuses on **maliciousness of Python source code**.
+
+Future iterations will cover malware scanning for more languages (JavaScript, Rust, Go) and more formats (binaries, logs).
 
 ## Support
 
@@ -107,16 +132,16 @@ cmds/train.sh
 
 ### Triage
 
-malwi utilized a pipeline which can be improved by triaging results (see `src/research/triage.py`).
-For automated triaging you can utilize open-source models and Ollama (default Gemma 3).
+malwi uses a pipeline that can be enhanced by triaging its results (see `src/research/triage.py`). For automated triaging, you can leverage open-source models in combination with [Ollama](https://ollama.com/).
 
-Install Gemma 3:
+#### Start LLM
 
 ```
 ollama run gemma3
 ```
 
-Start auto-triaging:
+#### Start Triaging
+
 ```
 uv run python -m src.research.triage --triage-ollama --path <FOLDER_WITH_MALWI_YAML_RESULTS>
 ```
