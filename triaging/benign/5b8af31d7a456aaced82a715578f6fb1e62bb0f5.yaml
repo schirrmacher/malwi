@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-kms/2.16.1/python-aliyun-sdk-kms-2.16.1/python-aliyun-sdk-kms-2.16.1/aliyunsdkkms/request/v20160120/GetRandomPasswordRequest.py
   contents:
   - name: GetRandomPasswordRequest.get_ExcludeUppercase
-    score: 0.0
+    score: null
     code: "def get_ExcludeUppercase(self): # String\n\t\treturn self.get_query_params().get('ExcludeUppercase')"
     tokens: resume load_fast self load_attr STRING_LEN_S_ENT_HIGH call load_attr get load_const STRING_BASE64_LEN_S_ENT_HIGH call return_value
     hash: 09387463583a2c69eb4a6af07ffa0154d546e1e6b3e76b6e5ad824a46b8d0031

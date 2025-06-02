@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-kms/2.16.1/python-aliyun-sdk-kms-2.16.1/python-aliyun-sdk-kms-2.16.1/aliyunsdkkms/request/v20160120/ListTagResourcesRequest.py
   contents:
   - name: ListTagResourcesRequest.get_NextToken
-    score: 0.0
+    score: null
     code: "def get_NextToken(self): # String\n\t\treturn self.get_query_params().get('NextToken')"
     tokens: resume load_fast self load_attr STRING_LEN_S_ENT_HIGH call load_attr get load_const NextToken call return_value
     hash: 04f249187ab600d8177e135fed4e78648d78acd758135378fc884d2717d168b0

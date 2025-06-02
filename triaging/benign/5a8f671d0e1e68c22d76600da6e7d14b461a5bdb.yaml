@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/streamingoutputarg.py
   contents:
   - name: StreamingOutputArgument.cli_name
-    score: 0.0
+    score: null
     code: |-
       @property
           def cli_name(self):

@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/typesutil/1.9.4/typesutil-1.9.4/typesutil-1.9.4/typesutil/__init__.py
   contents:
   - name: TimeDelta.__abs__
-    score: 0.0
+    score: null
     code: |-
       def __abs__(self):
               return self if self.fractional_days >= 0 else -self

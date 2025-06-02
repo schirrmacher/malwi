@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-kms/2.16.1/python-aliyun-sdk-kms-2.16.1/python-aliyun-sdk-kms-2.16.1/aliyunsdkkms/request/v20160120/SetDeletionProtectionRequest.py
   contents:
   - name: SetDeletionProtectionRequest.set_DeletionProtectionDescription
-    score: 0.0
+    score: null
     code: "def set_DeletionProtectionDescription(self, DeletionProtectionDescription):  # String\n\t\tself.add_query_param('DeletionProtectionDescription', DeletionProtectionDescription)"
     tokens: resume load_fast self load_attr add_query_param load_const STRING_LEN_S_ENT_HIGH load_fast STRING_LEN_S_ENT_HIGH call pop_top return_const None
     hash: 7d2e8192ad96dfb428537cec5974cd884517a56d107652b094607d1e096b83d3

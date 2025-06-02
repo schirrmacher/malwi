@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/tdwtauthauthentication/1.0.9/tdwtauthauthentication-1.0.9/tdwtauthauthentication-1.0.9/tdwTauthAuthentication/plugin_manager.py
   contents:
   - name: DetectResult.get_detect_time
-    score: 0.0
+    score: null
     code: |-
       def get_detect_time(self):
               return self.detect_time

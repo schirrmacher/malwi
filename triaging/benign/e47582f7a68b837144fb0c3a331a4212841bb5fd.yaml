@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/quantiumbase/0.8.1/quantiumbase-0.8.1/quantiumbase-0.8.1/quantiumbase/backends/postgres.py
   contents:
   - name: Record.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(
               self,

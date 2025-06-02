@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/rekognition.py
   contents:
   - name: ImageArgUpdater.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, source_param, new_param):
               self._source_param = source_param

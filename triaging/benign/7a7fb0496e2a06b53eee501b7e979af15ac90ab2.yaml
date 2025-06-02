@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/retry/retry_condition.py
   contents:
   - name: NoRetryCondition.should_retry
-    score: 0.0
+    score: null
     code: |-
       def should_retry(self, retry_policy_context):
               return RetryCondition.NO_RETRY

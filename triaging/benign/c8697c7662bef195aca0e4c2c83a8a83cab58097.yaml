@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/customizations/cloudtrail/utils.py
   contents:
   - name: <module>
-    score: 0.0
+    score: null
     code: |-
       # Copyright 2012-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
       #

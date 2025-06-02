@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/tdwtauthauthentication/1.0.9/tdwtauthauthentication-1.0.9/tdwtauthauthentication-1.0.9/tdwTauthAuthentication/plugin_manager.py
   contents:
   - name: DetectResult.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, detect_type: str = "", ret_status: int = 0, detect_time: int = 0,
                        detect_instance: Instance = None):

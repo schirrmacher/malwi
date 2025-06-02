@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/typesutil/1.9.4/typesutil-1.9.4/typesutil-1.9.4/typesutil/__init__.py
   contents:
   - name: Time.register_new_time.<locals>.TimeReprAttribute.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, attr_name, modif_time_repr_class):
                       self.attr_name = attr_name

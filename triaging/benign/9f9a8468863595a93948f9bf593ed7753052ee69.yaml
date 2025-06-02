@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/typesutil/1.9.4/typesutil-1.9.4/typesutil-1.9.4/typesutil/__init__.py
   contents:
   - name: TimeDelta.register_new_time_interval.<locals>.TimeIntervalAttribute.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, attr_name, modif_time_interval_class):
                       self.attribute_name = attr_name

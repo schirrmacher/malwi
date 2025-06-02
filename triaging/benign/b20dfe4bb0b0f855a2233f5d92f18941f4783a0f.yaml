@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/arguments.py
   contents:
   - name: CustomArgument.nargs
-    score: 0.0
+    score: null
     code: |-
       @property
           def nargs(self):

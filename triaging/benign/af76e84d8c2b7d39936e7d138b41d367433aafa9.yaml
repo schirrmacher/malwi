@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/vendored/requests/packages/chardet/hebrewprober.py
   contents:
   - name: HebrewProber.set_model_probers
-    score: 0.0
+    score: null
     code: |-
       def set_model_probers(self, logicalProber, visualProber):
               self._logical_prober = logicalProber

@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/colored-upgrade/0.0.1/colored-upgrade-0.0.1/colored-upgrade-0.0.1/colored/utilities.py
   contents:
   - name: Utilities.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self):
               self._COLORS: dict = Library.COLORS

@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/retry/retry_condition.py
   contents:
   - name: MaxRetryTimesCondition.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, max_retry_times):
               validation.assert_integer_positive(max_retry_times, "max_retry_times")

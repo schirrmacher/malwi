@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/nitro-checker/1.0/nitro-checker-1.0/nitro-checker-1.0/nitro-checker/__main__.py
   contents:
   - name: <module>
-    score: 0.0
+    score: null
     code: |-
       def nitro():
           print("nitro-checker successfully installed")

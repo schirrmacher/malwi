@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/request.py
   contents:
   - name: RoaRequest.set_path_params
-    score: 0.0
+    score: null
     code: |-
       def set_path_params(self, path_params):
               self._path_params = path_params

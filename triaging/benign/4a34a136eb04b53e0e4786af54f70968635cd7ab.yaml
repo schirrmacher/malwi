@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/flaw/0.0.1/flaw-0.0.1/flaw-0.0.1/src/flaw/utils/embed.py
   contents:
   - name: Embed.set_title
-    score: 0.0
+    score: null
     code: |-
       def set_title(self, title) -> None:
               """

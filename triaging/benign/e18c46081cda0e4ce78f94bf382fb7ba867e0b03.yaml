@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/awscl/1.27.67/awscl-1.27.67/awscl-1.27.67/awscli/clidocs.py
   contents:
   - name: GlobalOptionsDocumenter.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, help_command):
               self._help_command = help_command

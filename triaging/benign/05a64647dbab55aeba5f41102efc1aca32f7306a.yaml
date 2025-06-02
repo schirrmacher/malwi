@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/auth/credentials.py
   contents:
   - name: EcsRamRoleCredential.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, role_name):
               self.role_name = role_name

@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/typesutil/1.9.4/typesutil-1.9.4/typesutil-1.9.4/typesutil/__init__.py
   contents:
   - name: Date.register_new_calendar.<locals>.CalendarAttribute.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, attr_name, modif_calendar_class):
                       self.attribute_name = attr_name

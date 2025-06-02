@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/endpoint/resolver_endpoint_request.py
   contents:
   - name: ResolveEndpointRequest.__init__
-    score: 0.0
+    score: null
     code: |-
       def __init__(self, region_id, product_code, location_service_code, endpoint_type):
 

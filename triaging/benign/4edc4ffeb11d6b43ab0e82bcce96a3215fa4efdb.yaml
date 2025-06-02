@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/aliababcloud-tea-openapi/0.3.7/aliababcloud_tea_openapi-0.3.7/aliababcloud_tea_openapi-0.3.7/alibabacloud_tea_openapi/models.py
   contents:
   - name: Config.validate
-    score: 0.0
+    score: null
     code: |-
       def validate(self):
               if self.global_parameters:

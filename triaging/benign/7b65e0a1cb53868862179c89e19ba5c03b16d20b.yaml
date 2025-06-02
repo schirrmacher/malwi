@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-kms/2.16.1/python-aliyun-sdk-kms-2.16.1/python-aliyun-sdk-kms-2.16.1/aliyunsdkkms/endpoint.py
   contents:
   - name: EndpointData.getEndpointMap
-    score: 0.0
+    score: null
     code: "def getEndpointMap(self):\n\t\treturn self.endpoint_map"
     tokens: resume load_fast self load_attr endpoint_map return_value
     hash: d922547e138cd1112e22fd44c0026e2c54f59721a233b696a72a53c57f14456c

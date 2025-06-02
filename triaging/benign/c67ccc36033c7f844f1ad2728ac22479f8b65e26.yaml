@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/typesutil/1.9.4/typesutil-1.9.4/typesutil-1.9.4/typesutil/__init__.py
   contents:
   - name: TimeDelta.is_integer
-    score: 0.0
+    score: null
     code: |-
       def is_integer(self):
               return self._frac_part == 0

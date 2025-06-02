@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/python-aliyun-sdk-core/2.13.36/python-aliyun-sdk-core-2.13.36/python-aliyun-sdk-core-2.13.36/aliyunsdkcore/vendored/requests/packages/urllib3/packages/socks.py
   contents:
   - name: SOCKS5AuthError
-    score: 0.0
+    score: null
     code: |-
       def __str__(self):
               return self.msg

@@ -7,7 +7,7 @@ details:
 - path: .repo_cache/malicious_repos/pypi_malregistry/typesutil/1.9.4/typesutil-1.9.4/typesutil-1.9.4/typesutil/common.py
   contents:
   - name: verify_fractional_value
-    score: 0.0
+    score: null
     code: |-
       def verify_fractional_value(fractional, min=None, max=None, min_excl=None, max_excl=None, strict=False):
           return verify_value(fractional, None, min, max, min_excl, max_excl, strict)
