@@ -545,7 +545,14 @@ BENIGN_REPO_URLS = [
     "https://github.com/ztane/python-Levenshtein/",
     "https://winpython.github.io/",
 ]
-MALICIOUS_REPO_URL = "https://github.com/lxyeternal/pypi_malregistry.git"
+DATADOG_MALICIOUS_REPO_URL = (
+    "https://github.com/DataDog/malicious-software-packages-dataset.git"
+)
+MALICIOUS_REPO_URLS = [
+    "https://github.com/lxyeternal/pypi_malregistry.git",
+    DATADOG_MALICIOUS_REPO_URL,
+]
+ENCRYPTED_ZIP_PASSWORD = b"infected"  # Password for DataDog encrypted zips
 
 REPO_CACHE_DIR = ".repo_cache"
 BENIGN_REPOS_CACHE_PATH = os.path.join(REPO_CACHE_DIR, "benign_repos")
@@ -555,6 +562,20 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - [%(module)s.%(funcName)s] %(message)s",
     handlers=[logging.StreamHandler()],
+)
+
+
+def _get_repo_name_from_url_internal(url):
+    try:
+        path_part = urlparse(url).path
+        repo_name = path_part.strip("/").replace(".git", "")
+        return os.path.basename(repo_name)
+    except Exception:
+        return os.path.basename(url).replace(".git", "")
+
+
+DATADOG_MALICIOUS_REPO_NAME = _get_repo_name_from_url_internal(
+    DATADOG_MALICIOUS_REPO_URL
 )
 
 
@@ -628,12 +649,7 @@ def make_readonly(path):
 
 
 def get_repo_name_from_url(url):
-    try:
-        path_part = urlparse(url).path
-        repo_name = path_part.strip("/").replace(".git", "")
-        return os.path.basename(repo_name)
-    except Exception:
-        return os.path.basename(url).replace(".git", "")
+    return _get_repo_name_from_url_internal(url)
 
 
 def run_command(command, working_dir=None, repo_name=""):
@@ -712,19 +728,20 @@ def ensure_writable_for_operation(path_to_check):
         return True
 
 
-def unpack_archives_recursively(directory_to_scan):
+def unpack_archives_recursively(directory_to_scan, repo_name_being_scanned=None):
     extracted_package_roots = []
     for root, _, files in os.walk(directory_to_scan, topdown=True):
         if not ensure_writable_for_operation(root):
             logging.warning(
                 f"Cannot make {root} writable, skipping unpacking in this directory."
             )
-            continue  # Skip this directory if we can't write to it
+            continue
 
         for filename in list(files):
             filepath = os.path.join(root, filename)
             archive_type = None
             extract_path_name = None
+            extraction_succeeded = False  # Flag to track successful extraction
 
             if filename.endswith(".tar.gz"):
                 archive_type = "tar.gz"
@@ -735,19 +752,24 @@ def unpack_archives_recursively(directory_to_scan):
             elif filename.endswith(".zip"):
                 archive_type = "zip"
                 extract_path_name = filename[: -len(".zip")]
-            elif filename.endswith(".gz") and not filename.endswith(
-                ".tar.gz"
-            ):  # Handles .gz but not .tar.gz
+                if repo_name_being_scanned == DATADOG_MALICIOUS_REPO_NAME:
+                    expected_datadog_zip_path_prefix = os.path.join(
+                        directory_to_scan, "samples", "pypi"
+                    )
+                    if not root.startswith(expected_datadog_zip_path_prefix):
+                        logging.debug(
+                            f"Skipping zip {filepath} in {repo_name_being_scanned} as it's not under {expected_datadog_zip_path_prefix}"
+                        )
+                        continue
+            elif filename.endswith(".gz") and not filename.endswith(".tar.gz"):
                 archive_type = "gz"
                 extract_path_name = filename[: -len(".gz")]
             else:
-                continue  # Not a supported archive type
+                continue
 
             logging.debug(f"Attempting to unpack {filepath} (type: {archive_type})")
 
-            if not ensure_writable_for_operation(
-                filepath
-            ):  # Ensure archive itself is writable (for deletion)
+            if not ensure_writable_for_operation(filepath):
                 logging.warning(
                     f"Cannot make archive {filepath} writable for potential deletion, skipping."
                 )
@@ -756,10 +778,7 @@ def unpack_archives_recursively(directory_to_scan):
             extract_full_path = os.path.join(root, extract_path_name)
 
             try:
-                # Ensure the parent directory of the extraction path is writable to create the extraction dir
-                if not ensure_writable_for_operation(
-                    root
-                ):  # Double check parent dir writability
+                if not ensure_writable_for_operation(root):
                     logging.warning(
                         f"Parent directory {root} not writable to create {extract_full_path}, skipping."
                     )
@@ -773,7 +792,6 @@ def unpack_archives_recursively(directory_to_scan):
                     )
                     continue
 
-                # Ensure extraction target directory is writable
                 if not ensure_writable_for_operation(extract_full_path):
                     logging.warning(
                         f"Extraction target {extract_full_path} not writable, skipping."
@@ -786,15 +804,49 @@ def unpack_archives_recursively(directory_to_scan):
                     logging.debug(
                         f"Successfully unpacked .tar.gz {filepath} to {extract_full_path}"
                     )
+                    extraction_succeeded = True
                 elif archive_type in ["whl", "zip"]:
-                    with zipfile.ZipFile(filepath, "r") as zip_ref:
-                        zip_ref.extractall(extract_full_path)
-                    logging.debug(
-                        f"Successfully unpacked .{archive_type} {filepath} to {extract_full_path}"
-                    )
+                    try:
+                        with zipfile.ZipFile(filepath, "r") as zip_ref:
+                            zip_ref.extractall(extract_full_path)
+                        logging.debug(
+                            f"Successfully unpacked .{archive_type} {filepath} to {extract_full_path}"
+                        )
+                        extraction_succeeded = True
+                    except RuntimeError as e_runtime_zip:
+                        if (
+                            "encrypted" in str(e_runtime_zip).lower()
+                            or "password required" in str(e_runtime_zip).lower()
+                        ) and repo_name_being_scanned == DATADOG_MALICIOUS_REPO_NAME:
+                            logging.info(
+                                f"Encrypted zip {filepath} in {DATADOG_MALICIOUS_REPO_NAME}. Attempting extraction with password."
+                            )
+                            try:
+                                with zipfile.ZipFile(filepath, "r") as zip_ref_pwd:
+                                    zip_ref_pwd.extractall(
+                                        extract_full_path, pwd=ENCRYPTED_ZIP_PASSWORD
+                                    )
+                                logging.info(
+                                    f"Successfully unpacked encrypted .{archive_type} {filepath} with password to {extract_full_path}"
+                                )
+                                extraction_succeeded = True
+                            except RuntimeError as e_pwd_failed:
+                                logging.warning(
+                                    f"Failed to extract encrypted zip {filepath} with password: {e_pwd_failed}"
+                                )
+                            except Exception as e_pwd_generic_failed:
+                                logging.error(
+                                    f"Error extracting encrypted zip {filepath} with password: {e_pwd_generic_failed}"
+                                )
+                        else:
+                            logging.warning(
+                                f"Skipping zip file {filepath} due to unhandled RuntimeError: {e_runtime_zip}"
+                            )
+                    except zipfile.BadZipFile as e_zip_bad:
+                        logging.debug(
+                            f"Skipping file {filepath} as it's not a valid .whl/.zip file or is corrupted: {e_zip_bad}"
+                        )
                 elif archive_type == "gz":
-                    # For single .gz files, decompress it into the target directory
-                    # The decompressed file will have the name of extract_path_name
                     decompressed_file_path = os.path.join(
                         extract_full_path, os.path.basename(extract_path_name)
                     )
@@ -804,42 +856,41 @@ def unpack_archives_recursively(directory_to_scan):
                     logging.debug(
                         f"Successfully decompressed .gz {filepath} to {decompressed_file_path}"
                     )
+                    extraction_succeeded = True
 
-                extracted_package_roots.append(extract_full_path)
-                make_readonly(extract_full_path)  # Make extracted content read-only
-
-                try:
-                    if ensure_writable_for_operation(
-                        filepath
-                    ):  # Ensure original archive is writable before deleting
-                        os.remove(filepath)
-                        logging.debug(f"Successfully removed archive {filepath}")
-                    else:
-                        logging.warning(
-                            f"Could not make {filepath} writable to remove it."
+                if extraction_succeeded:
+                    extracted_package_roots.append(extract_full_path)
+                    make_readonly(extract_full_path)
+                    try:
+                        if ensure_writable_for_operation(
+                            filepath
+                        ):  # Ensure original archive is writable before deleting
+                            os.remove(filepath)
+                            logging.debug(f"Successfully removed archive {filepath}")
+                        else:
+                            logging.warning(
+                                f"Could not make {filepath} writable to remove it."
+                            )
+                    except OSError as e_remove:
+                        logging.error(
+                            f"Failed to remove archive {filepath} after extraction: {e_remove}"
                         )
-                except OSError as e_remove:
-                    logging.error(
-                        f"Failed to remove archive {filepath} after extraction: {e_remove}"
-                    )
 
             except tarfile.ReadError as e_tar:
                 logging.debug(
                     f"Skipping file {filepath} as it's not a valid tar.gz file or is corrupted: {e_tar}"
                 )
-            except zipfile.BadZipFile as e_zip:
-                logging.debug(
-                    f"Skipping file {filepath} as it's not a valid .whl/.zip file or is corrupted: {e_zip}"
-                )
-            except gzip.BadGzipFile as e_gzip:  # More specific exception for gzip
+            except gzip.BadGzipFile as e_gzip:
                 logging.debug(
                     f"Skipping file {filepath} as it's not a valid .gz file or is corrupted: {e_gzip}"
                 )
-            except EOFError as e_eof:  # Can occur with corrupted archives
+            except EOFError as e_eof:
                 logging.debug(
                     f"Skipping file {filepath} due to EOFError (possibly corrupted): {e_eof}"
                 )
-            except Exception as e_unpack:
+            except (
+                Exception
+            ) as e_unpack:  # General catch-all for other issues in this file's processing
                 logging.error(f"Failed to unpack or process {filepath}: {e_unpack}")
     return list(set(extracted_package_roots))
 
@@ -862,41 +913,46 @@ def process_benign_repositories(repo_urls):
     return processed_paths
 
 
-def process_malicious_repository(repo_url):
-    logging.info("Processing malicious repository...")
-    repo_name = get_repo_name_from_url(repo_url)
-    processed_package_paths = []
-    try:
-        cloned_mal_repo_path = get_or_clone_repo(repo_url, MALICIOUS_REPOS_CACHE_PATH)
-        if not cloned_mal_repo_path:
-            return []
+def process_malicious_repositories(repo_urls_list):
+    logging.info("Processing malicious repositories...")
+    all_processed_package_paths = []
 
-        make_writable_recursive(cloned_mal_repo_path)  # Make entire repo writable first
-        logging.info(f"Unpacking archives in malicious repo: {repo_name}")
-        all_extracted_malicious_package_paths = unpack_archives_recursively(
-            cloned_mal_repo_path
-        )
-        make_readonly(cloned_mal_repo_path)
+    for repo_url in repo_urls_list:
+        repo_name = get_repo_name_from_url(repo_url)
+        current_repo_processed_package_paths = []
+        logging.info(f"Processing malicious repository: {repo_name} from {repo_url}")
+        try:
+            cloned_mal_repo_path = get_or_clone_repo(
+                repo_url, MALICIOUS_REPOS_CACHE_PATH
+            )
+            if not cloned_mal_repo_path:
+                continue
 
-        if not all_extracted_malicious_package_paths:
-            logging.warning(
-                f"No .tar.gz, .whl, .zip, or .gz packages extracted from {cloned_mal_repo_path}."
+            make_writable_recursive(cloned_mal_repo_path)
+            logging.info(f"Unpacking archives in malicious repo: {repo_name}")
+            extracted_package_paths = unpack_archives_recursively(
+                cloned_mal_repo_path, repo_name_being_scanned=repo_name
             )
-        else:
-            logging.info(
-                f"Found {len(all_extracted_malicious_package_paths)} malicious packages/extracted directories for processing."
-            )
-            for package_path in all_extracted_malicious_package_paths:
-                # The package_path is the directory where files were extracted
-                descriptive_package_name = f"{repo_name}_{os.path.relpath(package_path, cloned_mal_repo_path).replace(os.sep, '_')}"
-                logging.info(
-                    f"Processing malicious package content at: {package_path} (derived from {descriptive_package_name})"
+            make_readonly(cloned_mal_repo_path)
+
+            if not extracted_package_paths:
+                logging.warning(
+                    f"No applicable packages extracted from {cloned_mal_repo_path}."
                 )
-                # Placeholder for actual processing logic for the *contents* of package_path
-                processed_package_paths.append(package_path)
-    except Exception as e:
-        logging.error(f"Error processing malicious repo {repo_name}: {e}")
-    return processed_package_paths
+            else:
+                logging.info(
+                    f"Found {len(extracted_package_paths)} malicious packages/extracted directories in {repo_name} for processing."
+                )
+                for package_path in extracted_package_paths:
+                    descriptive_package_name = f"{repo_name}_{os.path.relpath(package_path, cloned_mal_repo_path).replace(os.sep, '_')}"
+                    logging.info(
+                        f"Processing malicious package content at: {package_path} (derived from {descriptive_package_name})"
+                    )
+                    current_repo_processed_package_paths.append(package_path)
+            all_processed_package_paths.extend(current_repo_processed_package_paths)
+        except Exception as e:
+            logging.error(f"Error processing malicious repo {repo_name}: {e}")
+    return all_processed_package_paths
 
 
 def main():
@@ -934,7 +990,7 @@ def main():
         process_benign_repositories(BENIGN_REPO_URLS)
 
     if args.type in ["malicious", "all"]:
-        process_malicious_repository(MALICIOUS_REPO_URL)
+        process_malicious_repositories(MALICIOUS_REPO_URLS)
 
     logging.info("Script execution finished.")
 
