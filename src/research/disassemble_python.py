@@ -541,10 +541,14 @@ def triage(
 Please analyze the following code sample and determine whether it exhibits any signs of malicious behavior.
 Examples of malicious behavior include (but are not limited to):
 - Data exfiltration attempts
-- Code obfuscation
+- Code obfuscation or dynamic code execution (e.g., eval, exec, reflection)
 - Unauthorized access or privilege escalation
-- Use of suspicious network or file operations
-- Dynamic code execution (e.g., eval, exec)
+- Suspicious network, file system, or subprocess activity
+- Malicious or hidden behavior during installation or setup
+- Modification of system files, environment variables, or dependencies
+- Installation of unnecessary or unverified packages, especially from untrusted sources
+- Use or misuse of cryptographic functions (e.g., weak algorithms, hardcoded secrets)
+- Hardcoded, exposed, or improperly handled cryptographic key material or credentials
 Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
         else:
             prompt = f"{prompt}\n\n```{obj.code}\n```"
