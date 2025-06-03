@@ -537,9 +537,14 @@ def triage(
 
         prompt = llm_prompt
         if not prompt:
-            prompt = f"""You are a professional security code reviewer. 
-Is the following code sample indicating any malicious behavior to you? 
-Examples for malicious behavior: suspicious usage of eval, exfiltration attempts, obfuscation.
+            prompt = f"""You are a professional security code reviewer.
+Please analyze the following code sample and determine whether it exhibits any signs of malicious behavior.
+Examples of malicious behavior include (but are not limited to):
+- Data exfiltration attempts
+- Code obfuscation
+- Unauthorized access or privilege escalation
+- Use of suspicious network or file operations
+- Dynamic code execution (e.g., eval, exec)
 Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
         else:
             prompt = f"{prompt}\n\n```{obj.code}\n```"
