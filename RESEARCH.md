@@ -40,6 +40,15 @@ Problem: Triaging is the categorization of findings into true-positives or false
 
 ## Model Training
 
+- Commit: `647d0a4`
+- `DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 20.0`
+- Only malicious samples with one file (higher malicious code density)
+- The scores were even better with a `DEFAULT_BENIGN_TO_MALICIOUS_RATIO` of `7.0` (F1 ~0.97)
+
+```
+{'eval_loss': 0.017408201470971107, 'eval_accuracy': 0.9957611312692869, 'eval_f1': 0.9547265483520464, 'eval_precision': 0.9712601326455417, 'eval_recall': 0.9387464387464387, 'eval_runtime': 52.7913, 'eval_samples_per_second': 558.596, 'eval_steps_per_second': 34.93, 'epoch': 3.0}
+```
+
 - Commit: `5b1eb22`
 - `DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 7.0`
 - `STRING_MAX_LENGTH = 15`
