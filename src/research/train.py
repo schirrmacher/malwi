@@ -70,7 +70,7 @@ def load_asts_from_csv(
             ):
                 continue
             asts.append(ast_data.strip())
-        print(f"Loaded {len(asts)} AST strings from {csv_file_path}")
+        print(f"Loaded {len(asts)} sample strings from {csv_file_path}")
     except FileNotFoundError:
         print(f"Error: File not found at {csv_file_path}. Returning empty list.")
         return []
@@ -190,11 +190,11 @@ def run_training(args):
     benign_asts = load_asts_from_csv(args.benign, args.ast_column)
     malicious_asts = load_asts_from_csv(args.malicious, args.ast_column)
 
-    print(f"Original benign ASTs count: {len(benign_asts)}")
-    print(f"Original malicious ASTs count: {len(malicious_asts)}")
+    print(f"Original benign samples count: {len(benign_asts)}")
+    print(f"Original malicious samples count: {len(malicious_asts)}")
 
     if not malicious_asts:
-        print("Error: No malicious ASTs loaded. Cannot proceed with training.")
+        print("Error: No malicious samples loaded. Cannot proceed with training.")
         return
 
     if (
@@ -207,7 +207,7 @@ def run_training(args):
             benign_asts
         ):  # Ensure we are actually downsampling
             print(
-                f"Downsampling benign ASTs from {len(benign_asts)} to {target_benign_count}"
+                f"Downsampling benign samples from {len(benign_asts)} to {target_benign_count}"
             )
             rng = np.random.RandomState(42)
             benign_indices = rng.choice(
@@ -215,10 +215,10 @@ def run_training(args):
             )
             benign_asts = [benign_asts[i] for i in benign_indices]
     elif not benign_asts:
-        print("Warning: No benign ASTs loaded.")
+        print("Warning: No benign samples loaded.")
 
-    print(f"Processed benign ASTs for training lookup: {len(benign_asts)}")
-    print(f"Malicious ASTs for training: {len(malicious_asts)}")
+    print(f"Processed benign samples for training lookup: {len(benign_asts)}")
+    print(f"Malicious samples for training: {len(malicious_asts)}")
 
     all_texts_for_training = benign_asts + malicious_asts
     all_labels_for_training = [0] * len(benign_asts) + [1] * len(malicious_asts)
@@ -227,7 +227,7 @@ def run_training(args):
         print("Error: No data available for training after filtering or downsampling.")
         return
 
-    print(f"Total AST strings for model training: {len(all_texts_for_training)}")
+    print(f"Total sample strings for model training: {len(all_texts_for_training)}")
 
     (
         distilbert_train_texts,
