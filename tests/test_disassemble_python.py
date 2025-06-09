@@ -83,6 +83,11 @@ class TestCoreDisassembly:
         )
         assert method_one_obj is not None
 
+        assert (
+            MalwiObject.collect_token_stats(malwi_objects=results)["SYSTEM_INTERACTION"]
+            == 3
+        )
+
     def test_disassemble_syntax_error_file(self, tmp_path, syntax_error_py_content):
         p = tmp_path / "syntax.py"
         p.write_text(syntax_error_py_content)

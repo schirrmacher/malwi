@@ -12,11 +12,11 @@ import inspect
 import hashlib
 import warnings
 import argparse
-import collections
 import questionary
 
 from tqdm import tqdm
 from pathlib import Path
+from collections import Counter
 from dataclasses import dataclass
 from ollama import ChatResponse, chat
 from typing import List, Tuple, Set, Optional, TextIO, Optional, Any, Dict, Union
@@ -648,7 +648,7 @@ class MalwiObject:
         return all_token_parts
 
     def calculate_token_stats(self) -> dict:
-        token_counts = collections.Counter(self.to_tokens())
+        token_counts = Counter(self.to_tokens())
         stats = {token: token_counts.get(token, 0) for token in self.all_tokens()}
         return stats
 
@@ -769,6 +769,17 @@ class MalwiObject:
                     ).decode("utf-8")
 
         return report_data
+
+    def collect_token_stats(
+        malwi_objects: List["MalwiObject"],
+    ) -> dict[str, int]:
+        result: Counter = Counter()
+
+        for obj in malwi_objects:
+            stats = obj.calculate_token_stats()
+            result.update(stats)
+
+        return dict(result)
 
     @classmethod
     def to_report_json(
