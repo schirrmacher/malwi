@@ -182,7 +182,7 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     if argval in python_function_mapping:
         return python_function_mapping.get(argval)
     elif argval in python_import_mapping:
-        return argval
+        return python_import_mapping.get(argval)
     elif argval in SENSITIVE_PATHS:
         return f"{SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
     elif is_valid_ip(argval):
@@ -295,6 +295,15 @@ def tokenize_code_type(
             final_value = map_load_const_number_arg(
                 instruction, argval, original_argrepr
             )
+        elif instruction.opname in ["IMPORT_NAME", "IMPORT_FROM"]:
+            final_value = map_string_arg(argval, original_argrepr)
+        elif instruction.opname in [
+            "LOAD_GLOBAL",
+            "LOAD_NAME",
+            "LOAD_METHOD",
+            "LOAD_ATTR",
+        ]:
+            final_value = map_string_arg(argval, original_argrepr)
         elif isinstance(argval, str):
             final_value = map_string_arg(argval, original_argrepr)
         elif isinstance(argval, types.CodeType):
@@ -307,7 +316,7 @@ def tokenize_code_type(
             final_value = original_argrepr
 
         flat_instructions.append(opname)
-        # Only add final_value if it's meaningful (not None and not an empty string)
+
         if final_value is not None and str(final_value) != "":
             flat_instructions.append(str(final_value))
     return flat_instructions

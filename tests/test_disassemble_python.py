@@ -67,7 +67,7 @@ class TestCoreDisassembly:
         # This is the original expected token string for the module object
         assert (
             module_obj.to_token_string()
-            == "resume load_const INTEGER load_const import_name os store_name os load_const OBJECT make_function store_name hello push_null load_build_class load_const OBJECT make_function load_const MyClass call store_name MyClass load_name __name__ load_const __main__ compare_op == pop_jump_if_false TO_NUMBER push_null load_name hello load_const world call pop_top return_const None return_const None"
+            == "resume load_const INTEGER load_const import_name SYSTEM_INTERACTION store_name SYSTEM_INTERACTION load_const OBJECT make_function store_name hello push_null load_build_class load_const OBJECT make_function load_const MyClass call store_name MyClass load_name __name__ load_const __main__ compare_op == pop_jump_if_false TO_NUMBER push_null load_name hello load_const world call pop_top return_const None return_const None"
         )
 
         hello_obj = next((obj for obj in results if obj.name == "hello"), None)
@@ -333,7 +333,7 @@ class TestMainCLI:
             assert row[2] == str(script_file)  # Filepath is the 3rd column
 
         # Check if the expected module token string is present in one of the rows
-        expected_module_tokens = "resume load_const INTEGER load_const import_name os store_name os load_const OBJECT make_function store_name hello push_null load_build_class load_const OBJECT make_function load_const MyClass call store_name MyClass load_name __name__ load_const __main__ compare_op == pop_jump_if_false TO_NUMBER push_null load_name hello load_const world call pop_top return_const None return_const None"
+        expected_module_tokens = "resume load_const INTEGER load_const import_name SYSTEM_INTERACTION store_name SYSTEM_INTERACTION load_const OBJECT make_function store_name hello push_null load_build_class load_const OBJECT make_function load_const MyClass call store_name MyClass load_name __name__ load_const __main__ compare_op == pop_jump_if_false TO_NUMBER push_null load_name hello load_const world call pop_top return_const None return_const None"
         found_module_tokens = False
         for row in data_rows:
             if row[0] == expected_module_tokens:

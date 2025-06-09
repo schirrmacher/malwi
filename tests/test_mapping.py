@@ -61,7 +61,7 @@ class TestArgumentMapping:
         "argval, expected_output_pattern",
         [
             ("eval", "DYNAMIC_CODE_EXECUTION"),
-            ("os", "os"),  # From IMPORT_MAPPING, returns key itself
+            ("os", "SYSTEM_INTERACTION"),
             ("/etc/passwd", SpecialCases.STRING_SENSITIVE_FILE_PATH.value),
             ("192.168.1.1", SpecialCases.STRING_IP.value),
             ("http://example.com", SpecialCases.STRING_URL.value),
