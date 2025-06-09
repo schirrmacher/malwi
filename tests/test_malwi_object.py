@@ -139,7 +139,7 @@ def test_from_file_reads_yaml_correctly():
     assert obj.name == "test_function"
     assert obj.file_path == "example.py"
     assert obj.file_source_code == "print('hello world')"
-    assert isinstance(obj.codeType, types.CodeType)
+    assert isinstance(obj.code_type, types.CodeType)
     assert (
         obj.to_token_string()
         == "suspicious resume push_null load_name USER_IO load_const hello world call pop_top return_const None"
@@ -194,6 +194,6 @@ class Cat:
 
     assert obj.name == "Cat.speak"
     assert obj.file_path == "example.py"
-    assert isinstance(obj.codeType, types.CodeType)
+    assert isinstance(obj.code_type, types.CodeType)
     assert obj.to_token_string() == "suspicious resume return_const Meow!"
     assert obj.warnings == ["suspicious"]

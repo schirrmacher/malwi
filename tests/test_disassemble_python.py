@@ -63,7 +63,7 @@ class TestCoreDisassembly:
 
         module_obj = next((obj for obj in results if obj.name == "<module>"), None)
         assert module_obj is not None
-        assert module_obj.codeType is not None
+        assert module_obj.code_type is not None
         # This is the original expected token string for the module object
         assert (
             module_obj.to_token_string()
@@ -90,7 +90,7 @@ class TestCoreDisassembly:
         assert isinstance(obj, MalwiObject)
         assert obj.name == SpecialCases.MALFORMED_SYNTAX.value
         assert SpecialCases.MALFORMED_SYNTAX.value in obj.warnings
-        assert obj.codeType is None
+        assert obj.code_type is None
 
     def test_disassemble_empty_file(self, tmp_path, empty_py_content):
         p = tmp_path / "empty.py"
@@ -101,7 +101,7 @@ class TestCoreDisassembly:
         assert isinstance(obj, MalwiObject)
         assert obj.name == "<module>"
         assert SpecialCases.MALFORMED_SYNTAX.value not in obj.warnings
-        assert obj.codeType is not None
+        assert obj.code_type is not None
 
     def test_disassemble_non_existent_file(self):
         results = disassemble_python_file(None, "non_existent_file.py")
@@ -110,7 +110,7 @@ class TestCoreDisassembly:
         assert isinstance(obj, MalwiObject)
         assert obj.name == SpecialCases.MALFORMED_FILE.value
         assert SpecialCases.MALFORMED_FILE.value in obj.warnings
-        assert obj.codeType is None
+        assert obj.code_type is None
 
     def test_disassemble_targeted_file(self, tmp_path):
         p = tmp_path / "setup.py"
@@ -122,7 +122,7 @@ class TestCoreDisassembly:
         assert isinstance(obj, MalwiObject)
         assert obj.name == "<module>"
         assert SpecialCases.TARGETED_FILE.value in obj.warnings
-        assert obj.codeType is not None
+        assert obj.code_type is not None
 
 
 class TestOutputFormatting:
@@ -284,9 +284,9 @@ class TestMainCLI:
         # If the names are directly in details (e.g. if details are flat list of objects)
         # reported_names = sorted([item.get("name") for item in report_data["details"] if item.get("name")])
         # If names are nested as assumed above:
-        assert sorted(reported_object_info) == expected_object_names, (
-            f"Reported object names {sorted(reported_object_info)} did not match expected {expected_object_names}"
-        )
+        assert (
+            sorted(reported_object_info) == expected_object_names
+        ), f"Reported object names {sorted(reported_object_info)} did not match expected {expected_object_names}"
 
         mock_sys_exit_func.assert_called_with(0)
 

@@ -592,7 +592,7 @@ class MalwiObject:
     file_source_code: str
     code: Optional[str] = None
     maliciousness: Optional[float] = None
-    codeType: Optional[types.CodeType] = None
+    code_type: Optional[types.CodeType] = None
 
     def __init__(
         self,
@@ -607,7 +607,7 @@ class MalwiObject:
         self.file_path = file_path
         self.warnings = list(warnings)
         self.maliciousness = None
-        self.codeType = codeType
+        self.code_type = codeType
         self.file_source_code = file_source_code
 
         if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
@@ -623,7 +623,7 @@ class MalwiObject:
         all_token_parts: List[str] = []
         all_token_parts.extend(self.warnings)
         generated_instructions = tokenize_code_type(
-            code_type=self.codeType, map_special_tokens=map_special_tokens
+            code_type=self.code_type, map_special_tokens=map_special_tokens
         )
         all_token_parts.extend(generated_instructions)
         return all_token_parts
@@ -640,7 +640,7 @@ class MalwiObject:
 
     def retrieve_source_code(self) -> Optional[str]:
         try:
-            self.code = inspect.getsource(self.codeType)
+            self.code = inspect.getsource(self.code_type)
             return self.code
         except Exception:
             pass
@@ -882,7 +882,7 @@ class MalwiObject:
                             language=language,
                             file_path=file_path_val,
                             warnings=warnings,
-                            codeType=matchingCodeType[0].codeType,
+                            codeType=matchingCodeType[0].code_type,
                         )
                         malwi_objects.append(malwi_object)
 
