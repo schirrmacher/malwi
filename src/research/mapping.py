@@ -12,9 +12,10 @@ from typing import List, Tuple, Optional, Any, Dict, Set
 
 from common.files import read_json_from_file
 
+STRING_MAX_LENGTH = 15
+
 
 class SpecialCases(Enum):
-    STRING_MAX_LENGTH = 15
     STRING_SENSITIVE_FILE_PATH = "STRING_SENSITIVE_FILE_PATH"
     STRING_URL = "STRING_URL"
     STRING_FILE_PATH = "STRING_FILE_PATH"
@@ -192,7 +193,7 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     elif is_file_path(argval):
         return f"{SpecialCases.STRING_FILE_PATH.value}"
     else:
-        if len(argval) <= SpecialCases.STRING_MAX_LENGTH.value:
+        if len(argval) <= STRING_MAX_LENGTH:
             return argval
         if is_escaped_hex(argval):
             prefix = SpecialCases.STRING_ESCAPED_HEX.value

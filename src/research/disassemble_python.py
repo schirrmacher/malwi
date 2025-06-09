@@ -12,6 +12,7 @@ import inspect
 import hashlib
 import warnings
 import argparse
+import collections
 import questionary
 
 from tqdm import tqdm
@@ -20,7 +21,13 @@ from dataclasses import dataclass
 from ollama import ChatResponse, chat
 from typing import List, Tuple, Set, Optional, TextIO, Optional, Any, Dict, Union
 
-from research.mapping import SpecialCases, tokenize_code_type, COMMON_TARGET_FILES
+from research.mapping import (
+    SpecialCases,
+    tokenize_code_type,
+    COMMON_TARGET_FILES,
+    FUNCTION_MAPPING,
+    IMPORT_MAPPING,
+)
 from research.predict import get_node_text_prediction, initialize_models
 
 
@@ -619,6 +626,18 @@ class MalwiObject:
     ) -> None:
         initialize_models(model_path=model_path, tokenizer_path=tokenizer_path)
 
+    @classmethod
+    def all_tokens(
+        cls,
+    ) -> None:
+        tokens = set()
+        tokens.update([member.value for member in SpecialCases])
+        tokens.update(FUNCTION_MAPPING.get("python", {}).values())
+        tokens.update(IMPORT_MAPPING.get("python", {}).values())
+        unique = list(tokens)
+        unique.sort()
+        return unique
+
     def to_tokens(self, map_special_tokens: bool = True) -> List[str]:
         all_token_parts: List[str] = []
         all_token_parts.extend(self.warnings)
@@ -627,6 +646,11 @@ class MalwiObject:
         )
         all_token_parts.extend(generated_instructions)
         return all_token_parts
+
+    def calculate_token_stats(self) -> dict:
+        token_counts = collections.Counter(self.to_tokens())
+        stats = {token: token_counts.get(token, 0) for token in self.all_tokens()}
+        return stats
 
     def to_token_string(self, map_special_tokens: bool = True) -> str:
         return " ".join(self.to_tokens(map_special_tokens=map_special_tokens))

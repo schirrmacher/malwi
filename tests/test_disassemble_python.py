@@ -70,6 +70,8 @@ class TestCoreDisassembly:
             == "resume load_const INTEGER load_const import_name SYSTEM_INTERACTION store_name SYSTEM_INTERACTION load_const OBJECT make_function store_name hello push_null load_build_class load_const OBJECT make_function load_const MyClass call store_name MyClass load_name __name__ load_const __main__ compare_op == pop_jump_if_false TO_NUMBER push_null load_name hello load_const world call pop_top return_const None return_const None"
         )
 
+        assert module_obj.calculate_token_stats()["SYSTEM_INTERACTION"] == 2
+
         hello_obj = next((obj for obj in results if obj.name == "hello"), None)
         assert hello_obj is not None
 
@@ -123,6 +125,78 @@ class TestCoreDisassembly:
         assert obj.name == "<module>"
         assert SpecialCases.TARGETED_FILE.value in obj.warnings
         assert obj.code_type is not None
+
+    def test_all_tokens(self):
+        assert MalwiObject.all_tokens() == [
+            "ARCHIVE_COMPRESSION",
+            "BUILD_MANIPULATION",
+            "CODE_EXECUTION_INTEROP",
+            "CRYPTOGRAPHY",
+            "CRYPTO_ENCRYPTION_DECRYPTION",
+            "CRYPTO_HASHING",
+            "CRYPTO_MISC",
+            "DATABASE_ACCESS",
+            "DATA_HANDLING",
+            "DESERIALIZATION",
+            "DYNAMIC_CODE_COMPILATION",
+            "DYNAMIC_CODE_EXECUTION",
+            "DYNAMIC_IMPORT",
+            "ENCODING_DECODING",
+            "ENVIRONMENT_VARIABLE_ACCESS",
+            "ENVIRONMENT_VARIABLE_MODIFICATION",
+            "FILESYSTEM",
+            "FILESYSTEM_ACCESS",
+            "FILESYSTEM_DELETION",
+            "FILE_READING_ISSUES",
+            "FLOAT",
+            "FS_COPY",
+            "FS_CREATE_DIR",
+            "FS_LINKING",
+            "FS_METADATA_UPDATE",
+            "FS_PERMISSIONS_OWNERSHIP",
+            "FS_RENAME_MOVE",
+            "INTEGER",
+            "LOW_LEVEL_DATA_PACKING",
+            "LOW_LEVEL_DATA_UNPACKING",
+            "LOW_LEVEL_FFI",
+            "LOW_LEVEL_MEMORY_MANIPULATION",
+            "LOW_LEVEL_PYTHON_INTERNALS",
+            "MALFORMED_FILE",
+            "MALFORMED_SYNTAX",
+            "MESSAGING_COMMUNICATION",
+            "NETWORKING",
+            "NETWORK_FILE_DOWNLOAD",
+            "NETWORK_HTTP_REQUEST",
+            "PROCESS_CONCURRENCY",
+            "PROCESS_MANAGEMENT",
+            "PROCESS_REPLACEMENT",
+            "PROCESS_SIGNALING",
+            "PROCESS_TERMINATION",
+            "REFLECTION_DYNAMIC_DELETE",
+            "REFLECTION_DYNAMIC_READ",
+            "REFLECTION_DYNAMIC_WRITE",
+            "SENSITIVE_DATA_ACCESS",
+            "STRING_BASE64",
+            "STRING_ESCAPED_HEX",
+            "STRING_FILE_PATH",
+            "STRING_HEX",
+            "STRING_IP",
+            "STRING_SENSITIVE_FILE_PATH",
+            "STRING_URL",
+            "SYSINFO_FILESYSTEM",
+            "SYSINFO_HARDWARE",
+            "SYSINFO_OS",
+            "SYSINFO_RUNTIME",
+            "SYSINFO_USER",
+            "SYSTEM_INTERACTION",
+            "TARGETED_FILE",
+            "TEMP_FILE_CREATION",
+            "TEMP_FILE_CREATION_INSECURE",
+            "TIME",
+            "TYPING",
+            "USER_IO",
+            "WEB_GUI_AUTOMATION",
+        ]
 
 
 class TestOutputFormatting:
