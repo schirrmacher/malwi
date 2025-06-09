@@ -376,6 +376,7 @@ def process_files(
             if triaging_type:
                 triage(
                     file_objects,
+                    out_path="triaging",
                     malicious_only=malicious_only,
                     malicious_threshold=malicious_threshold,
                     triaging_type=triaging_type,
