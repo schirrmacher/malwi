@@ -1,11 +1,11 @@
-import torch
+import os
+import dis
 import shutil
 import pathlib
 import argparse
 import numpy as np
 import pandas as pd
-import os
-import json
+
 
 from typing import Set
 from pathlib import Path
@@ -132,6 +132,8 @@ def create_or_load_tokenizer(
 
         bpe_trainer_obj = ByteLevelBPETokenizer()
 
+        bytecode_op_names = [key.lower() for key in dis.opmap.keys()]
+
         bpe_default_special_tokens = [
             "[PAD]",
             "[UNK]",
@@ -139,7 +141,9 @@ def create_or_load_tokenizer(
             "[SEP]",
             "[MASK]",
         ]
-        # Combine default BPE special tokens with user-defined ones from the global set
+
+        bpe_default_special_tokens.extend(bytecode_op_names)
+
         combined_special_tokens = list(
             set(bpe_default_special_tokens + list(global_special_tokens))
         )
