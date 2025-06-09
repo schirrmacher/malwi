@@ -40,6 +40,13 @@ Problem: Triaging is the categorization of findings into true-positives or false
 
 ## Model Training
 
+- Commit: `e6e1466`
+- Enabled mapping of imports: `python_import_mapping.get(argval)`
+
+```
+{'eval_loss': 0.013353521004319191, 'eval_accuracy': 0.9970061940812113, 'eval_f1': 0.9681435371658733, 'eval_precision': 0.9814402375649591, 'eval_recall': 0.9552023121387283, 'eval_runtime': 51.1984, 'eval_samples_per_second': 567.596, 'eval_steps_per_second': 35.489, 'epoch': 3.0}
+```
+
 - Commit: `647d0a4`
 - `DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 20.0`
 - Only malicious samples with one file (higher malicious code density)
