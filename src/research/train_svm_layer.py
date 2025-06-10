@@ -1,25 +1,24 @@
 import pickle
 import argparse
 
+import numpy as np
 import pandas as pd
 from sklearn.svm import SVC
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    precision_score,
+    recall_score,
+    f1_score,
+)
 
 
 def load_and_prepare_data(benign_path, malicious_path):
     """
     Loads data from benign and/or malicious CSV files, handles duplicates,
     and combines them into a single DataFrame.
-
-    Args:
-        benign_path (str): Path to the benign CSV file.
-        malicious_path (str): Path to the malicious CSV file.
-
-    Returns:
-        pandas.DataFrame: A single DataFrame containing the combined and cleaned data,
-                          or None if loading fails.
     """
     benign_df = None
     malicious_df = None
@@ -60,8 +59,7 @@ def load_and_prepare_data(benign_path, malicious_path):
     combined_df = pd.concat([benign_df, malicious_df], ignore_index=True, join="outer")
 
     # Fill any missing feature counts with 0
-    # This handles cases where one file has columns the other doesn't
-    feature_cols = combined_df.columns.drop("package")
+    feature_cols = combined_df.columns.drop(["package", "label"])
     combined_df[feature_cols] = combined_df[feature_cols].fillna(0)
 
     print(f"Combined dataset has {len(combined_df)} total rows.")
@@ -73,16 +71,23 @@ def create_features_and_labels(df):
     Takes a combined dataframe and prepares the feature matrix (X),
     label vector (y), and other metadata for training.
     """
-    if "package" not in df.columns:
-        print("Error: Combined CSV data must contain a 'package' column.")
+    # The 'label' column is the target for classification.
+    if "label" not in df.columns:
+        print(
+            "Error: The combined CSV data must contain a 'label' column for classification ('benign'/'malicious')."
+        )
         return None, None, None, None
 
-    # Drop the 'label' column if it exists from the source CSVs, as it's not a feature
-    if "label" in df.columns:
-        df = df.drop("label", axis=1)
+    if "package" not in df.columns:
+        print(
+            "Error: Combined CSV data must contain a 'package' column to be used as an identifier."
+        )
+        return None, None, None, None
 
-    y_labels = df["package"]
-    X_features = df.drop("package", axis=1)
+    # THE FIX IS HERE: Use the 'label' column for y, not 'package'.
+    y_labels = df["label"]
+    # Drop both 'package' and 'label' so they are not used as features.
+    X_features = df.drop(["package", "label"], axis=1)
     feature_names = X_features.columns.tolist()
 
     print(f"Found {len(feature_names)} feature columns for the model.")
@@ -90,7 +95,8 @@ def create_features_and_labels(df):
     le = LabelEncoder()
     y_encoded = le.fit_transform(y_labels)
 
-    print(f"Encoded {len(le.classes_)} unique package labels.")
+    # Updated print statement for clarity
+    print(f"Encoded {len(le.classes_)} unique labels: {list(le.classes_)}")
 
     return X_features.values, y_encoded, feature_names, le
 
@@ -171,38 +177,13 @@ def main():
         print("Halting due to feature creation errors.")
         return
 
-    # --- 2. Split Data (with error handling) ---
+    # --- 2. Split Data ---
     print(f"\nStep 2: Splitting data (Test size: {args.test_size})...")
-    try:
-        # Pre-emptively check for classes with only one sample
-        label_counts = pd.Series(y).value_counts()
-        single_sample_labels = label_counts[label_counts == 1].index
-
-        if not single_sample_labels.empty:
-            problem_packages = label_encoder.inverse_transform(single_sample_labels)
-            print("\n❌ Error: Cannot split data for training.")
-            print(
-                "The following packages have only one sample and cannot be split into training and testing sets:"
-            )
-            for pkg in problem_packages:
-                print(f"  - {pkg}")
-            print(
-                "\nPlease provide at least two samples for each package or remove the single-sample packages from your data."
-            )
-            return  # Exit gracefully
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=args.test_size, random_state=42, stratify=y
-        )
-        print(
-            f"Training set: {len(X_train)} samples | Testing set: {len(X_test)} samples"
-        )
-
-    except ValueError as e:
-        # Fallback for other potential splitting errors
-        print(f"\n❌ An unexpected error occurred during data splitting: {e}")
-        print("Please check the integrity and format of your dataset.")
-        return
+    # Restore stratify=y now that we have a small number of classes
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=args.test_size, random_state=42, stratify=y
+    )
+    print(f"Training set: {len(X_train)} samples | Testing set: {len(X_test)} samples")
 
     # --- 3. Train SVM Model ---
     print("\nStep 3: Training the SVM model...")
@@ -217,10 +198,33 @@ def main():
     # --- 4. Evaluate Model ---
     print("\nStep 4: Evaluating the model...")
     y_pred = model.predict(X_test)
+
+    # --- Overall Performance Metrics ---
     accuracy = accuracy_score(y_test, y_pred)
-    print(f"\nModel Accuracy: {accuracy * 100:.2f}%\n")
-    print("Classification Report:")
-    print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
+    # Use weighted average to account for class imbalance
+    precision = precision_score(y_test, y_pred, average="weighted", zero_division=0)
+    recall = recall_score(y_test, y_pred, average="weighted", zero_division=0)
+    f1 = f1_score(y_test, y_pred, average="weighted", zero_division=0)
+
+    print("\n--- Overall Model Performance ---")
+    print(f"Accuracy:         {accuracy * 100:.2f}%")
+    print(f"Weighted Precision: {precision:.2f}")
+    print(f"Weighted Recall:    {recall:.2f}")
+    print(f"Weighted F1-Score:  {f1:.2f}")
+
+    # --- Detailed Per-Class Report ---
+    print("\n--- Detailed Classification Report ---")
+    try:
+        # Create the report first
+        report = classification_report(
+            y_test, y_pred, target_names=label_encoder.classes_, zero_division=0
+        )
+        # Then print it
+        print(report)
+    except ValueError:
+        print(
+            "Could not generate classification report. Some classes in the test set may have no predicted samples."
+        )
 
     # --- 5. Save Model using Pickle ---
     print(f"\nStep 5: Saving model and metadata to '{args.output}' using pickle...")
