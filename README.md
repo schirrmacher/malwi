@@ -54,7 +54,7 @@ The following datasets are used as a source for malicious samples:
 - [pypi_malregistry](https://github.com/lxyeternal/pypi_malregistry)
 - [DataDog malicious-software-packages-dataset](https://github.com/DataDog/malicious-software-packages-dataset)
 
-### 1. malwi compiles Python files to bytecode
+### 1. malwi compiles Python files to bytecode objects
 
 ```
 def runcommand(value):
@@ -72,7 +72,9 @@ def runcommand(value):
   ...
 ```
 
-### 2. Bytecode operators are mapped to tokens
+### 2. Certain bytecode operators are mapped to constants for simplification
+
+Constants can be seen here in capital letters:
 
 ```
 TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
@@ -81,23 +83,45 @@ TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_c
 ### 3. Tokens are used as input for a pre-trained DistilBert
 
 ```
-Maliciousness: 0.9620079398155212
+DistilBert( Tokenizer( TARGETED_FILE resume load_global subprocess load_attr... ) ) => Maliciousness Score
+```
+
+This creates a list with malicious code objects. However malicious code might be split into chunks and spread across
+a package. This is why the next layers are needed.
+
+### 4. Create statistics about malicious code objects
+
+
+| Object   | DYNAMIC_CODE_EXECUTION | ENCODING_DECODING | FILESYSTEM_ACCESS | ... |
+|----------|------------------------|-------------------|-------------------|-----|
+| Object A | 0                      | 1                 | 0                 | ... |
+| Object B | 1                      | 2                 | 1                 | ... |
+| Object C | 0                      | 0                 | 2                 | ... |
+| **Package**  | **1**                      | **3**                 | **3**                 | **...** |
+
+
+### 5. Take final decision about package based on SVM layer
+
+```
+SVM( DYNAMIC_CODE_EXECUTION, ENCODING_DECODING, FILESYSTEM_ACCESS, ... ) => Malicious
 ```
 
 ## Benchmarks?
 
-The current best model differentiates benign from malicious code with the following metrics:
+DistilBert:
 
 | Metric                     | Value                         |
 |----------------------------|-------------------------------|
-| F1 Score                   | 0.91                          |
-| Recall                     | 0.87                          |
-| Precision                  | 0.94                          |
-| Unique benign samples      | 1,070,888                     |
-| Unique malicious samples   | 152,984                       |
+| F1 Score                   | 0.96                          |
+| Recall                     | 0.95                          |
+| Precision                  | 0.98                          |
 | Training time              | ~4 hours                      |
 | Hardware                   | NVIDIA RTX 4090               |
 | Epochs                     | 3                             |
+
+SVM:
+
+`Coming soon`
 
 ## Limitations
 
