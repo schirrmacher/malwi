@@ -66,12 +66,24 @@ def load_and_prepare_data(benign_path, malicious_path):
     return combined_df
 
 
-def create_features_and_labels(df):
+def create_features_and_labels(
+    df,
+    allowed_features=None,
+):
     """
     Takes a combined dataframe and prepares the feature matrix (X),
     label vector (y), and other metadata for training.
+
+    Parameters:
+    - df: pandas DataFrame
+    - allowed_features: list of column names to allow as features (optional)
+
+    Returns:
+    - X_features: feature matrix
+    - y_encoded: encoded labels
+    - feature_names: list of feature column names
+    - le: fitted LabelEncoder
     """
-    # The 'label' column is the target for classification.
     if "label" not in df.columns:
         print(
             "Error: The combined CSV data must contain a 'label' column for classification ('benign'/'malicious')."
@@ -84,18 +96,27 @@ def create_features_and_labels(df):
         )
         return None, None, None, None
 
-    # THE FIX IS HERE: Use the 'label' column for y, not 'package'.
     y_labels = df["label"]
-    # Drop both 'package' and 'label' so they are not used as features.
-    X_features = df.drop(["package", "label"], axis=1)
-    feature_names = X_features.columns.tolist()
 
-    print(f"Found {len(feature_names)} feature columns for the model.")
+    # Determine which features to keep
+    if allowed_features is not None:
+        missing = [col for col in allowed_features if col not in df.columns]
+        if missing:
+            print(
+                f"Warning: Some allowed feature columns are missing in the data: {missing}"
+            )
+        selected_columns = [col for col in allowed_features if col in df.columns]
+        X_features = df[selected_columns]
+    else:
+        # Default behavior: drop 'label' and 'package'
+        X_features = df.drop(["package", "label"], axis=1)
+
+    feature_names = X_features.columns.tolist()
+    print(f"Using {len(feature_names)} allowed feature columns: {feature_names}")
 
     le = LabelEncoder()
     y_encoded = le.fit_transform(y_labels)
 
-    # Updated print statement for clarity
     print(f"Encoded {len(le.classes_)} unique labels: {list(le.classes_)}")
 
     return X_features.values, y_encoded, feature_names, le
@@ -190,7 +211,13 @@ def main():
     gamma_value = (
         float(args.gamma) if args.gamma.replace(".", "", 1).isdigit() else args.gamma
     )
-    model = SVC(kernel=args.kernel, C=args.C, gamma=gamma_value, probability=True)
+    model = SVC(
+        kernel=args.kernel,
+        C=args.C,
+        gamma=gamma_value,
+        probability=True,
+        class_weight="balanced",
+    )
     print(f"Model parameters: kernel={args.kernel}, C={args.C}, gamma={gamma_value}")
     model.fit(X_train, y_train)
     print("Training complete.")
