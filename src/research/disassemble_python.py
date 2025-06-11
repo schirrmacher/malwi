@@ -240,7 +240,10 @@ def disassemble_python_file(
 
 
 def process_python_file(
-    file_path: Path, predict: bool = True, retrieve_source_code: bool = True
+    file_path: Path,
+    predict: bool = True,
+    retrieve_source_code: bool = True,
+    maliciousness_threshold: Optional[float] = None,
 ) -> Optional[List["MalwiObject"]]:
     try:
         source_code = file_path.read_text(encoding="utf-8", errors="replace")
@@ -248,15 +251,26 @@ def process_python_file(
             source_code, file_path=str(file_path)
         )
 
+        all_objects = []
+
         if predict:
             for obj in objects:
                 obj.predict()
 
-        if retrieve_source_code:
+                if maliciousness_threshold and obj.maliciousness:
+                    if obj.maliciousness > maliciousness_threshold:
+                        all_objects.append(obj)
+                else:
+                    all_objects.append(obj)
+        else:
             for obj in objects:
+                all_objects.append(obj)
+
+        if retrieve_source_code:
+            for obj in all_objects:
                 obj.retrieve_source_code()
 
-        return objects or None
+        return all_objects or None
 
     except Exception as e:
         print(
@@ -339,7 +353,9 @@ def process_files(
     llm_api_key: Optional[str] = None,
 ) -> ProcessingResult:
     accepted_files, skipped_files = collect_files_by_extension(
-        input_path, accepted_extensions, silent
+        input_path=input_path,
+        accepted_extensions=accepted_extensions,
+        silent=silent,
     )
 
     all_files = accepted_files + skipped_files
@@ -375,7 +391,10 @@ def process_files(
     ):
         try:
             file_objects: List[MalwiObject] = process_python_file(
-                file_path, predict=predict, retrieve_source_code=retrieve_source_code
+                file_path,
+                predict=predict,
+                retrieve_source_code=retrieve_source_code,
+                maliciousness_threshold=malicious_threshold if malicious_only else None,
             )
             if file_objects:
                 files_processed_count += 1

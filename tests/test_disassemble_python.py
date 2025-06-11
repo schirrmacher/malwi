@@ -280,6 +280,51 @@ class TestFileProcessingAndCollection:
         assert result.processed_files == 2
         assert mock_get_pred.call_count == 5
 
+    @patch(
+        "research.disassemble_python.get_node_text_prediction",
+        return_value=MOCK_PREDICTION_RESULT,  # This mock returns maliciousness of 0.8
+    )
+    @patch("inspect.getsource", return_value="mock line")
+    def test_process_python_file_maliciousness_threshold(
+        self, mock_inspect, mock_get_pred, tmp_path, valid_py_content
+    ):
+        """
+        Tests that process_python_file correctly filters objects based on the
+        maliciousness_threshold.
+        """
+        p = tmp_path / "valid.py"
+        p.write_text(valid_py_content)
+
+        # --- CASE 1: Threshold is HIGHER than the score, expect objects to be filtered ---
+        # The maliciousness score from the mock is 0.8.
+        # A threshold of 0.9 should now filter all objects.
+        results_filtered = process_python_file(
+            p,
+            predict=True,
+            retrieve_source_code=False,
+            maliciousness_threshold=0.9,
+        )
+
+        # The function returns `None` when the resulting list of objects is empty.
+        # This asserts the new, correct filtering behavior.
+        assert results_filtered is None
+
+        # --- CASE 2: Threshold is LOWER than the score, expect objects to be returned ---
+        # A threshold of 0.7 is lower than the 0.8 score, so nothing should be filtered.
+        results_not_filtered = process_python_file(
+            p,
+            predict=True,
+            retrieve_source_code=False,
+            maliciousness_threshold=0.7,
+        )
+
+        # All 4 objects from the valid_py_content fixture should be returned.
+        assert results_not_filtered is not None
+        assert len(results_not_filtered) == 4
+
+        # Verify that prediction was called and the score was annotated correctly.
+        assert all(obj.maliciousness == 0.8 for obj in results_not_filtered)
+
 
 @patch("research.disassemble_python.MalwiObject.load_models_into_memory")
 class TestMainCLI:

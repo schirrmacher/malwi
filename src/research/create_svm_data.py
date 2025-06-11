@@ -143,6 +143,8 @@ def process_benign_packages(
                 f"Selected {len(sample_of_files)} files and copied to temporary dir: {temp_dir}"
             )
 
+            print(f"look for maliciousness score {args.threshold}")
+
             # Process the temporary directory
             results = process_files(
                 input_path=Path(temp_dir),
@@ -154,6 +156,11 @@ def process_benign_packages(
                 malicious_only=True,
                 malicious_threshold=args.threshold,
             )
+
+            print(f"Identified {len(results.malwi_objects)} malicious objects")
+
+            for o in results.malwi_objects:
+                print(o.maliciousness)
 
             token_stats = MalwiObject.collect_token_stats(results.malwi_objects)
             if not token_stats:
