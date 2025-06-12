@@ -150,8 +150,11 @@ cmds/preprocess.sh
 # Preprocess then start training
 cmds/preprocess_and_train.sh
 
-# Only start training
-cmds/train.sh
+# Start DistilBert training
+cmds/train_distilbert.sh
+
+# Start SVM Layer training
+cmds/train_svm_layer.sh
 ```
 
 ### Triage
