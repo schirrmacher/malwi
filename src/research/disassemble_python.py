@@ -286,7 +286,7 @@ def process_python_file(
 
 
 @dataclass
-class ProcessingResult:
+class MalwiReport:
     """Result of processing files from a path."""
 
     objects: List["MalwiObject"]
@@ -358,7 +358,7 @@ def process_files(
     triaging_type: Optional[str] = None,
     malicious_threshold: float = 0.7,
     llm_api_key: Optional[str] = None,
-) -> ProcessingResult:
+) -> MalwiReport:
     accepted_files, skipped_files = collect_files_by_extension(
         input_path=input_path,
         accepted_extensions=accepted_extensions,
@@ -370,7 +370,7 @@ def process_files(
     files_processed_count = 0
 
     if not accepted_files:
-        return ProcessingResult(
+        return MalwiReport(
             objects=all_objects,
             all_files=all_files,
             skipped_files=skipped_files,
@@ -438,7 +438,7 @@ def process_files(
     )[:5]
     top_activities_string = (f"{k}: {v}" for k, v in top_activities)
 
-    return ProcessingResult(
+    return MalwiReport(
         objects=all_objects,
         all_files=all_files,
         skipped_files=skipped_files,

@@ -6,7 +6,7 @@ from pathlib import Path
 from research.disassemble_python import (
     MalwiObject,
     process_files,
-    ProcessingResult,
+    MalwiReport,
 )
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
@@ -154,7 +154,7 @@ def main():
     elif args.triage_ollama:
         triaging_type = "ollama"
 
-    result: ProcessingResult = process_files(
+    result: MalwiReport = process_files(
         input_path=input_path,
         accepted_extensions=args.extensions,
         predict=True,  # Enable prediction for malwi scanner
