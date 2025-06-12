@@ -54,7 +54,7 @@ The following datasets are used as a source for malicious samples:
 - [pypi_malregistry](https://github.com/lxyeternal/pypi_malregistry)
 - [DataDog malicious-software-packages-dataset](https://github.com/DataDog/malicious-software-packages-dataset)
 
-### 1. malwi compiles Python files to bytecode objects
+### 1. Compile Python files to bytecode
 
 ```
 def runcommand(value):
@@ -72,24 +72,22 @@ def runcommand(value):
   ...
 ```
 
-### 2. Certain bytecode operators are mapped to constants for simplification
-
-Constants can be seen here in capital letters:
+### 2. Map bytecode to tokens
 
 ```
 TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
 ```
 
-### 3. Tokens are used as input for a pre-trained DistilBert
+### 3. Feed tokens into pre-trained DistilBert
 
 ```
-DistilBert( Tokenizer( TARGETED_FILE resume load_global subprocess load_attr... ) ) => Maliciousness Score
+=> Maliciousness Score: 0.92
 ```
 
 This creates a list with malicious code objects. However malicious code might be split into chunks and spread across
 a package. This is why the next layers are needed.
 
-### 4. Create statistics about malicious code objects
+### 4. Create statistics about malicious activities
 
 
 | Object   | DYNAMIC_CODE_EXECUTION | ENCODING_DECODING | FILESYSTEM_ACCESS | ... |
@@ -100,10 +98,12 @@ a package. This is why the next layers are needed.
 | **Package**  | **1**                      | **3**                 | **3**                 | **...** |
 
 
-### 5. Take final decision about package based on SVM layer
+### 5. Take final decision
+
+An SVM layer takes statistics as input and decides if all findings combined are malicious.
 
 ```
-SVM( DYNAMIC_CODE_EXECUTION, ENCODING_DECODING, FILESYSTEM_ACCESS, ... ) => Malicious
+SVM => Malicious
 ```
 
 ## Benchmarks?
