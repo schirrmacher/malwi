@@ -1,2 +1,2 @@
 ./cmds/preprocess.sh
-./cmds/train.sh
+./cmds/train_distilbert.sh
