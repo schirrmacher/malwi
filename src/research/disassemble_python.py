@@ -28,7 +28,11 @@ from research.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
 )
-from research.predict import get_node_text_prediction, initialize_models
+from research.predict import (
+    get_node_text_prediction,
+    initialize_models as initialize_distilbert_models,
+)
+from research.predict_svm_layer import initialize_svm_model
 
 
 class OutputFormatter:
@@ -641,9 +645,15 @@ class MalwiObject:
 
     @classmethod
     def load_models_into_memory(
-        cls, model_path: Optional[str] = None, tokenizer_path: Optional[str] = None
+        cls,
+        distilbert_model_path: Optional[str] = None,
+        tokenizer_path: Optional[str] = None,
+        svm_layer_path: Optional[str] = None,
     ) -> None:
-        initialize_models(model_path=model_path, tokenizer_path=tokenizer_path)
+        initialize_distilbert_models(
+            model_path=distilbert_model_path, tokenizer_path=tokenizer_path
+        )
+        initialize_svm_model(svm_layer_path)
 
     @classmethod
     def all_tokens(
@@ -997,7 +1007,7 @@ def main() -> None:
 
     try:
         MalwiObject.load_models_into_memory(
-            model_path=args.model_path, tokenizer_path=args.tokenizer_path
+            distilbert_model_path=args.model_path, tokenizer_path=args.tokenizer_path
         )
     except Exception as e:
         print(

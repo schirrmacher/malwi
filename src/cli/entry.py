@@ -124,7 +124,7 @@ def main():
     # Load ML models
     try:
         MalwiObject.load_models_into_memory(
-            model_path=args.model_path, tokenizer_path=args.tokenizer_path
+            distilbert_model_path=args.model_path, tokenizer_path=args.tokenizer_path
         )
     except Exception as e:
         if not args.quiet:

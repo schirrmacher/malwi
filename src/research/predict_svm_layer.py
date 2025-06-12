@@ -1,37 +1,54 @@
+import torch
 import pickle
+import logging
 import argparse
 import numpy as np
-from pathlib import Path
-from typing import Dict, Any
-from huggingface_hub import hf_hub_download
 
-from research.disassemble_python import MalwiObject, process_files
+from pathlib import Path
+from huggingface_hub import hf_hub_download
+from typing import Dict, Any, Optional
 
 DEFAULT_HF_REPO = "schirrmacher/malwi-svm-layer"
+DEFAULT_HF_FILE = "svm_layer.pkl"
+
+# Global SVM model variable
+GLOBAL_SVM_MODEL: Optional[Dict[str, Any]] = None
 
 
-def load_model_from_hf(repo_id: str, filename: str = "svm_layer.pkl") -> Dict[str, Any]:
-    """Load the trained SVM model from Hugging Face Hub."""
+def initialize_svm_model(
+    model_path: Optional[str] = None, repo_id: Optional[str] = None
+):
+    global GLOBAL_SVM_MODEL
+
+    # If already initialized, skip re-loading
+    if GLOBAL_SVM_MODEL is not None:
+        return
+
     try:
-        model_path = hf_hub_download(repo_id=repo_id, filename=filename)
-        with open(model_path, "rb") as f:
-            return pickle.load(f)
+        if model_path:
+            with open(model_path, "rb") as f:
+                GLOBAL_SVM_MODEL = pickle.load(f)
+        else:
+            downloaded_path = hf_hub_download(
+                repo_id=repo_id or DEFAULT_HF_REPO,
+                filename=DEFAULT_HF_FILE,
+            )
+            with open(downloaded_path, "rb") as f:
+                GLOBAL_SVM_MODEL = pickle.load(f)
     except Exception as e:
-        raise RuntimeError(f"Failed to load model from HF Hub: {e}")
+        logging.error(f"Failed to load SVM model: {e}")
+        GLOBAL_SVM_MODEL = None
 
 
-def load_model_local(model_path: str) -> Dict[str, Any]:
-    """Load the trained SVM model from local pickle file."""
-    with open(model_path, "rb") as f:
-        return pickle.load(f)
+def predict(token_stats: Dict[str, float]) -> Dict[str, Any]:
+    if GLOBAL_SVM_MODEL is None:
+        raise RuntimeError(
+            "SVM model not initialized. Call initialize_svm_model() first."
+        )
 
-
-def predict(
-    model_payload: Dict[str, Any], token_stats: Dict[str, float]
-) -> Dict[str, Any]:
-    model = model_payload["model"]
-    feature_names = model_payload["feature_names"]
-    label_encoder = model_payload["label_encoder"]
+    model = GLOBAL_SVM_MODEL["model"]
+    feature_names = GLOBAL_SVM_MODEL["feature_names"]
+    label_encoder = GLOBAL_SVM_MODEL["label_encoder"]
 
     feature_vector = [token_stats.get(name, 0) for name in feature_names]
     feature_vector = np.array(feature_vector).reshape(1, -1)
@@ -48,6 +65,8 @@ def predict(
 
 
 def main():
+    from research.disassemble_python import MalwiObject, process_files
+
     parser = argparse.ArgumentParser(
         description="Make predictions using trained SVM model"
     )
@@ -71,22 +90,16 @@ def main():
 
     args = parser.parse_args()
 
-    # Determine model loading source
     print("Loading SVM model...")
-    try:
-        if args.svm:
-            model_payload = load_model_local(args.svm)
-        else:
-            repo_id = args.hf_repo if args.hf_repo else DEFAULT_HF_REPO
-            model_payload = load_model_from_hf(repo_id)
-    except Exception as e:
-        print(f"❌ Error loading model: {e}")
+    initialize_svm_model(model_path=args.svm, repo_id=args.hf_repo)
+
+    if GLOBAL_SVM_MODEL is None:
+        print("❌ Failed to load SVM model. Exiting.")
         return
 
-    # Load ML models for tokenization
     try:
         MalwiObject.load_models_into_memory(
-            model_path=args.model_path, tokenizer_path=args.tokenizer_path
+            distilbert_model_path=args.model_path, tokenizer_path=args.tokenizer_path
         )
     except Exception as e:
         if not args.quiet:
@@ -94,7 +107,6 @@ def main():
                 f"Warning: Could not initialize ML models: {e}. Maliciousness prediction will be disabled."
             )
 
-    # Process files and get token stats
     result = process_files(
         input_path=Path(args.path),
         accepted_extensions=["py"],
@@ -104,11 +116,8 @@ def main():
     )
 
     token_stats = MalwiObject.collect_token_stats(result.malwi_objects)
+    prediction = predict(token_stats)
 
-    # Make prediction
-    prediction = predict(model_payload, token_stats)
-
-    # Display results
     print(f"- {len(result.all_files)} files scanned")
     print(f"- {len(result.skipped_files)} files skipped")
     print(f"- {len(result.malwi_objects)} malicious objects identified")
