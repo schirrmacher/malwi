@@ -192,11 +192,14 @@ def main():
             include_source_files=args.no_sources,
         )
     else:
-        print(f"- {len(result.all_files)} files scanned")
-        print(f"- {len(result.skipped_files)} files skipped")
-        print(f"- {len(result.objects)} malicious objects")
-        print("")
+        print(
+            f"- {len(result.all_files)} files scanned, {len(result.skipped_files)} files skipped"
+        )
         if result.malicious:
+            print(f"- {len(result.objects)} malicious objects")
+            for activity in result.activities:
+                print(f"- {activity.lower()}")
+            print("")
             print(f"=> 👹 malicious {result.confidence}")
         else:
             print(f"=> 🟢 not malicious {result.confidence}")

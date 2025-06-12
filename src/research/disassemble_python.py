@@ -295,6 +295,7 @@ class ProcessingResult:
     processed_files: int
     malicious: bool
     confidence: float
+    activities: List[str]
 
 
 def collect_files_by_extension(
@@ -430,6 +431,13 @@ def process_files(
     token_stats = MalwiObject.collect_token_stats(all_objects)
     prediction = svm_predict(token_stats)
 
+    top_activities = sorted(
+        ((k, v) for k, v in token_stats.items() if v > 0),
+        key=lambda item: item[1],
+        reverse=True,
+    )[:5]
+    top_activities_string = (f"{k}: {v}" for k, v in top_activities)
+
     return ProcessingResult(
         objects=all_objects,
         all_files=all_files,
@@ -437,6 +445,7 @@ def process_files(
         processed_files=files_processed_count,
         malicious=prediction["malicious"],
         confidence=round(prediction["confidence"], 2),
+        activities=top_activities_string,
     )
 
 
