@@ -56,12 +56,14 @@ class OutputFormatter:
     def format_json(
         objects_data: List["MalwiObject"],
         output_stream: TextIO,
-        malicious_threshold: float = 0.5,
-        malicious_only: bool = False,
+        malicious_threshold: float = 0.7,
     ) -> None:
         """Format objects as JSON report."""
         report_json = MalwiObject.to_report_json(
-            objects_data, [], malicious_threshold, 0, malicious_only
+            objects_data,
+            [],
+            malicious_threshold,
+            0,
         )
         output_stream.write(report_json + "\n")
 
@@ -69,12 +71,11 @@ class OutputFormatter:
     def format_yaml(
         objects_data: List["MalwiObject"],
         output_stream: TextIO,
-        malicious_threshold: float = 0.5,
-        malicious_only: bool = False,
+        malicious_threshold: float = 0.7,
     ) -> None:
         """Format objects as YAML report."""
         report_yaml = MalwiObject.to_report_yaml(
-            objects_data, [], malicious_threshold, 0, malicious_only
+            objects_data, [], malicious_threshold, 0
         )
         output_stream.write(report_yaml + "\n")
 
@@ -354,8 +355,7 @@ def process_files(
     silent: bool = False,
     show_progress: bool = True,
     triaging_type: Optional[str] = None,
-    malicious_only: bool = False,
-    malicious_threshold: float = 0.5,
+    malicious_threshold: float = 0.7,
     llm_api_key: Optional[str] = None,
 ) -> ProcessingResult:
     accepted_files, skipped_files = collect_files_by_extension(
@@ -400,7 +400,7 @@ def process_files(
                 file_path,
                 predict=predict,
                 retrieve_source_code=retrieve_source_code,
-                maliciousness_threshold=malicious_threshold if malicious_only else None,
+                maliciousness_threshold=malicious_threshold,
             )
             if file_objects:
                 files_processed_count += 1
@@ -409,7 +409,6 @@ def process_files(
                 triage(
                     file_objects,
                     out_path="triaging",
-                    malicious_only=malicious_only,
                     malicious_threshold=malicious_threshold,
                     triaging_type=triaging_type,
                     llm_api_key=llm_api_key,
@@ -450,7 +449,6 @@ def save_yaml_report(obj: "MalwiObject", path: str, code_hash: str) -> None:
                     [obj.file_path],
                     malicious_threshold=0.0,
                     number_of_skipped_files=0.0,
-                    malicious_only=False,
                 )
             )
         print(f"Saved data for hash {code_hash} to {path}")
@@ -533,8 +531,7 @@ def ollama_triage(
 def triage(
     all_objects: List["MalwiObject"],
     out_path: Path,
-    malicious_only: bool = False,
-    malicious_threshold: float = 0.5,
+    malicious_threshold: float = 0.7,
     grep_string: str = None,
     max_tokens: int = 0,
     triaging_type: str = "manual",
@@ -550,7 +547,7 @@ def triage(
     os.makedirs(malicious_dir, exist_ok=True)
 
     for obj in all_objects:
-        if malicious_only and obj.maliciousness < malicious_threshold:
+        if obj.maliciousness < malicious_threshold:
             continue
 
         obj.retrieve_source_code()
@@ -753,7 +750,6 @@ class MalwiObject:
         all_files: List[str],
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
-        malicious_only: bool = False,
         include_source_files: bool = True,
     ) -> Dict[str, Any]:
         processed_objects_count = len(malwi_files)
@@ -790,13 +786,8 @@ class MalwiObject:
             is_malicious = (
                 mf.maliciousness is not None and mf.maliciousness > malicious_threshold
             )
-            include = (
-                is_malicious
-                or (not malicious_only and mf.maliciousness is None)
-                or (not malicious_only and mf.maliciousness is not None)
-            )
 
-            if include:
+            if is_malicious:
                 mf.retrieve_source_code()
                 report_data["details"].append(mf.to_dict())
 
@@ -823,17 +814,15 @@ class MalwiObject:
         cls,
         malwi_files: List["MalwiObject"],
         all_files: List[str],
-        malicious_threshold: float = 0.5,
+        malicious_threshold: float,
         number_of_skipped_files: int = 0,
-        malicious_only: bool = False,
         include_source_files: bool = True,
     ) -> str:
         report_data = cls._generate_report_data(
-            malwi_files,
-            all_files,
-            malicious_threshold,
-            number_of_skipped_files,
-            malicious_only=malicious_only,
+            malwi_files=malwi_files,
+            all_files=all_files,
+            malicious_threshold=malicious_threshold,
+            number_of_skipped_files=number_of_skipped_files,
             include_source_files=include_source_files,
         )
         return json.dumps(report_data, indent=4)
@@ -843,17 +832,15 @@ class MalwiObject:
         cls,
         malwi_files: List["MalwiObject"],
         all_files: List[str],
-        malicious_threshold: float = 0.5,
+        malicious_threshold: float,
         number_of_skipped_files: int = 0,
-        malicious_only: bool = False,
         include_source_files: bool = True,
     ) -> str:
         report_data = cls._generate_report_data(
-            malwi_files,
-            all_files,
-            malicious_threshold,
-            number_of_skipped_files,
-            malicious_only=malicious_only,
+            malwi_files=malwi_files,
+            all_files=all_files,
+            malicious_threshold=malicious_threshold,
+            number_of_skipped_files=number_of_skipped_files,
             include_source_files=include_source_files,
         )
         return yaml.dump(
@@ -867,14 +854,12 @@ class MalwiObject:
         all_files: List[str],
         malicious_threshold: float = 0.5,
         number_of_skipped_files: int = 0,
-        malicious_only: bool = False,
     ) -> str:
         report_data = cls._generate_report_data(
-            malwi_files,
-            all_files,
-            malicious_threshold,
-            number_of_skipped_files,
-            malicious_only=malicious_only,
+            malwi_files=malwi_files,
+            all_files=all_files,
+            malicious_threshold=malicious_threshold,
+            number_of_skipped_files=number_of_skipped_files,
         )
 
         stats = report_data["statistics"]
@@ -1090,14 +1075,12 @@ def main() -> None:
                         objects,
                         output_stream=output_stream,
                         malicious_threshold=args.malicious_threshold,
-                        malicious_only=args.malicious_only,
                     )
                 elif args.format == "yaml":
                     OutputFormatter.format_yaml(
                         objects,
                         output_stream=output_stream,
                         malicious_threshold=args.malicious_threshold,
-                        malicious_only=args.malicious_only,
                     )
             finally:
                 if output_file:

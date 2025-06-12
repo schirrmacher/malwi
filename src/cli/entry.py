@@ -162,7 +162,6 @@ def main():
         silent=args.quiet,
         show_progress=not args.quiet,
         triaging_type=triaging_type,
-        malicious_only=args.malicious_only,
         malicious_threshold=args.threshold,
     )
 
@@ -174,7 +173,14 @@ def main():
             all_files=[str(f) for f in result.all_files],
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(result.skipped_files),
-            malicious_only=args.malicious_only,
+            include_source_files=args.no_sources,
+        )
+    elif args.format == "json":
+        output = MalwiObject.to_report_json(
+            result.objects,
+            all_files=[str(f) for f in result.all_files],
+            malicious_threshold=args.threshold,
+            number_of_skipped_files=len(result.skipped_files),
             include_source_files=args.no_sources,
         )
     elif args.format == "markdown":
@@ -183,7 +189,6 @@ def main():
             all_files=[str(f) for f in result.all_files],
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(result.skipped_files),
-            malicious_only=args.malicious_only,
             include_source_files=args.no_sources,
         )
     else:

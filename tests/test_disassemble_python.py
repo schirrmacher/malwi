@@ -384,7 +384,6 @@ class TestMainCLI:
                 "json",
                 "--save",
                 str(output_file),
-                "--malicious-only",  # Added to prevent code retrieval
             ],
         ):
             main()

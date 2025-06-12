@@ -153,7 +153,6 @@ def process_benign_packages(
                 retrieve_source_code=False,
                 silent=args.quiet,
                 show_progress=not args.quiet,
-                malicious_only=True,
                 malicious_threshold=args.threshold,
             )
 
@@ -206,7 +205,6 @@ def process_malicious_packages(
                 retrieve_source_code=False,
                 silent=args.quiet,
                 show_progress=not args.quiet,
-                malicious_only=True,
                 malicious_threshold=args.threshold,
             )
 
