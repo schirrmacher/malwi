@@ -24,13 +24,11 @@ malwi ./examples
 
 3) **Evaluate**: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
 ```
-def runcommand(value):
-    output = subprocess.run(value, shell=True, capture_output=True)
-    return [output.stdout, output.stderr]
+- 2 files scanned
+- 0 files skipped
+- 3 malicious objects
 
-## examples/__init__.py
-- Object: runcommand
-- Maliciousness: 👹 0.9620079398155212
+=> 👹 malicious 1.0
 ```
 
 ## Why malwi?
