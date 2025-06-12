@@ -115,12 +115,12 @@ def main():
         malicious_only=True,
     )
 
-    token_stats = MalwiObject.collect_token_stats(result.malwi_objects)
+    token_stats = MalwiObject.collect_token_stats(result.objects)
     prediction = predict(token_stats)
 
     print(f"- {len(result.all_files)} files scanned")
     print(f"- {len(result.skipped_files)} files skipped")
-    print(f"- {len(result.malwi_objects)} malicious objects identified")
+    print(f"- {len(result.objects)} malicious objects identified")
     if prediction["malicious"]:
         print(f"=> 👹 malicious {prediction['confidence']:.2f}")
     else:

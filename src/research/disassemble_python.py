@@ -32,7 +32,7 @@ from research.predict import (
     get_node_text_prediction,
     initialize_models as initialize_distilbert_models,
 )
-from research.predict_svm_layer import initialize_svm_model
+from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
 
 
 class OutputFormatter:
@@ -288,10 +288,12 @@ def process_python_file(
 class ProcessingResult:
     """Result of processing files from a path."""
 
-    malwi_objects: List["MalwiObject"]
+    objects: List["MalwiObject"]
     all_files: List[Path]
     skipped_files: List[Path]
     processed_files: int
+    malicious: bool
+    confidence: float
 
 
 def collect_files_by_extension(
@@ -368,7 +370,7 @@ def process_files(
 
     if not accepted_files:
         return ProcessingResult(
-            malwi_objects=all_objects,
+            objects=all_objects,
             all_files=all_files,
             skipped_files=skipped_files,
             processed_files=files_processed_count,
@@ -425,11 +427,17 @@ def process_files(
             file=sys.stderr,
         )
 
+    # Final Decision
+    token_stats = MalwiObject.collect_token_stats(all_objects)
+    prediction = svm_predict(token_stats)
+
     return ProcessingResult(
-        malwi_objects=all_objects,
+        objects=all_objects,
         all_files=all_files,
         skipped_files=skipped_files,
         processed_files=files_processed_count,
+        malicious=prediction["malicious"],
+        confidence=round(prediction["confidence"], 2),
     )
 
 
@@ -1044,8 +1052,8 @@ def main() -> None:
                 show_progress=True,
             )
 
-            if result.malwi_objects:
-                csv_writer_instance.write_objects(result.malwi_objects)
+            if result.objects:
+                csv_writer_instance.write_objects(result.objects)
 
             csv_writer_instance.close()
 
@@ -1059,7 +1067,7 @@ def main() -> None:
                 silent=False,
                 show_progress=True,
             )
-            objects = result.malwi_objects
+            objects = result.objects
 
             # Handle output
             output_file = None

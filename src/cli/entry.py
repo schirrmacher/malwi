@@ -20,8 +20,8 @@ def main():
     parser.add_argument(
         "--format",
         "-f",
-        choices=["markdown", "json", "yaml", "tokens"],
-        default="markdown",
+        choices=["demo", "markdown", "json", "yaml"],
+        default="demo",
         help="Specify the output format.",
     )
     parser.add_argument(
@@ -79,14 +79,21 @@ def main():
         "--tokenizer-path",
         "-t",
         metavar="PATH",
-        help="Specify the custom tokenizer directory.",
+        help="Specify the tokenizer path",
         default=None,
     )
     developer_group.add_argument(
         "--model-path",
         "-m",
         metavar="PATH",
-        help="Specify the custom model path directory.",
+        help="Specify the DistilBert model path",
+        default=None,
+    )
+    developer_group.add_argument(
+        "--svm-path",
+        "-svm",
+        metavar="PATH",
+        help="Specify the SVM layer model path",
         default=None,
     )
     triage_group = developer_group.add_mutually_exclusive_group()
@@ -124,7 +131,9 @@ def main():
     # Load ML models
     try:
         MalwiObject.load_models_into_memory(
-            distilbert_model_path=args.model_path, tokenizer_path=args.tokenizer_path
+            distilbert_model_path=args.model_path,
+            tokenizer_path=args.tokenizer_path,
+            svm_layer_path=args.svm_path,
         )
     except Exception as e:
         if not args.quiet:
@@ -161,7 +170,7 @@ def main():
 
     if args.format == "yaml":
         output = MalwiObject.to_report_yaml(
-            result.malwi_objects,
+            result.objects,
             all_files=[str(f) for f in result.all_files],
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(result.skipped_files),
@@ -170,23 +179,22 @@ def main():
         )
     elif args.format == "markdown":
         output = MalwiObject.to_report_markdown(
-            result.malwi_objects,
+            result.objects,
             all_files=[str(f) for f in result.all_files],
             malicious_threshold=args.threshold,
             number_of_skipped_files=len(result.skipped_files),
             malicious_only=args.malicious_only,
             include_source_files=args.no_sources,
         )
-    elif args.format == "tokens":
-        output = generate_tokens_output(result.malwi_objects)
     else:
-        output = MalwiObject.to_report_json(
-            result.malwi_objects,
-            all_files=[str(f) for f in result.all_files],
-            malicious_threshold=args.threshold,
-            number_of_skipped_files=len(result.skipped_files),
-            malicious_only=args.malicious_only,
-        )
+        print(f"- {len(result.all_files)} files scanned")
+        print(f"- {len(result.skipped_files)} files skipped")
+        print(f"- {len(result.objects)} malicious objects")
+        print("")
+        if result.malicious:
+            print(f"=> 👹 malicious {result.confidence}")
+        else:
+            print(f"=> 🟢 not malicious {result.confidence}")
 
     if args.save:
         save_path = Path(args.save)
@@ -196,16 +204,6 @@ def main():
             logging.info(f"Output saved to {args.save}")
     else:
         print(output)
-
-
-def generate_tokens_output(malwi_objects: List[MalwiObject]) -> str:
-    """Generate tokens-only output."""
-    lines = []
-    for obj in malwi_objects:
-        lines.append(f"# {obj.file_path} - {obj.name}")
-        lines.append(obj.to_token_string())
-        lines.append("")
-    return "\n".join(lines)
 
 
 if __name__ == "__main__":

@@ -157,12 +157,12 @@ def process_benign_packages(
                 malicious_threshold=args.threshold,
             )
 
-            print(f"Identified {len(results.malwi_objects)} malicious objects")
+            print(f"Identified {len(results.objects)} malicious objects")
 
-            for o in results.malwi_objects:
+            for o in results.objects:
                 print(o.maliciousness)
 
-            token_stats = MalwiObject.collect_token_stats(results.malwi_objects)
+            token_stats = MalwiObject.collect_token_stats(results.objects)
             if not token_stats:
                 print(
                     f"Warning: No token statistics generated for '{package_name}'. Skipping."
@@ -210,7 +210,7 @@ def process_malicious_packages(
                 malicious_threshold=args.threshold,
             )
 
-            token_stats = MalwiObject.collect_token_stats(results.malwi_objects)
+            token_stats = MalwiObject.collect_token_stats(results.objects)
             if not token_stats:
                 print(
                     f"Warning: No token statistics generated for '{package_name}'. Skipping."
