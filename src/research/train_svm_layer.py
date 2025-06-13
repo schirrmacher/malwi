@@ -216,7 +216,6 @@ def main():
         C=args.C,
         gamma=gamma_value,
         probability=True,
-        class_weight="balanced",
     )
     print(f"Model parameters: kernel={args.kernel}, C={args.C}, gamma={gamma_value}")
     model.fit(X_train, y_train)
