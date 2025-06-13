@@ -337,36 +337,47 @@ class MalwiReport:
         )
 
     def to_demo_text(self) -> str:
-        txt = f"- files scanned: {len(self.all_files)}"
-        txt += f"files skipped: {len(self.skipped_files)}\n"
+        txt = f"- files scanned: {len(self.all_files)}\n"
+        txt += f"- files skipped: {len(self.skipped_files)}\n"
 
         if self.malicious:
-            txt += f"- {len(self.objects)} malicious objects\n"
+            txt += f"- {len(self.objects)} malicious objects\n\n"
             for activity in self.activities:
                 txt += f"- {activity.lower()}\n"
             txt += "\n"
-            txt += f"=> 👹 malicious {self.confidence}"
+            txt += f"=> 👹 malicious {self.confidence}\n"
         else:
             txt += f"- {len(self.objects)} suspicious objects"
-            txt += f"=> 🟢 not malicious {self.confidence}"
+            txt += f"=> 🟢 not malicious {self.confidence}\n"
 
         return txt
 
     def to_report_markdown(
         self,
-        number_of_skipped_files: int = 0,
     ) -> str:
-        report_data = self._generate_report_data(
-            number_of_skipped_files=number_of_skipped_files,
-        )
+        report_data = self._generate_report_data(include_source_files=True)
 
         stats = report_data["statistics"]
 
         txt = "# Malwi Report\n\n"
+
+        txt += f"## Summary\n"
+
+        txt += f"Based on the analyzed patterns, the code is evaluated as:\n"
+
+        if self.malicious:
+            txt += f"> 👹 **Malicious**: `{self.confidence}`\n\n"
+        else:
+            txt += f"> 🟢 **Not malicious**: `{self.confidence}`\n\n"
+
         txt += f"- Files: {stats['total_files']}\n"
-        txt += f"- Skipped: {stats['skipped_files']}\n"
+        txt += f"- Skipped: {len(stats['skipped_files'])}\n"
         txt += f"- Processed Objects: {stats['processed_objects']}\n"
         txt += f"- Malicious Objects: {stats['malicious_objects']}\n\n"
+
+        txt += f"## Token Statistics\n"
+        for activity in self.activities:
+            txt += f"- {activity.lower().replace('_', ' ')}\n"
 
         for file in report_data["details"]:
             txt += f"## {file['path']}\n"
@@ -374,11 +385,11 @@ class MalwiReport:
             for object in file["contents"]:
                 name = object["name"] if object["name"] else "<object>"
                 score = object["score"]
-                if score > self.th:
-                    maliciousness = f"👹 {score}"
+                if score > self.threshold:
+                    maliciousness = f"👹 `{round(score, 2)}`"
                 else:
-                    maliciousness = f"🟢 {score}"
-                txt += f"- Object: {name}\n"
+                    maliciousness = f"🟢 `{round(score, 2)}`"
+                txt += f"- Object: `{name if name else 'Not defined'}`\n"
                 txt += f"- Maliciousness: {maliciousness}\n\n"
                 txt += "### Code\n"
                 txt += f"```\n{object['code']}\n```\n\n"
@@ -527,7 +538,7 @@ def process_files(
         ((k, v) for k, v in token_stats.items() if v > 0),
         key=lambda item: item[1],
         reverse=True,
-    )[:5]
+    )
     top_activities_string = (f"{k}: {v}" for k, v in top_activities)
 
     return MalwiReport(

@@ -176,9 +176,7 @@ def main():
             include_source_files=args.no_sources,
         )
     elif args.format == "markdown":
-        output = result.to_report_markdown(
-            include_source_files=args.no_sources,
-        )
+        output = result.to_report_markdown()
     else:
         output = result.to_demo_text()
 
