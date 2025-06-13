@@ -1,3 +1,4 @@
+import io
 import sys
 import json
 import pytest
@@ -9,7 +10,7 @@ from research.mapping import SpecialCases
 
 from research.disassemble_python import (
     MalwiObject,
-    OutputFormatter,
+    MalwiReport,
     disassemble_python_file,
     process_python_file,
     process_files,
@@ -233,10 +234,21 @@ class TestOutputFormatting:
         )
         return [obj1, obj_err]
 
-    def test_format_csv(self, sample_objects_data, capsys):
-        OutputFormatter.format_csv(sample_objects_data, sys.stdout)
-        captured = capsys.readouterr()
-        lines = captured.out.strip().split("\n")
+    def test_format_csv(self, sample_objects_data, tmp_path):
+        report = MalwiReport(
+            objects=sample_objects_data,
+            threshold=0.7,
+            all_files=[p.file_path for p in sample_objects_data],
+            skipped_files=[],
+            processed_files=len(sample_objects_data),
+            malicious=False,
+            confidence=0.1,
+            activities=[],
+        )
+        output = io.StringIO()
+        report.to_report_csv(output)
+        output.seek(0)
+        lines = output.getvalue().strip().split("\n")
         assert "tokens,hash,filepath" in lines[0]
 
         obj1_tokens_csv = lines[1].split(",")[0]

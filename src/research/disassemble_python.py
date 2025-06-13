@@ -35,51 +35,6 @@ from research.predict import (
 from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
 
 
-class OutputFormatter:
-    """Handles different output formats for MalwiObject data."""
-
-    @staticmethod
-    def format_csv(objects_data: List["MalwiObject"], output_stream: TextIO) -> None:
-        """Format objects as CSV."""
-        writer = csv.writer(output_stream)
-        writer.writerow(["tokens", "hash", "filepath"])
-        for obj in objects_data:
-            writer.writerow(
-                [
-                    obj.to_token_string(),
-                    obj.to_string_hash(),
-                    obj.file_path,
-                ]
-            )
-
-    @staticmethod
-    def format_json(
-        objects_data: List["MalwiObject"],
-        output_stream: TextIO,
-        malicious_threshold: float = 0.7,
-    ) -> None:
-        """Format objects as JSON report."""
-        report_json = MalwiObject.to_report_json(
-            objects_data,
-            [],
-            malicious_threshold,
-            0,
-        )
-        output_stream.write(report_json + "\n")
-
-    @staticmethod
-    def format_yaml(
-        objects_data: List["MalwiObject"],
-        output_stream: TextIO,
-        malicious_threshold: float = 0.7,
-    ) -> None:
-        """Format objects as YAML report."""
-        report_yaml = MalwiObject.to_report_yaml(
-            objects_data, [], malicious_threshold, 0
-        )
-        output_stream.write(report_yaml + "\n")
-
-
 class CSVWriter:
     """Handles CSV output operations."""
 
@@ -290,12 +245,148 @@ class MalwiReport:
     """Result of processing files from a path."""
 
     objects: List["MalwiObject"]
+    threshold: float
     all_files: List[Path]
     skipped_files: List[Path]
     processed_files: int
     malicious: bool
     confidence: float
     activities: List[str]
+
+    def _generate_report_data(
+        self,
+        include_source_files: bool = True,
+    ) -> Dict[str, Any]:
+        processed_objects_count = len(self.objects)
+        total_maliciousness_score = 0.0
+        malicious_objects_count = 0
+        files_with_scores_count = 0
+
+        for mf in self.objects:
+            if mf.maliciousness is None:
+                mf.predict()
+
+            if mf.maliciousness is not None:
+                total_maliciousness_score += mf.maliciousness
+                files_with_scores_count += 1
+                if mf.maliciousness > self.threshold:
+                    malicious_objects_count += 1
+
+        summary_statistics = {
+            "total_files": len(self.all_files),
+            "skipped_files": self.skipped_files,
+            "processed_objects": processed_objects_count,
+            "malicious_objects": malicious_objects_count,
+        }
+
+        report_data = {
+            "statistics": summary_statistics,
+            "details": [],
+        }
+
+        if include_source_files:
+            report_data["sources"] = {}
+
+        for mf in self.objects:
+            is_malicious = (
+                mf.maliciousness is not None and mf.maliciousness > self.threshold
+            )
+
+            if is_malicious:
+                mf.retrieve_source_code()
+                report_data["details"].append(mf.to_dict())
+
+                if include_source_files:
+                    report_data["sources"][mf.file_path] = base64.b64encode(
+                        mf.file_source_code.encode("utf-8", errors="replace")
+                    ).decode("utf-8")
+
+        return report_data
+
+    def to_report_csv(self, output_stream: TextIO) -> None:
+        """Format objects as CSV and write to a stream."""
+        writer = csv.writer(output_stream)
+        writer.writerow(["tokens", "hash", "filepath"])
+        for obj in self.objects:
+            writer.writerow(
+                [
+                    obj.to_token_string(),
+                    obj.to_string_hash(),
+                    obj.file_path,
+                ]
+            )
+
+    def to_report_json(
+        self,
+        include_source_files: bool = True,
+    ) -> str:
+        report_data = self._generate_report_data(
+            include_source_files=include_source_files,
+        )
+        return json.dumps(report_data, indent=4)
+
+    def to_report_yaml(
+        self,
+        include_source_files: bool = True,
+    ) -> str:
+        report_data = self._generate_report_data(
+            include_source_files=include_source_files,
+        )
+        return yaml.dump(
+            report_data, sort_keys=False, width=float("inf"), default_flow_style=False
+        )
+
+    def to_demo_text(self) -> str:
+        txt = f"- files scanned: {len(self.all_files)}"
+        txt += f"files skipped: {len(self.skipped_files)}\n"
+
+        if self.malicious:
+            txt += f"- {len(self.objects)} malicious objects\n"
+            for activity in self.activities:
+                txt += f"- {activity.lower()}\n"
+            txt += "\n"
+            txt += f"=> 👹 malicious {self.confidence}"
+        else:
+            txt += f"- {len(self.objects)} suspicious objects"
+            txt += f"=> 🟢 not malicious {self.confidence}"
+
+        return txt
+
+    def to_report_markdown(
+        self,
+        number_of_skipped_files: int = 0,
+    ) -> str:
+        report_data = self._generate_report_data(
+            number_of_skipped_files=number_of_skipped_files,
+        )
+
+        stats = report_data["statistics"]
+
+        txt = "# Malwi Report\n\n"
+        txt += f"- Files: {stats['total_files']}\n"
+        txt += f"- Skipped: {stats['skipped_files']}\n"
+        txt += f"- Processed Objects: {stats['processed_objects']}\n"
+        txt += f"- Malicious Objects: {stats['malicious_objects']}\n\n"
+
+        for file in report_data["details"]:
+            txt += f"## {file['path']}\n"
+
+            for object in file["contents"]:
+                name = object["name"] if object["name"] else "<object>"
+                score = object["score"]
+                if score > self.th:
+                    maliciousness = f"👹 {score}"
+                else:
+                    maliciousness = f"🟢 {score}"
+                txt += f"- Object: {name}\n"
+                txt += f"- Maliciousness: {maliciousness}\n\n"
+                txt += "### Code\n"
+                txt += f"```\n{object['code']}\n```\n\n"
+                txt += "### Tokens\n"
+                txt += f"```\n{object['tokens']}\n```\n"
+            txt += "\n\n"
+
+        return txt
 
 
 def collect_files_by_extension(
@@ -372,6 +463,7 @@ def process_files(
     if not accepted_files:
         return MalwiReport(
             objects=all_objects,
+            threshold=malicious_threshold,
             all_files=all_files,
             skipped_files=skipped_files,
             processed_files=files_processed_count,
@@ -440,6 +532,7 @@ def process_files(
 
     return MalwiReport(
         objects=all_objects,
+        threshold=malicious_threshold,
         all_files=all_files,
         skipped_files=skipped_files,
         processed_files=files_processed_count,
@@ -657,6 +750,17 @@ class MalwiObject:
         if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings += [SpecialCases.TARGETED_FILE.value]
 
+    def collect_token_stats(
+        malwi_objects: List["MalwiObject"],
+    ) -> dict[str, int]:
+        result: Counter = Counter()
+
+        for obj in malwi_objects:
+            stats = obj.calculate_token_stats()
+            result.update(stats)
+
+        return dict(result)
+
     @classmethod
     def load_models_into_memory(
         cls,
@@ -752,152 +856,6 @@ class MalwiObject:
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=4)
-
-    @staticmethod
-    def _generate_report_data(
-        malwi_files: List["MalwiObject"],
-        all_files: List[str],
-        malicious_threshold: float = 0.5,
-        number_of_skipped_files: int = 0,
-        include_source_files: bool = True,
-    ) -> Dict[str, Any]:
-        processed_objects_count = len(malwi_files)
-        total_maliciousness_score = 0.0
-        malicious_objects_count = 0
-        files_with_scores_count = 0
-
-        for mf in malwi_files:
-            if mf.maliciousness is None:
-                mf.predict()
-
-            if mf.maliciousness is not None:
-                total_maliciousness_score += mf.maliciousness
-                files_with_scores_count += 1
-                if mf.maliciousness > malicious_threshold:
-                    malicious_objects_count += 1
-
-        summary_statistics = {
-            "total_files": len(all_files),
-            "skipped_files": number_of_skipped_files,
-            "processed_objects": processed_objects_count,
-            "malicious_objects": malicious_objects_count,
-        }
-
-        report_data = {
-            "statistics": summary_statistics,
-            "details": [],
-        }
-
-        if include_source_files:
-            report_data["sources"] = {}
-
-        for mf in malwi_files:
-            is_malicious = (
-                mf.maliciousness is not None and mf.maliciousness > malicious_threshold
-            )
-
-            if is_malicious:
-                mf.retrieve_source_code()
-                report_data["details"].append(mf.to_dict())
-
-                if include_source_files:
-                    report_data["sources"][mf.file_path] = base64.b64encode(
-                        mf.file_source_code.encode("utf-8", errors="replace")
-                    ).decode("utf-8")
-
-        return report_data
-
-    def collect_token_stats(
-        malwi_objects: List["MalwiObject"],
-    ) -> dict[str, int]:
-        result: Counter = Counter()
-
-        for obj in malwi_objects:
-            stats = obj.calculate_token_stats()
-            result.update(stats)
-
-        return dict(result)
-
-    @classmethod
-    def to_report_json(
-        cls,
-        malwi_files: List["MalwiObject"],
-        all_files: List[str],
-        malicious_threshold: float,
-        number_of_skipped_files: int = 0,
-        include_source_files: bool = True,
-    ) -> str:
-        report_data = cls._generate_report_data(
-            malwi_files=malwi_files,
-            all_files=all_files,
-            malicious_threshold=malicious_threshold,
-            number_of_skipped_files=number_of_skipped_files,
-            include_source_files=include_source_files,
-        )
-        return json.dumps(report_data, indent=4)
-
-    @classmethod
-    def to_report_yaml(
-        cls,
-        malwi_files: List["MalwiObject"],
-        all_files: List[str],
-        malicious_threshold: float,
-        number_of_skipped_files: int = 0,
-        include_source_files: bool = True,
-    ) -> str:
-        report_data = cls._generate_report_data(
-            malwi_files=malwi_files,
-            all_files=all_files,
-            malicious_threshold=malicious_threshold,
-            number_of_skipped_files=number_of_skipped_files,
-            include_source_files=include_source_files,
-        )
-        return yaml.dump(
-            report_data, sort_keys=False, width=float("inf"), default_flow_style=False
-        )
-
-    @classmethod
-    def to_report_markdown(
-        cls,
-        malwi_files: List["MalwiObject"],
-        all_files: List[str],
-        malicious_threshold: float = 0.5,
-        number_of_skipped_files: int = 0,
-    ) -> str:
-        report_data = cls._generate_report_data(
-            malwi_files=malwi_files,
-            all_files=all_files,
-            malicious_threshold=malicious_threshold,
-            number_of_skipped_files=number_of_skipped_files,
-        )
-
-        stats = report_data["statistics"]
-
-        txt = "# Malwi Report\n\n"
-        txt += f"- Files: {stats['total_files']}\n"
-        txt += f"- Skipped: {stats['skipped_files']}\n"
-        txt += f"- Processed Objects: {stats['processed_objects']}\n"
-        txt += f"- Malicious Objects: {stats['malicious_objects']}\n\n"
-
-        for file in report_data["details"]:
-            txt += f"## {file['path']}\n"
-
-            for object in file["contents"]:
-                name = object["name"] if object["name"] else "<object>"
-                score = object["score"]
-                if score > malicious_threshold:
-                    maliciousness = f"👹 {score}"
-                else:
-                    maliciousness = f"🟢 {score}"
-                txt += f"- Object: {name}\n"
-                txt += f"- Maliciousness: {maliciousness}\n\n"
-                txt += "### Code\n"
-                txt += f"```\n{object['code']}\n```\n\n"
-                txt += "### Tokens\n"
-                txt += f"```\n{object['tokens']}\n```\n"
-            txt += "\n\n"
-
-        return txt
 
     @classmethod
     def from_file(
@@ -1022,7 +980,6 @@ def main() -> None:
         sys.exit(1)
 
     # Process input and collect all data
-    objects: List[MalwiObject] = []
     csv_writer_instance: Optional[CSVWriter] = None
 
     try:
@@ -1056,12 +1013,12 @@ def main() -> None:
             result = process_files(
                 input_path_obj,
                 accepted_extensions=["py"],
-                predict=False,
-                retrieve_source_code=False,
+                predict=True,
+                retrieve_source_code=True,
                 silent=False,
                 show_progress=True,
+                malicious_threshold=args.malicious_threshold,
             )
-            objects = result.objects
 
             # Handle output
             output_file = None
@@ -1078,19 +1035,11 @@ def main() -> None:
 
             try:
                 if args.format == "csv":
-                    OutputFormatter.format_csv(objects, output_stream)
+                    result.to_report_csv(output_stream)
                 elif args.format == "json":
-                    OutputFormatter.format_json(
-                        objects,
-                        output_stream=output_stream,
-                        malicious_threshold=args.malicious_threshold,
-                    )
+                    output_stream.write(result.to_report_json() + "\n")
                 elif args.format == "yaml":
-                    OutputFormatter.format_yaml(
-                        objects,
-                        output_stream=output_stream,
-                        malicious_threshold=args.malicious_threshold,
-                    )
+                    output_stream.write(result.to_report_yaml() + "\n")
             finally:
                 if output_file:
                     output_file.close()

@@ -168,41 +168,19 @@ def main():
     output = ""
 
     if args.format == "yaml":
-        output = MalwiObject.to_report_yaml(
-            result.objects,
-            all_files=[str(f) for f in result.all_files],
-            malicious_threshold=args.threshold,
-            number_of_skipped_files=len(result.skipped_files),
+        output = result.to_report_yaml(
             include_source_files=args.no_sources,
         )
     elif args.format == "json":
-        output = MalwiObject.to_report_json(
-            result.objects,
-            all_files=[str(f) for f in result.all_files],
-            malicious_threshold=args.threshold,
-            number_of_skipped_files=len(result.skipped_files),
+        output = result.to_report_json(
             include_source_files=args.no_sources,
         )
     elif args.format == "markdown":
-        output = MalwiObject.to_report_markdown(
-            result.objects,
-            all_files=[str(f) for f in result.all_files],
-            malicious_threshold=args.threshold,
-            number_of_skipped_files=len(result.skipped_files),
+        output = result.to_report_markdown(
             include_source_files=args.no_sources,
         )
     else:
-        print(
-            f"- {len(result.all_files)} files scanned, {len(result.skipped_files)} files skipped"
-        )
-        if result.malicious:
-            print(f"- {len(result.objects)} malicious objects")
-            for activity in result.activities:
-                print(f"- {activity.lower()}")
-            print("")
-            print(f"=> 👹 malicious {result.confidence}")
-        else:
-            print(f"=> 🟢 not malicious {result.confidence}")
+        output = result.to_demo_text()
 
     if args.save:
         save_path = Path(args.save)
