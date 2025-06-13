@@ -466,6 +466,7 @@ def process_files(
     show_progress: bool = True,
     triaging_type: Optional[str] = None,
     malicious_threshold: float = 0.7,
+    predict_svm: bool = True,
     llm_api_key: Optional[str] = None,
 ) -> MalwiReport:
     accepted_files, skipped_files = collect_files_by_extension(
@@ -540,6 +541,18 @@ def process_files(
             processed_files=files_processed_count,
             malicious=False,
             confidence=1.0,
+            activities=[],
+        )
+
+    if not predict_svm:
+        return MalwiReport(
+            objects=all_objects,
+            threshold=malicious_threshold,
+            all_files=all_files,
+            skipped_files=skipped_files,
+            processed_files=files_processed_count,
+            malicious=False,
+            confidence=0.0,
             activities=[],
         )
 
@@ -1045,6 +1058,7 @@ def main() -> None:
                 input_path_obj,
                 accepted_extensions=["py"],
                 predict=False,
+                predict_svm=False,  # Performance
                 retrieve_source_code=False,
                 silent=False,
                 show_progress=True,
