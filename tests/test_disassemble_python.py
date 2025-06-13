@@ -222,7 +222,7 @@ class TestOutputFormatting:
             language="python",
             file_path=dummy_file_path,
             file_source_code="pass",
-            codeType=co_pass,
+            code_type=co_pass,
         )
 
         obj_err = MalwiObject(

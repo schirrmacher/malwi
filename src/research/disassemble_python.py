@@ -91,7 +91,7 @@ def recursively_disassemble_python(
                 name=err_msg,
                 language=language,
                 file_path=file_path,
-                codeType=None,
+                code_type=None,
                 file_source_code="",
                 warnings=[err_msg],
             )
@@ -119,7 +119,7 @@ def recursively_disassemble_python(
         name=code_obj.co_qualname,
         language=language,
         file_path=file_path,
-        codeType=code_obj,
+        code_type=code_obj,
         file_source_code=source_code,
     )
     all_objects_data.append(object_data)
@@ -169,7 +169,7 @@ def disassemble_python_file(
                         language="python",
                         file_path=file_path,
                         file_source_code=source_code,
-                        codeType=target_code,
+                        code_type=target_code,
                     )
                 ]
 
@@ -737,14 +737,14 @@ class MalwiObject:
         language: str,
         file_path: str,
         file_source_code: str,
-        codeType: types.CodeType = None,
+        code_type: types.CodeType = None,
         warnings: List[str] = [],
     ):
         self.name = name
         self.file_path = file_path
         self.warnings = list(warnings)
         self.maliciousness = None
-        self.code_type = codeType
+        self.code_type = code_type
         self.file_source_code = file_source_code
 
         if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
@@ -906,7 +906,7 @@ class MalwiObject:
                             language=language,
                             file_path=file_path_val,
                             warnings=warnings,
-                            codeType=matchingCodeType[0].code_type,
+                            code_type=matchingCodeType[0].code_type,
                         )
                         malwi_objects.append(malwi_object)
 

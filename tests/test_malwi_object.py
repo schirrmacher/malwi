@@ -33,11 +33,11 @@ class TestMalwiObject:
             language="python",
             file_source_code="abcd",
             file_path="test.py",
-            codeType=sample_code_type,
+            code_type=sample_code_type,
         )
 
     def test_to_tokens_and_string(self, malwi_obj, sample_code_type):
-        malwi_obj.codeType = sample_code_type
+        malwi_obj.code_type = sample_code_type
         token_string = malwi_obj.to_token_string()
         assert "load_const" in token_string
         assert SpecialCases.INTEGER.value in token_string
@@ -48,7 +48,7 @@ class TestMalwiObject:
         self, mock_getsourcelines, malwi_obj, sample_code_type
     ):
         mock_getsourcelines.return_value = "a = 1\nb = 'hello'\n"
-        malwi_obj.codeType = sample_code_type  # ensure codeType is set
+        malwi_obj.code_type = sample_code_type  # ensure codeType is set
         source = malwi_obj.retrieve_source_code()
         assert source == "a = 1\nb = 'hello'\n"
         assert malwi_obj.code == source
@@ -71,7 +71,7 @@ class TestMalwiObject:
         mock_get_pred.assert_called_once_with(malwi_obj.to_token_string())
 
     def test_to_dict_yaml_json(self, malwi_obj, sample_code_type):
-        malwi_obj.codeType = sample_code_type
+        malwi_obj.code_type = sample_code_type
         malwi_obj.code = "source code\nline2"  # Multi-line for LiteralStr
         malwi_obj.maliciousness = 0.75
 
