@@ -797,11 +797,7 @@ class MalwiObject:
             stats = obj.calculate_token_stats()
             result.update(stats)
 
-        result[MetaAttributes.FILE_COUNT.value] = file_count
         result[MetaAttributes.MALICIOUS_COUNT.value] = malicious_count
-        result[MetaAttributes.MALICIOUS_RATIO.value] = (
-            malicious_count / file_count if file_count > 0 else 0.0
-        )
 
         return dict(result)
 
