@@ -531,10 +531,16 @@ def process_files(
                     f"Critical error processing file {file_path}: {e}", file=sys.stderr
                 )
 
-    if files_processed_count == 0 and accepted_files and not silent:
-        print(
-            "No files were successfully processed to produce data from the input path.",
-            file=sys.stderr,
+    if len(all_objects) == 0:
+        return MalwiReport(
+            objects=[],
+            threshold=malicious_threshold,
+            all_files=all_files,
+            skipped_files=skipped_files,
+            processed_files=files_processed_count,
+            malicious=False,
+            confidence=1.0,
+            activities=[],
         )
 
     # Final Decision
