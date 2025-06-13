@@ -15,6 +15,7 @@ import argparse
 import questionary
 
 from tqdm import tqdm
+from enum import Enum
 from pathlib import Path
 from collections import Counter
 from dataclasses import dataclass
@@ -33,6 +34,12 @@ from research.predict import (
     initialize_models as initialize_distilbert_models,
 )
 from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
+
+
+class MetaAttributes(Enum):
+    FILE_COUNT = "FILE_COUNT"
+    MALICIOUS_COUNT = "MALICIOUS_COUNT"
+    MALICIOUS_RATIO = "MALICIOUS_RATIO"
 
 
 class CSVWriter:
@@ -343,7 +350,7 @@ class MalwiReport:
         if self.malicious:
             txt += f"- malicious objects: {len(self.objects)} \n\n"
             for activity in self.activities:
-                txt += f"- {activity.lower().replace("_", " ")}\n"
+                txt += f"- {activity.lower().replace('_', ' ')}\n"
             txt += "\n"
             txt += f"=> 👹 malicious {self.confidence}\n"
         else:
@@ -531,7 +538,9 @@ def process_files(
         )
 
     # Final Decision
-    token_stats = MalwiObject.collect_token_stats(all_objects)
+    token_stats = MalwiObject.collect_token_stats(
+        all_objects, file_count=len(all_files), malicious_count=len(all_objects)
+    )
     prediction = svm_predict(token_stats)
 
     top_activities = sorted(
@@ -778,13 +787,21 @@ class MalwiObject:
             self.warnings += [SpecialCases.TARGETED_FILE.value]
 
     def collect_token_stats(
-        malwi_objects: List["MalwiObject"],
+        objects: List["MalwiObject"],
+        file_count: int = 0,
+        malicious_count: int = 0,
     ) -> dict[str, int]:
         result: Counter = Counter()
 
-        for obj in malwi_objects:
+        for obj in objects:
             stats = obj.calculate_token_stats()
             result.update(stats)
+
+        result[MetaAttributes.FILE_COUNT.value] = file_count
+        result[MetaAttributes.MALICIOUS_COUNT.value] = malicious_count
+        result[MetaAttributes.MALICIOUS_RATIO.value] = (
+            malicious_count / file_count if file_count > 0 else 0.0
+        )
 
         return dict(result)
 
@@ -806,6 +823,7 @@ class MalwiObject:
     ) -> None:
         tokens = set()
         tokens.update([member.value for member in SpecialCases])
+        tokens.update([member.value for member in MetaAttributes])
         tokens.update(FUNCTION_MAPPING.get("python", {}).values())
         tokens.update(IMPORT_MAPPING.get("python", {}).values())
         unique = list(tokens)

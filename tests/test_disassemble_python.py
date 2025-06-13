@@ -85,8 +85,7 @@ class TestCoreDisassembly:
         assert method_one_obj is not None
 
         assert (
-            MalwiObject.collect_token_stats(malwi_objects=results)["SYSTEM_INTERACTION"]
-            == 3
+            MalwiObject.collect_token_stats(objects=results)["SYSTEM_INTERACTION"] == 3
         )
 
     def test_disassemble_syntax_error_file(self, tmp_path, syntax_error_py_content):
@@ -159,6 +158,7 @@ class TestCoreDisassembly:
                 "FILESYSTEM",
                 "FILESYSTEM_ACCESS",
                 "FILESYSTEM_DELETION",
+                "FILE_COUNT",
                 "FILE_READING_ISSUES",
                 "FLOAT",
                 "FS_COPY",
@@ -175,6 +175,8 @@ class TestCoreDisassembly:
                 "LOW_LEVEL_PYTHON_INTERNALS",
                 "MALFORMED_FILE",
                 "MALFORMED_SYNTAX",
+                "MALICIOUS_COUNT",
+                "MALICIOUS_RATIO",
                 "MESSAGING_COMMUNICATION",
                 "NETWORKING",
                 "NETWORK_FILE_DOWNLOAD",
