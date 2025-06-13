@@ -564,9 +564,10 @@ def manual_triage(
     obj: "MalwiObject", code_hash: str, benign_path: str, malicious_path: str
 ) -> None:
     triage_result: Optional[str] = questionary.select(
-        f"Is the following code malicious?\n\n# Original Maliciousness: {obj.maliciousness}\n\n{obj.code}\n\n",
+        f"Is the following code malicious?\n\n# Original Maliciousness: {obj.maliciousness}\n# {obj.file_path}\n\n{obj.code}\n\n{obj.to_token_string()}",
         use_shortcuts=True,
-        choices=["yes", "no", "skip", "exit"],
+        multiline=True,
+        choices=["yes", "no", "tokens", "skip", "exit"],
     ).ask()
 
     if triage_result == "yes":
@@ -580,6 +581,21 @@ def manual_triage(
     elif triage_result == "exit" or triage_result is None:
         print("Exiting triage process.")
         exit(0)
+    elif triage_result == "tokens" or triage_result is None:
+        triage_result: Optional[str] = questionary.select(
+            obj.to_token_string(),
+            choices=["proceed", "exit"],
+        ).ask()
+        if triage_result == "proceed" or triage_result is None:
+            manual_triage(
+                obj=obj,
+                code_hash=code_hash,
+                benign_path=benign_path,
+                malicious_path=malicious_path,
+            )
+        elif triage_result == "exit":
+            print("Exiting triage process.")
+            exit(0)
     else:
         print(f"Unknown triage result '{triage_result}', skipping sample {code_hash}.")
 
