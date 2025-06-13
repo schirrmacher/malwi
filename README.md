@@ -106,7 +106,7 @@ SVM => Malicious
 
 ## Benchmarks?
 
-DistilBert:
+### DistilBert
 
 | Metric                     | Value                         |
 |----------------------------|-------------------------------|
@@ -117,11 +117,18 @@ DistilBert:
 | Hardware                   | NVIDIA RTX 4090               |
 | Epochs                     | 3                             |
 
-SVM:
+### SVM Layer
 
-`Coming soon`
+| Metric                     | Value                         |
+|----------------------------|-------------------------------|
+| F1 Score                   | 0.96                          |
+| Recall                     | 0.95                          |
+| Precision                  | 0.95                          |
 
 ## Limitations
+
+malwi compiles Python to bytecode, which is highly version dependent. The AI models are trained on that bytecode.
+This means the performance might drop if a user installed a Python version which creates different bytecode instructions. There is no data yet about this.
 
 The malicious dataset includes some boilerplate functions, such as init functions, which can also appear in benign code. These cause false positives during scans. The goal is to triage and reduce such false positives to improve malwi's accuracy.
 
