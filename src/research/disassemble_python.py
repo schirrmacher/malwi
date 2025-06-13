@@ -341,13 +341,13 @@ class MalwiReport:
         txt += f"- files skipped: {len(self.skipped_files)}\n"
 
         if self.malicious:
-            txt += f"- {len(self.objects)} malicious objects\n\n"
+            txt += f"- malicious objects: {len(self.objects)} \n\n"
             for activity in self.activities:
-                txt += f"- {activity.lower()}\n"
+                txt += f"- {activity.lower().replace("_", " ")}\n"
             txt += "\n"
             txt += f"=> 👹 malicious {self.confidence}\n"
         else:
-            txt += f"- {len(self.objects)} suspicious objects"
+            txt += f"- suspicious objects: {len(self.objects)}\n"
             txt += f"=> 🟢 not malicious {self.confidence}\n"
 
         return txt
