@@ -5,6 +5,7 @@ import pathlib
 import argparse
 import numpy as np
 import pandas as pd
+import json
 
 
 from typing import Set
@@ -50,19 +51,19 @@ DEFAULT_NUM_PROC = (
 
 
 def load_asts_from_csv(
-    csv_file_path: str, ast_column_name: str = "tokens"
+    csv_file_path: str, token_column_name: str = "tokens"
 ) -> list[str]:
     asts = []
     try:
         df = pd.read_csv(csv_file_path)
-        if ast_column_name not in df.columns:
+        if token_column_name not in df.columns:
             print(
-                f"Warning: Column '{ast_column_name}' not found in {csv_file_path}. Returning empty list."
+                f"Warning: Column '{token_column_name}' not found in {csv_file_path}. Returning empty list."
             )
             return []
 
         for idx, row in df.iterrows():
-            ast_data = row[ast_column_name]
+            ast_data = row[token_column_name]
             if (
                 pd.isna(ast_data)
                 or not isinstance(ast_data, str)
@@ -185,14 +186,124 @@ def create_or_load_tokenizer(
     return tokenizer
 
 
+def save_training_metrics(metrics_dict: dict, output_path: Path):
+    """Save training metrics to a text file."""
+    metrics_file = output_path / "training_metrics.txt"
+
+    try:
+        with open(metrics_file, "w") as f:
+            f.write("Training Metrics Summary\n")
+            f.write("=" * 40 + "\n\n")
+
+            for key, value in metrics_dict.items():
+                if isinstance(value, (int, float)):
+                    f.write(f"{key}: {value:.4f}\n")
+                else:
+                    f.write(f"{key}: {value}\n")
+
+            f.write("\n" + "=" * 40 + "\n")
+            f.write("Training completed successfully\n")
+
+        print(f"Training metrics saved to: {metrics_file}")
+
+    except Exception as e:
+        print(f"Warning: Could not save training metrics: {e}")
+
+
+def save_model_with_prefix(trainer, tokenizer, output_path: Path):
+    """Save model and tokenizer with prefixes in the same directory."""
+    print(f"\nSaving model and tokenizer with prefixes to {output_path}...")
+
+    # Create output directory if it doesn't exist
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    # Save model files with distilbert prefix
+    model_files = trainer.save_model(str(output_path))
+
+    # Rename model files to add distilbert prefix
+    model_file_mappings = {
+        "config.json": "distilbert_config.json",
+        "pytorch_model.bin": "distilbert_pytorch_model.bin",
+        "model.safetensors": "distilbert_model.safetensors",
+        "training_args.bin": "distilbert_training_args.bin",
+    }
+
+    for original_name, new_name in model_file_mappings.items():
+        original_path = output_path / original_name
+        new_path = output_path / new_name
+        if original_path.exists():
+            original_path.rename(new_path)
+            print(f"Renamed {original_name} to {new_name}")
+
+    # Save tokenizer files with tokenizer prefix
+    tokenizer.save_pretrained(str(output_path))
+
+    # Rename tokenizer files to add tokenizer prefix
+    tokenizer_file_mappings = {
+        "tokenizer.json": "tokenizer.json",
+        "tokenizer_config.json": "tokenizer_config.json",
+        "vocab.json": "tokenizer_vocab.json",
+        "merges.txt": "tokenizer_merges.txt",
+        "special_tokens_map.json": "tokenizer_special_tokens_map.json",
+    }
+
+    for original_name, new_name in tokenizer_file_mappings.items():
+        original_path = output_path / original_name
+        new_path = output_path / new_name
+        if original_path.exists():
+            original_path.rename(new_path)
+            print(f"Renamed {original_name} to {new_name}")
+
+
+def cleanup_model_directory(model_output_path: Path):
+    """Clean up the model directory, keeping only essential prefixed model files and tokenizer."""
+    print(f"\nCleaning up model directory: {model_output_path}")
+
+    # Essential files to keep (with prefixes)
+    essential_files = {
+        "distilbert_config.json",
+        "distilbert_pytorch_model.bin",
+        "distilbert_model.safetensors",
+        "distilbert_training_args.bin",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "tokenizer_vocab.json",
+        "tokenizer_merges.txt",
+        "tokenizer_special_tokens_map.json",
+        "training_metrics.txt",
+    }
+
+    if not model_output_path.exists():
+        print(f"Directory {model_output_path} does not exist, skipping cleanup.")
+        return
+
+    try:
+        for item in model_output_path.iterdir():
+            if item.is_file():
+                # Check if file should be kept
+                if item.name not in essential_files:
+                    print(f"Removing file: {item}")
+                    item.unlink()
+                else:
+                    print(f"Keeping essential file: {item}")
+
+            elif item.is_dir():
+                # Remove all directories (results, logs, checkpoints, etc.)
+                print(f"Removing directory: {item}")
+                shutil.rmtree(item)
+
+    except Exception as e:
+        print(f"Warning: Error during cleanup: {e}")
+
+
 def run_training(args):
     if args.disable_hf_datasets_progress_bar:
         disable_progress_bar()
 
     print("--- Starting New Model Training ---")
 
-    benign_asts = load_asts_from_csv(args.benign, args.ast_column)
-    malicious_asts = load_asts_from_csv(args.malicious, args.ast_column)
+    benign_asts = load_asts_from_csv(args.benign, args.token_column)
+    malicious_asts = load_asts_from_csv(args.malicious, args.token_column)
 
     print(f"Original benign samples count: {len(benign_asts)}")
     print(f"Original malicious samples count: {len(malicious_asts)}")
@@ -297,6 +408,7 @@ def run_training(args):
     val_dataset_for_trainer = tokenized_datasets["validation"]
 
     model_output_path = Path(args.model_output_path)
+    # Create temporary results and logs directories for training
     results_path = model_output_path / "results"
     logs_path = model_output_path / "logs"
 
@@ -344,7 +456,39 @@ def run_training(args):
     )
 
     print("\nStarting model training...")
-    trainer.train()
+    train_result = trainer.train()
+
+    # Evaluate the final model
+    print("\nEvaluating final model...")
+    eval_result = trainer.evaluate()
+
+    # Save the final model and tokenizer with prefixes to the main output directory
+    save_model_with_prefix(trainer, tokenizer, model_output_path)
+
+    # Collect training metrics
+    training_metrics = {
+        "training_loss": train_result.training_loss,
+        "epochs_completed": args.epochs,
+        "train_samples": len(distilbert_train_texts),
+        "validation_samples": len(distilbert_val_texts),
+        "benign_samples_used": len(benign_asts),
+        "malicious_samples_used": len(malicious_asts),
+        "benign_to_malicious_ratio": args.benign_to_malicious_ratio,
+        "vocab_size": args.vocab_size,
+        "max_length": args.max_length,
+        "batch_size": args.batch_size,
+        **eval_result,  # Include final evaluation metrics
+    }
+
+    # Save training metrics to text file
+    save_training_metrics(training_metrics, model_output_path)
+
+    # Clean up the model directory
+    cleanup_model_directory(model_output_path)
+
+    print(f"\nTraining completed successfully!")
+    print(f"Final model saved to: {model_output_path}")
+    print(f"Training metrics saved to: {model_output_path}/training_metrics.txt")
 
 
 if __name__ == "__main__":
@@ -373,7 +517,7 @@ if __name__ == "__main__":
     # Removed --resume-from-checkpoint
     parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
     parser.add_argument(
-        "--ast-column",
+        "--token-column",
         type=str,
         default="tokens",
         help="Name of column to use from CSV",
