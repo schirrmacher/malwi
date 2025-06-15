@@ -29,7 +29,7 @@ from research.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
 )
-from research.predict import (
+from research.predict_distilbert import (
     get_node_text_prediction,
     initialize_models as initialize_distilbert_models,
 )
