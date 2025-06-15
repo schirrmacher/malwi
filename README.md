@@ -137,7 +137,9 @@ Do you have access to malicious Rust, Go, whatever packages? **Contact me.**
 
 ### Develop
 
-**Prerequisites:** [uv](https://docs.astral.sh/uv/)
+**Prerequisites:** 
+- [uv](https://docs.astral.sh/uv/)
+- Download [malwi-samples](https://github.com/schirrmacher/malwi-samples) in the same parent folder
 
 ```bash
 # Download and process data
