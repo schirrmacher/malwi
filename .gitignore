@@ -14,3 +14,4 @@ benign*.csv
 malicious*.csv
 malwi_tokenizer/*
 malwi_model/*
+malwi-samples
