@@ -1,6 +1,7 @@
 import pickle
 import argparse
 import json
+import os
 
 import numpy as np
 import pandas as pd
@@ -100,7 +101,6 @@ def clean_and_convert_features(df):
 def create_features_and_labels(
     df,
     allowed_features=None,
-    scale_features=True,
 ):
     """
     Takes a combined dataframe and prepares the feature matrix (X),
@@ -109,14 +109,13 @@ def create_features_and_labels(
     Parameters:
     - df: pandas DataFrame
     - allowed_features: list of column names to allow as features (optional)
-    - scale_features: bool, whether to apply standard scaling (default: True)
 
     Returns:
     - X_features: feature matrix (numpy array)
     - y_encoded: encoded labels
     - feature_names: list of feature column names
     - le: fitted LabelEncoder
-    - scaler: fitted StandardScaler (if scale_features=True)
+    - scaler: fitted StandardScaler
     """
     if "label" not in df.columns:
         print(
@@ -152,17 +151,15 @@ def create_features_and_labels(
     print("Cleaning and converting features to numeric...")
     X_features_df = clean_and_convert_features(X_features_df)
 
-    # Apply scaling if requested
-    scaler = None
-    if scale_features:
-        print("Applying standard scaling to features...")
-        scaler = StandardScaler()
-        X_features_scaled = scaler.fit_transform(X_features_df)
-        # Convert back to DataFrame to maintain pandas operations
-        X_features_df = pd.DataFrame(
-            X_features_scaled, columns=feature_names, index=X_features_df.index
-        )
-        print("Standard scaling applied.")
+    # Apply standard scaling (always enabled now)
+    print("Applying standard scaling to features...")
+    scaler = StandardScaler()
+    X_features_scaled = scaler.fit_transform(X_features_df)
+    # Convert back to DataFrame to maintain pandas operations
+    X_features_df = pd.DataFrame(
+        X_features_scaled, columns=feature_names, index=X_features_df.index
+    )
+    print("Standard scaling applied.")
 
     # Encode labels
     le = LabelEncoder()
@@ -197,14 +194,8 @@ def main():
     parser.add_argument(
         "--output",
         "-o",
-        default="svm_layer.pkl",
-        help="Path to save the trained SVM model (e.g., 'svm_model.pkl').",
-    )
-
-    parser.add_argument(
-        "--no-scaling",
-        action="store_true",
-        help="Disable standard scaling of features (not recommended for SVM).",
+        default="malwi-models/svm_layer.pkl",
+        help="Path to save the trained SVM model (default: 'malwi-models/svm_layer.pkl').",
     )
 
     # --- Arguments for model tuning ---
@@ -253,7 +244,6 @@ def main():
     print("\nStep 2: Creating features and labels...")
     X, y, feature_names, label_encoder, scaler = create_features_and_labels(
         combined_data,
-        scale_features=not args.no_scaling,
     )
 
     if X is None:
@@ -312,6 +302,13 @@ def main():
 
     # --- 6. Save Model using Pickle ---
     print(f"\nStep 6: Saving model and metadata to '{args.output}' using pickle...")
+
+    # Create directory if it doesn't exist
+    output_dir = os.path.dirname(args.output)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        print(f"Created directory: {output_dir}")
+
     model_payload = {
         "model": model,
         "feature_names": feature_names,
