@@ -194,8 +194,8 @@ def main():
     parser.add_argument(
         "--output",
         "-o",
-        default="malwi-models/svm_layer.pkl",
-        help="Path to save the trained SVM model (default: 'malwi-models/svm_layer.pkl').",
+        default="malwi_models/svm_layer.pkl",
+        help="Path to save the trained SVM model (default: 'malwi_models/svm_layer.pkl').",
     )
 
     # --- Arguments for model tuning ---
