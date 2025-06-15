@@ -485,6 +485,9 @@ def process_files(
             all_files=all_files,
             skipped_files=skipped_files,
             processed_files=files_processed_count,
+            malicious=False,
+            confidence=1.0,
+            activities=[],
         )
 
     # Configure progress bar
