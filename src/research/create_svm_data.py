@@ -98,31 +98,33 @@ def _write_row_to_csv(row_data: dict, output_file: Path):
         print(f"Rewrote {output_file} and saved results for '{row_data['package']}'")
 
 
-def process_benign_packages(
-    parent_dir: Path, args: argparse.Namespace, output_file: Path
+def process_random_samples(
+    parent_dir: Path, args: argparse.Namespace, output_file: Path, label: str
 ):
     """
-    Creates a fixed number of artificial benign samples by sampling files
+    Creates a fixed number of artificial samples by sampling files
     from a master list and processing them in temporary directories.
     """
-    print("--- Benign Processing Mode ---")
-    print("Scanning all subdirectories to create a master list of benign files...")
+    print(f"--- {label.capitalize()} Processing Mode (Random Sampling) ---")
+    print(
+        "Scanning all subdirectories to create a master list of files for sampling..."
+    )
     master_picker = RandomFilePicker(
         directory=str(parent_dir), extensions=args.extensions
     )
 
     if not master_picker.file_list:
         print(
-            "Error: No benign files with specified extensions found to sample from. Exiting."
+            "Error: No files with specified extensions found to sample from. Exiting."
         )
         return 0
 
-    print(f"Found {len(master_picker.file_list)} total benign files.")
-    print(f"Creating {args.benign_samples} artificial samples...")
+    print(f"Found {len(master_picker.file_list)} total files for sampling.")
+    print(f"Creating {args.samples} artificial samples...")
 
     processed_count = 0
-    for i in range(args.benign_samples):
-        package_name = f"benign_sample_{i + 1}"
+    for i in range(args.samples):
+        package_name = f"{label}_sample_{i + 1}"
         print(f"\n--- Processing {package_name} ---")
         temp_dir = None
         try:
@@ -135,7 +137,7 @@ def process_benign_packages(
             sample_of_files = master_picker.get_random_files(num_files_to_select)
 
             # Create a temporary directory and copy the sampled files into it
-            temp_dir = tempfile.mkdtemp(prefix="benign_sample_")
+            temp_dir = tempfile.mkdtemp(prefix=f"{label}_sample_")
             for file_path in sample_of_files:
                 shutil.copy(file_path, temp_dir)
 
@@ -143,7 +145,7 @@ def process_benign_packages(
                 f"Selected {len(sample_of_files)} files and copied to temporary dir: {temp_dir}"
             )
 
-            print(f"look for maliciousness score {args.threshold}")
+            print(f"Look for maliciousness score {args.threshold}")
 
             # Process the temporary directory
             results = process_files(
@@ -169,7 +171,7 @@ def process_benign_packages(
                 continue
 
             token_stats["package"] = package_name
-            token_stats["label"] = args.label
+            token_stats["label"] = label
             processed_count += 1
 
             _write_row_to_csv(token_stats, output_file)
@@ -186,13 +188,13 @@ def process_benign_packages(
     return processed_count
 
 
-def process_malicious_packages(
-    subdirectories: List[Path], args: argparse.Namespace, output_file: Path
+def process_package_directories(
+    subdirectories: List[Path], args: argparse.Namespace, output_file: Path, label: str
 ):
     """
-    Processes each subdirectory as a distinct malicious package.
+    Processes each subdirectory as a distinct package.
     """
-    print("--- Malicious Processing Mode ---")
+    print(f"--- {label.capitalize()} Processing Mode (Package Directories) ---")
     processed_count = 0
     for child_dir in subdirectories:
         package_name = child_dir.name
@@ -216,7 +218,7 @@ def process_malicious_packages(
                 continue
 
             token_stats["package"] = package_name
-            token_stats["label"] = args.label
+            token_stats["label"] = label
             processed_count += 1
 
             _write_row_to_csv(token_stats, output_file)
@@ -268,19 +270,24 @@ def create_svm_data():
     )
     parser.add_argument("--quiet", action="store_true", help="Run in silent mode.")
 
-    # --- NEW CLI ARGUMENTS ---
-    benign_group = parser.add_argument_group("Benign Sampling Options")
-    benign_group.add_argument(
-        "--benign-samples",
+    # --- Group for Sampling Options ---
+    sampling_options_group = parser.add_argument_group("Sampling Options")
+    sampling_options_group.add_argument(
+        "--samples",
         type=int,
         default=10000,
-        help="Number of artificial benign samples to create. Used only if --label is 'benign'.",
+        help="Number of artificial samples to create when random sampling is enabled.",
     )
-    benign_group.add_argument(
+    sampling_options_group.add_argument(
         "--max-files-per-sample",
         type=int,
         default=100,
-        help="Maximum number of files to include in each artificial benign sample.",
+        help="Maximum number of files to include in each artificial sample when random sampling is enabled.",
+    )
+    sampling_options_group.add_argument(
+        "--use-random-sampling",
+        action="store_true",
+        help="Use random file sampling to create artificial packages. If not set, each subdirectory in the provided parent directory will be treated as a separate package.",
     )
 
     args = parser.parse_args()
@@ -303,15 +310,24 @@ def create_svm_data():
     output_file = Path(args.save)
     processed_count = 0
 
-    if args.label.lower() == "benign":
-        processed_count = process_benign_packages(parent_dir, args, output_file)
+    # Determine the actual label to be used (e.g., 'malicious' or 'benign')
+    processing_label = args.label.lower()
+
+    if args.use_random_sampling:
+        processed_count = process_random_samples(
+            parent_dir, args, output_file, processing_label
+        )
     else:
-        print(f"Scanning subdirectories in '{parent_dir}'...")
+        print(
+            f"Scanning subdirectories in '{parent_dir}' for {processing_label} packages..."
+        )
         subdirectories = [d for d in parent_dir.iterdir() if d.is_dir()]
         if not subdirectories:
             print(f"No subdirectories found in '{parent_dir}'. Exiting.")
             return
-        processed_count = process_malicious_packages(subdirectories, args, output_file)
+        processed_count = process_package_directories(
+            subdirectories, args, output_file, processing_label
+        )
 
     print(
         f"\n✅ Success! Analysis complete. Processed {processed_count} packages/samples."
