@@ -228,7 +228,7 @@ def main():
         )
 
     # --- 1. Prepare Dataset ---
-    info("Step 1: Loading and preparing dataset from CSV files...")
+    progress("Step 1: Loading and preparing dataset from CSV files...")
     combined_data = load_and_prepare_data(args.benign, args.malicious)
 
     if combined_data is None or combined_data.empty:
@@ -236,7 +236,7 @@ def main():
         return
 
     # --- 2. Create Features and Labels ---
-    info("Step 2: Creating features and labels...")
+    progress("Step 2: Creating features and labels...")
     X, y, feature_names, label_encoder, scaler = create_features_and_labels(
         combined_data,
     )
@@ -246,14 +246,14 @@ def main():
         return
 
     # --- 3. Split Data ---
-    info(f"Step 3: Splitting data (Test size: {args.test_size})...")
+    progress(f"Step 3: Splitting data (test size: {args.test_size})...")
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=args.test_size, random_state=42, stratify=y
     )
     info(f"Training set: {len(X_train)} samples | Testing set: {len(X_test)} samples")
 
     # --- 4. Train SVM Model ---
-    info("Step 4: Training the SVM model...")
+    progress("Step 4: Training SVM model...")
     gamma_value = (
         float(args.gamma) if args.gamma.replace(".", "", 1).isdigit() else args.gamma
     )
@@ -265,10 +265,10 @@ def main():
     )
     info(f"Model parameters: kernel={args.kernel}, C={args.C}, gamma={gamma_value}")
     model.fit(X_train, y_train)
-    success("Training complete.")
+    success("SVM model training completed")
 
     # --- 5. Evaluate Model ---
-    info("Step 5: Evaluating the model...")
+    progress("Step 5: Evaluating model performance...")
     y_pred = model.predict(X_test)
 
     # --- Overall Performance Metrics ---
@@ -294,7 +294,7 @@ def main():
         warning("Could not generate classification report. Some classes in the test set may have no predicted samples.")
 
     # --- 6. Save Model using Pickle ---
-    info(f"Step 6: Saving model and metadata to '{args.output}' using pickle...")
+    progress(f"Step 6: Saving model to '{args.output}'...")
 
     # Create directory if it doesn't exist
     output_dir = os.path.dirname(args.output)
@@ -314,7 +314,7 @@ def main():
 
     success("Model saved successfully.")
     info("Saved components: model, feature_names, label_encoder, scaler")
-    warning("Only load .pkl files from sources you trust.")
+    warning("Only load .pkl files from trusted sources")
 
 
 if __name__ == "__main__":

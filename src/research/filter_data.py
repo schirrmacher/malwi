@@ -52,13 +52,13 @@ def process_csv_files(benign, malicious, triage_dir=None):
     """
 
     try:
-        progress(f"Reading BENIGN CSV file: {benign}")
+        progress(f"Reading benign CSV file: {benign}")
         df_benign = pd.read_csv(benign)
-        success(f"Read {benign} - shape: {df_benign.shape}")
+        info(f"Loaded {len(df_benign)} benign samples from {benign}")
 
-        progress(f"Reading MALICIOUS CSV file: {malicious}")
+        progress(f"Reading malicious CSV file: {malicious}")
         df_malicious = pd.read_csv(malicious)
-        success(f"Read {malicious} - shape: {df_malicious.shape}")
+        info(f"Loaded {len(df_malicious)} malicious samples from {malicious}")
 
     except Exception as e:
         error(f"Error reading files: {e}")
@@ -82,11 +82,11 @@ def process_csv_files(benign, malicious, triage_dir=None):
     # Remove internal duplicates in each CSV by 'hash'
     initial_benign = len(df_benign)
     df_benign = df_benign.drop_duplicates(subset=["hash"], keep="first")
-    info(f"Removed {initial_benign - len(df_benign)} duplicate rows from benign set")
+    success(f"Removed {initial_benign - len(df_benign)} duplicate rows from benign dataset")
 
     initial_malicious = len(df_malicious)
     df_malicious = df_malicious.drop_duplicates(subset=["hash"], keep="first")
-    info(f"Removed {initial_malicious - len(df_malicious)} duplicate rows from malicious set")
+    success(f"Removed {initial_malicious - len(df_malicious)} duplicate rows from malicious dataset")
 
     # Identify common hashes between the two sets
     hashes_benign = set(df_benign["hash"])
@@ -97,7 +97,7 @@ def process_csv_files(benign, malicious, triage_dir=None):
     # Remove common hashes ONLY from malicious set
     if common_hashes:
         df_malicious = df_malicious[~df_malicious["hash"].isin(common_hashes)]
-        info(f"Removed {len(common_hashes)} rows from malicious set with common hashes")
+        success(f"Removed {len(common_hashes)} common samples from malicious dataset")
 
     success(f"Final benign set shape: {df_benign.shape}")
     success(f"Final malicious set shape: {df_malicious.shape}")

@@ -18,7 +18,7 @@ except LookupError:
     warning("NLTK 'stopwords' corpus not found. Downloading...")
     try:
         nltk.download("stopwords", quiet=True)  # Download quietly
-        success("Download complete.")
+        success("NLTK stopwords corpus downloaded successfully")
     except Exception as e:
         error(f"Error downloading NLTK 'stopwords': {e}")
         error("Please try running 'import nltk; nltk.download('stopwords')' manually in a Python interpreter.")

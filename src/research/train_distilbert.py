@@ -289,13 +289,13 @@ def run_training(args):
     if args.disable_hf_datasets_progress_bar:
         disable_progress_bar()
 
-    info("=== Starting New Model Training ===")
+    progress("Starting DistilBERT model training...")
 
     benign_asts = load_asts_from_csv(args.benign, args.token_column)
     malicious_asts = load_asts_from_csv(args.malicious, args.token_column)
 
-    info(f"Original benign samples count: {len(benign_asts)}")
-    info(f"Original malicious samples count: {len(malicious_asts)}")
+    info(f"Loaded {len(benign_asts)} benign samples")
+    info(f"Loaded {len(malicious_asts)} malicious samples")
 
     if not malicious_asts:
         error("No malicious samples loaded. Cannot proceed with training.")
@@ -319,8 +319,8 @@ def run_training(args):
     elif not benign_asts:
         warning("No benign samples loaded.")
 
-    info(f"Processed benign samples for training lookup: {len(benign_asts)}")
-    info(f"Malicious samples for training: {len(malicious_asts)}")
+    info(f"Using {len(benign_asts)} benign samples for training")
+    info(f"Using {len(malicious_asts)} malicious samples for training")
 
     all_texts_for_training = benign_asts + malicious_asts
     all_labels_for_training = [0] * len(benign_asts) + [1] * len(malicious_asts)
@@ -329,7 +329,7 @@ def run_training(args):
         error("No data available for training after filtering or downsampling.")
         return
 
-    info(f"Total sample strings for model training: {len(all_texts_for_training)}")
+    info(f"Total training samples: {len(all_texts_for_training)}")
 
     (
         distilbert_train_texts,
@@ -387,7 +387,7 @@ def run_training(args):
     tokenized_datasets = raw_datasets.map(
         tokenize_function, batched=True, num_proc=num_proc, remove_columns=["text"]
     )
-    success("Tokenization complete.")
+    success("Dataset tokenization completed")
 
     train_dataset_for_trainer = tokenized_datasets["train"]
     val_dataset_for_trainer = tokenized_datasets["validation"]
@@ -469,7 +469,7 @@ def run_training(args):
     # Clean up the model directory
     cleanup_model_directory(model_output_path)
 
-    success("Training completed successfully!")
+    success("DistilBERT model training completed successfully")
     success(f"Final model saved to: {model_output_path}")
     success(f"Training metrics saved to: {model_output_path}/training_metrics.txt")
 

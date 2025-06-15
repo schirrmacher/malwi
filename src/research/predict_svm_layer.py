@@ -125,9 +125,9 @@ def main():
     info(f"- {len(result.skipped_files)} files skipped")
     info(f"- {len(result.objects)} malicious objects identified")
     if prediction["malicious"]:
-        error(f"=> 👹 malicious {prediction['confidence']:.2f}")
+        warning(f"⚠️  Malicious code detected (confidence: {prediction['confidence']:.2f})")
     else:
-        success(f"=> 🟢 not malicious {prediction['confidence']:.2f}")
+        success(f"No malicious code detected (confidence: {prediction['confidence']:.2f})")
 
 
 if __name__ == "__main__":

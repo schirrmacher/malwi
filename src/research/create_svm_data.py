@@ -138,7 +138,7 @@ def process_random_samples(
 
             info(f"Selected {len(sample_of_files)} files and copied to temporary dir: {temp_dir}")
 
-            info(f"Look for maliciousness score {args.threshold}")
+            info(f"Processing with maliciousness threshold: {args.threshold}")
 
             # Process the temporary directory
             results = process_files(
@@ -151,10 +151,11 @@ def process_random_samples(
                 malicious_threshold=args.threshold,
             )
 
-            info(f"Identified {len(results.objects)} malicious objects")
+            info(f"Found {len(results.objects)} objects above maliciousness threshold")
 
-            for o in results.objects:
-                info(f"Object maliciousness: {o.maliciousness}")
+            if results.objects:
+                avg_maliciousness = sum(o.maliciousness for o in results.objects) / len(results.objects)
+                info(f"Average maliciousness score: {avg_maliciousness:.3f}")
 
             token_stats = MalwiObject.collect_token_stats(results.objects)
             if not token_stats:
