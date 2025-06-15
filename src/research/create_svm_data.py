@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from research.disassemble_python import MalwiObject, process_files
+from common.messaging import configure_messaging, info, success, warning, error, progress
 
 
 class RandomFilePicker:
@@ -76,11 +77,9 @@ def _write_row_to_csv(row_data: dict, output_file: Path):
             if not file_exists:
                 writer.writeheader()
             writer.writerow(row_data)
-        print(f"Appended results for '{row_data['package']}' to {output_file}")
+        success(f"Appended results for '{row_data['package']}' to {output_file}")
     else:
-        print(
-            f"New feature columns found. Rewriting {output_file} with updated header..."
-        )
+        info(f"New feature columns found. Rewriting {output_file} with updated header...")
         all_data = []
         if file_exists:
             with open(output_file, "r", newline="", encoding="utf-8") as f_read:
@@ -95,7 +94,7 @@ def _write_row_to_csv(row_data: dict, output_file: Path):
             writer = csv.DictWriter(f_write, fieldnames=final_header)
             writer.writeheader()
             writer.writerows(all_data)
-        print(f"Rewrote {output_file} and saved results for '{row_data['package']}'")
+        success(f"Rewrote {output_file} and saved results for '{row_data['package']}'")
 
 
 def process_random_samples(
@@ -105,27 +104,23 @@ def process_random_samples(
     Creates a fixed number of artificial samples by sampling files
     from a master list and processing them in temporary directories.
     """
-    print(f"--- {label.capitalize()} Processing Mode (Random Sampling) ---")
-    print(
-        "Scanning all subdirectories to create a master list of files for sampling..."
-    )
+    info(f"--- {label.capitalize()} Processing Mode (Random Sampling) ---")
+    progress("Scanning all subdirectories to create a master list of files for sampling...")
     master_picker = RandomFilePicker(
         directory=str(parent_dir), extensions=args.extensions
     )
 
     if not master_picker.file_list:
-        print(
-            "Error: No files with specified extensions found to sample from. Exiting."
-        )
+        error("No files with specified extensions found to sample from. Exiting.")
         return 0
 
-    print(f"Found {len(master_picker.file_list)} total files for sampling.")
-    print(f"Creating {args.samples} artificial samples...")
+    success(f"Found {len(master_picker.file_list)} total files for sampling.")
+    info(f"Creating {args.samples} artificial samples...")
 
     processed_count = 0
     for i in range(args.samples):
         package_name = f"{label}_sample_{i + 1}"
-        print(f"\n--- Processing {package_name} ---")
+        info(f"--- Processing {package_name} ---")
         temp_dir = None
         try:
             # Determine how many files to select for this sample
@@ -141,11 +136,9 @@ def process_random_samples(
             for file_path in sample_of_files:
                 shutil.copy(file_path, temp_dir)
 
-            print(
-                f"Selected {len(sample_of_files)} files and copied to temporary dir: {temp_dir}"
-            )
+            info(f"Selected {len(sample_of_files)} files and copied to temporary dir: {temp_dir}")
 
-            print(f"Look for maliciousness score {args.threshold}")
+            info(f"Look for maliciousness score {args.threshold}")
 
             # Process the temporary directory
             results = process_files(
@@ -158,16 +151,14 @@ def process_random_samples(
                 malicious_threshold=args.threshold,
             )
 
-            print(f"Identified {len(results.objects)} malicious objects")
+            info(f"Identified {len(results.objects)} malicious objects")
 
             for o in results.objects:
-                print(o.maliciousness)
+                info(f"Object maliciousness: {o.maliciousness}")
 
             token_stats = MalwiObject.collect_token_stats(results.objects)
             if not token_stats:
-                print(
-                    f"Warning: No token statistics generated for '{package_name}'. Skipping."
-                )
+                warning(f"No token statistics generated for '{package_name}'. Skipping.")
                 continue
 
             token_stats["package"] = package_name
@@ -177,9 +168,7 @@ def process_random_samples(
             _write_row_to_csv(token_stats, output_file)
 
         except Exception as e:
-            print(
-                f"An error occurred while processing '{package_name}': {e}. Skipping."
-            )
+            error(f"An error occurred while processing '{package_name}': {e}. Skipping.")
         finally:
             # Ensure the temporary directory is always cleaned up
             if temp_dir and os.path.exists(temp_dir):
@@ -194,11 +183,11 @@ def process_package_directories(
     """
     Processes each subdirectory as a distinct package.
     """
-    print(f"--- {label.capitalize()} Processing Mode (Package Directories) ---")
+    info(f"--- {label.capitalize()} Processing Mode (Package Directories) ---")
     processed_count = 0
     for child_dir in subdirectories:
         package_name = child_dir.name
-        print(f"\n--- Processing package: {package_name} ---")
+        info(f"--- Processing package: {package_name} ---")
         try:
             results = process_files(
                 input_path=child_dir,
@@ -212,9 +201,7 @@ def process_package_directories(
 
             token_stats = MalwiObject.collect_token_stats(results.objects)
             if not token_stats:
-                print(
-                    f"Warning: No token statistics generated for '{package_name}'. Skipping."
-                )
+                warning(f"No token statistics generated for '{package_name}'. Skipping.")
                 continue
 
             token_stats["package"] = package_name
@@ -224,9 +211,7 @@ def process_package_directories(
             _write_row_to_csv(token_stats, output_file)
 
         except Exception as e:
-            print(
-                f"An error occurred while processing '{package_name}': {e}. Skipping."
-            )
+            error(f"An error occurred while processing '{package_name}': {e}. Skipping.")
 
     return processed_count
 
@@ -292,19 +277,19 @@ def create_svm_data():
 
     args = parser.parse_args()
 
+    # Configure messaging system
+    configure_messaging(quiet=args.quiet)
+
     try:
         MalwiObject.load_models_into_memory(
             distilbert_model_path=args.model_path, tokenizer_path=args.tokenizer_path
         )
     except Exception as e:
-        if not args.quiet:
-            logging.error(
-                f"Warning: Could not initialize ML models: {e}. Prediction will be disabled."
-            )
+        warning(f"Could not initialize ML models: {e}. Prediction will be disabled.")
 
     parent_dir = Path(args.dir)
     if not parent_dir.is_dir():
-        print(f"Error: Provided path '{parent_dir}' is not a valid directory.")
+        error(f"Provided path '{parent_dir}' is not a valid directory.")
         return
 
     output_file = Path(args.save)
@@ -318,25 +303,21 @@ def create_svm_data():
             parent_dir, args, output_file, processing_label
         )
     else:
-        print(
-            f"Scanning subdirectories in '{parent_dir}' for {processing_label} packages..."
-        )
+        info(f"Scanning subdirectories in '{parent_dir}' for {processing_label} packages...")
         subdirectories = [d for d in parent_dir.iterdir() if d.is_dir()]
         if not subdirectories:
-            print(f"No subdirectories found in '{parent_dir}'. Exiting.")
+            error(f"No subdirectories found in '{parent_dir}'. Exiting.")
             return
         processed_count = process_package_directories(
             subdirectories, args, output_file, processing_label
         )
 
-    print(
-        f"\n✅ Success! Analysis complete. Processed {processed_count} packages/samples."
-    )
-    print(f"Final data saved to '{args.save}'")
+    success(f"Analysis complete. Processed {processed_count} packages/samples.")
+    success(f"Final data saved to '{args.save}'")
 
 
 if __name__ == "__main__":
     try:
         create_svm_data()
     except KeyboardInterrupt:
-        print("\n👋 Interrupted by user. Partial results are saved.")
+        info("Interrupted by user. Partial results are saved.")

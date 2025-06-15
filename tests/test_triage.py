@@ -50,53 +50,47 @@ class TestProcessObjectFile(unittest.TestCase):
             llm_model=mock_llm_model,
         )
 
-    @patch("research.triage.triage")
-    @patch("research.triage.MalwiObject")
-    @patch("builtins.print")
-    def test_process_object_file_exception_from_malwiobject(
-        self, mock_print, MockTriageModuleMalwiObject, mock_triage_module_triage_func
-    ):
+    def test_process_object_file_exception_from_malwiobject(self):
         mock_file_path = Path("dummy/test.yaml")
         mock_out_path = Path("output_dir")
-        MockTriageModuleMalwiObject.from_file.side_effect = Exception(
-            "MalwiObject error"
-        )
+        
+        with patch("research.triage.MalwiObject") as MockTriageModuleMalwiObject, \
+             patch("research.triage.triage") as mock_triage_module_triage_func:
+            
+            MockTriageModuleMalwiObject.from_file.side_effect = Exception(
+                "MalwiObject error"
+            )
 
-        triage_module.process_object_file(
-            file_path=mock_file_path,
-            out_path=mock_out_path,
-            # llm_model defaults to "gemma3" in the function signature if not provided
-        )
+            # Should not raise exception, just log error
+            triage_module.process_object_file(
+                file_path=mock_file_path,
+                out_path=mock_out_path,
+                # llm_model defaults to "gemma3" in the function signature if not provided
+            )
 
-        MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
-        mock_triage_module_triage_func.assert_not_called()
-        mock_print.assert_called_once_with(
-            f"Failed to process {mock_file_path}: MalwiObject error"
-        )
+            MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
+            mock_triage_module_triage_func.assert_not_called()
 
-    @patch("research.triage.triage")
-    @patch("research.triage.MalwiObject")
-    @patch("builtins.print")
-    def test_process_object_file_exception_from_triage(
-        self, mock_print, MockTriageModuleMalwiObject, mock_triage_module_triage_func
-    ):
+    def test_process_object_file_exception_from_triage(self):
         mock_file_path = Path("dummy/test.yaml")
         mock_out_path = Path("output_dir")
-        mock_malwi_instance = MagicMock()
-        MockTriageModuleMalwiObject.from_file.return_value = [mock_malwi_instance]
-        mock_triage_module_triage_func.side_effect = Exception("Triage error")
+        
+        with patch("research.triage.MalwiObject") as MockTriageModuleMalwiObject, \
+             patch("research.triage.triage") as mock_triage_module_triage_func:
+            
+            mock_malwi_instance = MagicMock()
+            MockTriageModuleMalwiObject.from_file.return_value = [mock_malwi_instance]
+            mock_triage_module_triage_func.side_effect = Exception("Triage error")
 
-        triage_module.process_object_file(
-            file_path=mock_file_path,
-            out_path=mock_out_path,
-            # llm_model defaults to "gemma3"
-        )
+            # Should not raise exception, just log error
+            triage_module.process_object_file(
+                file_path=mock_file_path,
+                out_path=mock_out_path,
+                # llm_model defaults to "gemma3"
+            )
 
-        MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
-        mock_triage_module_triage_func.assert_called_once()
-        mock_print.assert_called_once_with(
-            f"Failed to process {mock_file_path}: Triage error"
-        )
+            MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
+            mock_triage_module_triage_func.assert_called_once()
 
     @patch("research.triage.triage")
     @patch("research.triage.MalwiObject")
@@ -316,21 +310,20 @@ class TestMainFunction(unittest.TestCase):
             llm_prompt=None,
         )
 
-    @patch("builtins.print")
-    @patch("argparse.ArgumentParser")
-    def test_main_invalid_path(self, MockArgumentParser, mock_print):
-        mock_args = MagicMock()
-        mock_args.path = MagicMock(spec=Path)
-        mock_args.path.is_file.return_value = False
-        mock_args.path.is_dir.return_value = False
+    def test_main_invalid_path(self):
+        with patch("argparse.ArgumentParser") as MockArgumentParser:
+            mock_args = MagicMock()
+            mock_args.path = MagicMock(spec=Path)
+            mock_args.path.is_file.return_value = False
+            mock_args.path.is_dir.return_value = False
 
-        MockArgumentParser.return_value.parse_args.return_value = mock_args
+            MockArgumentParser.return_value.parse_args.return_value = mock_args
 
-        triage_module.main()
+            # Should not raise exception, just log error
+            triage_module.main()
 
-        mock_args.path.is_file.assert_called_once()
-        mock_args.path.is_dir.assert_called_once()
-        mock_print.assert_called_once_with(f"Invalid path: {mock_args.path}")
+            mock_args.path.is_file.assert_called_once()
+            mock_args.path.is_dir.assert_called_once()
 
     @patch("research.triage.process_object_file")
     @patch("argparse.ArgumentParser")

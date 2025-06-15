@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from research.disassemble_python import MalwiObject, triage
+from common.messaging import configure_messaging, info, success, warning, error, progress
 
 
 def process_object_file(
@@ -30,7 +31,7 @@ def process_object_file(
             llm_model=llm_model,
         )
     except Exception as e:
-        print(f"Failed to process {file_path}: {e}")
+        error(f"Failed to process {file_path}: {e}")
 
 
 def main():
@@ -89,6 +90,9 @@ def main():
 
     args = parser.parse_args()
 
+    # Configure messaging system
+    configure_messaging(quiet=False)
+
     triaging_type = "manual"
     if args.triage_ollama:
         triaging_type = "ollama"
@@ -124,11 +128,11 @@ def main():
                 llm_prompt=args.prompt,
             )
     else:
-        print(f"Invalid path: {args.path}")
+        error(f"Invalid path: {args.path}")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("👋")
+        info("👋")

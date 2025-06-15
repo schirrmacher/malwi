@@ -10,19 +10,18 @@ from collections import Counter
 from nltk.util import ngrams
 from nltk.corpus import stopwords
 
+from common.messaging import configure_messaging, info, success, warning, error, progress
+
 try:
     nltk.data.find("corpora/stopwords")
 except LookupError:
-    print("NLTK 'stopwords' corpus not found. Downloading...")
+    warning("NLTK 'stopwords' corpus not found. Downloading...")
     try:
         nltk.download("stopwords", quiet=True)  # Download quietly
-        print("Download complete.")
+        success("Download complete.")
     except Exception as e:
-        print(f"Error downloading NLTK 'stopwords': {e}", file=sys.stderr)
-        print(
-            "Please try running 'import nltk; nltk.download('stopwords')' manually in a Python interpreter.",
-            file=sys.stderr,
-        )
+        error(f"Error downloading NLTK 'stopwords': {e}")
+        error("Please try running 'import nltk; nltk.download('stopwords')' manually in a Python interpreter.")
         sys.exit(1)
 
 
@@ -60,43 +59,35 @@ def run_ngram_analysis(args):
     """
     Performs the n-gram analysis based on the provided arguments.
     """
-    print(
-        f"Analyzing n-grams (n={args.ngram_size}) from column '{args.text_column}' in {args.input_file}..."
-    )
+    info(f"Analyzing n-grams (n={args.ngram_size}) from column '{args.text_column}' in {args.input_file}...")
 
     # Load data (common step, could be moved outside if needed frequently)
     try:
         df = pd.read_csv(args.input_file)
     except FileNotFoundError:
-        print(f"Error: Input file not found at {args.input_file}", file=sys.stderr)
+        error(f"Input file not found at {args.input_file}")
         sys.exit(1)
     except Exception as e:
-        print(f"Error loading CSV file: {e}", file=sys.stderr)
+        error(f"Error loading CSV file: {e}")
         sys.exit(1)
 
     # Validate text column
     if args.text_column not in df.columns:
-        print(
-            f"Error: Text column '{args.text_column}' not found in the input file.",
-            file=sys.stderr,
-        )
+        error(f"Text column '{args.text_column}' not found in the input file.")
         sys.exit(1)
 
-    print("Preprocessing text...")
+    progress("Preprocessing text...")
     df["tokens"] = df[args.text_column].apply(
         lambda x: preprocess_text(x) if pd.notna(x) else []
     )
 
-    print(f"Calculating {args.ngram_size}-grams...")
+    progress(f"Calculating {args.ngram_size}-grams...")
     ngram_counts = get_ngram_counts(
         df["tokens"].tolist(), args.ngram_size
     )  # Pass list of lists
 
     if not ngram_counts:
-        print(
-            f"No n-grams of size {args.ngram_size} found in the dataset after preprocessing.",
-            file=sys.stderr,
-        )
+        warning(f"No n-grams of size {args.ngram_size} found in the dataset after preprocessing.")
         return  # Exit the function gracefully
 
     ngram_df = pd.DataFrame.from_records(
@@ -109,11 +100,11 @@ def run_ngram_analysis(args):
     pd.options.display.max_columns = None
     pd.options.display.width = None
 
-    print(f"\nTop {args.limit} most common {args.ngram_size}-grams:")
-    print(ngram_df.to_string(index=False))  # Use to_string for better console output
+    info(f"Top {args.limit} most common {args.ngram_size}-grams:")
+    info(ngram_df.to_string(index=False))  # Use to_string for better console output
 
     if args.output_mapping:
-        print(f"\nGenerating n-gram mapping for top {args.limit}...")
+        progress(f"Generating n-gram mapping for top {args.limit}...")
         ngram_mapping = {}
 
         for _, row in ngram_df.iterrows():
@@ -129,36 +120,28 @@ def run_ngram_analysis(args):
         try:
             with open(args.output_mapping, "w") as f:
                 json.dump(ngram_mapping, f, indent=4)
-            print(f"N-gram mapping saved to {args.output_mapping}")
+            success(f"N-gram mapping saved to {args.output_mapping}")
         except Exception as e:
-            print(
-                f"Error saving n-gram mapping to {args.output_mapping}: {e}",
-                file=sys.stderr,
-            )
+            error(f"Error saving n-gram mapping to {args.output_mapping}: {e}")
 
 
 def run_stats_analysis(args):
     """
     Calculates and displays statistics about the text column.
     """
-    print(
-        f"Analyzing statistics for column '{args.text_column}' in {args.input_file}..."
-    )
+    info(f"Analyzing statistics for column '{args.text_column}' in {args.input_file}...")
 
     try:
         df = pd.read_csv(args.input_file)
     except FileNotFoundError:
-        print(f"Error: Input file not found at {args.input_file}", file=sys.stderr)
+        error(f"Input file not found at {args.input_file}")
         sys.exit(1)
     except Exception as e:
-        print(f"Error loading CSV file: {e}", file=sys.stderr)
+        error(f"Error loading CSV file: {e}")
         sys.exit(1)
 
     if args.text_column not in df.columns:
-        print(
-            f"Error: Text column '{args.text_column}' not found in the input file.",
-            file=sys.stderr,
-        )
+        error(f"Text column '{args.text_column}' not found in the input file.")
         sys.exit(1)
 
     word_counts = df[args.text_column].apply(
@@ -166,7 +149,7 @@ def run_stats_analysis(args):
     )
 
     if word_counts.empty:
-        print("No text data found to analyze.", file=sys.stderr)
+        warning("No text data found to analyze.")
         return
 
     average_words = word_counts.mean()
@@ -174,17 +157,15 @@ def run_stats_analysis(args):
     total_lines = len(df)
     lines_with_text = len(word_counts[word_counts > 0])
 
-    print("\nText Column Statistics:")
-    print(f"  Total lines in CSV: {total_lines}")
-    print(f"  Lines with text in '{args.text_column}': {lines_with_text}")
+    info("Text Column Statistics:")
+    info(f"  Total lines in CSV: {total_lines}")
+    info(f"  Lines with text in '{args.text_column}': {lines_with_text}")
     if lines_with_text > 0:
-        print(f"  Average words per line (with text): {average_words:.2f}")
-        print(f"  Maximum words in a single line: {max_words}")
-        print(
-            f"  Minimum words in a single line (with text): {word_counts[word_counts > 0].min()}"
-        )
+        info(f"  Average words per line (with text): {average_words:.2f}")
+        info(f"  Maximum words in a single line: {max_words}")
+        info(f"  Minimum words in a single line (with text): {word_counts[word_counts > 0].min()}")
     else:
-        print("  No lines contained text for word count analysis.")
+        warning("  No lines contained text for word count analysis.")
 
 
 def main():
@@ -263,8 +244,11 @@ Example:
 
     args = parser.parse_args()
 
+    # Configure messaging system
+    configure_messaging(quiet=False)
+
     if args.command == "ngrams" and args.ngram_size <= 0:
-        print("Error: N-gram size must be a positive integer.", file=sys.stderr)
+        error("N-gram size must be a positive integer.")
         sys.exit(1)
 
     args.func(args)

@@ -29,6 +29,7 @@ from datasets import Dataset, DatasetDict
 from datasets.utils.logging import disable_progress_bar
 
 from common.files import read_json_from_file
+from common.messaging import configure_messaging, info, success, warning, error, progress
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 
@@ -57,9 +58,7 @@ def load_asts_from_csv(
     try:
         df = pd.read_csv(csv_file_path)
         if token_column_name not in df.columns:
-            print(
-                f"Warning: Column '{token_column_name}' not found in {csv_file_path}. Returning empty list."
-            )
+            warning(f"Column '{token_column_name}' not found in {csv_file_path}. Returning empty list.")
             return []
 
         for idx, row in df.iterrows():
@@ -71,12 +70,12 @@ def load_asts_from_csv(
             ):
                 continue
             asts.append(ast_data.strip())
-        print(f"Loaded {len(asts)} sample strings from {csv_file_path}")
+        success(f"Loaded {len(asts)} sample strings from {csv_file_path}")
     except FileNotFoundError:
-        print(f"Error: File not found at {csv_file_path}. Returning empty list.")
+        error(f"File not found at {csv_file_path}. Returning empty list.")
         return []
     except Exception as e:
-        print(f"Error reading CSV {csv_file_path}: {e}. Returning empty list.")
+        error(f"Reading CSV {csv_file_path}: {e}. Returning empty list.")
         return []
     return asts
 
@@ -102,24 +101,18 @@ def create_or_load_tokenizer(
     huggingface_tokenizer_config_file = tokenizer_output_path / "tokenizer.json"
 
     if not force_retrain and huggingface_tokenizer_config_file.exists():
-        print(
-            f"\nLoading existing PreTrainedTokenizerFast from {tokenizer_output_path} (found tokenizer.json)."
-        )
+        info(f"Loading existing PreTrainedTokenizerFast from {tokenizer_output_path} (found tokenizer.json).")
         tokenizer = PreTrainedTokenizerFast.from_pretrained(
             str(tokenizer_output_path), model_max_length=max_length
         )
     else:
-        print("\nTraining or re-training custom BPE tokenizer...")
+        info("Training or re-training custom BPE tokenizer...")
         if force_retrain and tokenizer_output_path.exists():
-            print(
-                f"Force retraining: Deleting existing tokenizer directory: {tokenizer_output_path}"
-            )
+            warning(f"Force retraining: Deleting existing tokenizer directory: {tokenizer_output_path}")
             try:
                 shutil.rmtree(tokenizer_output_path)
             except OSError as e:
-                print(
-                    f"Error deleting directory {tokenizer_output_path}: {e}. Please delete manually and retry."
-                )
+                error(f"Deleting directory {tokenizer_output_path}: {e}. Please delete manually and retry.")
                 raise
 
         tokenizer_output_path.mkdir(parents=True, exist_ok=True)
@@ -128,7 +121,7 @@ def create_or_load_tokenizer(
         merges_file_path = tokenizer_output_path / "merges.txt"
 
         if not texts_for_training:
-            print("Error: No texts provided for training BPE tokenizer.")
+            error("No texts provided for training BPE tokenizer.")
             raise ValueError("Cannot train tokenizer with no data.")
 
         bpe_trainer_obj = ByteLevelBPETokenizer()
@@ -156,9 +149,7 @@ def create_or_load_tokenizer(
             special_tokens=combined_special_tokens,
         )
         bpe_trainer_obj.save_model(str(tokenizer_output_path))
-        print(
-            f"BPE components (vocab.json, merges.txt) saved to {tokenizer_output_path}"
-        )
+        success(f"BPE components (vocab.json, merges.txt) saved to {tokenizer_output_path}")
 
         bpe_model = BPE.from_file(
             str(vocab_file_path), str(merges_file_path), unk_token="[UNK]"
@@ -179,9 +170,7 @@ def create_or_load_tokenizer(
             model_max_length=max_length,
         )
         tokenizer.save_pretrained(str(tokenizer_output_path))
-        print(
-            f"PreTrainedTokenizerFast fully saved to {tokenizer_output_path} (tokenizer.json created)."
-        )
+        success(f"PreTrainedTokenizerFast fully saved to {tokenizer_output_path} (tokenizer.json created).")
 
     return tokenizer
 
@@ -204,15 +193,15 @@ def save_training_metrics(metrics_dict: dict, output_path: Path):
             f.write("\n" + "=" * 40 + "\n")
             f.write("Training completed successfully\n")
 
-        print(f"Training metrics saved to: {metrics_file}")
+        success(f"Training metrics saved to: {metrics_file}")
 
     except Exception as e:
-        print(f"Warning: Could not save training metrics: {e}")
+        warning(f"Could not save training metrics: {e}")
 
 
 def save_model_with_prefix(trainer, tokenizer, output_path: Path):
     """Save model and tokenizer with prefixes in the same directory."""
-    print(f"\nSaving model and tokenizer with prefixes to {output_path}...")
+    info(f"Saving model and tokenizer with prefixes to {output_path}...")
 
     # Create output directory if it doesn't exist
     output_path.mkdir(parents=True, exist_ok=True)
@@ -233,7 +222,7 @@ def save_model_with_prefix(trainer, tokenizer, output_path: Path):
         new_path = output_path / new_name
         if original_path.exists():
             original_path.rename(new_path)
-            print(f"Renamed {original_name} to {new_name}")
+            success(f"Renamed {original_name} to {new_name}")
 
     # Save tokenizer files with tokenizer prefix
     tokenizer.save_pretrained(str(output_path))
@@ -252,12 +241,12 @@ def save_model_with_prefix(trainer, tokenizer, output_path: Path):
         new_path = output_path / new_name
         if original_path.exists():
             original_path.rename(new_path)
-            print(f"Renamed {original_name} to {new_name}")
+            success(f"Renamed {original_name} to {new_name}")
 
 
 def cleanup_model_directory(model_output_path: Path):
     """Clean up the model directory, keeping only essential prefixed model files and tokenizer."""
-    print(f"\nCleaning up model directory: {model_output_path}")
+    info(f"Cleaning up model directory: {model_output_path}")
 
     # Essential files to keep (with prefixes)
     essential_files = {
@@ -274,7 +263,7 @@ def cleanup_model_directory(model_output_path: Path):
     }
 
     if not model_output_path.exists():
-        print(f"Directory {model_output_path} does not exist, skipping cleanup.")
+        warning(f"Directory {model_output_path} does not exist, skipping cleanup.")
         return
 
     try:
@@ -282,34 +271,34 @@ def cleanup_model_directory(model_output_path: Path):
             if item.is_file():
                 # Check if file should be kept
                 if item.name not in essential_files:
-                    print(f"Removing file: {item}")
+                    info(f"Removing file: {item}")
                     item.unlink()
                 else:
-                    print(f"Keeping essential file: {item}")
+                    info(f"Keeping essential file: {item}")
 
             elif item.is_dir():
                 # Remove all directories (results, logs, checkpoints, etc.)
-                print(f"Removing directory: {item}")
+                info(f"Removing directory: {item}")
                 shutil.rmtree(item)
 
     except Exception as e:
-        print(f"Warning: Error during cleanup: {e}")
+        warning(f"Error during cleanup: {e}")
 
 
 def run_training(args):
     if args.disable_hf_datasets_progress_bar:
         disable_progress_bar()
 
-    print("--- Starting New Model Training ---")
+    info("=== Starting New Model Training ===")
 
     benign_asts = load_asts_from_csv(args.benign, args.token_column)
     malicious_asts = load_asts_from_csv(args.malicious, args.token_column)
 
-    print(f"Original benign samples count: {len(benign_asts)}")
-    print(f"Original malicious samples count: {len(malicious_asts)}")
+    info(f"Original benign samples count: {len(benign_asts)}")
+    info(f"Original malicious samples count: {len(malicious_asts)}")
 
     if not malicious_asts:
-        print("Error: No malicious samples loaded. Cannot proceed with training.")
+        error("No malicious samples loaded. Cannot proceed with training.")
         return
 
     if (
@@ -321,28 +310,26 @@ def run_training(args):
         if target_benign_count < len(
             benign_asts
         ):  # Ensure we are actually downsampling
-            print(
-                f"Downsampling benign samples from {len(benign_asts)} to {target_benign_count}"
-            )
+            info(f"Downsampling benign samples from {len(benign_asts)} to {target_benign_count}")
             rng = np.random.RandomState(42)
             benign_indices = rng.choice(
                 len(benign_asts), size=target_benign_count, replace=False
             )
             benign_asts = [benign_asts[i] for i in benign_indices]
     elif not benign_asts:
-        print("Warning: No benign samples loaded.")
+        warning("No benign samples loaded.")
 
-    print(f"Processed benign samples for training lookup: {len(benign_asts)}")
-    print(f"Malicious samples for training: {len(malicious_asts)}")
+    info(f"Processed benign samples for training lookup: {len(benign_asts)}")
+    info(f"Malicious samples for training: {len(malicious_asts)}")
 
     all_texts_for_training = benign_asts + malicious_asts
     all_labels_for_training = [0] * len(benign_asts) + [1] * len(malicious_asts)
 
     if not all_texts_for_training:
-        print("Error: No data available for training after filtering or downsampling.")
+        error("No data available for training after filtering or downsampling.")
         return
 
-    print(f"Total sample strings for model training: {len(all_texts_for_training)}")
+    info(f"Total sample strings for model training: {len(all_texts_for_training)}")
 
     (
         distilbert_train_texts,
@@ -358,9 +345,7 @@ def run_training(args):
     )
 
     if not distilbert_train_texts:
-        print(
-            "Error: No training data available after train/test split. Cannot proceed."
-        )
+        error("No training data available after train/test split. Cannot proceed.")
         return
 
     try:
@@ -373,10 +358,10 @@ def run_training(args):
             force_retrain=args.force_retrain_tokenizer,
         )
     except Exception as e:
-        print(f"Failed to create or load tokenizer: {e}")
+        error(f"Failed to create or load tokenizer: {e}")
         return
 
-    print("\nConverting data to Hugging Face Dataset format...")
+    info("Converting data to Hugging Face Dataset format...")
     train_data_dict = {"text": distilbert_train_texts, "label": distilbert_train_labels}
     val_data_dict = {"text": distilbert_val_texts, "label": distilbert_val_labels}
 
@@ -387,7 +372,7 @@ def run_training(args):
         {"train": train_hf_dataset, "validation": val_hf_dataset}
     )
 
-    print("Tokenizing datasets using .map()...")
+    info("Tokenizing datasets using .map()...")
 
     def tokenize_function(examples):
         return tokenizer(
@@ -402,7 +387,7 @@ def run_training(args):
     tokenized_datasets = raw_datasets.map(
         tokenize_function, batched=True, num_proc=num_proc, remove_columns=["text"]
     )
-    print("Tokenization complete.")
+    success("Tokenization complete.")
 
     train_dataset_for_trainer = tokenized_datasets["train"]
     val_dataset_for_trainer = tokenized_datasets["validation"]
@@ -412,7 +397,7 @@ def run_training(args):
     results_path = model_output_path / "results"
     logs_path = model_output_path / "logs"
 
-    print(f"\nSetting up DistilBERT model for fine-tuning from {args.model_name}...")
+    info(f"Setting up DistilBERT model for fine-tuning from {args.model_name}...")
     config = DistilBertConfig.from_pretrained(args.model_name, num_labels=2)
     config.pad_token_id = tokenizer.pad_token_id
     config.cls_token_id = tokenizer.cls_token_id
@@ -423,9 +408,7 @@ def run_training(args):
     )
 
     if len(tokenizer) != model.config.vocab_size:
-        print(
-            f"Resizing model token embeddings from {model.config.vocab_size} to {len(tokenizer)}"
-        )
+        info(f"Resizing model token embeddings from {model.config.vocab_size} to {len(tokenizer)}")
         model.resize_token_embeddings(len(tokenizer))
 
     training_arguments = TrainingArguments(
@@ -455,11 +438,11 @@ def run_training(args):
         tokenizer=tokenizer,
     )
 
-    print("\nStarting model training...")
+    info("Starting model training...")
     train_result = trainer.train()
 
     # Evaluate the final model
-    print("\nEvaluating final model...")
+    info("Evaluating final model...")
     eval_result = trainer.evaluate()
 
     # Save the final model and tokenizer with prefixes to the main output directory
@@ -486,9 +469,9 @@ def run_training(args):
     # Clean up the model directory
     cleanup_model_directory(model_output_path)
 
-    print(f"\nTraining completed successfully!")
-    print(f"Final model saved to: {model_output_path}")
-    print(f"Training metrics saved to: {model_output_path}/training_metrics.txt")
+    success("Training completed successfully!")
+    success(f"Final model saved to: {model_output_path}")
+    success(f"Training metrics saved to: {model_output_path}/training_metrics.txt")
 
 
 if __name__ == "__main__":
@@ -530,5 +513,8 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    # Configure messaging system (quiet mode not supported in training script)
+    configure_messaging(quiet=False)
 
     run_training(args)

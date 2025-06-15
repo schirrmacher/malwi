@@ -8,6 +8,8 @@ from pathlib import Path
 from huggingface_hub import hf_hub_download
 from typing import Dict, Any, Optional
 
+from common.messaging import configure_messaging, info, success, warning, error, progress
+
 DEFAULT_HF_REPO = "schirrmacher/malwi"
 DEFAULT_HF_FILE = "svm_layer.pkl"
 
@@ -36,7 +38,7 @@ def initialize_svm_model(
             with open(downloaded_path, "rb") as f:
                 GLOBAL_SVM_MODEL = pickle.load(f)
     except Exception as e:
-        logging.error(f"Failed to load SVM model: {e}")
+        error(f"Failed to load SVM model: {e}")
         GLOBAL_SVM_MODEL = None
 
 
@@ -90,11 +92,14 @@ def main():
 
     args = parser.parse_args()
 
-    print("Loading SVM model...")
+    # Configure messaging system
+    configure_messaging(quiet=args.quiet)
+
+    progress("Loading SVM model...")
     initialize_svm_model(model_path=args.svm, repo_id=args.hf_repo)
 
     if GLOBAL_SVM_MODEL is None:
-        print("❌ Failed to load SVM model. Exiting.")
+        error("Failed to load SVM model. Exiting.")
         return
 
     try:
@@ -103,9 +108,7 @@ def main():
         )
     except Exception as e:
         if not args.quiet:
-            print(
-                f"Warning: Could not initialize ML models: {e}. Maliciousness prediction will be disabled."
-            )
+            warning(f"Could not initialize ML models: {e}. Maliciousness prediction will be disabled.")
 
     result = process_files(
         input_path=Path(args.path),
@@ -118,17 +121,17 @@ def main():
     token_stats = MalwiObject.collect_token_stats(result.objects)
     prediction = predict(token_stats)
 
-    print(f"- {len(result.all_files)} files scanned")
-    print(f"- {len(result.skipped_files)} files skipped")
-    print(f"- {len(result.objects)} malicious objects identified")
+    info(f"- {len(result.all_files)} files scanned")
+    info(f"- {len(result.skipped_files)} files skipped")
+    info(f"- {len(result.objects)} malicious objects identified")
     if prediction["malicious"]:
-        print(f"=> 👹 malicious {prediction['confidence']:.2f}")
+        error(f"=> 👹 malicious {prediction['confidence']:.2f}")
     else:
-        print(f"=> 🟢 not malicious {prediction['confidence']:.2f}")
+        success(f"=> 🟢 not malicious {prediction['confidence']:.2f}")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("👋")
+        info("👋")
