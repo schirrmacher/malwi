@@ -360,14 +360,18 @@ class TestMainCLI:
     @patch("sys.exit")
     @patch("inspect.getsource", return_value="mocked line")
     def test_main_non_existent_path(
-        self, mock_inspect, mock_sys_exit_func, mock_load_models, mock_svm, capsys
+        self, mock_inspect, mock_sys_exit_func, mock_load_models, mock_svm, capsys, caplog
     ):
         with patch.object(
             sys, "argv", ["research.disassemble_python.py", "nonexistentpath"]
         ):
             main()
         captured = capsys.readouterr()
-        assert "Input path does not exist" in captured.err
+        # With unified messaging, path errors are logged rather than printed to stderr
+        # Check both captured output and log records
+        has_error_in_output = "Path does not exist" in captured.out or "Path does not exist" in captured.err
+        has_error_in_logs = any("Path does not exist" in record.message for record in caplog.records)
+        assert has_error_in_output or has_error_in_logs
         mock_sys_exit_func.assert_any_call(1)
 
     @patch("sys.exit")

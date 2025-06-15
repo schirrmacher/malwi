@@ -34,6 +34,7 @@ from research.predict_distilbert import (
     initialize_models as initialize_distilbert_models,
 )
 from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
+from common.messaging import get_message_manager, file_error, path_error, info, progress, error, success, warning, debug
 
 
 class MetaAttributes(Enum):
@@ -239,10 +240,7 @@ def process_python_file(
         return all_objects or None
 
     except Exception as e:
-        print(
-            f"[Error] Failed to process {file_path} ({type(e).__name__}): {e}",
-            file=sys.stderr,
-        )
+        file_error(file_path, e, "processing")
         return None
 
 
@@ -431,7 +429,7 @@ def collect_files_by_extension(
 
     if not input_path.exists():
         if not silent:
-            print(f"Error: Path does not exist: {input_path}", file=sys.stderr)
+            path_error(input_path)
         return accepted_files, skipped_files
 
     if input_path.is_file():
@@ -468,6 +466,10 @@ def process_files(
     predict_svm: bool = True,
     llm_api_key: Optional[str] = None,
 ) -> MalwiReport:
+    # Configure messaging to respect silent mode
+    msg = get_message_manager()
+    msg.set_quiet(silent)
+    
     accepted_files, skipped_files = collect_files_by_extension(
         input_path=input_path,
         accepted_extensions=accepted_extensions,
@@ -530,9 +532,7 @@ def process_files(
 
         except Exception as e:
             if not silent:
-                print(
-                    f"Critical error processing file {file_path}: {e}", file=sys.stderr
-                )
+                file_error(file_path, e, "critical processing")
 
     if len(all_objects) == 0:
         return MalwiReport(
@@ -594,11 +594,11 @@ def save_yaml_report(obj: "MalwiObject", path: str, code_hash: str) -> None:
                     number_of_skipped_files=0.0,
                 )
             )
-        print(f"Saved data for hash {code_hash} to {path}")
+        success(f"Saved data for hash {code_hash} to {path}")
     except IOError as e:
-        print(f"Error writing YAML file {path} for hash {code_hash}: {e}")
+        error(f"Writing YAML file {path} for hash {code_hash}: {e}")
     except Exception as e:
-        print(f"Unexpected error saving YAML for hash {code_hash}: {e}")
+        error(f"Unexpected error saving YAML for hash {code_hash}: {e}")
 
 
 def manual_triage(
@@ -618,9 +618,9 @@ def manual_triage(
         obj.maliciousness = 0.0
         save_yaml_report(obj, benign_path, code_hash)
     elif triage_result == "skip":
-        print(f"Skipping sample {code_hash}...")
+        info(f"Skipping sample {code_hash}...")
     elif triage_result == "exit" or triage_result is None:
-        print("Exiting triage process.")
+        info("Exiting triage process.")
         exit(0)
     elif triage_result == "tokens" or triage_result is None:
         triage_result: Optional[str] = questionary.select(
@@ -635,10 +635,10 @@ def manual_triage(
                 malicious_path=malicious_path,
             )
         elif triage_result == "exit":
-            print("Exiting triage process.")
+            info("Exiting triage process.")
             exit(0)
     else:
-        print(f"Unknown triage result '{triage_result}', skipping sample {code_hash}.")
+        warning(f"Unknown triage result '{triage_result}', skipping sample {code_hash}.")
 
 
 def auto_triage(
@@ -673,17 +673,17 @@ def ollama_triage(
         if "yes" in result_text:
             obj.maliciousness = 1.0
             save_yaml_report(obj, malicious_path, code_hash)
-            print(f"👹 Code categorized as malicious")
+            success("Code categorized as malicious")
         elif "no" in result_text:
             obj.maliciousness = 0.0
             save_yaml_report(obj, benign_path, code_hash)
-            print(f"🟢 Code categorized as benign")
+            success("Code categorized as benign")
         else:
-            print(f"Unclear LLM response for {code_hash}: {result_text}. Skipping.")
+            warning(f"Unclear LLM response for {code_hash}: {result_text}. Skipping.")
 
     except Exception as e:
         error_message = str(e)
-        print(f"Authentication failed: {error_message}")
+        error(f"Authentication failed: {error_message}")
         sys.exit(1)
 
 
@@ -712,7 +712,7 @@ def triage(
         obj.retrieve_source_code()
 
         if not hasattr(obj, "code") or not obj.code:
-            print("Object has no source code, skipping...")
+            debug("Object has no source code, skipping...")
             continue
 
         if grep_string and not (grep_string in obj.name or grep_string in obj.code):
@@ -727,7 +727,7 @@ def triage(
         malicious_path = os.path.join(malicious_dir, f"{code_hash}.yaml")
 
         if os.path.exists(benign_path) or os.path.exists(malicious_path):
-            print(f"Hash {code_hash} already exists, skipping...")
+            debug(f"Hash {code_hash} already exists, skipping...")
             continue
 
         prompt = llm_prompt
@@ -1042,13 +1042,10 @@ def main() -> None:
             distilbert_model_path=args.model_path, tokenizer_path=args.tokenizer_path
         )
     except Exception as e:
-        print(
-            f"Warning: Could not initialize ML models: {e}. Maliciousness prediction will be disabled.",
-            file=sys.stderr,
-        )
+        model_warning("ML", e)
 
     if not input_path_obj.exists():
-        print(f"Error: Input path does not exist: {input_path_obj}", file=sys.stderr)
+        path_error(input_path_obj)
         sys.exit(1)
 
     # Process input and collect all data
@@ -1102,9 +1099,7 @@ def main() -> None:
                 save_path.parent.mkdir(parents=True, exist_ok=True)
                 output_file = open(save_path, "w", encoding="utf-8", errors="replace")
                 output_stream = output_file
-                print(
-                    f"Output will be saved to: {save_path.resolve()}", file=sys.stderr
-                )
+                info(f"Output will be saved to: {save_path.resolve()}")
 
             try:
                 if args.format == "csv":
@@ -1118,9 +1113,10 @@ def main() -> None:
                     output_file.close()
 
     except Exception as e:
-        print(f"A critical error occurred: {e}", file=sys.stderr)
+        critical(f"A critical error occurred: {e}")
         import traceback
-
+        
+        # Print traceback to stderr directly for debugging
         traceback.print_exc(file=sys.stderr)
         if csv_writer_instance:
             csv_writer_instance.close()

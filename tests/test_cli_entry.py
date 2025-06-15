@@ -58,9 +58,9 @@ class TestCLIEntry:
         mock_process_files.return_value = mock_report
         
         with patch.object(sys, "argv", ["malwi", str(test_file)]):
-            with patch("builtins.print") as mock_print:
+            with patch("cli.entry.result") as mock_result:
                 main()
-                mock_print.assert_called_with("Demo output")
+                mock_result.assert_called_with("Demo output", force=True)
 
     @patch("cli.entry.MalwiObject")
     @patch("cli.entry.process_files")
@@ -123,9 +123,9 @@ class TestCLIEntry:
             ("yaml", "YAML")
         ]:
             with patch.object(sys, "argv", ["malwi", str(test_file), "--format", fmt, "--quiet"]):
-                with patch("builtins.print") as mock_print:
+                with patch("cli.entry.result") as mock_result:
                     main()
-                    mock_print.assert_called_with(expected_output)
+                    mock_result.assert_called_with(expected_output, force=True)
 
     @patch("cli.entry.Path")
     @patch("cli.entry.MalwiObject")
@@ -148,7 +148,7 @@ class TestCLIEntry:
                 mock_report.to_demo_text.return_value = "Output"
                 mock_process.return_value = mock_report
                 
-                with patch("builtins.print"):
+                with patch("cli.entry.result"):
                     # Should not crash
                     main()
 
@@ -179,7 +179,7 @@ class TestCLIEntry:
             "--quiet",
             "--malicious-only"
         ]):
-            with patch("builtins.print"):
+            with patch("cli.entry.result"):
                 main()
         
         # Verify process_files was called with correct arguments

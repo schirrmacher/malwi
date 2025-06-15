@@ -1,4 +1,3 @@
-import logging
 import argparse
 from pathlib import Path
 
@@ -7,8 +6,7 @@ from research.disassemble_python import (
     process_files,
     MalwiReport,
 )
-
-logging.basicConfig(format="%(message)s", level=logging.INFO)
+from common.messaging import configure_messaging, banner, model_warning, path_error, info, result
 
 
 def main():
@@ -111,17 +109,17 @@ def main():
 
     args = parser.parse_args()
 
-    if args.quiet:
-        logging.getLogger().setLevel(logging.CRITICAL + 1)
-    else:
-        logging.info(
-            """
+    # Configure unified messaging system
+    configure_messaging(quiet=args.quiet)
+    
+    banner(
+        """
                   __          __
   .--------.---.-|  .--.--.--|__|
   |        |  _  |  |  |  |  |  |
   |__|__|__|___._|__|________|__|
      AI Python Malware Scanner\n\n"""
-        )
+    )
 
     if not args.path:
         parser.print_help()
@@ -135,16 +133,12 @@ def main():
             svm_layer_path=args.svm_path,
         )
     except Exception as e:
-        if not args.quiet:
-            logging.error(
-                f"Warning: Could not initialize ML models: {e}. "
-                "Maliciousness prediction will be disabled."
-            )
+        model_warning("ML", e)
 
     # Process files using the consolidated function
     input_path = Path(args.path)
     if not input_path.exists():
-        logging.error(f"Error: Input path does not exist: {input_path}")
+        path_error(input_path)
         return
 
     triaging_type = None
@@ -153,7 +147,7 @@ def main():
     elif args.triage_ollama:
         triaging_type = "ollama"
 
-    result: MalwiReport = process_files(
+    report: MalwiReport = process_files(
         input_path=input_path,
         accepted_extensions=args.extensions,
         predict=True,  # Enable prediction for malwi scanner
@@ -167,30 +161,29 @@ def main():
     output = ""
 
     if args.format == "yaml":
-        output = result.to_report_yaml(
+        output = report.to_report_yaml(
             include_source_files=args.no_sources,
         )
     elif args.format == "json":
-        output = result.to_report_json(
+        output = report.to_report_json(
             include_source_files=args.no_sources,
         )
     elif args.format == "markdown":
-        output = result.to_report_markdown()
+        output = report.to_report_markdown()
     else:
-        output = result.to_demo_text()
+        output = report.to_demo_text()
 
     if args.save:
         save_path = Path(args.save)
         save_path.parent.mkdir(parents=True, exist_ok=True)
         save_path.write_text(output, encoding="utf-8")
-        if not args.quiet:
-            logging.info(f"Output saved to {args.save}")
+        info(f"Output saved to {args.save}")
     else:
-        print(output)
+        result(output, force=True)
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("👋")
+        result("👋", force=True)
