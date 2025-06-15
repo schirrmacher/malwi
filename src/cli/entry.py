@@ -1,6 +1,5 @@
 import logging
 import argparse
-from typing import List
 from pathlib import Path
 
 from research.disassemble_python import (
