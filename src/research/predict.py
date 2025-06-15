@@ -5,8 +5,11 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer, DistilBertForSequenceClassification
 
-HF_TOKENIZER_NAME = "schirrmacher/malwi-tokenizer"
-HF_MODEL_NAME = "schirrmacher/malwi"
+# Changed to use the same repository for both tokenizer and model
+HF_REPO_NAME = "schirrmacher/malwi"
+HF_TOKENIZER_NAME = HF_REPO_NAME
+HF_MODEL_NAME = HF_REPO_NAME
+
 HF_TOKENIZER_INSTANCE = None
 HF_MODEL_INSTANCE = None
 HF_DEVICE_INSTANCE = None
@@ -15,12 +18,7 @@ HF_DEVICE_INSTANCE = None
 def initialize_models(
     model_path: Optional[str] = None, tokenizer_path: Optional[str] = None
 ):
-    global \
-        HF_TOKENIZER_INSTANCE, \
-        HF_MODEL_INSTANCE, \
-        HF_DEVICE_INSTANCE, \
-        HF_MODEL_NAME, \
-        HF_TOKENIZER_NAME
+    global HF_TOKENIZER_INSTANCE, HF_MODEL_INSTANCE, HF_DEVICE_INSTANCE, HF_MODEL_NAME, HF_TOKENIZER_NAME
 
     if HF_MODEL_INSTANCE is not None:
         return
