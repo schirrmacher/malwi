@@ -178,6 +178,17 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     python_function_mapping = FUNCTION_MAPPING.get("python", {})
     python_import_mapping = IMPORT_MAPPING.get("python", {})
 
+    # Sanitize argval to ensure it's a well-formed Unicode string
+    try:
+        # Encode to UTF-8 and decode back, replacing any bytes that
+        # result in ill-formed Unicode (like lone surrogates) with U+FFFD.
+        sanitized_argval = argval.encode("utf-8", errors="replace").decode(
+            "utf-8", errors="replace"
+        )
+    except Exception:
+        sanitized_argval = str(argval)
+
+    argval = sanitized_argval
     argval = reduce_whitespace(remove_newlines(argval))
 
     if argval in python_function_mapping:
