@@ -804,7 +804,9 @@ class MalwiObject:
         if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
             self.warnings += [SpecialCases.TARGETED_FILE.value]
 
+    @classmethod
     def collect_token_stats(
+        cls,
         objects: List["MalwiObject"],
         file_count: int = 0,
         malicious_count: int = 0,
@@ -815,6 +817,14 @@ class MalwiObject:
             stats = obj.calculate_token_stats()
             result.update(stats)
 
+        # 1. Ensure all possible tokens are present in the result, initializing to 0 if not observed.
+        # This resolves the "empty string" issue by guaranteeing a 0 for unobserved features.
+        for token in cls.all_tokens():
+            if token not in result:
+                result[token] = 0
+
+        # 2. Explicitly set MetaAttributes that are passed as arguments or calculated.
+        # This fixes the FILE_COUNT bug.
         result[MetaAttributes.MALICIOUS_COUNT.value] = malicious_count
 
         return dict(result)

@@ -18,7 +18,12 @@ HF_DEVICE_INSTANCE = None
 def initialize_models(
     model_path: Optional[str] = None, tokenizer_path: Optional[str] = None
 ):
-    global HF_TOKENIZER_INSTANCE, HF_MODEL_INSTANCE, HF_DEVICE_INSTANCE, HF_MODEL_NAME, HF_TOKENIZER_NAME
+    global \
+        HF_TOKENIZER_INSTANCE, \
+        HF_MODEL_INSTANCE, \
+        HF_DEVICE_INSTANCE, \
+        HF_MODEL_NAME, \
+        HF_TOKENIZER_NAME
 
     if HF_MODEL_INSTANCE is not None:
         return
