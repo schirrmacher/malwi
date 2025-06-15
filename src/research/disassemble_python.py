@@ -37,9 +37,8 @@ from research.predict_svm_layer import initialize_svm_model, predict as svm_pred
 
 
 class MetaAttributes(Enum):
-    FILE_COUNT = "FILE_COUNT"
+    # Additional attributes for SVM layer training
     MALICIOUS_COUNT = "MALICIOUS_COUNT"
-    MALICIOUS_RATIO = "MALICIOUS_RATIO"
 
 
 class CSVWriter:
