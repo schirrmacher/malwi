@@ -7,7 +7,6 @@ import yaml
 import json
 import types
 import base64
-import types
 import inspect
 import hashlib
 import warnings
@@ -20,7 +19,7 @@ from pathlib import Path
 from collections import Counter
 from dataclasses import dataclass
 from ollama import ChatResponse, chat
-from typing import List, Tuple, Set, Optional, TextIO, Optional, Any, Dict, Union
+from typing import List, Tuple, Set, TextIO, Optional, Any, Dict, Union
 
 from research.mapping import (
     SpecialCases,
@@ -34,7 +33,7 @@ from research.predict_distilbert import (
     initialize_models as initialize_distilbert_models,
 )
 from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
-from common.messaging import get_message_manager, file_error, path_error, info, progress, error, success, warning, debug
+from common.messaging import get_message_manager, file_error, path_error, model_warning, info, progress, error, success, warning, debug, critical
 
 
 class MetaAttributes(Enum):
@@ -365,9 +364,9 @@ class MalwiReport:
 
         txt = "# Malwi Report\n\n"
 
-        txt += f"## Summary\n"
+        txt += "## Summary\n"
 
-        txt += f"Based on the analyzed patterns, the code is evaluated as:\n"
+        txt += "Based on the analyzed patterns, the code is evaluated as:\n"
 
         if self.malicious:
             txt += f"> 👹 **Malicious**: `{self.confidence}`\n\n"
@@ -379,7 +378,7 @@ class MalwiReport:
         txt += f"- Processed Objects: {stats['processed_objects']}\n"
         txt += f"- Malicious Objects: {stats['malicious_objects']}\n\n"
 
-        txt += f"## Token Statistics\n"
+        txt += "## Token Statistics\n"
         for activity in self.activities:
             txt += f"- {activity.lower().replace('_', ' ')}\n"
 
@@ -470,6 +469,9 @@ def process_files(
     msg = get_message_manager()
     msg.set_quiet(silent)
     
+    if not silent:
+        progress("Step 1: Collecting Python files...")
+    
     accepted_files, skipped_files = collect_files_by_extension(
         input_path=input_path,
         accepted_extensions=accepted_extensions,
@@ -478,6 +480,11 @@ def process_files(
 
     all_files = accepted_files + skipped_files
     all_objects: List[MalwiObject] = []
+    
+    if not silent:
+        info(f"Found {len(accepted_files)} Python files to process")
+        if skipped_files:
+            info(f"Skipped {len(skipped_files)} non-Python files")
     files_processed_count = 0
 
     if not accepted_files:
@@ -547,6 +554,8 @@ def process_files(
         )
 
     if not predict_svm:
+        if not silent:
+            success(f"File processing completed: {files_processed_count} files processed")
         return MalwiReport(
             objects=all_objects,
             threshold=malicious_threshold,
@@ -559,9 +568,14 @@ def process_files(
         )
 
     # Final Decision
+    if not silent:
+        progress("Step 2: Generating token statistics...")
     token_stats = MalwiObject.collect_token_stats(
         all_objects, file_count=len(all_files), malicious_count=len(all_objects)
     )
+    
+    if not silent:
+        progress("Step 3: Running SVM classification...")
     prediction = svm_predict(token_stats)
 
     top_activities = sorted(
@@ -570,6 +584,9 @@ def process_files(
         reverse=True,
     )
     top_activities_string = (f"{k}: {v}" for k, v in top_activities)
+    
+    if not silent:
+        success(f"Analysis completed: {files_processed_count} files processed, classification: {'malicious' if prediction['malicious'] else 'benign'} (confidence: {prediction['confidence']:.2f})")
 
     return MalwiReport(
         objects=all_objects,
@@ -596,9 +613,9 @@ def save_yaml_report(obj: "MalwiObject", path: str, code_hash: str) -> None:
             )
         success(f"Saved data for hash {code_hash} to {path}")
     except IOError as e:
-        error(f"Writing YAML file {path} for hash {code_hash}: {e}")
+        error(f"Failed to write YAML file {path}: {e}")
     except Exception as e:
-        error(f"Unexpected error saving YAML for hash {code_hash}: {e}")
+        error(f"Failed to save YAML data for hash {code_hash}: {e}")
 
 
 def manual_triage(
@@ -638,7 +655,7 @@ def manual_triage(
             info("Exiting triage process.")
             exit(0)
     else:
-        warning(f"Unknown triage result '{triage_result}', skipping sample {code_hash}.")
+        warning(f"Unknown triage result '{triage_result}', skipping sample {code_hash}")
 
 
 def auto_triage(
@@ -679,11 +696,11 @@ def ollama_triage(
             save_yaml_report(obj, benign_path, code_hash)
             success("Code categorized as benign")
         else:
-            warning(f"Unclear LLM response for {code_hash}: {result_text}. Skipping.")
+            warning(f"Unclear LLM response for {code_hash}: {result_text}, skipping")
 
     except Exception as e:
         error_message = str(e)
-        error(f"Authentication failed: {error_message}")
+        error(f"Failed to authenticate with LLM service: {error_message}")
         sys.exit(1)
 
 
@@ -1037,10 +1054,13 @@ def main() -> None:
     args: argparse.Namespace = parser.parse_args()
     input_path_obj: Path = Path(args.path)
 
+    # Step 1: Initialize models
+    progress("Step 1: Initializing ML models...")
     try:
         MalwiObject.load_models_into_memory(
             distilbert_model_path=args.model_path, tokenizer_path=args.tokenizer_path
         )
+        success("ML models initialized successfully")
     except Exception as e:
         model_warning("ML", e)
 
@@ -1054,15 +1074,14 @@ def main() -> None:
     try:
         # Handle CSV output separately for streaming
         if args.format == "csv" and args.save:
+            progress("Step 2: Setting up CSV output stream...")
             save_path = Path(args.save)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             csv_writer_instance = CSVWriter(save_path)
-            print(
-                f"CSV output will be appended to: {save_path.resolve()}",
-                file=sys.stderr,
-            )
+            info(f"CSV output will be appended to: {save_path.resolve()}")
 
             # Process files and write directly to CSV
+            progress("Step 3: Processing Python files for CSV export...")
             result = process_files(
                 input_path_obj,
                 accepted_extensions=["py"],
@@ -1074,12 +1093,16 @@ def main() -> None:
             )
 
             if result.objects:
+                progress("Step 4: Writing objects to CSV file...")
                 csv_writer_instance.write_objects(result.objects)
+                success(f"Successfully wrote {len(result.objects)} objects to CSV")
 
             csv_writer_instance.close()
+            success(f"CSV processing completed: {save_path.resolve()}")
 
         else:
             # For all other formats, collect data first
+            progress("Step 2: Processing Python files with ML prediction...")
             result = process_files(
                 input_path_obj,
                 accepted_extensions=["py"],
@@ -1091,6 +1114,7 @@ def main() -> None:
             )
 
             # Handle output
+            progress("Step 3: Preparing output format...")
             output_file = None
             output_stream = sys.stdout
 
@@ -1101,6 +1125,7 @@ def main() -> None:
                 output_stream = output_file
                 info(f"Output will be saved to: {save_path.resolve()}")
 
+            progress(f"Step 4: Generating {args.format.upper()} report...")
             try:
                 if args.format == "csv":
                     result.to_report_csv(output_stream)
@@ -1108,6 +1133,7 @@ def main() -> None:
                     output_stream.write(result.to_report_json() + "\n")
                 elif args.format == "yaml":
                     output_stream.write(result.to_report_yaml() + "\n")
+                success(f"Report generation completed in {args.format.upper()} format")
             finally:
                 if output_file:
                     output_file.close()

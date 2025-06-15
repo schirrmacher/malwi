@@ -1,9 +1,7 @@
 import pickle
 import argparse
-import json
 import os
 
-import numpy as np
 import pandas as pd
 from sklearn.svm import SVC
 from sklearn.preprocessing import LabelEncoder, StandardScaler

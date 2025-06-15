@@ -1,7 +1,6 @@
 import os
 import csv
 import random
-import logging
 import argparse
 import tempfile
 import shutil

@@ -59,11 +59,11 @@ def run_ngram_analysis(args):
     """
     Performs the n-gram analysis based on the provided arguments.
     """
-    info(f"Analyzing n-grams (n={args.ngram_size}) from column '{args.text_column}' in {args.input_file}...")
-
-    # Load data (common step, could be moved outside if needed frequently)
+    # Step 1: Load dataset
+    progress(f"Step 1: Loading dataset from {args.input_file}...")
     try:
         df = pd.read_csv(args.input_file)
+        info(f"Loaded dataset with {len(df)} samples")
     except FileNotFoundError:
         error(f"Input file not found at {args.input_file}")
         sys.exit(1)
@@ -76,18 +76,20 @@ def run_ngram_analysis(args):
         error(f"Text column '{args.text_column}' not found in the input file.")
         sys.exit(1)
 
-    progress("Preprocessing text...")
+    # Step 2: Preprocess text data
+    progress("Step 2: Preprocessing text data...")
     df["tokens"] = df[args.text_column].apply(
         lambda x: preprocess_text(x) if pd.notna(x) else []
     )
 
-    progress(f"Calculating {args.ngram_size}-grams...")
+    # Step 3: Generate n-grams
+    progress(f"Step 3: Generating {args.ngram_size}-grams from text data...")
     ngram_counts = get_ngram_counts(
         df["tokens"].tolist(), args.ngram_size
     )  # Pass list of lists
 
     if not ngram_counts:
-        warning(f"No n-grams of size {args.ngram_size} found in the dataset after preprocessing.")
+        warning(f"No n-grams of size {args.ngram_size} found in dataset after preprocessing")
         return  # Exit the function gracefully
 
     ngram_df = pd.DataFrame.from_records(
@@ -104,7 +106,8 @@ def run_ngram_analysis(args):
     info(ngram_df.to_string(index=False))  # Use to_string for better console output
 
     if args.output_mapping:
-        progress(f"Generating n-gram mapping for top {args.limit}...")
+        # Step 4: Generate mapping file
+        progress(f"Step 4: Generating n-gram mapping for top {args.limit} results...")
         ngram_mapping = {}
 
         for _, row in ngram_df.iterrows():
@@ -129,10 +132,11 @@ def run_stats_analysis(args):
     """
     Calculates and displays statistics about the text column.
     """
-    info(f"Analyzing statistics for column '{args.text_column}' in {args.input_file}...")
-
+    # Step 1: Load dataset for analysis
+    progress(f"Step 1: Loading dataset from {args.input_file}...")
     try:
         df = pd.read_csv(args.input_file)
+        info(f"Loaded dataset with {len(df)} samples")
     except FileNotFoundError:
         error(f"Input file not found at {args.input_file}")
         sys.exit(1)
@@ -149,7 +153,7 @@ def run_stats_analysis(args):
     )
 
     if word_counts.empty:
-        warning("No text data found to analyze.")
+        warning("No text samples found to analyze")
         return
 
     average_words = word_counts.mean()

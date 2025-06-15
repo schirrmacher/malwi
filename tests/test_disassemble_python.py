@@ -4,7 +4,7 @@ import json
 import pytest
 import csv
 
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
 from research.mapping import SpecialCases
 
@@ -14,7 +14,6 @@ from research.disassemble_python import (
     disassemble_python_file,
     process_python_file,
     process_files,
-    triage,
     main,
 )
 

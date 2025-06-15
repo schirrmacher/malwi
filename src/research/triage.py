@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from research.disassemble_python import MalwiObject, triage
-from common.messaging import configure_messaging, info, success, warning, error, progress
+from common.messaging import configure_messaging, info, success, warning, error, path_error
 
 
 def process_object_file(
@@ -30,8 +30,9 @@ def process_object_file(
             llm_prompt=llm_prompt,
             llm_model=llm_model,
         )
+        success(f"Triage completed for {file_path}")
     except Exception as e:
-        error(f"Failed to process {file_path}: {e}")
+        error(f"Failed to process triage file {file_path}: {e}")
 
 
 def main():
@@ -116,6 +117,7 @@ def main():
             for file in args.path.iterdir()
             if file.is_file() and file.suffix in {".yaml", ".yml"}
         ]
+        info(f"Found {len(files)} YAML files to process")
         for file in tqdm(files, desc="Processing files"):
             process_object_file(
                 file_path=file,
@@ -128,11 +130,11 @@ def main():
                 llm_prompt=args.prompt,
             )
     else:
-        error(f"Invalid path: {args.path}")
+        path_error(args.path, "is not a valid file or directory")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        info("👋")
+        warning("Operation interrupted by user")

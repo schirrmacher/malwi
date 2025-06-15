@@ -5,7 +5,6 @@ import pathlib
 import argparse
 import numpy as np
 import pandas as pd
-import json
 
 
 from typing import Set
@@ -207,7 +206,7 @@ def save_model_with_prefix(trainer, tokenizer, output_path: Path):
     output_path.mkdir(parents=True, exist_ok=True)
 
     # Save model files with distilbert prefix
-    model_files = trainer.save_model(str(output_path))
+    trainer.save_model(str(output_path))
 
     # Rename model files to add distilbert prefix
     model_file_mappings = {
