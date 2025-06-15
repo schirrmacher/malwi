@@ -67,59 +67,39 @@ def load_and_prepare_data(benign_path, malicious_path):
     return combined_df
 
 
-def apply_feature_weights(df, feature_weights, feature_names):
+def clean_and_convert_features(df):
     """
-    Apply weights to features using pandas operations.
+    Clean feature columns by converting string values to numeric.
 
     Parameters:
-    - df: pandas DataFrame with features
-    - feature_weights: dict mapping feature names to weights, or list of weights
-    - feature_names: list of feature column names
+    - df: pandas DataFrame with potentially mixed-type feature columns
 
     Returns:
-    - weighted_df: DataFrame with weighted features
+    - cleaned_df: DataFrame with all feature columns as numeric
     """
-    weighted_df = df.copy()
+    cleaned_df = df.copy()
 
-    if isinstance(feature_weights, dict):
-        # Dictionary approach - apply weights by name
-        applied_weights = {}
-        for feature_name in feature_names:
-            if feature_name in feature_weights:
-                weight = feature_weights[feature_name]
-                weighted_df[feature_name] = weighted_df[feature_name] * weight
-                applied_weights[feature_name] = weight
-            else:
-                applied_weights[feature_name] = 1.0  # Default weight
+    for col in cleaned_df.columns:
+        # Convert the column to string first, then handle special cases
+        col_series = cleaned_df[col].astype(str)
 
-        print(f"Applied feature weights: {applied_weights}")
+        # Handle common string patterns that should be numeric
+        # Replace 's' suffix (like '0s' -> '0')
+        col_series = col_series.str.replace("s$", "", regex=True)
 
-    elif isinstance(feature_weights, (list, np.ndarray)):
-        # List approach - apply weights by position
-        if len(feature_weights) != len(feature_names):
-            raise ValueError(
-                f"Number of weights ({len(feature_weights)}) must match "
-                f"number of features ({len(feature_names)})"
-            )
+        # Handle other common patterns if needed
+        # col_series = col_series.str.replace('ms$', '', regex=True)  # milliseconds
+        # col_series = col_series.str.replace('%$', '', regex=True)   # percentages
 
-        applied_weights = {}
-        for i, feature_name in enumerate(feature_names):
-            weight = feature_weights[i]
-            weighted_df[feature_name] = weighted_df[feature_name] * weight
-            applied_weights[feature_name] = weight
+        # Try to convert to numeric, replacing any remaining non-numeric with 0
+        cleaned_df[col] = pd.to_numeric(col_series, errors="coerce").fillna(0)
 
-        print(f"Applied feature weights: {applied_weights}")
-
-    else:
-        raise ValueError("feature_weights must be a dict or list/array")
-
-    return weighted_df
+    return cleaned_df
 
 
 def create_features_and_labels(
     df,
     allowed_features=None,
-    feature_weights=None,
     scale_features=True,
 ):
     """
@@ -129,7 +109,6 @@ def create_features_and_labels(
     Parameters:
     - df: pandas DataFrame
     - allowed_features: list of column names to allow as features (optional)
-    - feature_weights: dict or list of feature weights (optional)
     - scale_features: bool, whether to apply standard scaling (default: True)
 
     Returns:
@@ -169,12 +148,9 @@ def create_features_and_labels(
     feature_names = X_features_df.columns.tolist()
     print(f"Using {len(feature_names)} feature columns: {feature_names}")
 
-    # Apply feature weights if provided
-    if feature_weights is not None:
-        print("\nApplying feature weights...")
-        X_features_df = apply_feature_weights(
-            X_features_df, feature_weights, feature_names
-        )
+    # Clean and convert features to numeric before any processing
+    print("Cleaning and converting features to numeric...")
+    X_features_df = clean_and_convert_features(X_features_df)
 
     # Apply scaling if requested
     scaler = None
@@ -195,29 +171,6 @@ def create_features_and_labels(
     print(f"Encoded {len(le.classes_)} unique labels: {list(le.classes_)}")
 
     return X_features_df.values, y_encoded, feature_names, le, scaler
-
-
-def load_feature_weights(weights_file):
-    """
-    Load feature weights from a JSON file.
-
-    Parameters:
-    - weights_file: path to JSON file containing feature weights
-
-    Returns:
-    - feature_weights: dict of feature name -> weight
-    """
-    try:
-        with open(weights_file, "r") as f:
-            weights = json.load(f)
-        print(f"Loaded feature weights from {weights_file}")
-        return weights
-    except FileNotFoundError:
-        print(f"Warning: Feature weights file not found at '{weights_file}'")
-        return None
-    except json.JSONDecodeError:
-        print(f"Error: Invalid JSON in feature weights file '{weights_file}'")
-        return None
 
 
 def main():
@@ -248,13 +201,6 @@ def main():
         help="Path to save the trained SVM model (e.g., 'svm_model.pkl').",
     )
 
-    # --- Feature weighting arguments ---
-    parser.add_argument(
-        "--feature-weights",
-        "-w",
-        type=str,
-        help="Path to JSON file containing feature weights (e.g., {'feature1': 2.0, 'feature2': 0.5})",
-    )
     parser.add_argument(
         "--no-scaling",
         action="store_true",
@@ -266,7 +212,7 @@ def main():
         "--test-size",
         type=float,
         default=0.2,
-        help="Proportion of the dataset for the test split (default: 0.25).",
+        help="Proportion of the dataset for the test split (default: 0.2).",
     )
     parser.add_argument(
         "--kernel",
@@ -295,18 +241,6 @@ def main():
             "At least one of --benign or --malicious input files must be provided."
         )
 
-    # --- Load feature weights if provided ---
-    feature_weights = None
-    if args.feature_weights:
-        feature_weights = load_feature_weights(args.feature_weights)
-    else:
-        # Default: Give higher weight to NETWORKING feature
-        feature_weights = {
-            "NETWORKING": 3.0,
-            "NETWORK_HTTP_REQUEST": 3.0,
-            "NETWORK_FILE_DOWNLOAD": 3.0,
-        }
-
     # --- 1. Prepare Dataset ---
     print("Step 1: Loading and preparing dataset from CSV files...")
     combined_data = load_and_prepare_data(args.benign, args.malicious)
@@ -315,11 +249,10 @@ def main():
         print("Halting due to data loading errors or no data found.")
         return
 
-    # --- 2. Create Features and Labels with Weighting ---
-    print("\nStep 2: Creating features and labels with optional weighting...")
+    # --- 2. Create Features and Labels ---
+    print("\nStep 2: Creating features and labels...")
     X, y, feature_names, label_encoder, scaler = create_features_and_labels(
         combined_data,
-        feature_weights=feature_weights,
         scale_features=not args.no_scaling,
     )
 
@@ -344,7 +277,6 @@ def main():
         C=args.C,
         gamma=gamma_value,
         probability=True,
-        class_weight="balanced",
     )
     print(f"Model parameters: kernel={args.kernel}, C={args.C}, gamma={gamma_value}")
     model.fit(X_train, y_train)
@@ -385,16 +317,13 @@ def main():
         "feature_names": feature_names,
         "label_encoder": label_encoder,
         "scaler": scaler,
-        "feature_weights": feature_weights,
     }
 
     with open(args.output, "wb") as f:
         pickle.dump(model_payload, f)
 
     print("Model saved successfully.")
-    print(
-        "Saved components: model, feature_names, label_encoder, scaler, feature_weights"
-    )
+    print("Saved components: model, feature_names, label_encoder, scaler")
     print("\nWarning: Only load .pkl files from sources you trust.")
 
 
