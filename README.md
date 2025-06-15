@@ -144,18 +144,25 @@ Do you have access to malicious Rust, Go, whatever packages? **Contact me.**
 
 ### Develop
 
-Prerequisites: [uv](https://docs.astral.sh/uv/)
-```
+**Prerequisites:** [uv](https://docs.astral.sh/uv/)
+
+```bash
 # Download and process data
-cmds/download_and_preprocess.sh
+cmds/download_and_preprocess_distilbert.sh
 
-# Only process data
-cmds/preprocess.sh
+# Preprocess and train DistilBERT only
+cmds/preprocess_and_train_distilbert.sh
 
-# Preprocess then start training
-cmds/preprocess_and_train.sh
+# Preprocess and train SVM Layer only
+cmds/preprocess_and_train_svm.sh
 
-# Start DistilBert training
+# Only preprocess data for DistilBERT
+cmds/preprocess_distilbert.sh
+
+# Only preprocess data for SVM Layer
+cmds/preprocess_svm.sh
+
+# Start DistilBERT training
 cmds/train_distilbert.sh
 
 # Start SVM Layer training
