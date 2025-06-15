@@ -41,16 +41,9 @@ Typical malware behaviors include:
 - _Backdoors_: Allowing remote attackers to gain unauthorized access to your system.
 - _Destructive_ actions: Deleting files, corrupting databases, or sabotaging applications.
 
-> ⚠️ **Attention**: Malicious packages might execute code during installation (e.g. through `setup.py`). 
-Make sure to *NOT* download or install malicious packages from the dataset with commands like `uv add`, `pip install`, `poetry add`.
-
 ## How does it work?
 
-malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). 
-
-The following datasets are used as a source for malicious samples:
-- [pypi_malregistry](https://github.com/lxyeternal/pypi_malregistry)
-- [DataDog malicious-software-packages-dataset](https://github.com/DataDog/malicious-software-packages-dataset)
+malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). The [malwi-samples](https://github.com/schirrmacher/malwi-samples) dataset is used for training.
 
 ### 1. Compile Python files to bytecode
 
