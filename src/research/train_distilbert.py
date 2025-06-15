@@ -222,10 +222,10 @@ def save_model_with_prefix(trainer, tokenizer, output_path: Path):
 
     # Rename model files to add distilbert prefix
     model_file_mappings = {
-        "config.json": "distilbert_config.json",
-        "pytorch_model.bin": "distilbert_pytorch_model.bin",
-        "model.safetensors": "distilbert_model.safetensors",
-        "training_args.bin": "distilbert_training_args.bin",
+        "config.json": "config.json",
+        "pytorch_model.bin": "pytorch_model.bin",
+        "model.safetensors": "model.safetensors",
+        "training_args.bin": "training_args.bin",
     }
 
     for original_name, new_name in model_file_mappings.items():
@@ -242,9 +242,9 @@ def save_model_with_prefix(trainer, tokenizer, output_path: Path):
     tokenizer_file_mappings = {
         "tokenizer.json": "tokenizer.json",
         "tokenizer_config.json": "tokenizer_config.json",
-        "vocab.json": "tokenizer_vocab.json",
-        "merges.txt": "tokenizer_merges.txt",
-        "special_tokens_map.json": "tokenizer_special_tokens_map.json",
+        "vocab.json": "vocab.json",
+        "merges.txt": "merges.txt",
+        "special_tokens_map.json": "special_tokens_map.json",
     }
 
     for original_name, new_name in tokenizer_file_mappings.items():
