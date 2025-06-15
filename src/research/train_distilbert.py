@@ -261,15 +261,15 @@ def cleanup_model_directory(model_output_path: Path):
 
     # Essential files to keep (with prefixes)
     essential_files = {
-        "distilbert_config.json",
-        "distilbert_pytorch_model.bin",
-        "distilbert_model.safetensors",
-        "distilbert_training_args.bin",
+        "config.json",
+        "pytorch_model.bin",
+        "model.safetensors",
+        "training_args.bin",
         "tokenizer.json",
         "tokenizer_config.json",
-        "tokenizer_vocab.json",
-        "tokenizer_merges.txt",
-        "tokenizer_special_tokens_map.json",
+        "vocab.json",
+        "merges.txt",
+        "special_tokens_map.json",
         "training_metrics.txt",
     }
 
