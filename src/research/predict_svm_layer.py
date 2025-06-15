@@ -8,7 +8,7 @@ from pathlib import Path
 from huggingface_hub import hf_hub_download
 from typing import Dict, Any, Optional
 
-DEFAULT_HF_REPO = "schirrmacher/malwi-svm-layer"
+DEFAULT_HF_REPO = "schirrmacher/malwi"
 DEFAULT_HF_FILE = "svm_layer.pkl"
 
 # Global SVM model variable
