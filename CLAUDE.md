@@ -40,6 +40,16 @@ ruff format .
 ./cmds/preprocess_and_train_svm.sh
 ```
 
+## Release
+
+1. Run pytests
+2. Create a version bump, adapt the minor version in:
+- pyproject.toml
+- setup.py
+- uv.lock
+3. Create a git commit with: version bump
+4. Run: `git tag <version>`
+
 ## Architecture Notes
 
 - **Entry Point**: `src/cli/entry.py` - CLI interface and orchestration
