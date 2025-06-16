@@ -26,7 +26,16 @@ def initialize_svm_model(
 
     try:
         if model_path:
-            with open(model_path, "rb") as f:
+            # Check if model_path is a directory or file
+            model_path_obj = Path(model_path)
+            if model_path_obj.is_dir():
+                # If it's a directory, look for svm_layer.pkl inside it
+                svm_file_path = model_path_obj / "svm_layer.pkl"
+            else:
+                # If it's a file, use it directly
+                svm_file_path = model_path_obj
+            
+            with open(svm_file_path, "rb") as f:
                 GLOBAL_SVM_MODEL = pickle.load(f)
         else:
             downloaded_path = hf_hub_download(
