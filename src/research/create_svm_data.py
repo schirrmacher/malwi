@@ -9,7 +9,14 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from research.disassemble_python import MalwiObject, process_files
-from common.messaging import configure_messaging, info, success, warning, error, progress
+from common.messaging import (
+    configure_messaging,
+    info,
+    success,
+    warning,
+    error,
+    progress,
+)
 
 
 class RandomFilePicker:
@@ -78,7 +85,9 @@ def _write_row_to_csv(row_data: dict, output_file: Path):
             writer.writerow(row_data)
         success(f"Appended results for '{row_data['package']}' to {output_file}")
     else:
-        info(f"New feature columns found. Rewriting {output_file} with updated header...")
+        info(
+            f"New feature columns found. Rewriting {output_file} with updated header..."
+        )
         all_data = []
         if file_exists:
             with open(output_file, "r", newline="", encoding="utf-8") as f_read:
@@ -104,7 +113,9 @@ def process_random_samples(
     from a master list and processing them in temporary directories.
     """
     info(f"--- {label.capitalize()} Processing Mode (Random Sampling) ---")
-    progress("Scanning all subdirectories to create a master list of files for sampling...")
+    progress(
+        "Scanning all subdirectories to create a master list of files for sampling..."
+    )
     master_picker = RandomFilePicker(
         directory=str(parent_dir), extensions=args.extensions
     )
@@ -135,7 +146,9 @@ def process_random_samples(
             for file_path in sample_of_files:
                 shutil.copy(file_path, temp_dir)
 
-            info(f"Selected {len(sample_of_files)} files and copied to temporary dir: {temp_dir}")
+            info(
+                f"Selected {len(sample_of_files)} files and copied to temporary dir: {temp_dir}"
+            )
 
             info(f"Processing with maliciousness threshold: {args.threshold}")
 
@@ -146,19 +159,22 @@ def process_random_samples(
                 predict=True,
                 retrieve_source_code=False,
                 silent=args.quiet,
-                show_progress=not args.quiet,
                 malicious_threshold=args.threshold,
             )
 
             info(f"Found {len(results.objects)} objects above maliciousness threshold")
 
             if results.objects:
-                avg_maliciousness = sum(o.maliciousness for o in results.objects) / len(results.objects)
+                avg_maliciousness = sum(o.maliciousness for o in results.objects) / len(
+                    results.objects
+                )
                 info(f"Average maliciousness score: {avg_maliciousness:.3f}")
 
             token_stats = MalwiObject.collect_token_stats(results.objects)
             if not token_stats:
-                warning(f"No token statistics generated for '{package_name}'. Skipping.")
+                warning(
+                    f"No token statistics generated for '{package_name}'. Skipping."
+                )
                 continue
 
             token_stats["package"] = package_name
@@ -168,7 +184,9 @@ def process_random_samples(
             _write_row_to_csv(token_stats, output_file)
 
         except Exception as e:
-            error(f"An error occurred while processing '{package_name}': {e}. Skipping.")
+            error(
+                f"An error occurred while processing '{package_name}': {e}. Skipping."
+            )
         finally:
             # Ensure the temporary directory is always cleaned up
             if temp_dir and os.path.exists(temp_dir):
@@ -195,13 +213,14 @@ def process_package_directories(
                 predict=True,
                 retrieve_source_code=False,
                 silent=args.quiet,
-                show_progress=not args.quiet,
                 malicious_threshold=args.threshold,
             )
 
             token_stats = MalwiObject.collect_token_stats(results.objects)
             if not token_stats:
-                warning(f"No token statistics generated for '{package_name}'. Skipping.")
+                warning(
+                    f"No token statistics generated for '{package_name}'. Skipping."
+                )
                 continue
 
             token_stats["package"] = package_name
@@ -211,7 +230,9 @@ def process_package_directories(
             _write_row_to_csv(token_stats, output_file)
 
         except Exception as e:
-            error(f"An error occurred while processing '{package_name}': {e}. Skipping.")
+            error(
+                f"An error occurred while processing '{package_name}': {e}. Skipping."
+            )
 
     return processed_count
 
@@ -303,7 +324,9 @@ def create_svm_data():
             parent_dir, args, output_file, processing_label
         )
     else:
-        info(f"Scanning subdirectories in '{parent_dir}' for {processing_label} packages...")
+        info(
+            f"Scanning subdirectories in '{parent_dir}' for {processing_label} packages..."
+        )
         subdirectories = [d for d in parent_dir.iterdir() if d.is_dir()]
         if not subdirectories:
             error(f"No subdirectories found in '{parent_dir}'. Exiting.")

@@ -6,7 +6,14 @@ from pathlib import Path
 from huggingface_hub import hf_hub_download
 from typing import Dict, Any, Optional
 
-from common.messaging import configure_messaging, info, success, warning, error, progress
+from common.messaging import (
+    configure_messaging,
+    info,
+    success,
+    warning,
+    error,
+    progress,
+)
 
 DEFAULT_HF_REPO = "schirrmacher/malwi"
 DEFAULT_HF_FILE = "svm_layer.pkl"
@@ -34,7 +41,7 @@ def initialize_svm_model(
             else:
                 # If it's a file, use it directly
                 svm_file_path = model_path_obj
-            
+
             with open(svm_file_path, "rb") as f:
                 GLOBAL_SVM_MODEL = pickle.load(f)
         else:
@@ -115,7 +122,9 @@ def main():
         )
     except Exception as e:
         if not args.quiet:
-            warning(f"Could not initialize ML models: {e}. Maliciousness prediction will be disabled.")
+            warning(
+                f"Could not initialize ML models: {e}. Maliciousness prediction will be disabled."
+            )
 
     result = process_files(
         input_path=Path(args.path),
@@ -132,9 +141,13 @@ def main():
     info(f"- {len(result.skipped_files)} files skipped")
     info(f"- {len(result.objects)} malicious objects identified")
     if prediction["malicious"]:
-        warning(f"⚠️  Malicious code detected (confidence: {prediction['confidence']:.2f})")
+        warning(
+            f"⚠️  Malicious code detected (confidence: {prediction['confidence']:.2f})"
+        )
     else:
-        success(f"No malicious code detected (confidence: {prediction['confidence']:.2f})")
+        success(
+            f"No malicious code detected (confidence: {prediction['confidence']:.2f})"
+        )
 
 
 if __name__ == "__main__":

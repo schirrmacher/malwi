@@ -5,7 +5,14 @@ from pathlib import Path
 from typing import Optional
 
 from research.disassemble_python import MalwiObject, triage
-from common.messaging import configure_messaging, info, success, warning, error, path_error
+from common.messaging import (
+    configure_messaging,
+    info,
+    success,
+    warning,
+    error,
+    path_error,
+)
 
 
 def process_object_file(

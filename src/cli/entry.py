@@ -6,7 +6,14 @@ from research.disassemble_python import (
     process_files,
     MalwiReport,
 )
-from common.messaging import configure_messaging, banner, model_warning, path_error, info, result
+from common.messaging import (
+    configure_messaging,
+    banner,
+    model_warning,
+    path_error,
+    info,
+    result,
+)
 
 
 def main():
@@ -111,7 +118,7 @@ def main():
 
     # Configure unified messaging system
     configure_messaging(quiet=args.quiet)
-    
+
     banner(
         """
                   __          __
@@ -153,7 +160,6 @@ def main():
         predict=True,  # Enable prediction for malwi scanner
         retrieve_source_code=args.no_snippets,
         silent=args.quiet,
-        show_progress=not args.quiet,
         triaging_type=triaging_type,
         malicious_threshold=args.threshold,
     )

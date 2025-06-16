@@ -33,7 +33,19 @@ from research.predict_distilbert import (
     initialize_models as initialize_distilbert_models,
 )
 from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
-from common.messaging import get_message_manager, file_error, path_error, model_warning, info, progress, error, success, warning, debug, critical
+from common.messaging import (
+    get_message_manager,
+    file_error,
+    path_error,
+    model_warning,
+    info,
+    progress,
+    error,
+    success,
+    warning,
+    debug,
+    critical,
+)
 
 
 class MetaAttributes(Enum):
@@ -459,7 +471,6 @@ def process_files(
     predict: bool = False,
     retrieve_source_code: bool = False,
     silent: bool = False,
-    show_progress: bool = True,
     triaging_type: Optional[str] = None,
     malicious_threshold: float = 0.7,
     predict_svm: bool = True,
@@ -468,10 +479,7 @@ def process_files(
     # Configure messaging to respect silent mode
     msg = get_message_manager()
     msg.set_quiet(silent)
-    
-    if not silent:
-        progress("Step 1: Collecting Python files...")
-    
+
     accepted_files, skipped_files = collect_files_by_extension(
         input_path=input_path,
         accepted_extensions=accepted_extensions,
@@ -480,11 +488,7 @@ def process_files(
 
     all_files = accepted_files + skipped_files
     all_objects: List[MalwiObject] = []
-    
-    if not silent:
-        info(f"Found {len(accepted_files)} Python files to process")
-        if skipped_files:
-            info(f"Skipped {len(skipped_files)} non-Python files")
+
     files_processed_count = 0
 
     if not accepted_files:
@@ -506,9 +510,7 @@ def process_files(
         else f"Processing '{input_path.name}'"
     )
 
-    disable_tqdm = not show_progress or (
-        len(accepted_files) <= 1 and input_path.is_file()
-    )
+    disable_tqdm = silent or (len(accepted_files) <= 1 and input_path.is_file())
 
     for file_path in tqdm(
         accepted_files,
@@ -554,8 +556,6 @@ def process_files(
         )
 
     if not predict_svm:
-        if not silent:
-            success(f"File processing completed: {files_processed_count} files processed")
         return MalwiReport(
             objects=all_objects,
             threshold=malicious_threshold,
@@ -567,15 +567,10 @@ def process_files(
             activities=[],
         )
 
-    # Final Decision
-    if not silent:
-        progress("Step 2: Generating token statistics...")
     token_stats = MalwiObject.collect_token_stats(
         all_objects, file_count=len(all_files), malicious_count=len(all_objects)
     )
-    
-    if not silent:
-        progress("Step 3: Running SVM classification...")
+
     prediction = svm_predict(token_stats)
 
     top_activities = sorted(
@@ -584,9 +579,6 @@ def process_files(
         reverse=True,
     )
     top_activities_string = (f"{k}: {v}" for k, v in top_activities)
-    
-    if not silent:
-        success(f"Analysis completed: {files_processed_count} files processed, classification: {'malicious' if prediction['malicious'] else 'benign'} (confidence: {prediction['confidence']:.2f})")
 
     return MalwiReport(
         objects=all_objects,
@@ -1089,7 +1081,6 @@ def main() -> None:
                 predict_svm=False,  # Performance
                 retrieve_source_code=False,
                 silent=False,
-                show_progress=True,
             )
 
             if result.objects:
@@ -1109,7 +1100,6 @@ def main() -> None:
                 predict=True,
                 retrieve_source_code=True,
                 silent=False,
-                show_progress=True,
                 malicious_threshold=args.malicious_threshold,
             )
 
@@ -1141,7 +1131,7 @@ def main() -> None:
     except Exception as e:
         critical(f"A critical error occurred: {e}")
         import traceback
-        
+
         # Print traceback to stderr directly for debugging
         traceback.print_exc(file=sys.stderr)
         if csv_writer_instance:

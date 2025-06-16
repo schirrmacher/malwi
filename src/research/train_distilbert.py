@@ -28,7 +28,14 @@ from datasets import Dataset, DatasetDict
 from datasets.utils.logging import disable_progress_bar
 
 from common.files import read_json_from_file
-from common.messaging import configure_messaging, info, success, warning, error, progress
+from common.messaging import (
+    configure_messaging,
+    info,
+    success,
+    warning,
+    error,
+    progress,
+)
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 
@@ -57,7 +64,9 @@ def load_asts_from_csv(
     try:
         df = pd.read_csv(csv_file_path)
         if token_column_name not in df.columns:
-            warning(f"Column '{token_column_name}' not found in {csv_file_path}. Returning empty list.")
+            warning(
+                f"Column '{token_column_name}' not found in {csv_file_path}. Returning empty list."
+            )
             return []
 
         for idx, row in df.iterrows():
@@ -100,18 +109,24 @@ def create_or_load_tokenizer(
     huggingface_tokenizer_config_file = tokenizer_output_path / "tokenizer.json"
 
     if not force_retrain and huggingface_tokenizer_config_file.exists():
-        info(f"Loading existing PreTrainedTokenizerFast from {tokenizer_output_path} (found tokenizer.json).")
+        info(
+            f"Loading existing PreTrainedTokenizerFast from {tokenizer_output_path} (found tokenizer.json)."
+        )
         tokenizer = PreTrainedTokenizerFast.from_pretrained(
             str(tokenizer_output_path), model_max_length=max_length
         )
     else:
         info("Training or re-training custom BPE tokenizer...")
         if force_retrain and tokenizer_output_path.exists():
-            warning(f"Force retraining: Deleting existing tokenizer directory: {tokenizer_output_path}")
+            warning(
+                f"Force retraining: Deleting existing tokenizer directory: {tokenizer_output_path}"
+            )
             try:
                 shutil.rmtree(tokenizer_output_path)
             except OSError as e:
-                error(f"Deleting directory {tokenizer_output_path}: {e}. Please delete manually and retry.")
+                error(
+                    f"Deleting directory {tokenizer_output_path}: {e}. Please delete manually and retry."
+                )
                 raise
 
         tokenizer_output_path.mkdir(parents=True, exist_ok=True)
@@ -148,7 +163,9 @@ def create_or_load_tokenizer(
             special_tokens=combined_special_tokens,
         )
         bpe_trainer_obj.save_model(str(tokenizer_output_path))
-        success(f"BPE components (vocab.json, merges.txt) saved to {tokenizer_output_path}")
+        success(
+            f"BPE components (vocab.json, merges.txt) saved to {tokenizer_output_path}"
+        )
 
         bpe_model = BPE.from_file(
             str(vocab_file_path), str(merges_file_path), unk_token="[UNK]"
@@ -169,7 +186,9 @@ def create_or_load_tokenizer(
             model_max_length=max_length,
         )
         tokenizer.save_pretrained(str(tokenizer_output_path))
-        success(f"PreTrainedTokenizerFast fully saved to {tokenizer_output_path} (tokenizer.json created).")
+        success(
+            f"PreTrainedTokenizerFast fully saved to {tokenizer_output_path} (tokenizer.json created)."
+        )
 
     return tokenizer
 
@@ -309,7 +328,9 @@ def run_training(args):
         if target_benign_count < len(
             benign_asts
         ):  # Ensure we are actually downsampling
-            info(f"Downsampling benign samples from {len(benign_asts)} to {target_benign_count}")
+            info(
+                f"Downsampling benign samples from {len(benign_asts)} to {target_benign_count}"
+            )
             rng = np.random.RandomState(42)
             benign_indices = rng.choice(
                 len(benign_asts), size=target_benign_count, replace=False
@@ -407,7 +428,9 @@ def run_training(args):
     )
 
     if len(tokenizer) != model.config.vocab_size:
-        info(f"Resizing model token embeddings from {model.config.vocab_size} to {len(tokenizer)}")
+        info(
+            f"Resizing model token embeddings from {model.config.vocab_size} to {len(tokenizer)}"
+        )
         model.resize_token_embeddings(len(tokenizer))
 
     training_arguments = TrainingArguments(

@@ -14,21 +14,21 @@ from pathlib import Path
 class MessageManager:
     """
     Centralized message manager that unifies print() and logging calls.
-    
+
     Provides consistent formatting and respects quiet mode across the entire application.
     """
-    
+
     def __init__(self, quiet: bool = False, logger_name: str = "malwi"):
         """
         Initialize the message manager.
-        
+
         Args:
             quiet: If True, suppresses info and progress messages
             logger_name: Name of the logger to use
         """
         self.quiet = quiet
         self.logger = logging.getLogger(logger_name)
-        
+
         # Set up logging format if not already configured
         if not self.logger.handlers:
             handler = logging.StreamHandler()
@@ -36,13 +36,13 @@ class MessageManager:
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
             self.logger.setLevel(logging.INFO)
-        
+
         # Adjust log level based on quiet mode
         if quiet:
             self.logger.setLevel(logging.WARNING)
         else:
             self.logger.setLevel(logging.INFO)
-    
+
     def set_quiet(self, quiet: bool) -> None:
         """Update quiet mode setting."""
         self.quiet = quiet
@@ -50,44 +50,44 @@ class MessageManager:
             self.logger.setLevel(logging.WARNING)
         else:
             self.logger.setLevel(logging.INFO)
-    
+
     def info(self, message: str, *args: Any) -> None:
         """Print informational message (respects quiet mode)."""
         if not self.quiet:
             formatted_message = message.format(*args) if args else message
             self.logger.info(formatted_message)
-    
+
     def success(self, message: str, *args: Any) -> None:
         """Print success message with green indicator (respects quiet mode)."""
         if not self.quiet:
             formatted_message = message.format(*args) if args else message
             self.logger.info(f"🟢 {formatted_message}")
-    
+
     def warning(self, message: str, *args: Any) -> None:
         """Print warning message (always shown, even in quiet mode)."""
         formatted_message = message.format(*args) if args else message
         self.logger.warning(f"⚠️  Warning: {formatted_message}")
-    
+
     def error(self, message: str, *args: Any) -> None:
         """Print error message (always shown)."""
         formatted_message = message.format(*args) if args else message
         self.logger.error(f"❌ Error: {formatted_message}")
-    
+
     def critical(self, message: str, *args: Any) -> None:
         """Print critical error message (always shown)."""
         formatted_message = message.format(*args) if args else message
         self.logger.critical(f"🚨 Critical: {formatted_message}")
-    
+
     def progress(self, message: str, *args: Any) -> None:
         """Print progress message (respects quiet mode)."""
         if not self.quiet:
             formatted_message = message.format(*args) if args else message
             self.logger.info(f"📈 {formatted_message}")
-    
+
     def result(self, message: str, *args: Any, force: bool = False) -> None:
         """
         Print result/output message.
-        
+
         Args:
             message: The message to print
             *args: Arguments for string formatting
@@ -96,29 +96,33 @@ class MessageManager:
         formatted_message = message.format(*args) if args else message
         if force or not self.quiet:
             print(formatted_message)
-    
+
     def banner(self, message: str) -> None:
         """Print banner message (respects quiet mode)."""
         if not self.quiet:
             self.logger.info(message)
-    
+
     def debug(self, message: str, *args: Any) -> None:
         """Print debug message (only when debug logging is enabled)."""
         formatted_message = message.format(*args) if args else message
         self.logger.debug(formatted_message)
-    
+
     def file_error(self, file_path: Path, error: Exception, context: str = "") -> None:
         """Print standardized file processing error."""
         context_str = f" ({context})" if context else ""
-        self.error(f"Failed to process {file_path}{context_str}: {type(error).__name__}: {error}")
-    
+        self.error(
+            f"Failed to process {file_path}{context_str}: {type(error).__name__}: {error}"
+        )
+
     def path_error(self, path: Path, reason: str = "does not exist") -> None:
         """Print standardized path error."""
         self.error(f"Path {reason}: {path}")
-    
+
     def model_warning(self, model_type: str, error: Exception) -> None:
         """Print standardized model loading warning."""
-        self.warning(f"Could not initialize {model_type} model: {error}. Functionality will be limited.")
+        self.warning(
+            f"Could not initialize {model_type} model: {error}. Functionality will be limited."
+        )
 
 
 # Global message manager instance
@@ -138,14 +142,16 @@ def set_quiet_mode(quiet: bool) -> None:
     get_message_manager().set_quiet(quiet)
 
 
-def configure_messaging(quiet: bool = False, logger_name: str = "malwi") -> MessageManager:
+def configure_messaging(
+    quiet: bool = False, logger_name: str = "malwi"
+) -> MessageManager:
     """
     Configure the global messaging system.
-    
+
     Args:
         quiet: Enable quiet mode
         logger_name: Logger name to use
-        
+
     Returns:
         The configured MessageManager instance
     """

@@ -297,7 +297,6 @@ class TestFileProcessingAndCollection:
             accepted_extensions=["py"],
             predict=True,
             retrieve_source_code=True,
-            show_progress=False,
         )
         assert result.processed_files == 2
         # 4 objects from f1.py + 1 from f2.py
@@ -359,7 +358,13 @@ class TestMainCLI:
     @patch("sys.exit")
     @patch("inspect.getsource", return_value="mocked line")
     def test_main_non_existent_path(
-        self, mock_inspect, mock_sys_exit_func, mock_load_models, mock_svm, capsys, caplog
+        self,
+        mock_inspect,
+        mock_sys_exit_func,
+        mock_load_models,
+        mock_svm,
+        capsys,
+        caplog,
     ):
         with patch.object(
             sys, "argv", ["research.disassemble_python.py", "nonexistentpath"]
@@ -368,8 +373,13 @@ class TestMainCLI:
         captured = capsys.readouterr()
         # With unified messaging, path errors are logged rather than printed to stderr
         # Check both captured output and log records
-        has_error_in_output = "Path does not exist" in captured.out or "Path does not exist" in captured.err
-        has_error_in_logs = any("Path does not exist" in record.message for record in caplog.records)
+        has_error_in_output = (
+            "Path does not exist" in captured.out
+            or "Path does not exist" in captured.err
+        )
+        has_error_in_logs = any(
+            "Path does not exist" in record.message for record in caplog.records
+        )
         assert has_error_in_output or has_error_in_logs
         mock_sys_exit_func.assert_any_call(1)
 

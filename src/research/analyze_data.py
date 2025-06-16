@@ -10,7 +10,14 @@ from collections import Counter
 from nltk.util import ngrams
 from nltk.corpus import stopwords
 
-from common.messaging import configure_messaging, info, success, warning, error, progress
+from common.messaging import (
+    configure_messaging,
+    info,
+    success,
+    warning,
+    error,
+    progress,
+)
 
 try:
     nltk.data.find("corpora/stopwords")
@@ -21,7 +28,9 @@ except LookupError:
         success("NLTK stopwords corpus downloaded successfully")
     except Exception as e:
         error(f"Error downloading NLTK 'stopwords': {e}")
-        error("Please try running 'import nltk; nltk.download('stopwords')' manually in a Python interpreter.")
+        error(
+            "Please try running 'import nltk; nltk.download('stopwords')' manually in a Python interpreter."
+        )
         sys.exit(1)
 
 
@@ -89,7 +98,9 @@ def run_ngram_analysis(args):
     )  # Pass list of lists
 
     if not ngram_counts:
-        warning(f"No n-grams of size {args.ngram_size} found in dataset after preprocessing")
+        warning(
+            f"No n-grams of size {args.ngram_size} found in dataset after preprocessing"
+        )
         return  # Exit the function gracefully
 
     ngram_df = pd.DataFrame.from_records(
@@ -167,7 +178,9 @@ def run_stats_analysis(args):
     if lines_with_text > 0:
         info(f"  Average words per line (with text): {average_words:.2f}")
         info(f"  Maximum words in a single line: {max_words}")
-        info(f"  Minimum words in a single line (with text): {word_counts[word_counts > 0].min()}")
+        info(
+            f"  Minimum words in a single line (with text): {word_counts[word_counts > 0].min()}"
+        )
     else:
         warning("  No lines contained text for word count analysis.")
 

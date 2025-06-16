@@ -14,7 +14,14 @@ from sklearn.metrics import (
     f1_score,
 )
 
-from common.messaging import configure_messaging, info, success, warning, error, progress
+from common.messaging import (
+    configure_messaging,
+    info,
+    success,
+    warning,
+    error,
+    progress,
+)
 
 
 def load_and_prepare_data(benign_path, malicious_path):
@@ -38,7 +45,9 @@ def load_and_prepare_data(benign_path, malicious_path):
     if malicious_path:
         try:
             malicious_df = pd.read_csv(malicious_path)
-            success(f"Loaded {len(malicious_df)} rows from malicious file: {malicious_path}")
+            success(
+                f"Loaded {len(malicious_df)} rows from malicious file: {malicious_path}"
+            )
         except FileNotFoundError:
             error(f"Malicious file not found at '{malicious_path}'")
             return None
@@ -51,7 +60,9 @@ def load_and_prepare_data(benign_path, malicious_path):
         malicious_df = malicious_df[~malicious_df["package"].isin(benign_packages)]
         removed_count = original_malicious_count - len(malicious_df)
         if removed_count > 0:
-            info(f"Removed {removed_count} duplicate packages from the malicious dataset.")
+            info(
+                f"Removed {removed_count} duplicate packages from the malicious dataset."
+            )
 
     # Combine the dataframes
     combined_df = pd.concat([benign_df, malicious_df], ignore_index=True, join="outer")
@@ -114,11 +125,15 @@ def create_features_and_labels(
     - scaler: fitted StandardScaler
     """
     if "label" not in df.columns:
-        error("The combined CSV data must contain a 'label' column for classification ('benign'/'malicious').")
+        error(
+            "The combined CSV data must contain a 'label' column for classification ('benign'/'malicious')."
+        )
         return None, None, None, None, None
 
     if "package" not in df.columns:
-        error("Combined CSV data must contain a 'package' column to be used as an identifier.")
+        error(
+            "Combined CSV data must contain a 'package' column to be used as an identifier."
+        )
         return None, None, None, None, None
 
     y_labels = df["label"]
@@ -289,7 +304,9 @@ def main():
         )
         info(report)
     except ValueError:
-        warning("Could not generate classification report. Some classes in the test set may have no predicted samples.")
+        warning(
+            "Could not generate classification report. Some classes in the test set may have no predicted samples."
+        )
 
     # --- 6. Save Model using Pickle ---
     progress(f"Step 6: Saving model to '{args.output}'...")

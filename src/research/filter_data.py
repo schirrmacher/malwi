@@ -3,7 +3,14 @@ import argparse
 import pandas as pd
 
 from research.disassemble_python import MalwiObject
-from common.messaging import configure_messaging, info, success, warning, error, progress
+from common.messaging import (
+    configure_messaging,
+    info,
+    success,
+    warning,
+    error,
+    progress,
+)
 
 
 def enrich_dataframe_with_triage(
@@ -74,7 +81,9 @@ def process_csv_files(benign, malicious, triage_dir=None):
             df_benign = enrich_dataframe_with_triage(df_benign, benign_triage_path)
 
         if os.path.isdir(malicious_triage_path):
-            info(f"Enriching malicious dataset with files from: {malicious_triage_path}")
+            info(
+                f"Enriching malicious dataset with files from: {malicious_triage_path}"
+            )
             df_malicious = enrich_dataframe_with_triage(
                 df_malicious, malicious_triage_path
             )
@@ -83,11 +92,15 @@ def process_csv_files(benign, malicious, triage_dir=None):
     progress("Step 3: Removing duplicate samples within datasets...")
     initial_benign = len(df_benign)
     df_benign = df_benign.drop_duplicates(subset=["hash"], keep="first")
-    success(f"Removed {initial_benign - len(df_benign)} duplicate samples from benign dataset")
+    success(
+        f"Removed {initial_benign - len(df_benign)} duplicate samples from benign dataset"
+    )
 
     initial_malicious = len(df_malicious)
     df_malicious = df_malicious.drop_duplicates(subset=["hash"], keep="first")
-    success(f"Removed {initial_malicious - len(df_malicious)} duplicate samples from malicious dataset")
+    success(
+        f"Removed {initial_malicious - len(df_malicious)} duplicate samples from malicious dataset"
+    )
 
     # Step 4: Remove cross-dataset duplicates
     progress("Step 4: Identifying and removing cross-dataset duplicates...")
@@ -118,9 +131,11 @@ def process_csv_files(benign, malicious, triage_dir=None):
 
         df_malicious.to_csv(output_malicious, index=False)
         success(f"Saved processed malicious dataset to: {output_malicious}")
-        
+
         # Summary
-        success(f"Dataset processing completed: {len(df_benign)} benign, {len(df_malicious)} malicious samples")
+        success(
+            f"Dataset processing completed: {len(df_benign)} benign, {len(df_malicious)} malicious samples"
+        )
 
     except Exception as e:
         error(f"Error saving processed CSVs: {e}")
@@ -164,4 +179,6 @@ if __name__ == "__main__":
     if args.benign and args.malicious:
         process_csv_files(args.benign, args.malicious, triage_dir=args.triaging)
     else:
-        error("Both --benign and --malicious CSV file paths must be provided to process.")
+        error(
+            "Both --benign and --malicious CSV file paths must be provided to process."
+        )
