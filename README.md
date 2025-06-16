@@ -19,14 +19,22 @@ pip install --user malwi
 
 2) **Run**
 ```
-malwi ./examples
+malwi examples/malicious/discordpydebug-0.0.4
 ```
 
 3) **Evaluate**: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
 ```
-- 2 files scanned
-- 0 files skipped
-- 3 malicious objects
+- files scanned: 12
+- files skipped: 9
+- malicious objects: 4
+
+- data handling: 4
+- filesystem access: 4
+- encoding decoding: 3
+- process concurrency: 2
+- system interaction: 2
+- networking: 1
+- string url: 1
 
 => 👹 malicious 1.0
 ```
