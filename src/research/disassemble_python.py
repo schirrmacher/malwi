@@ -248,11 +248,11 @@ def process_python_file(
             for obj in all_objects:
                 obj.retrieve_source_code()
 
-        return all_objects or None
+        return all_objects
 
     except Exception as e:
         file_error(file_path, e, "processing")
-        return None
+        return []
 
 
 @dataclass

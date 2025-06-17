@@ -330,7 +330,7 @@ class TestFileProcessingAndCollection:
 
         # The function returns `None` when the resulting list of objects is empty.
         # This asserts the new, correct filtering behavior.
-        assert results_filtered is None
+        assert results_filtered == []
 
         # --- CASE 2: Threshold is LOWER than the score, expect objects to be returned ---
         # A threshold of 0.7 is lower than the 0.8 score, so nothing should be filtered.
