@@ -1,9 +1,11 @@
+import os
+import time
 import pickle
 import argparse
-import os
 
 import pandas as pd
 from sklearn.svm import SVC
+from datetime import datetime
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
@@ -175,8 +177,34 @@ def create_features_and_labels(
     return X_features_df.values, y_encoded, feature_names, le, scaler
 
 
+def save_training_metrics(output_path, metrics_data):
+    """Save training metrics summary to a file in the same directory as the model."""
+    model_dir = os.path.dirname(output_path)
+    metrics_filename = (
+        os.path.splitext(os.path.basename(output_path))[0] + "_training_metrics.txt"
+    )
+    metrics_path = os.path.join(model_dir, metrics_filename)
+
+    with open(metrics_path, "w") as f:
+        f.write("Training Metrics Summary\n")
+        f.write("=" * 40 + "\n")
+        for key, value in metrics_data.items():
+            if isinstance(value, float):
+                f.write(f"{key}: {value:.4f}\n")
+            else:
+                f.write(f"{key}: {value}\n")
+        f.write("=" * 40 + "\n")
+        f.write("Training completed successfully\n")
+
+    info(f"Training metrics saved to: {metrics_path}")
+
+
 def main():
     """Main function to parse arguments and run the training pipeline."""
+    # Record start time
+    start_time = time.time()
+    training_start_datetime = datetime.now()
+
     parser = argparse.ArgumentParser(
         description="CLI for training an SVM model from benign and malicious CSV files.",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -330,6 +358,32 @@ def main():
     success("Model saved successfully.")
     info("Saved components: model, feature_names, label_encoder, scaler")
     warning("Only load .pkl files from trusted sources")
+
+    # --- 7. Save Training Metrics Summary ---
+    end_time = time.time()
+    training_duration = end_time - start_time
+
+    metrics_data = {
+        "training_start_time": training_start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        "training_duration_seconds": training_duration,
+        "training_duration_minutes": training_duration / 60,
+        "total_samples": len(combined_data),
+        "training_samples": len(X_train),
+        "test_samples": len(X_test),
+        "num_features": len(feature_names),
+        "kernel": args.kernel,
+        "C_parameter": args.C,
+        "gamma_parameter": str(gamma_value),
+        "test_size_ratio": args.test_size,
+        "accuracy": accuracy,
+        "weighted_precision": precision,
+        "weighted_recall": recall,
+        "weighted_f1_score": f1,
+        "label_classes": list(label_encoder.classes_),
+        "model_output_path": args.output,
+    }
+
+    save_training_metrics(args.output, metrics_data)
 
 
 if __name__ == "__main__":
