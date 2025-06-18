@@ -47,6 +47,7 @@ DEFAULT_MODEL_NAME = "distilbert-base-uncased"
 DEFAULT_TOKENIZER_CLI_PATH = Path("malwi_models")
 DEFAULT_MODEL_OUTPUT_CLI_PATH = Path("malwi_models")
 DEFAULT_MAX_LENGTH = 512
+DEFAULT_WINDOW_STRIDE = 128
 DEFAULT_EPOCHS = 3
 DEFAULT_BATCH_SIZE = 16
 DEFAULT_VOCAB_SIZE = 30522
@@ -349,7 +350,7 @@ def run_training(args):
         error("No data available for training after filtering or downsampling.")
         return
 
-    info(f"Total training samples: {len(all_texts_for_training)}")
+    info(f"Total original samples: {len(all_texts_for_training)}")
 
     (
         distilbert_train_texts,
@@ -373,7 +374,7 @@ def run_training(args):
             tokenizer_output_path=Path(args.tokenizer_path),
             texts_for_training=distilbert_train_texts,
             vocab_size=args.vocab_size,
-            global_special_tokens=SPECIAL_TOKENS,  # Pass the globally loaded SPECIAL_TOKENS
+            global_special_tokens=SPECIAL_TOKENS,
             max_length=args.max_length,
             force_retrain=args.force_retrain_tokenizer,
         )
@@ -392,28 +393,53 @@ def run_training(args):
         {"train": train_hf_dataset, "validation": val_hf_dataset}
     )
 
-    info("Tokenizing datasets using .map()...")
+    info("Tokenizing datasets with windowing using .map()...")
 
-    def tokenize_function(examples):
-        return tokenizer(
+    # --- Updated Tokenization Function with Windowing ---
+    def tokenize_and_split(examples):
+        """Tokenize texts. For long texts, create multiple overlapping windows (features)."""
+        # Tokenize the batch of texts. `return_overflowing_tokens` will create multiple
+        # features from a single long text.
+        tokenized_outputs = tokenizer(
             examples["text"],
             truncation=True,
             padding="max_length",
             max_length=args.max_length,
+            stride=args.window_stride,  # The overlap between windows
+            return_overflowing_tokens=True,
         )
+
+        # `overflow_to_sample_mapping` tells us which original example each new feature came from.
+        # We use this to assign the correct label to each new feature (window).
+        sample_mapping = tokenized_outputs.pop("overflow_to_sample_mapping")
+
+        original_labels = examples["label"]
+        new_labels = [original_labels[sample_idx] for sample_idx in sample_mapping]
+        tokenized_outputs["label"] = new_labels
+
+        return tokenized_outputs
 
     num_proc = args.num_proc if args.num_proc > 0 else None
 
+    # The new columns will be 'input_ids', 'attention_mask', and the new 'label' list.
+    # We must remove the original columns ('text', 'label') that are now replaced.
     tokenized_datasets = raw_datasets.map(
-        tokenize_function, batched=True, num_proc=num_proc, remove_columns=["text"]
+        tokenize_and_split,
+        batched=True,
+        num_proc=num_proc,
+        remove_columns=raw_datasets["train"].column_names,
     )
-    success("Dataset tokenization completed")
+
+    info(f"Original training samples: {len(raw_datasets['train'])}")
+    info(f"Windowed training features: {len(tokenized_datasets['train'])}")
+    info(f"Original validation samples: {len(raw_datasets['validation'])}")
+    info(f"Windowed validation features: {len(tokenized_datasets['validation'])}")
+    success("Dataset tokenization and windowing completed")
 
     train_dataset_for_trainer = tokenized_datasets["train"]
     val_dataset_for_trainer = tokenized_datasets["validation"]
 
     model_output_path = Path(args.model_output_path)
-    # Create temporary results and logs directories for training
     results_path = model_output_path / "results"
     logs_path = model_output_path / "logs"
 
@@ -463,32 +489,29 @@ def run_training(args):
     info("Starting model training...")
     train_result = trainer.train()
 
-    # Evaluate the final model
     info("Evaluating final model...")
     eval_result = trainer.evaluate()
 
-    # Save the final model and tokenizer with prefixes to the main output directory
     save_model_with_prefix(trainer, tokenizer, model_output_path)
 
-    # Collect training metrics
     training_metrics = {
         "training_loss": train_result.training_loss,
         "epochs_completed": args.epochs,
-        "train_samples": len(distilbert_train_texts),
-        "validation_samples": len(distilbert_val_texts),
+        "original_train_samples": len(distilbert_train_texts),
+        "windowed_train_features": len(train_dataset_for_trainer),
+        "original_validation_samples": len(distilbert_val_texts),
+        "windowed_validation_features": len(val_dataset_for_trainer),
         "benign_samples_used": len(benign_asts),
         "malicious_samples_used": len(malicious_asts),
         "benign_to_malicious_ratio": args.benign_to_malicious_ratio,
         "vocab_size": args.vocab_size,
         "max_length": args.max_length,
+        "window_stride": args.window_stride,
         "batch_size": args.batch_size,
-        **eval_result,  # Include final evaluation metrics
+        **eval_result,
     }
 
-    # Save training metrics to text file
     save_training_metrics(training_metrics, model_output_path)
-
-    # Clean up the model directory
     cleanup_model_directory(model_output_path)
 
     success("DistilBERT model training completed successfully")
@@ -497,9 +520,6 @@ def run_training(args):
 
 
 if __name__ == "__main__":
-    # Define DEFAULT_BENIGN_TO_MALICIOUS_RATIO if it's not already defined globally
-    # For example: DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 1.0
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--benign", "-b", required=True, help="Path to benign CSV")
     parser.add_argument(
@@ -513,13 +533,19 @@ if __name__ == "__main__":
         "--model-output-path", type=Path, default=DEFAULT_MODEL_OUTPUT_CLI_PATH
     )
     parser.add_argument("--max-length", type=int, default=DEFAULT_MAX_LENGTH)
+    # --- New CLI Argument for Windowing ---
+    parser.add_argument(
+        "--window-stride",
+        type=int,
+        default=DEFAULT_WINDOW_STRIDE,
+        help="Overlap stride for windowing long inputs during training.",
+    )
     parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS)
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     parser.add_argument("--vocab-size", type=int, default=DEFAULT_VOCAB_SIZE)
     parser.add_argument("--save-steps", type=int, default=DEFAULT_SAVE_STEPS)
     parser.add_argument("--num-proc", type=int, default=DEFAULT_NUM_PROC)
     parser.add_argument("--force-retrain-tokenizer", action="store_true")
-    # Removed --resume-from-checkpoint
     parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
     parser.add_argument(
         "--token-column",
@@ -530,13 +556,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--benign-to-malicious-ratio",
         type=float,
-        default=DEFAULT_BENIGN_TO_MALICIOUS_RATIO,  # Ensure this default is defined
+        default=DEFAULT_BENIGN_TO_MALICIOUS_RATIO,
         help="Ratio of benign to malicious samples to use for training (e.g., 1.0 for 1:1). Set to 0 or negative to disable downsampling.",
     )
 
     args = parser.parse_args()
-
-    # Configure messaging system (quiet mode not supported in training script)
     configure_messaging(quiet=False)
-
     run_training(args)

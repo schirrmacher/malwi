@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 import torch
 import torch.nn.functional as F
@@ -14,10 +14,13 @@ HF_TOKENIZER_INSTANCE = None
 HF_MODEL_INSTANCE = None
 HF_DEVICE_INSTANCE = None
 
+WINDOW_STRIDE = 256
+
 
 def initialize_models(
     model_path: Optional[str] = None, tokenizer_path: Optional[str] = None
 ):
+    logging.getLogger("transformers").setLevel(logging.ERROR)
     global \
         HF_TOKENIZER_INSTANCE, \
         HF_MODEL_INSTANCE, \
@@ -48,25 +51,86 @@ def initialize_models(
         HF_TOKENIZER_INSTANCE = HF_MODEL_INSTANCE = HF_DEVICE_INSTANCE = None
 
 
+def _get_windowed_predictions(
+    input_ids: torch.Tensor, attention_mask: torch.Tensor
+) -> List[Dict[str, Any]]:
+    """
+    Run inference on multiple sliding windows of a single long input.
+    """
+    window_results = []
+    max_length = HF_TOKENIZER_INSTANCE.model_max_length
+    num_tokens = attention_mask.sum().item()
+
+    # The loop correctly iterates through all valid starting positions.
+    for i in range(0, num_tokens, WINDOW_STRIDE):
+        start_idx = i
+        end_idx = i + max_length
+
+        window_input_ids = input_ids[0, start_idx:end_idx]
+        window_attention_mask = attention_mask[0, start_idx:end_idx]
+
+        padding_needed = max_length - len(window_input_ids)
+        if padding_needed > 0:
+            pad_tensor = torch.tensor(
+                [HF_TOKENIZER_INSTANCE.pad_token_id] * padding_needed,
+                device=HF_DEVICE_INSTANCE,
+            )
+            window_input_ids = torch.cat([window_input_ids, pad_tensor])
+
+            mask_pad_tensor = torch.tensor(
+                [0] * padding_needed, device=HF_DEVICE_INSTANCE
+            )
+            window_attention_mask = torch.cat([window_attention_mask, mask_pad_tensor])
+
+        model_inputs = {
+            "input_ids": window_input_ids.unsqueeze(0),
+            "attention_mask": window_attention_mask.unsqueeze(0),
+        }
+
+        with torch.no_grad():
+            outputs = HF_MODEL_INSTANCE(**model_inputs)
+
+        if hasattr(outputs, "logits"):
+            logits = outputs.logits
+            probabilities = F.softmax(logits, dim=-1).cpu()[0]
+            prediction_idx = torch.argmax(probabilities).item()
+            label_map = {0: "Benign", 1: "Malicious"}
+            predicted_label = label_map.get(
+                prediction_idx, f"Unknown_Index_{prediction_idx}"
+            )
+
+            window_results.append(
+                {
+                    "window_index": len(window_results),
+                    "index": prediction_idx,
+                    "label": predicted_label,
+                    "probabilities": probabilities.tolist(),
+                }
+            )
+
+        # --- THIS BLOCK IS REMOVED ---
+        # if end_idx >= num_tokens:
+        #     break
+
+    return window_results
+
+
 def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
-    tokenization_debug_info: Dict[str, Any] = {
+    prediction_debug_info: Dict[str, Any] = {
         "tokenization_performed": False,
+        "windowing_performed": False,
+        "window_count": 0,
+        "aggregation_strategy": "N/A",
         "original_text_snippet": (
             text_input[:200] + "..." if isinstance(text_input, str) else ""
         ),
-        "input_ids": None,
-        "decoded_tokens": None,
-        "unk_token_id": None,
-        "unk_token_count": 0,
-        "total_non_padding_tokens": 0,
-        "oov_rate_percentage": 0.0,
     }
 
     if not isinstance(text_input, str):
         return {
             "status": "error",
             "message": "Input_Error_Invalid_Text_Input_Type",
-            "tokenization_debug": tokenization_debug_info,
+            "prediction_debug": prediction_debug_info,
         }
 
     if (
@@ -77,94 +141,103 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
         return {
             "status": "error",
             "message": "Model_Not_Loaded",
-            "tokenization_debug": tokenization_debug_info,
+            "prediction_debug": prediction_debug_info,
         }
     try:
+        # Tokenize the entire input without truncation to check its length
         inputs = HF_TOKENIZER_INSTANCE(
             text_input,
             return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=512,
+            padding=False,  # No padding yet
+            truncation=False,  # No truncation yet
         )
-        tokenization_debug_info["tokenization_performed"] = True
+        prediction_debug_info["tokenization_performed"] = True
 
-        input_ids_tensor = inputs.get("input_ids")
-        if input_ids_tensor is not None and input_ids_tensor.numel() > 0:
-            tokenization_debug_info["input_ids"] = input_ids_tensor[0].tolist()
-            decoded_tokens = [
-                HF_TOKENIZER_INSTANCE.decode([token_id])
-                for token_id in input_ids_tensor[0].tolist()
-            ]
-            tokenization_debug_info["decoded_tokens"] = decoded_tokens
+        input_ids = inputs.get("input_ids").to(HF_DEVICE_INSTANCE)
+        attention_mask = inputs.get("attention_mask").to(HF_DEVICE_INSTANCE)
 
-            unk_token_id = HF_TOKENIZER_INSTANCE.unk_token_id
-            tokenization_debug_info["unk_token_id"] = unk_token_id
-            if unk_token_id is not None:
-                unk_token_count = (input_ids_tensor[0] == unk_token_id).sum().item()
-                if HF_TOKENIZER_INSTANCE.pad_token_id is not None:
-                    total_valid_tokens = (
-                        input_ids_tensor[0]
-                        .ne(HF_TOKENIZER_INSTANCE.pad_token_id)
-                        .sum()
-                        .item()
-                    )
-                else:
-                    total_valid_tokens = len(input_ids_tensor[0])
-
-                tokenization_debug_info["unk_token_count"] = unk_token_count
-                tokenization_debug_info["total_non_padding_tokens"] = total_valid_tokens
-                if total_valid_tokens > 0:
-                    oov_rate = (unk_token_count / total_valid_tokens) * 100
-                    tokenization_debug_info["oov_rate_percentage"] = round(oov_rate, 2)
-            else:
-                pass
-        else:
-            tokenization_debug_info["input_ids"] = []
-            tokenization_debug_info["decoded_tokens"] = []
-
-        model_inputs = {}
-        if "input_ids" in inputs and inputs["input_ids"].numel() > 0:
-            model_inputs["input_ids"] = inputs["input_ids"].to(HF_DEVICE_INSTANCE)
-        if "attention_mask" in inputs and inputs["input_ids"].numel() > 0:
-            model_inputs["attention_mask"] = inputs["attention_mask"].to(
-                HF_DEVICE_INSTANCE
-            )
-
-        if model_inputs.get("input_ids") is None:
+        if input_ids is None or input_ids.numel() == 0:
             return {
                 "status": "error",
-                "message": "Input_Error_Missing_Input_IDs",
-                "tokenization_debug": tokenization_debug_info,
+                "message": "Input_Error_Empty_After_Tokenization",
+                "prediction_debug": prediction_debug_info,
             }
 
-        with torch.no_grad():
-            outputs = HF_MODEL_INSTANCE(**model_inputs)
+        num_tokens = input_ids.shape[1]
+        max_length = HF_TOKENIZER_INSTANCE.model_max_length
 
-        if hasattr(outputs, "logits"):
-            logits = outputs.logits
-            probabilities = F.softmax(logits, dim=-1).cpu()
-            first_item_probabilities = probabilities[0]
-            prediction_idx = torch.argmax(first_item_probabilities).item()
-            label_map = {
-                0: "Benign",
-                1: "Malicious",
-            }
-            predicted_label = label_map.get(
-                prediction_idx, f"Unknown_Index_{prediction_idx}"
-            )
+        # --- Windowing Logic ---
+        if num_tokens > max_length:
+            prediction_debug_info["windowing_performed"] = True
+
+            window_predictions = _get_windowed_predictions(input_ids, attention_mask)
+
+            prediction_debug_info["window_count"] = len(window_predictions)
+            prediction_debug_info["aggregation_strategy"] = "max_malicious_probability"
+            prediction_debug_info["all_window_predictions"] = window_predictions
+
+            if not window_predictions:
+                return {
+                    "status": "error",
+                    "message": "Windowing_Error_No_Results",
+                    "prediction_debug": prediction_debug_info,
+                }
+
+            # Aggregate results: find the window with the highest probability for "Malicious" (index 1)
+            # This is a common strategy: if any part is malicious, the whole is.
+            best_window = max(window_predictions, key=lambda x: x["probabilities"][1])
+
             return {
                 "status": "success",
-                "index": prediction_idx,
-                "label": predicted_label,
-                "probabilities": first_item_probabilities.tolist(),
-                "tokenization_debug": tokenization_debug_info,
+                "index": best_window["index"],
+                "label": best_window["label"],
+                "probabilities": best_window["probabilities"],
+                "prediction_debug": prediction_debug_info,
             }
-        return {
-            "status": "error",
-            "message": "No_Logits",
-            "tokenization_debug": tokenization_debug_info,
-        }
+
+        # --- Single-Window Logic (input is not long) ---
+        else:
+            # The input is short enough, so we pad it to max_length and predict
+            padded_inputs = HF_TOKENIZER_INSTANCE(
+                text_input,
+                return_tensors="pt",
+                padding="max_length",
+                truncation=True,
+                max_length=max_length,
+            )
+            model_inputs = {
+                "input_ids": padded_inputs["input_ids"].to(HF_DEVICE_INSTANCE),
+                "attention_mask": padded_inputs["attention_mask"].to(
+                    HF_DEVICE_INSTANCE
+                ),
+            }
+
+            with torch.no_grad():
+                outputs = HF_MODEL_INSTANCE(**model_inputs)
+
+            if hasattr(outputs, "logits"):
+                logits = outputs.logits
+                probabilities = F.softmax(logits, dim=-1).cpu()[0]
+                prediction_idx = torch.argmax(probabilities).item()
+                label_map = {0: "Benign", 1: "Malicious"}
+                predicted_label = label_map.get(
+                    prediction_idx, f"Unknown_Index_{prediction_idx}"
+                )
+
+                return {
+                    "status": "success",
+                    "index": prediction_idx,
+                    "label": predicted_label,
+                    "probabilities": probabilities.tolist(),
+                    "prediction_debug": prediction_debug_info,
+                }
+
+            return {
+                "status": "error",
+                "message": "No_Logits",
+                "prediction_debug": prediction_debug_info,
+            }
+
     except Exception as e:
         logging.error(
             f"Exception during model inference for input '{text_input[:100]}...': {e}",
@@ -173,5 +246,5 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
         return {
             "status": "error",
             "message": f"Inference_Err: {str(e)}",
-            "tokenization_debug": tokenization_debug_info,
+            "prediction_debug": prediction_debug_info,
         }
