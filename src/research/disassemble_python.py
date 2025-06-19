@@ -377,10 +377,8 @@ class MalwiReport:
         stats = report_data["statistics"]
 
         txt = "# Malwi Report\n\n"
-
-        txt += "## Summary\n"
-
-        txt += "Based on the analyzed patterns, the code is evaluated as:\n"
+        txt += "## Summary\n\n"
+        txt += "Based on the analyzed patterns, the code is evaluated as:\n\n"
 
         if self.malicious:
             txt += f"> 👹 **Malicious**: `{self.confidence}`\n\n"
@@ -392,12 +390,13 @@ class MalwiReport:
         txt += f"- Processed Objects: {stats['processed_objects']}\n"
         txt += f"- Malicious Objects: {stats['malicious_objects']}\n\n"
 
-        txt += "## Token Statistics\n"
+        txt += "## Token Statistics\n\n"
         for activity in self.activities:
             txt += f"- {activity.lower().replace('_', ' ')}\n"
+        txt += "\n"
 
         for file in report_data["details"]:
-            txt += f"## {file['path']}\n"
+            txt += f"## {file['path']}\n\n"
 
             for object in file["contents"]:
                 name = object["name"] if object["name"] else "<object>"
@@ -408,9 +407,9 @@ class MalwiReport:
                     maliciousness = f"🟢 `{round(score, 2)}`"
                 txt += f"- Object: `{name if name else 'Not defined'}`\n"
                 txt += f"- Maliciousness: {maliciousness}\n\n"
-                txt += "### Code\n"
+                txt += "### Code\n\n"
                 txt += f"```\n{object['code']}\n```\n\n"
-                txt += "### Tokens\n"
+                txt += "### Tokens\n\n"
                 txt += f"```\n{object['tokens']}\n```\n"
             txt += "\n\n"
 
