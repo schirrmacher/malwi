@@ -154,7 +154,7 @@ class TestMalwiReport(unittest.TestCase):
         """Test the simple text output for a malicious report."""
         text = self.malicious_report.to_demo_text()
         self.assertIn("- files scanned: 2", text)
-        self.assertIn("- malicious objects: 2", text)
+        self.assertIn("- malicious objects: 1", text)
         self.assertIn("- system call", text)
         self.assertIn("=> 👹 malicious 0.88", text)
 

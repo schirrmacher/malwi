@@ -352,11 +352,14 @@ class MalwiReport:
         )
 
     def to_demo_text(self) -> str:
-        txt = f"- files scanned: {len(self.all_files)}\n"
-        txt += f"- files skipped: {len(self.skipped_files)}\n"
+        report_data = self._generate_report_data(include_source_files=True)
+        stats = report_data["statistics"]
+
+        txt = f"- files scanned: {stats['processed_objects']}\n"
+        txt += f"- files skipped: {len(stats['skipped_files'])}\n"
 
         if self.malicious:
-            txt += f"- malicious objects: {len(self.objects)} \n\n"
+            txt += f"- malicious objects: {stats['malicious_objects']} \n\n"
             for activity in self.activities:
                 txt += f"- {activity.lower().replace('_', ' ')}\n"
             txt += "\n"
