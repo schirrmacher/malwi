@@ -59,12 +59,6 @@ def main():
 
     speed_group = parser.add_argument_group("Efficiency")
     speed_group.add_argument(
-        "--malicious-only",
-        "-mo",
-        action="store_true",
-        help="Only include malicious findings in the output.",
-    )
-    speed_group.add_argument(
         "--no-snippets",
         action="store_false",
         help="Do not add code snippets of findings in the output to increase performance.",

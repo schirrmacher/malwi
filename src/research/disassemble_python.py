@@ -1054,11 +1054,6 @@ def main() -> None:
         default=0.5,
         help="Threshold for classifying as malicious in reports (0.0 to 1.0).",
     )
-    parser.add_argument(
-        "--malicious-only",
-        action="store_true",
-        help="In reports, include only files deemed malicious.",
-    )
     parser.add_argument("--version", action="version", version="%(prog)s 2.6")
 
     args: argparse.Namespace = parser.parse_args()
