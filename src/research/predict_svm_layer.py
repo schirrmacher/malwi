@@ -1,6 +1,7 @@
 import pickle
 import argparse
 import numpy as np
+import pandas as pd
 
 from pathlib import Path
 from huggingface_hub import hf_hub_download
@@ -65,9 +66,35 @@ def predict(token_stats: Dict[str, float]) -> Dict[str, Any]:
     model = GLOBAL_SVM_MODEL["model"]
     feature_names = GLOBAL_SVM_MODEL["feature_names"]
     label_encoder = GLOBAL_SVM_MODEL["label_encoder"]
+    scaler = GLOBAL_SVM_MODEL.get("scaler")
+    feature_selector = GLOBAL_SVM_MODEL.get("feature_selector")
 
+    # Create feature vector from token stats
     feature_vector = [token_stats.get(name, 0) for name in feature_names]
-    feature_vector = np.array(feature_vector).reshape(1, -1)
+    
+    # Convert to pandas DataFrame to maintain feature names for scaler
+    feature_df = pd.DataFrame([feature_vector], columns=feature_names)
+
+    # Apply scaling if scaler was used during training
+    if scaler is not None:
+        feature_vector_scaled = scaler.transform(feature_df)
+        # Convert back to DataFrame if feature selection is needed
+        if feature_selector is not None:
+            feature_df = pd.DataFrame(feature_vector_scaled, columns=feature_names)
+            feature_vector = feature_vector_scaled
+        else:
+            feature_vector = feature_vector_scaled
+    else:
+        feature_vector = feature_df.values
+
+    # Apply feature selection if selector was used during training
+    if feature_selector is not None:
+        if hasattr(feature_selector, 'transform'):
+            # For SelectKBest and similar selectors
+            feature_vector = feature_selector.transform(feature_vector)
+        elif isinstance(feature_selector, np.ndarray):
+            # For RandomForest-based selection (indices array)
+            feature_vector = feature_vector[:, feature_selector]
 
     prediction = model.predict(feature_vector)[0]
     probabilities = model.predict_proba(feature_vector)[0]

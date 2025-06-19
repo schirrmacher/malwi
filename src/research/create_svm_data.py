@@ -162,15 +162,17 @@ def process_random_samples(
                 malicious_threshold=args.threshold,
             )
 
-            info(f"Found {len(results.objects)} objects above maliciousness threshold")
+            info(
+                f"Found {len(results.all_objects)} objects above maliciousness threshold"
+            )
 
-            if results.objects:
-                avg_maliciousness = sum(o.maliciousness for o in results.objects) / len(
-                    results.objects
-                )
+            if results.all_objects:
+                avg_maliciousness = sum(
+                    o.maliciousness for o in results.all_objects
+                ) / len(results.all_objects)
                 info(f"Average maliciousness score: {avg_maliciousness:.3f}")
 
-            token_stats = MalwiObject.collect_token_stats(results.objects)
+            token_stats = MalwiObject.collect_token_stats(results.all_objects)
             if not token_stats:
                 warning(
                     f"No token statistics generated for '{package_name}'. Skipping."

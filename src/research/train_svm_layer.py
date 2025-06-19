@@ -2,19 +2,23 @@ import os
 import time
 import pickle
 import argparse
+import numpy as np
 
 import pandas as pd
 from sklearn.svm import SVC
 from datetime import datetime
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
     precision_score,
     recall_score,
     f1_score,
+    make_scorer,
 )
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
 
 from common.messaging import (
     configure_messaging,
@@ -105,6 +109,109 @@ def clean_and_convert_features(df):
         cleaned_df[col] = pd.to_numeric(col_series, errors="coerce").fillna(0)
 
     return cleaned_df
+
+
+def select_best_features(X, y, feature_names, k=None, method="mutual_info"):
+    """
+    Select the k best features using statistical tests.
+
+    Parameters:
+    - X: feature matrix
+    - y: target labels
+    - feature_names: list of feature names
+    - k: number of features to select (if None, use all features)
+    - method: 'f_classif', 'mutual_info', or 'random_forest'
+
+    Returns:
+    - X_selected: selected features
+    - selected_feature_names: names of selected features
+    - selector: fitted selector object
+    """
+    if k is None or k >= len(feature_names):
+        info(f"Using all {len(feature_names)} features (no selection)")
+        return X, feature_names, None
+
+    progress(f"Selecting {k} best features using {method}...")
+
+    if method == "f_classif":
+        selector = SelectKBest(score_func=f_classif, k=k)
+    elif method == "mutual_info":
+        selector = SelectKBest(score_func=mutual_info_classif, k=k)
+    elif method == "random_forest":
+        # Use RandomForest feature importance for selection
+        rf = RandomForestClassifier(n_estimators=100, random_state=42)
+        rf.fit(X, y)
+        importances = rf.feature_importances_
+        indices = np.argsort(importances)[::-1][:k]
+        X_selected = X[:, indices]
+        selected_feature_names = [feature_names[i] for i in indices]
+        info(f"Selected features: {selected_feature_names}")
+        return X_selected, selected_feature_names, indices
+    else:
+        error(f"Unknown feature selection method: {method}")
+        return X, feature_names, None
+
+    X_selected = selector.fit_transform(X, y)
+    selected_indices = selector.get_support(indices=True)
+    selected_feature_names = [feature_names[i] for i in selected_indices]
+
+    info(f"Selected {len(selected_feature_names)} features: {selected_feature_names}")
+    return X_selected, selected_feature_names, selector
+
+
+def optimize_hyperparameters(X_train, y_train, kernel="rbf", cv_folds=5):
+    """
+    Perform grid search to find optimal hyperparameters.
+
+    Parameters:
+    - X_train: training features
+    - y_train: training labels
+    - kernel: SVM kernel type
+    - cv_folds: number of cross-validation folds
+
+    Returns:
+    - best_params: dictionary of best parameters
+    - best_score: best cross-validation F1 score
+    """
+    progress(f"Optimizing hyperparameters with {cv_folds}-fold cross-validation...")
+
+    # Define parameter grids for different kernels
+    if kernel == "rbf":
+        param_grid = {
+            "C": [0.1, 1, 10, 100],
+            "gamma": ["scale", "auto", 0.001, 0.01, 0.1, 1.0],
+        }
+    elif kernel == "linear":
+        param_grid = {"C": [0.1, 1, 10, 100]}
+    elif kernel == "poly":
+        param_grid = {
+            "C": [0.1, 1, 10, 100],
+            "gamma": ["scale", "auto", 0.001, 0.01, 0.1],
+            "degree": [2, 3, 4],
+        }
+    else:
+        param_grid = {"C": [0.1, 1, 10, 100]}
+
+    # Use F1 score as the optimization metric
+    f1_scorer = make_scorer(f1_score, average="weighted")
+
+    svm = SVC(kernel=kernel, probability=True, random_state=42)
+
+    grid_search = GridSearchCV(
+        svm,
+        param_grid,
+        cv=StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42),
+        scoring=f1_scorer,
+        n_jobs=-1,
+        verbose=1,
+    )
+
+    grid_search.fit(X_train, y_train)
+
+    info(f"Best parameters: {grid_search.best_params_}")
+    info(f"Best cross-validation F1 score: {grid_search.best_score_:.4f}")
+
+    return grid_search.best_params_, grid_search.best_score_
 
 
 def create_features_and_labels(
@@ -257,6 +364,28 @@ def main():
         default="scale",
         help="Kernel coefficient gamma (default: 'scale').",
     )
+    parser.add_argument(
+        "--optimize",
+        action="store_true",
+        help="Enable hyperparameter optimization using grid search.",
+    )
+    parser.add_argument(
+        "--feature-selection",
+        type=str,
+        choices=["f_classif", "mutual_info", "random_forest"],
+        help="Enable feature selection using the specified method.",
+    )
+    parser.add_argument(
+        "--k-features",
+        type=int,
+        help="Number of best features to select (requires --feature-selection).",
+    )
+    parser.add_argument(
+        "--cv-folds",
+        type=int,
+        default=5,
+        help="Number of cross-validation folds for hyperparameter optimization (default: 5).",
+    )
 
     args = parser.parse_args()
 
@@ -286,30 +415,64 @@ def main():
         error("Halting due to feature creation errors.")
         return
 
-    # --- 3. Split Data ---
-    progress(f"Step 3: Splitting data (test size: {args.test_size})...")
+    # --- 3. Feature Selection (Optional) ---
+    feature_selector = None
+    if args.feature_selection:
+        progress(f"Step 3: Feature selection using {args.feature_selection}...")
+        X, feature_names, feature_selector = select_best_features(
+            X, y, feature_names, k=args.k_features, method=args.feature_selection
+        )
+        info(f"Features reduced from {len(feature_names)} to {X.shape[1]}")
+
+    # --- 4. Split Data ---
+    step_num = 4 if args.feature_selection else 3
+    progress(f"Step {step_num}: Splitting data (test size: {args.test_size})...")
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=args.test_size, random_state=42, stratify=y
     )
     info(f"Training set: {len(X_train)} samples | Testing set: {len(X_test)} samples")
 
-    # --- 4. Train SVM Model ---
-    progress("Step 4: Training SVM model...")
-    gamma_value = (
-        float(args.gamma) if args.gamma.replace(".", "", 1).isdigit() else args.gamma
-    )
-    model = SVC(
-        kernel=args.kernel,
-        C=args.C,
-        gamma=gamma_value,
-        probability=True,
-    )
-    info(f"Model parameters: kernel={args.kernel}, C={args.C}, gamma={gamma_value}")
+    # --- 5. Hyperparameter Optimization (Optional) ---
+    best_params = None
+    step_num += 1
+    if args.optimize:
+        progress(f"Step {step_num}: Hyperparameter optimization...")
+        best_params, best_cv_score = optimize_hyperparameters(
+            X_train, y_train, kernel=args.kernel, cv_folds=args.cv_folds
+        )
+        step_num += 1
+
+    # --- 6. Train SVM Model ---
+    progress(f"Step {step_num}: Training SVM model...")
+
+    if best_params:
+        # Use optimized parameters
+        model = SVC(
+            kernel=args.kernel, probability=True, random_state=42, **best_params
+        )
+        info(f"Using optimized parameters: {best_params}")
+    else:
+        # Use provided or default parameters
+        gamma_value = (
+            float(args.gamma)
+            if args.gamma.replace(".", "", 1).isdigit()
+            else args.gamma
+        )
+        model = SVC(
+            kernel=args.kernel,
+            C=args.C,
+            gamma=gamma_value,
+            probability=True,
+            random_state=100,
+        )
+        info(f"Model parameters: kernel={args.kernel}, C={args.C}, gamma={gamma_value}")
+
     model.fit(X_train, y_train)
     success("SVM model training completed")
 
-    # --- 5. Evaluate Model ---
-    progress("Step 5: Evaluating model performance...")
+    # --- Evaluate Model ---
+    step_num += 1
+    progress(f"Step {step_num}: Evaluating model performance...")
     y_pred = model.predict(X_test)
 
     # --- Overall Performance Metrics ---
@@ -336,8 +499,9 @@ def main():
             "Could not generate classification report. Some classes in the test set may have no predicted samples."
         )
 
-    # --- 6. Save Model using Pickle ---
-    progress(f"Step 6: Saving model to '{args.output}'...")
+    # --- Save Model using Pickle ---
+    step_num += 1
+    progress(f"Step {step_num}: Saving model to '{args.output}'...")
 
     # Create directory if it doesn't exist
     output_dir = os.path.dirname(args.output)
@@ -350,6 +514,8 @@ def main():
         "feature_names": feature_names,
         "label_encoder": label_encoder,
         "scaler": scaler,
+        "feature_selector": feature_selector,  # Include feature selector if used
+        "optimization_params": best_params,  # Include optimized parameters if used
     }
 
     with open(args.output, "wb") as f:
@@ -372,8 +538,12 @@ def main():
         "test_samples": len(X_test),
         "num_features": len(feature_names),
         "kernel": args.kernel,
-        "C_parameter": args.C,
-        "gamma_parameter": str(gamma_value),
+        "C_parameter": best_params.get("C", args.C) if best_params else args.C,
+        "gamma_parameter": (
+            str(best_params.get("gamma", args.gamma))
+            if best_params
+            else str(args.gamma)
+        ),
         "test_size_ratio": args.test_size,
         "accuracy": accuracy,
         "weighted_precision": precision,
