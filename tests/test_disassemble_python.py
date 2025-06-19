@@ -12,7 +12,7 @@ from research.disassemble_python import (
     MalwiObject,
     MalwiReport,
     disassemble_python_file,
-    process_python_file,
+    process_single_file,
     process_files,
     main,
 )
@@ -247,7 +247,8 @@ class TestOutputFormatting:
 
     def test_format_csv(self, sample_objects_data, tmp_path):
         report = MalwiReport(
-            objects=sample_objects_data,
+            all_objects=sample_objects_data,
+            malicious_objects=[],  # Add missing parameter
             threshold=0.7,
             all_files=[p.file_path for p in sample_objects_data],
             skipped_files=[],
@@ -280,10 +281,11 @@ class TestFileProcessingAndCollection:
     ):
         p = tmp_path / "valid.py"
         p.write_text(valid_py_content)
-        results = process_python_file(p, predict=False, retrieve_source_code=True)
-        assert results is not None
-        assert len(results) == 4
-        object_names = sorted([obj.name for obj in results])
+        all_objects, malicious_objects = process_single_file(p, predict=False, retrieve_source_code=True)
+        assert all_objects is not None
+        assert len(all_objects) == 4
+        assert len(malicious_objects) == 0  # No predictions made
+        object_names = sorted([obj.name for obj in all_objects])
         assert object_names == sorted(
             ["<module>", "MyClass", "hello", "MyClass.method_one"]
         )
@@ -334,34 +336,33 @@ class TestFileProcessingAndCollection:
         # --- CASE 1: Threshold is HIGHER than the score, expect objects to be filtered ---
         # The maliciousness score from the mock is 0.8.
         # A threshold of 0.9 should now filter all objects.
-        results_filtered = process_python_file(
+        all_objects_filtered, malicious_objects_filtered = process_single_file(
             p,
             predict=True,
             retrieve_source_code=False,
             maliciousness_threshold=0.9,
         )
 
-        # The function returns `None` when the resulting list of objects is empty.
-        # This asserts the new, correct filtering behavior.
-        assert results_filtered == []
+        # All objects should be returned but none should be in malicious_objects
+        assert len(all_objects_filtered) == 4
+        assert len(malicious_objects_filtered) == 0
 
         # --- CASE 2: Threshold is LOWER than the score, expect objects to be returned ---
         # A threshold of 0.7 is lower than the 0.8 score, so objects with predictions should pass.
-        results_not_filtered = process_python_file(
+        all_objects_not_filtered, malicious_objects_not_filtered = process_single_file(
             p,
             predict=True,
             retrieve_source_code=False,
             maliciousness_threshold=0.7,
         )
 
-        # Only objects with special tokens get predictions and can pass the threshold
-        # In valid_py_content, only the hello function has special tokens (USER_IO from print)
-        assert results_not_filtered is not None
-        assert len(results_not_filtered) == 1
-        assert results_not_filtered[0].name == "hello"
+        # All objects returned, but only hello function has special tokens and gets prediction
+        assert len(all_objects_not_filtered) == 4
+        assert len(malicious_objects_not_filtered) == 1
+        assert malicious_objects_not_filtered[0].name == "hello"
 
         # Verify that prediction was called and the score was annotated correctly.
-        assert all(obj.maliciousness == 0.8 for obj in results_not_filtered)
+        assert malicious_objects_not_filtered[0].maliciousness == 0.8
 
 
 @patch(

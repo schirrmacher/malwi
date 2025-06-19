@@ -77,7 +77,8 @@ class TestMalwiReport(unittest.TestCase):
         self.all_objects = [self.malicious_obj, self.benign_obj]
 
         self.malicious_report = MalwiReport(
-            objects=self.all_objects,
+            all_objects=self.all_objects,
+            malicious_objects=[self.malicious_obj],
             threshold=0.7,
             all_files=[Path("/tmp/malware.py"), Path("/tmp/script.py")],
             skipped_files=[],
@@ -88,7 +89,8 @@ class TestMalwiReport(unittest.TestCase):
         )
 
         self.benign_report = MalwiReport(
-            objects=[self.benign_obj],
+            all_objects=[self.benign_obj],
+            malicious_objects=[],
             threshold=0.7,
             all_files=[Path("/tmp/script.py")],
             skipped_files=[],
@@ -153,16 +155,16 @@ class TestMalwiReport(unittest.TestCase):
     def test_to_demo_text_malicious(self):
         """Test the simple text output for a malicious report."""
         text = self.malicious_report.to_demo_text()
-        self.assertIn("- files scanned: 2", text)
-        self.assertIn("- malicious objects: 1", text)
+        self.assertIn("- files: 2", text)
+        self.assertIn("- objects malicious: 1", text)
         self.assertIn("- system call", text)
         self.assertIn("=> 👹 malicious 0.88", text)
 
     def test_to_demo_text_benign(self):
         """Test the simple text output for a benign report."""
         text = self.benign_report.to_demo_text()
-        self.assertIn("- files scanned: 1", text)
-        self.assertIn("- suspicious objects: 1", text)
+        self.assertIn("- files: 1", text)
+        self.assertIn("- objects suspicious: 0", text)
         self.assertIn("=> 🟢 not malicious 0.99", text)
 
     def test_to_report_markdown(self):

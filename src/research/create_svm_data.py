@@ -172,7 +172,7 @@ def process_random_samples(
                 ) / len(results.all_objects)
                 info(f"Average maliciousness score: {avg_maliciousness:.3f}")
 
-            token_stats = MalwiObject.collect_token_stats(results.all_objects)
+            token_stats = MalwiObject.collect_token_stats(results.malicious_objects)
             if not token_stats:
                 warning(
                     f"No token statistics generated for '{package_name}'. Skipping."
@@ -218,7 +218,7 @@ def process_package_directories(
                 malicious_threshold=args.threshold,
             )
 
-            token_stats = MalwiObject.collect_token_stats(results.objects)
+            token_stats = MalwiObject.collect_token_stats(results.malicious_objects)
             if not token_stats:
                 warning(
                     f"No token statistics generated for '{package_name}'. Skipping."

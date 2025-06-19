@@ -227,12 +227,12 @@ def disassemble_python_file(
     return all_objects
 
 
-def process_python_file(
+def process_single_file(
     file_path: Path,
     predict: bool = True,
     retrieve_source_code: bool = True,
     maliciousness_threshold: Optional[float] = None,
-) -> Optional[List["MalwiObject"]]:
+) -> Optional[Tuple[List["MalwiObject"], List["MalwiObject"]]]:
     try:
         source_code = file_path.read_text(encoding="utf-8", errors="replace")
         objects: List[MalwiObject] = disassemble_python_file(
@@ -240,34 +240,35 @@ def process_python_file(
         )
 
         all_objects = []
+        malicious_objects = []
 
-        if predict:
-            for obj in objects:
+        for obj in objects:
+            all_objects.append(obj)
+            if predict:
                 obj.predict()
+                if (
+                    maliciousness_threshold
+                    and obj.maliciousness
+                    and obj.maliciousness > maliciousness_threshold
+                ):
+                    malicious_objects.append(obj)
 
-                if maliciousness_threshold and obj.maliciousness:
-                    if obj.maliciousness > maliciousness_threshold:
-                        all_objects.append(obj)
-        else:
-            for obj in objects:
-                all_objects.append(obj)
-
-        if retrieve_source_code:
-            for obj in all_objects:
+            if retrieve_source_code:
                 obj.retrieve_source_code()
 
-        return all_objects
+        return all_objects, malicious_objects
 
     except Exception as e:
         file_error(file_path, e, "processing")
-        return []
+        return [], []
 
 
 @dataclass
 class MalwiReport:
     """Result of processing files from a path."""
 
-    objects: List["MalwiObject"]
+    all_objects: List["MalwiObject"]
+    malicious_objects: List["MalwiObject"]
     threshold: float
     all_files: List[Path]
     skipped_files: List[Path]
@@ -280,26 +281,14 @@ class MalwiReport:
         self,
         include_source_files: bool = True,
     ) -> Dict[str, Any]:
-        processed_objects_count = len(self.objects)
-        total_maliciousness_score = 0.0
-        malicious_objects_count = 0
-        files_with_scores_count = 0
-
-        for mf in self.objects:
-            if mf.maliciousness is None:
-                mf.predict()
-
-            if mf.maliciousness is not None:
-                total_maliciousness_score += mf.maliciousness
-                files_with_scores_count += 1
-                if mf.maliciousness > self.threshold:
-                    malicious_objects_count += 1
+        processed_objects_count = len(self.all_objects)
 
         summary_statistics = {
             "total_files": len(self.all_files),
-            "skipped_files": self.skipped_files,
+            "skipped_files": len(self.skipped_files),
+            "processed_files": len(self.all_files) - len(self.skipped_files),
             "processed_objects": processed_objects_count,
-            "malicious_objects": malicious_objects_count,
+            "malicious_objects": len(self.malicious_objects),
         }
 
         report_data = {
@@ -310,18 +299,18 @@ class MalwiReport:
         if include_source_files:
             report_data["sources"] = {}
 
-        for mf in self.objects:
+        for obj in self.all_objects:
             is_malicious = (
-                mf.maliciousness is not None and mf.maliciousness > self.threshold
+                obj.maliciousness is not None and obj.maliciousness > self.threshold
             )
 
             if is_malicious:
-                mf.retrieve_source_code()
-                report_data["details"].append(mf.to_dict())
+                obj.retrieve_source_code()
+                report_data["details"].append(obj.to_dict())
 
                 if include_source_files:
-                    report_data["sources"][mf.file_path] = base64.b64encode(
-                        mf.file_source_code.encode("utf-8", errors="replace")
+                    report_data["sources"][obj.file_path] = base64.b64encode(
+                        obj.file_source_code.encode("utf-8", errors="replace")
                     ).decode("utf-8")
 
         return report_data
@@ -330,7 +319,7 @@ class MalwiReport:
         """Format objects as CSV and write to a stream."""
         writer = csv.writer(output_stream)
         writer.writerow(["tokens", "hash", "filepath"])
-        for obj in self.objects:
+        for obj in self.all_objects:
             writer.writerow(
                 [
                     obj.to_token_string(),
@@ -363,17 +352,19 @@ class MalwiReport:
         report_data = self._generate_report_data(include_source_files=True)
         stats = report_data["statistics"]
 
-        txt = f"- files scanned: {stats['processed_objects']}\n"
-        txt += f"- files skipped: {len(stats['skipped_files'])}\n"
+        txt = f"- files: {stats['total_files']}\n"
+        txt += f"- files scanned: {stats['processed_files']}\n"
+        txt += f"- files skipped: {stats['skipped_files']}\n"
+        txt += f"- objects processed: {stats['processed_objects']}\n"
 
         if self.malicious:
-            txt += f"- malicious objects: {stats['malicious_objects']} \n\n"
+            txt += f"- objects malicious: {stats['malicious_objects']} \n\n"
             for activity in self.activities:
                 txt += f"- {activity.lower().replace('_', ' ')}\n"
             txt += "\n"
             txt += f"=> 👹 malicious {self.confidence}\n"
         else:
-            txt += f"- suspicious objects: {len(self.objects)}\n"
+            txt += f"- objects suspicious: {stats['malicious_objects']}\n\n"
             txt += f"=> 🟢 not malicious {self.confidence}\n"
 
         return txt
@@ -397,7 +388,7 @@ class MalwiReport:
             txt += f"> 🟢 **Not malicious**: `{self.confidence}`\n\n"
 
         txt += f"- Files: {stats['total_files']}\n"
-        txt += f"- Skipped: {len(stats['skipped_files'])}\n"
+        txt += f"- Skipped: {stats['skipped_files']}\n"
         txt += f"- Processed Objects: {stats['processed_objects']}\n"
         txt += f"- Malicious Objects: {stats['malicious_objects']}\n\n"
 
@@ -499,12 +490,14 @@ def process_files(
 
     all_files = accepted_files + skipped_files
     all_objects: List[MalwiObject] = []
+    malicious_objects: List[MalwiObject] = []
 
     files_processed_count = 0
 
     if not accepted_files:
         return MalwiReport(
-            objects=all_objects,
+            all_objects=[],
+            malicious_objects=[],
             threshold=malicious_threshold,
             all_files=all_files,
             skipped_files=skipped_files,
@@ -536,18 +529,19 @@ def process_files(
         mininterval=0.1,  # Minimum update interval
     ):
         try:
-            file_objects: List[MalwiObject] = process_python_file(
+            file_all_objects, file_malicious_objects = process_single_file(
                 file_path,
                 predict=predict,
                 retrieve_source_code=retrieve_source_code,
                 maliciousness_threshold=malicious_threshold,
             )
-            if file_objects:
-                files_processed_count += 1
-                all_objects.extend(file_objects)
+            all_objects.extend(file_all_objects)
+            malicious_objects.extend(file_malicious_objects)
+            files_processed_count += 1
+
             if triaging_type:
                 triage(
-                    file_objects,
+                    file_all_objects,
                     out_path="triaging",
                     malicious_threshold=malicious_threshold,
                     triaging_type=triaging_type,
@@ -558,9 +552,10 @@ def process_files(
             if not silent:
                 file_error(file_path, e, "critical processing")
 
-    if len(all_objects) == 0:
+    if len(malicious_objects) == 0:
         return MalwiReport(
-            objects=[],
+            all_objects=all_objects,
+            malicious_objects=[],
             threshold=malicious_threshold,
             all_files=all_files,
             skipped_files=skipped_files,
@@ -572,7 +567,8 @@ def process_files(
 
     if not predict_svm:
         return MalwiReport(
-            objects=all_objects,
+            all_objects=all_objects,
+            malicious_objects=malicious_objects,
             threshold=malicious_threshold,
             all_files=all_files,
             skipped_files=skipped_files,
@@ -583,20 +579,23 @@ def process_files(
         )
 
     token_stats = MalwiObject.collect_token_stats(
-        all_objects, file_count=len(all_files), malicious_count=len(all_objects)
+        all_objects, file_count=len(all_files), malicious_count=len(malicious_objects)
     )
 
     prediction = svm_predict(token_stats)
 
+    # Filter for functions only since those are mainly interesting when investigating
+    filter_values = set(FUNCTION_MAPPING.get("python", {}).values())
     top_activities = sorted(
-        ((k, v) for k, v in token_stats.items() if v > 0),
+        ((k, v) for k, v in token_stats.items() if v > 0 and k in filter_values),
         key=lambda item: item[1],
         reverse=True,
     )
     top_activities_string = (f"{k}: {v}" for k, v in top_activities)
 
     return MalwiReport(
-        objects=all_objects,
+        all_objects=all_objects,
+        malicious_objects=malicious_objects,
         threshold=malicious_threshold,
         all_files=all_files,
         skipped_files=skipped_files,
@@ -1100,10 +1099,10 @@ def main() -> None:
                 silent=False,
             )
 
-            if result.objects:
+            if result.all_objects:
                 progress("Step 4: Writing objects to CSV file...")
-                csv_writer_instance.write_objects(result.objects)
-                success(f"Successfully wrote {len(result.objects)} objects to CSV")
+                csv_writer_instance.write_objects(result.all_objects)
+                success(f"Successfully wrote {len(result.all_objects)} objects to CSV")
 
             csv_writer_instance.close()
             success(f"CSV processing completed: {save_path.resolve()}")

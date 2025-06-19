@@ -185,15 +185,8 @@ def main():
         sys.stdout.flush()
         sys.stderr.flush()
 
-        # Use tqdm.write for result to maintain proper ordering with progress bars
-        try:
-            from tqdm import tqdm
-
-            tqdm.write(output, file=sys.stdout)
-        except ImportError:
-            print(output)
-
-        sys.stdout.flush()
+        # Use result() for consistent output handling
+        result(output, force=True)
 
 
 if __name__ == "__main__":

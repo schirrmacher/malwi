@@ -71,7 +71,7 @@ def predict(token_stats: Dict[str, float]) -> Dict[str, Any]:
 
     # Create feature vector from token stats
     feature_vector = [token_stats.get(name, 0) for name in feature_names]
-    
+
     # Convert to pandas DataFrame to maintain feature names for scaler
     feature_df = pd.DataFrame([feature_vector], columns=feature_names)
 
@@ -89,7 +89,7 @@ def predict(token_stats: Dict[str, float]) -> Dict[str, Any]:
 
     # Apply feature selection if selector was used during training
     if feature_selector is not None:
-        if hasattr(feature_selector, 'transform'):
+        if hasattr(feature_selector, "transform"):
             # For SelectKBest and similar selectors
             feature_vector = feature_selector.transform(feature_vector)
         elif isinstance(feature_selector, np.ndarray):
