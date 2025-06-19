@@ -1,8 +1,11 @@
 {
-  "enableAllProjectMcpServers": false,
   "permissions": {
     "allow": [
-      "Bash(pytest:*)"
+      "Bash(pytest:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(grep:*)",
+      "Bash(uv run:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": false
 }
