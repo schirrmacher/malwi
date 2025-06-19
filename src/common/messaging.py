@@ -6,9 +6,29 @@ throughout the malwi codebase, ensuring consistent formatting and proper
 respect for quiet mode settings.
 """
 
+import sys
 import logging
-from typing import Optional, Any
+
 from pathlib import Path
+from typing import Optional, Any
+
+
+class TqdmLoggingHandler(logging.StreamHandler):
+    """A logging handler that uses tqdm.write() to avoid interfering with progress bars."""
+
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            # Try to use tqdm.write() if available, otherwise fall back to standard stream
+            try:
+                from tqdm import tqdm
+
+                tqdm.write(msg, file=self.stream)
+            except ImportError:
+                self.stream.write(msg + self.terminator)
+                self.flush()
+        except Exception:
+            self.handleError(record)
 
 
 class MessageManager:
@@ -31,7 +51,7 @@ class MessageManager:
 
         # Set up logging format if not already configured
         if not self.logger.handlers:
-            handler = logging.StreamHandler()
+            handler = TqdmLoggingHandler()  # Use default stderr
             formatter = logging.Formatter("%(message)s")
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
@@ -95,12 +115,27 @@ class MessageManager:
         """
         formatted_message = message.format(*args) if args else message
         if force or not self.quiet:
-            print(formatted_message)
+            # Check if tqdm is available and use its write method to avoid interference
+            try:
+                from tqdm import tqdm
+
+                tqdm.write(formatted_message, file=sys.stdout)
+            except ImportError:
+                print(formatted_message)
 
     def banner(self, message: str) -> None:
         """Print banner message (respects quiet mode)."""
         if not self.quiet:
-            self.logger.info(message)
+            # Use tqdm.write for banner to maintain proper ordering
+            import sys
+
+            try:
+                from tqdm import tqdm
+
+                tqdm.write(message, file=sys.stderr)
+            except ImportError:
+                self.logger.info(message)
+            sys.stderr.flush()
 
     def debug(self, message: str, *args: Any) -> None:
         """Print debug message (only when debug logging is enabled)."""

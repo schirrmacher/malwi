@@ -137,17 +137,8 @@ def main():
     token_stats = MalwiObject.collect_token_stats(result.objects)
     prediction = predict(token_stats)
 
-    info(f"- {len(result.all_files)} files scanned")
-    info(f"- {len(result.skipped_files)} files skipped")
-    info(f"- {len(result.objects)} malicious objects identified")
-    if prediction["malicious"]:
-        warning(
-            f"⚠️  Malicious code detected (confidence: {prediction['confidence']:.2f})"
-        )
-    else:
-        success(
-            f"No malicious code detected (confidence: {prediction['confidence']:.2f})"
-        )
+    # Temporarily disable these outputs to fix tqdm - they're shown in the final report anyway
+    pass
 
 
 if __name__ == "__main__":

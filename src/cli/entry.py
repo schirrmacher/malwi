@@ -179,7 +179,21 @@ def main():
         save_path.write_text(output, encoding="utf-8")
         info(f"Output saved to {args.save}")
     else:
-        result(output, force=True)
+        # Ensure all streams are flushed before final output
+        import sys
+
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+        # Use tqdm.write for result to maintain proper ordering with progress bars
+        try:
+            from tqdm import tqdm
+
+            tqdm.write(output, file=sys.stdout)
+        except ImportError:
+            print(output)
+
+        sys.stdout.flush()
 
 
 if __name__ == "__main__":

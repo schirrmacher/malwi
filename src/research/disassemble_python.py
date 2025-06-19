@@ -530,6 +530,10 @@ def process_files(
         ncols=100,
         disable=disable_tqdm,
         leave=False,
+        file=sys.stderr,  # Explicitly set stderr
+        dynamic_ncols=True,  # Better terminal handling
+        miniters=1,  # Force updates
+        mininterval=0.1,  # Minimum update interval
     ):
         try:
             file_objects: List[MalwiObject] = process_python_file(
