@@ -64,11 +64,32 @@ class TestMalwiObject:
         return_value=MOCK_PREDICTION_RESULT,
     )
     def test_predict(self, mock_get_pred, malwi_obj):
-        # MalwiObject.predict() directly calls get_node_text_prediction
+        # MalwiObject.predict() only calls get_node_text_prediction if token string has special tokens
+        # The default fixture doesn't have special tokens, so predict returns None
         prediction = malwi_obj.predict()
+        assert prediction is None
+        assert malwi_obj.maliciousness is None
+        mock_get_pred.assert_not_called()
+        
+    @patch(
+        "research.disassemble_python.get_node_text_prediction", 
+        return_value=MOCK_PREDICTION_RESULT,
+    )
+    def test_predict_with_special_tokens(self, mock_get_pred):
+        # Create an object with code that has special tokens (print = USER_IO)
+        code_with_special = compile("print('hello')", "test.py", "exec")
+        obj = MalwiObject(
+            name="<module>",
+            language="python", 
+            file_source_code="print('hello')",
+            file_path="test.py",
+            code_type=code_with_special,
+        )
+        
+        prediction = obj.predict()
         assert prediction == MOCK_PREDICTION_RESULT
-        assert malwi_obj.maliciousness == MOCK_PREDICTION_RESULT["probabilities"][1]
-        mock_get_pred.assert_called_once_with(malwi_obj.to_token_string())
+        assert obj.maliciousness == MOCK_PREDICTION_RESULT["probabilities"][1]
+        mock_get_pred.assert_called_once_with(obj.to_token_string())
 
     def test_to_dict_yaml_json(self, malwi_obj, sample_code_type):
         malwi_obj.code_type = sample_code_type

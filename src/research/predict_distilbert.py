@@ -14,7 +14,8 @@ HF_TOKENIZER_INSTANCE = None
 HF_MODEL_INSTANCE = None
 HF_DEVICE_INSTANCE = None
 
-WINDOW_STRIDE = 256
+# Higher == Faster
+WINDOW_STRIDE = 384
 
 
 def initialize_models(

@@ -8,6 +8,7 @@ import json
 import types
 import base64
 import inspect
+import pathlib
 import hashlib
 import warnings
 import argparse
@@ -45,6 +46,15 @@ from common.messaging import (
     warning,
     debug,
     critical,
+)
+
+
+from common.files import read_json_from_file
+
+SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
+
+SPECIAL_TOKENS: Set[str] = read_json_from_file(
+    SCRIPT_DIR / "syntax_mapping" / "function_mapping.json"
 )
 
 
@@ -238,8 +248,6 @@ def process_python_file(
                 if maliciousness_threshold and obj.maliciousness:
                     if obj.maliciousness > maliciousness_threshold:
                         all_objects.append(obj)
-                else:
-                    all_objects.append(obj)
         else:
             for obj in objects:
                 all_objects.append(obj)
@@ -902,7 +910,14 @@ class MalwiObject:
         return None
 
     def predict(self) -> Optional[dict]:
-        prediction = get_node_text_prediction(self.to_token_string())
+        token_string = self.to_token_string()
+        prediction = None
+        if any(
+            token in token_string for token in SPECIAL_TOKENS.get("python", {}).values()
+        ):
+            prediction = get_node_text_prediction(token_string)
+        else:
+            self.maliciousness = None
         if prediction and "probabilities" in prediction:
             self.maliciousness = prediction["probabilities"][1]
         return prediction

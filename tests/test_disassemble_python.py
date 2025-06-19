@@ -175,9 +175,19 @@ class TestCoreDisassembly:
                 "MALFORMED_SYNTAX",
                 "MALICIOUS_COUNT",
                 "MESSAGING_COMMUNICATION",
+                "MONKEY_PATCHING",
                 "NETWORKING",
+                "NETWORK_DNS_LOOKUP",
                 "NETWORK_FILE_DOWNLOAD",
                 "NETWORK_HTTP_REQUEST",
+                "NETWORK_SOCKET_ACCEPT",
+                "NETWORK_SOCKET_BIND",
+                "NETWORK_SOCKET_CONNECT",
+                "NETWORK_SOCKET_CREATE",
+                "NETWORK_SOCKET_LISTEN",
+                "NETWORK_SOCKET_RECEIVE",
+                "NETWORK_SOCKET_SEND",
+                "PACKAGE_INSTALLATION_EXECUTION",
                 "PROCESS_CONCURRENCY",
                 "PROCESS_MANAGEMENT",
                 "PROCESS_REPLACEMENT",
@@ -186,6 +196,7 @@ class TestCoreDisassembly:
                 "REFLECTION_DYNAMIC_DELETE",
                 "REFLECTION_DYNAMIC_READ",
                 "REFLECTION_DYNAMIC_WRITE",
+                "RUNTIME_MANIPULATION",
                 "SENSITIVE_DATA_ACCESS",
                 "STRING_BASE64",
                 "STRING_ESCAPED_HEX",
@@ -196,6 +207,7 @@ class TestCoreDisassembly:
                 "STRING_URL",
                 "SYSINFO_FILESYSTEM",
                 "SYSINFO_HARDWARE",
+                "SYSINFO_NETWORK",
                 "SYSINFO_OS",
                 "SYSINFO_RUNTIME",
                 "SYSINFO_USER",
@@ -299,8 +311,9 @@ class TestFileProcessingAndCollection:
             retrieve_source_code=True,
         )
         assert result.processed_files == 2
-        # 4 objects from f1.py + 1 from f2.py
-        assert mock_get_pred.call_count == 5
+        # Only objects with special tokens trigger predictions
+        # f1.py: hello function has USER_IO, f2.py: module has USER_IO from print
+        assert mock_get_pred.call_count == 2
         mock_svm.assert_called_once()
 
     @patch(
@@ -333,7 +346,7 @@ class TestFileProcessingAndCollection:
         assert results_filtered == []
 
         # --- CASE 2: Threshold is LOWER than the score, expect objects to be returned ---
-        # A threshold of 0.7 is lower than the 0.8 score, so nothing should be filtered.
+        # A threshold of 0.7 is lower than the 0.8 score, so objects with predictions should pass.
         results_not_filtered = process_python_file(
             p,
             predict=True,
@@ -341,9 +354,11 @@ class TestFileProcessingAndCollection:
             maliciousness_threshold=0.7,
         )
 
-        # All 4 objects from the valid_py_content fixture should be returned.
+        # Only objects with special tokens get predictions and can pass the threshold
+        # In valid_py_content, only the hello function has special tokens (USER_IO from print)
         assert results_not_filtered is not None
-        assert len(results_not_filtered) == 4
+        assert len(results_not_filtered) == 1
+        assert results_not_filtered[0].name == "hello"
 
         # Verify that prediction was called and the score was annotated correctly.
         assert all(obj.maliciousness == 0.8 for obj in results_not_filtered)
