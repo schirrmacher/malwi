@@ -24,19 +24,22 @@ malwi examples/malicious/discordpydebug-0.0.4
 
 3) **Evaluate**: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
 ```
-- files scanned: 12
-- files skipped: 9
-- malicious objects: 4
+- files: 14
+  ├── scanned: 4
+  └── skipped: 10
+- objects: 12
+  └── malicious: 4
+      └─── filesystem access: 5
+      └─── fs linking: 5
+      └─── encoding decoding: 3
+      └─── network http request: 3
+      └─── process management: 2
+      └─── deserialization: 1
+      └─── package installation execution: 1
+      └─── process termination: 1
+      └─── user io: 1
 
-- data handling: 4
-- filesystem access: 4
-- encoding decoding: 3
-- process concurrency: 2
-- system interaction: 2
-- networking: 1
-- string url: 1
-
-=> 👹 malicious 1.0
+=> 👹 malicious 0.96
 ```
 
 ## Why malwi?

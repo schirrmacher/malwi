@@ -33,7 +33,7 @@ from research.predict_distilbert import (
     get_node_text_prediction,
     initialize_models as initialize_distilbert_models,
 )
-from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
+from research.predict_svm_layer import initialize_xgboost_model, predict as svm_predict
 from common.messaging import (
     get_message_manager,
     file_error,
@@ -353,19 +353,26 @@ class MalwiReport:
         stats = report_data["statistics"]
 
         txt = f"- files: {stats['total_files']}\n"
-        txt += f"- files scanned: {stats['processed_files']}\n"
-        txt += f"- files skipped: {stats['skipped_files']}\n"
-        txt += f"- objects processed: {stats['processed_objects']}\n"
+        txt += f"  ├── scanned: {stats['processed_files']}\n"
+        txt += f"  └── skipped: {stats['skipped_files']}\n"
+        txt += f"- objects: {stats['processed_objects']}\n"
 
         if self.malicious:
-            txt += f"- objects malicious: {stats['malicious_objects']} \n\n"
-            for activity in self.activities:
-                txt += f"- {activity.lower().replace('_', ' ')}\n"
+            txt += f"  └── malicious: {stats['malicious_objects']} \n"
+            for i, activity in enumerate(list(self.activities)):
+                if i == len(list(self.activities)) - 1:
+                    txt += f"      └── {activity.lower().replace('_', ' ')}\n"
+                else:
+                    txt += f"      ├─── {activity.lower().replace('_', ' ')}\n"
             txt += "\n"
-            txt += f"=> 👹 malicious {self.confidence}\n"
+            txt += f"=> 👹 malicious {self.confidence:.2f}\n"
         else:
-            txt += f"- objects suspicious: {stats['malicious_objects']}\n\n"
-            txt += f"=> 🟢 not malicious {self.confidence}\n"
+            if stats["malicious_objects"] > 0:
+                txt += f"  └── interesting: {stats['malicious_objects']}\n\n"
+                txt += f"=> 🟢 ok {self.confidence:.2f}\n"
+            else:
+                txt += "\n"
+                txt += "=> 🟢 clean\n"
 
         return txt
 
@@ -864,7 +871,7 @@ class MalwiObject:
         initialize_distilbert_models(
             model_path=distilbert_model_path, tokenizer_path=tokenizer_path
         )
-        initialize_svm_model(svm_layer_path)
+        initialize_xgboost_model(svm_layer_path)
 
     @classmethod
     def all_tokens(

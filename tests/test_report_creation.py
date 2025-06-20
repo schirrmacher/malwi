@@ -156,16 +156,16 @@ class TestMalwiReport(unittest.TestCase):
         """Test the simple text output for a malicious report."""
         text = self.malicious_report.to_demo_text()
         self.assertIn("- files: 2", text)
-        self.assertIn("- objects malicious: 1", text)
-        self.assertIn("- system call", text)
+        self.assertIn("malicious: 1", text)
+        self.assertIn("system call", text)
         self.assertIn("=> 👹 malicious 0.88", text)
 
     def test_to_demo_text_benign(self):
         """Test the simple text output for a benign report."""
         text = self.benign_report.to_demo_text()
         self.assertIn("- files: 1", text)
-        self.assertIn("- objects suspicious: 0", text)
-        self.assertIn("=> 🟢 not malicious 0.99", text)
+        self.assertIn("objects: 1", text)
+        self.assertIn("clean", text)
 
     def test_to_report_markdown(self):
         """Test Markdown report generation."""
