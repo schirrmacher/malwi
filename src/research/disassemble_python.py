@@ -51,6 +51,8 @@ from malwi._version import __version__
 
 from common.files import read_json_from_file
 
+CONFIDENCE_MALICIOUSNESS_THRESHOLD = 0.8
+
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 
 SPECIAL_TOKENS: Set[str] = read_json_from_file(
@@ -594,8 +596,6 @@ def process_files(
         malicious_count=len(malicious_objects),
     )
 
-    prediction = svm_predict(token_stats)
-
     # Filter for functions only since those are mainly interesting when investigating
     filter_values = set(FUNCTION_MAPPING.get("python", {}).values())
     top_activities = sorted(
@@ -605,6 +605,15 @@ def process_files(
     )
     top_activities_string = (f"{k}: {v}" for k, v in top_activities)
 
+    prediction = svm_predict(token_stats)
+
+    malicious = prediction["malicious"]
+    confidence = prediction["confidence"]
+
+    if not malicious and confidence < CONFIDENCE_MALICIOUSNESS_THRESHOLD:
+        malicious = True
+        confidence = 0.0
+
     return MalwiReport(
         all_objects=all_objects,
         malicious_objects=malicious_objects,
@@ -612,8 +621,8 @@ def process_files(
         all_files=all_files,
         skipped_files=skipped_files,
         processed_files=files_processed_count,
-        malicious=prediction["malicious"],
-        confidence=round(prediction["confidence"], 2),
+        malicious=malicious,
+        confidence=confidence,
         activities=top_activities_string,
     )
 
