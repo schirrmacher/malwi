@@ -608,11 +608,15 @@ def process_files(
     prediction = svm_predict(token_stats)
 
     malicious = prediction["malicious"]
-    confidence = prediction["confidence"]
+    confidence = (
+        prediction["confidence_malicious"]
+        if malicious
+        else prediction["confidence_benign"]
+    )
 
     if not malicious and confidence < CONFIDENCE_MALICIOUSNESS_THRESHOLD:
         malicious = True
-        confidence = 0.0
+        confidence = prediction["confidence_malicious"]
 
     return MalwiReport(
         all_objects=all_objects,

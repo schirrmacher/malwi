@@ -103,6 +103,8 @@ def predict(token_stats: Dict[str, float]) -> Dict[str, Any]:
     return {
         "predicted_label": predicted_label,
         "confidence": max(probabilities),
+        "confidence_benign": probabilities[0],
+        "confidence_malicious": probabilities[1],
         "malicious": predicted_label == "malicious",
     }
 
