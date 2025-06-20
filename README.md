@@ -24,22 +24,20 @@ malwi examples/malicious/discordpydebug-0.0.4
 
 3) **Evaluate**: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
 ```
-- files: 14
-  ├── scanned: 4
-  └── skipped: 10
-- objects: 12
+- files: 12
+  ├── scanned: 3
+  └── skipped: 9
+- objects: 8
   └── malicious: 4
-      └─── filesystem access: 5
-      └─── fs linking: 5
-      └─── encoding decoding: 3
-      └─── network http request: 3
-      └─── process management: 2
-      └─── deserialization: 1
-      └─── package installation execution: 1
-      └─── process termination: 1
-      └─── user io: 1
+      ├─── filesystem access: 5
+      ├─── fs linking: 5
+      ├─── encoding decoding: 3
+      ├─── network http request: 3
+      ├─── process management: 2
+      ├─── deserialization: 1
+      ├─── package installation execution: 1
 
-=> 👹 malicious 0.96
+=> 👹 malicious 0.97
 ```
 
 ## Why malwi?
@@ -83,7 +81,7 @@ TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_c
 ### 3. Feed tokens into pre-trained DistilBert
 
 ```
-=> Maliciousness Score: 0.92
+=> Maliciousness: 0.92
 ```
 
 This creates a list with malicious code objects. However malicious code might be split into chunks and spread across
@@ -91,21 +89,22 @@ a package. This is why the next layers are needed.
 
 ### 4. Create statistics about malicious activities
 
-
-| Object   | DYNAMIC_CODE_EXECUTION | ENCODING_DECODING | FILESYSTEM_ACCESS | ... |
-|----------|------------------------|-------------------|-------------------|-----|
-| Object A | 0                      | 1                 | 0                 | ... |
-| Object B | 1                      | 2                 | 1                 | ... |
-| Object C | 0                      | 0                 | 2                 | ... |
-| **Package**  | **1**                      | **3**                 | **3**                 | **...** |
-
+```
+- filesystem access: 5
+- fs linking: 5
+- encoding decoding: 3
+- network http request: 3
+- process management: 2
+- deserialization: 1
+- package installation execution: 1
+```
 
 ### 5. Take final decision
 
 An SVM layer takes statistics as input and decides if all findings combined are malicious.
 
 ```
-SVM => Malicious
+=> Maliciousness: 0.96
 ```
 
 ## Benchmarks?
