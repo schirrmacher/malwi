@@ -293,7 +293,7 @@ class TestFileProcessingAndCollection:
 
     @patch(
         "research.disassemble_python.svm_predict",
-        return_value={"malicious": False, "confidence": 0.1},
+        return_value={"malicious": False, "confidence": 0.1, "confidence_benign": 0.9, "confidence_malicious": 0.1},
     )
     @patch(
         "research.disassemble_python.get_node_text_prediction",
