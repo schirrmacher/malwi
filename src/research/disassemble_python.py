@@ -33,7 +33,7 @@ from research.predict_distilbert import (
     get_node_text_prediction,
     initialize_models as initialize_distilbert_models,
 )
-from research.predict_svm_layer import initialize_xgboost_model, predict as svm_predict
+from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
 from common.messaging import (
     get_message_manager,
     file_error,
@@ -872,7 +872,7 @@ class MalwiObject:
         initialize_distilbert_models(
             model_path=distilbert_model_path, tokenizer_path=tokenizer_path
         )
-        initialize_xgboost_model(svm_layer_path)
+        initialize_svm_model(svm_layer_path)
 
     @classmethod
     def all_tokens(
