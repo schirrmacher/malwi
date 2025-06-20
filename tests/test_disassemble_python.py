@@ -176,7 +176,17 @@ class TestCoreDisassembly:
                 "MALICIOUS_COUNT",
                 "MESSAGING_COMMUNICATION",
                 "MONKEY_PATCHING",
-                "NETWORK_ACCESS",
+                "NETWORKING",
+                "NETWORK_DNS_LOOKUP",
+                "NETWORK_FILE_DOWNLOAD",
+                "NETWORK_HTTP_REQUEST",
+                "NETWORK_SOCKET_ACCEPT",
+                "NETWORK_SOCKET_BIND",
+                "NETWORK_SOCKET_CONNECT",
+                "NETWORK_SOCKET_CREATE",
+                "NETWORK_SOCKET_LISTEN",
+                "NETWORK_SOCKET_RECEIVE",
+                "NETWORK_SOCKET_SEND",
                 "PACKAGE_INSTALLATION_EXECUTION",
                 "PROCESS_CONCURRENCY",
                 "PROCESS_MANAGEMENT",
@@ -271,9 +281,7 @@ class TestFileProcessingAndCollection:
     ):
         p = tmp_path / "valid.py"
         p.write_text(valid_py_content)
-        all_objects, malicious_objects = process_single_file(
-            p, predict=False, retrieve_source_code=True
-        )
+        all_objects, malicious_objects = process_single_file(p, predict=False, retrieve_source_code=True)
         assert all_objects is not None
         assert len(all_objects) == 4
         assert len(malicious_objects) == 0  # No predictions made
