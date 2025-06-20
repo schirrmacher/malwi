@@ -586,7 +586,9 @@ def process_files(
         )
 
     token_stats = MalwiObject.collect_token_stats(
-        all_objects, file_count=len(all_files), malicious_count=len(malicious_objects)
+        malicious_objects,
+        file_count=len(all_files),
+        malicious_count=len(malicious_objects),
     )
 
     prediction = svm_predict(token_stats)
