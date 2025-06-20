@@ -29,13 +29,13 @@ malwi examples/malicious/discordpydebug-0.0.4
   └── skipped: 9
 - objects: 8
   └── malicious: 4
-      ├─── filesystem access: 5
-      ├─── fs linking: 5
-      ├─── encoding decoding: 3
-      ├─── network http request: 3
-      ├─── process management: 2
-      ├─── deserialization: 1
-      ├─── package installation execution: 1
+      ├── filesystem access: 5
+      ├── fs linking: 5
+      ├── encoding decoding: 3
+      ├── network http request: 3
+      ├── process management: 2
+      ├── deserialization: 1
+      └── package installation execution: 1
 
 => 👹 malicious 0.97
 ```

@@ -357,13 +357,14 @@ class MalwiReport:
         txt += f"  └── skipped: {stats['skipped_files']}\n"
         txt += f"- objects: {stats['processed_objects']}\n"
 
+        activity_list = list(self.activities)
         if self.malicious:
             txt += f"  └── malicious: {stats['malicious_objects']} \n"
-            for i, activity in enumerate(list(self.activities)):
-                if i == len(list(self.activities)) - 1:
+            for i, activity in enumerate(activity_list):
+                if i == len(list(activity_list)) - 1:
                     txt += f"      └── {activity.lower().replace('_', ' ')}\n"
                 else:
-                    txt += f"      ├─── {activity.lower().replace('_', ' ')}\n"
+                    txt += f"      ├── {activity.lower().replace('_', ' ')}\n"
             txt += "\n"
             txt += f"=> 👹 malicious {self.confidence:.2f}\n"
         else:
