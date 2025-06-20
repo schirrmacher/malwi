@@ -163,14 +163,21 @@ def process_random_samples(
             )
 
             info(
-                f"Found {len(results.all_objects)} objects above maliciousness threshold"
+                f"Found {len(results.malicious_objects)} objects above maliciousness threshold"
             )
 
-            if results.all_objects:
-                avg_maliciousness = sum(
-                    o.maliciousness for o in results.all_objects
-                ) / len(results.all_objects)
-                info(f"Average maliciousness score: {avg_maliciousness:.3f}")
+            if results.malicious_objects:
+                # Filter out objects with None maliciousness scores
+                objects_with_scores = [
+                    o for o in results.all_objects if o.maliciousness is not None
+                ]
+                if objects_with_scores:
+                    avg_maliciousness = sum(
+                        o.maliciousness for o in objects_with_scores
+                    ) / len(objects_with_scores)
+                    info(
+                        f"Average maliciousness score: {avg_maliciousness:.3f} (from {len(objects_with_scores)} objects with scores)"
+                    )
 
             token_stats = MalwiObject.collect_token_stats(results.malicious_objects)
             if not token_stats:
