@@ -1,8 +1,14 @@
 from setuptools import setup, find_packages
+import os
+import sys
+
+# Add src to path to import version
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+from malwi._version import __version__
 
 setup(
     name="malwi",
-    version="0.0.15",
+    version=__version__,
     author="Marvin Schirrmacher",
     author_email="m@schirrmacher.io",
     description="malwi - AI Python Malware Scanner",
@@ -26,11 +32,5 @@ setup(
     },
     install_requires=[
         # Add any dependencies here
-    ],
-    python_requires=">=3.7",
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
     ],
 )

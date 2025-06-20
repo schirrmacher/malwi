@@ -14,10 +14,14 @@ from common.messaging import (
     info,
     result,
 )
+from malwi._version import __version__
 
 
 def main():
     parser = argparse.ArgumentParser(description="malwi - AI Python Malware Scanner")
+    parser.add_argument(
+        "--version", "-v", action="version", version=f"👹 v{__version__}"
+    )
     parser.add_argument(
         "path", metavar="PATH", help="Specify the package file or folder path."
     )

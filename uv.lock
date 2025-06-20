@@ -415,7 +415,6 @@ wheels = [
 
 [[package]]
 name = "malwi"
-version = "0.0.15"
 source = { editable = "." }
 dependencies = [
     { name = "accelerate" },

@@ -44,11 +44,12 @@ ruff format .
 
 1. Run pytests
 2. Create a version bump, adapt the minor version in:
-- pyproject.toml
-- setup.py
-- uv.lock (via `uv sync`)
+   - `src/malwi/_version.py` (central version file)
+   - Run `uv sync` to update uv.lock
 3. Create a git commit with: version bump
 4. Run: `git tag v<version>` (e.g., `git tag v0.0.15`)
+
+**Note**: Version is now centralized in `src/malwi/_version.py`. All other files (pyproject.toml, setup.py, CLI) automatically read from this central location.
 
 ## Architecture Notes
 
