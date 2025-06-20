@@ -3,7 +3,8 @@
     "allow": [
       "Bash(uv run pytest:*)",
       "Bash(uv run python -m:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git tag:*)"
     ]
   },
   "enableAllProjectMcpServers": false

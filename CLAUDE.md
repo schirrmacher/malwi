@@ -46,9 +46,9 @@ ruff format .
 2. Create a version bump, adapt the minor version in:
 - pyproject.toml
 - setup.py
-- uv.lock
+- uv.lock (via `uv sync`)
 3. Create a git commit with: version bump
-4. Run: `git tag <version>`
+4. Run: `git tag v<version>` (e.g., `git tag v0.0.15`)
 
 ## Architecture Notes
 
