@@ -4,6 +4,7 @@ import random
 import argparse
 import tempfile
 import shutil
+import hashlib
 
 from pathlib import Path
 from typing import List, Optional, Set
@@ -67,7 +68,7 @@ def _write_row_to_csv(row_data: dict, output_file: Path):
     file_exists = output_file.is_file() and output_file.stat().st_size > 0
 
     # For decision tokens, we have a simple fixed header
-    header = ["package", "label", "tokens"]
+    header = ["package", "label", "tokens", "hash"]
 
     if not file_exists:
         # Create new file with header
@@ -168,10 +169,14 @@ def process_random_samples(
                 warning(f"No decision tokens generated for '{package_name}'. Skipping.")
                 continue
 
+            # Calculate SHA256 hash of the tokens
+            tokens_hash = hashlib.sha256(decision_tokens.encode('utf-8')).hexdigest()
+            
             row_data = {
                 "package": package_name,
                 "label": label,
                 "tokens": decision_tokens,
+                "hash": tokens_hash,
             }
             processed_count += 1
 
@@ -222,10 +227,14 @@ def process_package_directories(
                 warning(f"No decision tokens generated for '{package_name}'. Skipping.")
                 continue
 
+            # Calculate SHA256 hash of the tokens
+            tokens_hash = hashlib.sha256(decision_tokens.encode('utf-8')).hexdigest()
+            
             row_data = {
                 "package": package_name,
                 "label": label,
                 "tokens": decision_tokens,
+                "hash": tokens_hash,
             }
             processed_count += 1
 
