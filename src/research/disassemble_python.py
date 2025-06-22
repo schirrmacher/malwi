@@ -881,6 +881,37 @@ class MalwiObject:
         return dict(result)
 
     @classmethod
+    def create_decision_tokens(
+        cls,
+        objects: List["MalwiObject"],
+        file_count: int = 0,
+        malicious_count: int = 0,
+    ) -> str:
+        """
+        Create a string of tokens ordered by their count (high to low) for tokens with non-zero values.
+
+        Args:
+            objects: List of MalwiObject instances to analyze
+            file_count: Number of files processed
+            malicious_count: Number of malicious objects found
+
+        Returns:
+            A space-separated string of tokens ordered by their count
+        """
+        # Get token statistics
+        token_stats = cls.collect_token_stats(objects, file_count, malicious_count)
+
+        # Filter tokens with value greater than zero and sort by count (high to low)
+        non_zero_tokens = [
+            (token, count) for token, count in token_stats.items() if count > 0
+        ]
+        sorted_tokens = sorted(non_zero_tokens, key=lambda x: x[1], reverse=True)
+
+        # Create string from ordered tokens
+        ordered_tokens = [token for token, count in sorted_tokens]
+        return " ".join(ordered_tokens)
+
+    @classmethod
     def load_models_into_memory(
         cls,
         distilbert_model_path: Optional[str] = None,
