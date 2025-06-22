@@ -141,6 +141,43 @@ The first iteration focuses on **maliciousness of Python source code**.
 
 Future iterations will cover malware scanning for more languages (JavaScript, Rust, Go) and more formats (binaries, logs).
 
+## Python API
+
+You can use malwi programmatically as a Python library:
+
+```python
+from pathlib import Path
+from malwi import process_files, MalwiReport
+
+# Analyze a file or directory
+report = process_files(
+    input_path=Path("./my_project"),
+    accepted_extensions=["py"],  # Only analyze Python files
+    predict=True,               # Enable maliciousness prediction
+    retrieve_source_code=True,  # Include source code in results
+    malicious_threshold=0.7,    # Threshold for flagging as malicious
+)
+
+# Check results
+print(f"Malicious: {report.malicious}")
+print(f"Confidence: {report.confidence:.2f}")
+print(f"Objects found: {len(report.all_objects)}")
+print(f"Malicious objects: {len(report.malicious_objects)}")
+
+# Export results
+json_output = report.to_report_json()
+yaml_output = report.to_report_yaml()
+markdown_output = report.to_report_markdown()
+```
+
+### Available Classes
+
+- **`process_files()`**: Main analysis function
+- **`MalwiReport`**: Analysis results container with export methods
+- **`MalwiObject`**: Individual code object with maliciousness scoring
+
+For a complete example, see [`example_api_usage.py`](example_api_usage.py).
+
 ## Support
 
 Do you have access to malicious Rust, Go, whatever packages? **Contact me.**
