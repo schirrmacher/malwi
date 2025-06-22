@@ -62,47 +62,25 @@ class RandomFilePicker:
 def _write_row_to_csv(row_data: dict, output_file: Path):
     """
     Handles the logic for incrementally saving a row of data to a CSV file.
-    It will rewrite the entire file with a new header if new columns are found.
+    Now writes decision tokens instead of feature statistics.
     """
     file_exists = output_file.is_file() and output_file.stat().st_size > 0
-    on_disk_header = []
-    if file_exists:
-        with open(output_file, "r", newline="", encoding="utf-8") as f_read:
-            reader = csv.reader(f_read)
-            try:
-                on_disk_header = next(reader)
-            except StopIteration:
-                file_exists = False
 
-    current_row_keys = set(row_data.keys())
-    on_disk_header_set = set(on_disk_header)
+    # For decision tokens, we have a simple fixed header
+    header = ["package", "label", "tokens"]
 
-    if current_row_keys.issubset(on_disk_header_set):
-        with open(output_file, "a", newline="", encoding="utf-8") as f_append:
-            writer = csv.DictWriter(f_append, fieldnames=on_disk_header)
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(row_data)
-        success(f"Appended results for '{row_data['package']}' to {output_file}")
-    else:
-        info(
-            f"New feature columns found. Rewriting {output_file} with updated header..."
-        )
-        all_data = []
-        if file_exists:
-            with open(output_file, "r", newline="", encoding="utf-8") as f_read:
-                reader = csv.DictReader(f_read)
-                all_data.extend(list(reader))
-        all_data.append(row_data)
-        new_header_set = on_disk_header_set.union(current_row_keys)
-        final_header = ["package", "label"] + sorted(
-            list(new_header_set - {"package", "label"})
-        )
+    if not file_exists:
+        # Create new file with header
         with open(output_file, "w", newline="", encoding="utf-8") as f_write:
-            writer = csv.DictWriter(f_write, fieldnames=final_header)
+            writer = csv.DictWriter(f_write, fieldnames=header)
             writer.writeheader()
-            writer.writerows(all_data)
-        success(f"Rewrote {output_file} and saved results for '{row_data['package']}'")
+
+    # Append the row
+    with open(output_file, "a", newline="", encoding="utf-8") as f_append:
+        writer = csv.DictWriter(f_append, fieldnames=header)
+        writer.writerow(row_data)
+
+    success(f"Appended results for '{row_data['package']}' to {output_file}")
 
 
 def process_random_samples(
@@ -179,18 +157,21 @@ def process_random_samples(
                         f"Average maliciousness score: {avg_maliciousness:.3f} (from {len(objects_with_scores)} objects with scores)"
                     )
 
-            token_stats = MalwiObject.collect_token_stats(results.malicious_objects)
-            if not token_stats:
-                warning(
-                    f"No token statistics generated for '{package_name}'. Skipping."
-                )
+            decision_tokens = MalwiObject.create_decision_tokens(
+                results.malicious_objects
+            )
+            if not decision_tokens:
+                warning(f"No decision tokens generated for '{package_name}'. Skipping.")
                 continue
 
-            token_stats["package"] = package_name
-            token_stats["label"] = label
+            row_data = {
+                "package": package_name,
+                "label": label,
+                "tokens": decision_tokens,
+            }
             processed_count += 1
 
-            _write_row_to_csv(token_stats, output_file)
+            _write_row_to_csv(row_data, output_file)
 
         except Exception as e:
             error(
@@ -225,18 +206,21 @@ def process_package_directories(
                 malicious_threshold=args.threshold,
             )
 
-            token_stats = MalwiObject.collect_token_stats(results.malicious_objects)
-            if not token_stats:
-                warning(
-                    f"No token statistics generated for '{package_name}'. Skipping."
-                )
+            decision_tokens = MalwiObject.create_decision_tokens(
+                results.malicious_objects
+            )
+            if not decision_tokens:
+                warning(f"No decision tokens generated for '{package_name}'. Skipping.")
                 continue
 
-            token_stats["package"] = package_name
-            token_stats["label"] = label
+            row_data = {
+                "package": package_name,
+                "label": label,
+                "tokens": decision_tokens,
+            }
             processed_count += 1
 
-            _write_row_to_csv(token_stats, output_file)
+            _write_row_to_csv(row_data, output_file)
 
         except Exception as e:
             error(
@@ -248,11 +232,11 @@ def process_package_directories(
 
 def create_svm_data():
     """
-    Main function to process directories, collect dynamic features,
+    Main function to process directories, collect decision tokens,
     and save them to a CSV file after each package is processed.
     """
     parser = argparse.ArgumentParser(
-        description="Process project directories to generate a dynamic feature CSV for SVM training."
+        description="Process project directories to generate decision tokens CSV for DistilBERT training."
     )
     parser.add_argument(
         "--dir", "-d", type=str, required=True, help="Path to the parent directory."
