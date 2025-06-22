@@ -144,18 +144,22 @@ def process_random_samples(
                 f"Found {len(results.malicious_objects)} objects above maliciousness threshold"
             )
 
-            if results.malicious_objects:
-                # Filter out objects with None maliciousness scores
-                objects_with_scores = [
-                    o for o in results.all_objects if o.maliciousness is not None
-                ]
-                if objects_with_scores:
-                    avg_maliciousness = sum(
-                        o.maliciousness for o in objects_with_scores
-                    ) / len(objects_with_scores)
-                    info(
-                        f"Average maliciousness score: {avg_maliciousness:.3f} (from {len(objects_with_scores)} objects with scores)"
-                    )
+            # Skip samples without malicious findings
+            if not results.malicious_objects:
+                info(f"No malicious objects found in '{package_name}'. Skipping.")
+                continue
+
+            # Filter out objects with None maliciousness scores
+            objects_with_scores = [
+                o for o in results.all_objects if o.maliciousness is not None
+            ]
+            if objects_with_scores:
+                avg_maliciousness = sum(
+                    o.maliciousness for o in objects_with_scores
+                ) / len(objects_with_scores)
+                info(
+                    f"Average maliciousness score: {avg_maliciousness:.3f} (from {len(objects_with_scores)} objects with scores)"
+                )
 
             decision_tokens = MalwiObject.create_decision_tokens(
                 results.malicious_objects
@@ -205,6 +209,11 @@ def process_package_directories(
                 silent=args.quiet,
                 malicious_threshold=args.threshold,
             )
+
+            # Skip packages without malicious findings
+            if not results.malicious_objects:
+                info(f"No malicious objects found in '{package_name}'. Skipping.")
+                continue
 
             decision_tokens = MalwiObject.create_decision_tokens(
                 results.malicious_objects
