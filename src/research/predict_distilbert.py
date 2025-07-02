@@ -90,6 +90,12 @@ def initialize_models(
                 HF_DEVICE_INSTANCE = torch.device("cuda:0")
                 HF_DEVICE_IDS = [0]
                 USE_MULTI_GPU = False
+        elif torch.backends.mps.is_available():
+            # Apple Silicon GPU setup
+            print("Found Apple Silicon GPU, using MPS")
+            HF_DEVICE_INSTANCE = torch.device("mps")
+            HF_DEVICE_IDS = None
+            USE_MULTI_GPU = False
         else:
             # CPU fallback
             print("No GPUs found, using CPU")
