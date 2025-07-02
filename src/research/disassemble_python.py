@@ -384,7 +384,7 @@ class MalwiReport:
             txt += f"=> 👹 malicious {self.confidence:.2f}\n"
         elif result == "suspicious":
             txt += f"  └── suspicious: {stats['malicious_objects']}\n\n"
-            txt += f"=> ⚠️  suspicious {self.confidence:.2f}\n"
+            txt += f"=> ⚠️ suspicious {self.confidence:.2f}\n"
         else:  # result == "good"
             txt += "\n"
             txt += "=> 🟢 good\n"
