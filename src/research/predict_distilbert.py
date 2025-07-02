@@ -281,7 +281,7 @@ def get_model_version_string(base_version: str) -> str:
     try:
         initialize_models()
 
-        version_str = f"👹 v{base_version}"
+        version_str = f"v{base_version}"
 
         if HF_MODEL_INSTANCE is not None:
             try:
@@ -295,6 +295,6 @@ def get_model_version_string(base_version: str) -> str:
 
     except Exception:
         # Fallback to basic version if model loading fails
-        version_str = f"👹 v{base_version}"
+        version_str = f"v{base_version}"
 
     return version_str

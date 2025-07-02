@@ -18,7 +18,7 @@ from tqdm import tqdm
 from enum import Enum
 from pathlib import Path
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from ollama import ChatResponse, chat
 from typing import List, Tuple, Set, TextIO, Optional, Any, Dict, Union
 
@@ -32,6 +32,7 @@ from research.mapping import (
 from research.predict_distilbert import (
     get_node_text_prediction,
     initialize_models as initialize_distilbert_models,
+    get_model_version_string,
 )
 from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
 from common.messaging import (
@@ -278,7 +279,9 @@ class MalwiReport:
     malicious: bool
     confidence: float
     activities: List[str]
-    version: str = __version__  # Malwi version used for this report
+    version: str = field(
+        default_factory=lambda: get_model_version_string(__version__)
+    )  # Malwi version with model hash
 
     def _generate_report_data(
         self,
