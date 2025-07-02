@@ -1,4 +1,5 @@
 import logging
+import sys
 from typing import Dict, Any, Optional, List
 import threading
 
@@ -77,7 +78,6 @@ def initialize_models(
             gpu_count = torch.cuda.device_count()
             if gpu_count > 1:
                 # Multi-GPU setup
-                print(f"Found {gpu_count} GPUs, using DataParallel")
                 HF_DEVICE_IDS = list(range(gpu_count))
                 HF_DEVICE_INSTANCE = torch.device(f"cuda:{HF_DEVICE_IDS[0]}")
                 HF_MODEL_INSTANCE = torch.nn.DataParallel(
@@ -86,19 +86,16 @@ def initialize_models(
                 USE_MULTI_GPU = True
             else:
                 # Single GPU setup
-                print("Found 1 GPU, using single GPU")
                 HF_DEVICE_INSTANCE = torch.device("cuda:0")
                 HF_DEVICE_IDS = [0]
                 USE_MULTI_GPU = False
         elif torch.backends.mps.is_available():
             # Apple Silicon GPU setup
-            print("Found Apple Silicon GPU, using MPS")
             HF_DEVICE_INSTANCE = torch.device("mps")
             HF_DEVICE_IDS = None
             USE_MULTI_GPU = False
         else:
             # CPU fallback
-            print("No GPUs found, using CPU")
             HF_DEVICE_INSTANCE = torch.device("cpu")
             HF_DEVICE_IDS = None
             USE_MULTI_GPU = False
@@ -314,18 +311,11 @@ def get_model_version_string(base_version: str) -> str:
     try:
         initialize_models()
 
-        version_str = f"v{base_version}"
+        # Start with base version
+        version_parts = [f"v{base_version}"]
 
         if HF_MODEL_INSTANCE is not None:
             try:
-                # Add GPU information
-                if USE_MULTI_GPU and HF_DEVICE_IDS:
-                    version_str += f" (GPUs: {len(HF_DEVICE_IDS)})"
-                elif torch.cuda.is_available():
-                    version_str += " (GPU: 1)"
-                else:
-                    version_str += " (CPU)"
-
                 # Get HuggingFace commit hash if available
                 model_to_check = (
                     HF_MODEL_INSTANCE.module if USE_MULTI_GPU else HF_MODEL_INSTANCE
@@ -333,12 +323,36 @@ def get_model_version_string(base_version: str) -> str:
                 if hasattr(model_to_check, "config"):
                     config = model_to_check.config
                     if hasattr(config, "_commit_hash") and config._commit_hash:
-                        version_str += f" (models commit: {config._commit_hash[:8]})"
+                        version_parts.append(
+                            f"models commit: {config._commit_hash[:8]}"
+                        )
+
+                # Add device information
+                if USE_MULTI_GPU and HF_DEVICE_IDS:
+                    version_parts.append(f"GPU x{len(HF_DEVICE_IDS)}")
+                elif torch.cuda.is_available():
+                    version_parts.append("GPU")
+                elif torch.backends.mps.is_available():
+                    version_parts.append("MPS")
+                else:
+                    version_parts.append("CPU")
+
+                # Add Python version
+                python_version = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+                version_parts.append(python_version)
+
             except Exception:
-                pass
+                # Fallback device info
+                version_parts.append("CPU")
+                python_version = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+                version_parts.append(python_version)
+
+        # Join with commas
+        version_str = ", ".join(version_parts)
 
     except Exception:
         # Fallback to basic version if model loading fails
-        version_str = f"v{base_version}"
+        python_version = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        version_str = f"v{base_version}, CPU, {python_version}"
 
     return version_str
