@@ -14,6 +14,8 @@ HF_MODEL_NAME = HF_REPO_NAME
 HF_TOKENIZER_INSTANCE = None
 HF_MODEL_INSTANCE = None
 HF_DEVICE_INSTANCE = None
+HF_DEVICE_IDS = None  # List of GPU device IDs
+USE_MULTI_GPU = False
 
 # Thread-local storage for tokenizers to avoid "Already borrowed" errors
 _thread_local = threading.local()
@@ -49,7 +51,9 @@ def initialize_models(
         HF_MODEL_INSTANCE, \
         HF_DEVICE_INSTANCE, \
         HF_MODEL_NAME, \
-        HF_TOKENIZER_NAME
+        HF_TOKENIZER_NAME, \
+        HF_DEVICE_IDS, \
+        USE_MULTI_GPU
 
     if HF_MODEL_INSTANCE is not None:
         return
@@ -67,9 +71,32 @@ def initialize_models(
         HF_MODEL_INSTANCE = DistilBertForSequenceClassification.from_pretrained(
             actual_model_path, trust_remote_code=True
         )
-        HF_DEVICE_INSTANCE = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+
+        # Setup device configuration for single or multi-GPU
+        if torch.cuda.is_available():
+            gpu_count = torch.cuda.device_count()
+            if gpu_count > 1:
+                # Multi-GPU setup
+                print(f"Found {gpu_count} GPUs, using DataParallel")
+                HF_DEVICE_IDS = list(range(gpu_count))
+                HF_DEVICE_INSTANCE = torch.device(f"cuda:{HF_DEVICE_IDS[0]}")
+                HF_MODEL_INSTANCE = torch.nn.DataParallel(
+                    HF_MODEL_INSTANCE, device_ids=HF_DEVICE_IDS
+                )
+                USE_MULTI_GPU = True
+            else:
+                # Single GPU setup
+                print("Found 1 GPU, using single GPU")
+                HF_DEVICE_INSTANCE = torch.device("cuda:0")
+                HF_DEVICE_IDS = [0]
+                USE_MULTI_GPU = False
+        else:
+            # CPU fallback
+            print("No GPUs found, using CPU")
+            HF_DEVICE_INSTANCE = torch.device("cpu")
+            HF_DEVICE_IDS = None
+            USE_MULTI_GPU = False
+
         HF_MODEL_INSTANCE.to(HF_DEVICE_INSTANCE)
         HF_MODEL_INSTANCE.eval()
     except Exception as e:
@@ -285,9 +312,20 @@ def get_model_version_string(base_version: str) -> str:
 
         if HF_MODEL_INSTANCE is not None:
             try:
+                # Add GPU information
+                if USE_MULTI_GPU and HF_DEVICE_IDS:
+                    version_str += f" (GPUs: {len(HF_DEVICE_IDS)})"
+                elif torch.cuda.is_available():
+                    version_str += " (GPU: 1)"
+                else:
+                    version_str += " (CPU)"
+
                 # Get HuggingFace commit hash if available
-                if hasattr(HF_MODEL_INSTANCE, "config"):
-                    config = HF_MODEL_INSTANCE.config
+                model_to_check = (
+                    HF_MODEL_INSTANCE.module if USE_MULTI_GPU else HF_MODEL_INSTANCE
+                )
+                if hasattr(model_to_check, "config"):
+                    config = model_to_check.config
                     if hasattr(config, "_commit_hash") and config._commit_hash:
                         version_str += f" (models commit: {config._commit_hash[:8]})"
             except Exception:
