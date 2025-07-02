@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, Any, Optional, List
+import threading
 
 import torch
 import torch.nn.functional as F
@@ -14,8 +15,29 @@ HF_TOKENIZER_INSTANCE = None
 HF_MODEL_INSTANCE = None
 HF_DEVICE_INSTANCE = None
 
+# Thread-local storage for tokenizers to avoid "Already borrowed" errors
+_thread_local = threading.local()
+
 # Higher == Faster
 WINDOW_STRIDE = 384
+
+
+def get_thread_tokenizer():
+    """Get a thread-local tokenizer instance to avoid 'Already borrowed' errors."""
+    if not hasattr(_thread_local, "tokenizer"):
+        if HF_TOKENIZER_INSTANCE is None:
+            raise RuntimeError(
+                "Models not initialized. Call initialize_models() first."
+            )
+
+        # Create a new tokenizer instance for this thread
+        actual_tokenizer_path = getattr(
+            _thread_local, "tokenizer_path", HF_TOKENIZER_NAME
+        )
+        _thread_local.tokenizer = AutoTokenizer.from_pretrained(
+            actual_tokenizer_path, trust_remote_code=True
+        )
+    return _thread_local.tokenizer
 
 
 def initialize_models(
@@ -34,6 +56,9 @@ def initialize_models(
 
     actual_tokenizer_path = tokenizer_path if tokenizer_path else HF_TOKENIZER_NAME
     actual_model_path = model_path if model_path else HF_MODEL_NAME
+
+    # Store tokenizer path for thread-local instances
+    _thread_local.tokenizer_path = actual_tokenizer_path
 
     try:
         HF_TOKENIZER_INSTANCE = AutoTokenizer.from_pretrained(
@@ -59,7 +84,7 @@ def _get_windowed_predictions(
     Run inference on multiple sliding windows of a single long input.
     """
     window_results = []
-    max_length = HF_TOKENIZER_INSTANCE.model_max_length
+    max_length = get_thread_tokenizer().model_max_length
     num_tokens = attention_mask.sum().item()
 
     # The loop correctly iterates through all valid starting positions.
@@ -73,7 +98,7 @@ def _get_windowed_predictions(
         padding_needed = max_length - len(window_input_ids)
         if padding_needed > 0:
             pad_tensor = torch.tensor(
-                [HF_TOKENIZER_INSTANCE.pad_token_id] * padding_needed,
+                [get_thread_tokenizer().pad_token_id] * padding_needed,
                 device=HF_DEVICE_INSTANCE,
             )
             window_input_ids = torch.cat([window_input_ids, pad_tensor])
@@ -146,7 +171,7 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
         }
     try:
         # Tokenize the entire input without truncation to check its length
-        inputs = HF_TOKENIZER_INSTANCE(
+        inputs = get_thread_tokenizer()(
             text_input,
             return_tensors="pt",
             padding=False,  # No padding yet
@@ -165,7 +190,7 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
             }
 
         num_tokens = input_ids.shape[1]
-        max_length = HF_TOKENIZER_INSTANCE.model_max_length
+        max_length = get_thread_tokenizer().model_max_length
 
         # --- Windowing Logic ---
         if num_tokens > max_length:
@@ -199,7 +224,7 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
         # --- Single-Window Logic (input is not long) ---
         else:
             # The input is short enough, so we pad it to max_length and predict
-            padded_inputs = HF_TOKENIZER_INSTANCE(
+            padded_inputs = get_thread_tokenizer()(
                 text_input,
                 return_tensors="pt",
                 padding="max_length",

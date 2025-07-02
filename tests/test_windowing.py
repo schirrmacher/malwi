@@ -24,9 +24,10 @@ class TestWindowingPrediction(unittest.TestCase):
     # The mock for HF_DEVICE_INSTANCE is replaced with a direct value using 'new'.
     @patch("research.predict_distilbert.HF_MODEL_INSTANCE")
     @patch("research.predict_distilbert.HF_TOKENIZER_INSTANCE")
+    @patch("research.predict_distilbert.get_thread_tokenizer")
     @patch("research.predict_distilbert.HF_DEVICE_INSTANCE", new="cpu")
     def test_long_input_triggers_windowing_and_aggregates_correctly(
-        self, mock_tokenizer, mock_model
+        self, mock_get_thread_tokenizer, mock_tokenizer, mock_model
     ):
         """
         Tests the full windowing pipeline for a long input text.
@@ -48,6 +49,9 @@ class TestWindowingPrediction(unittest.TestCase):
             "input_ids": long_input_ids,
             "attention_mask": long_attention_mask,
         }
+
+        # Configure get_thread_tokenizer to return our mock tokenizer
+        mock_get_thread_tokenizer.return_value = mock_tokenizer
 
         # Configure the mock model to return different logits for each window.
         # The aggregation logic should pick the result from the 2nd window.
