@@ -142,7 +142,6 @@ class TestCoreDisassembly:
                 "BUILD_MANIPULATION",
                 "CODE_EXECUTION_INTEROP",
                 "CRYPTOGRAPHY",
-                "CRYPTO_ENCRYPTION_DECRYPTION",
                 "CRYPTO_HASHING",
                 "CRYPTO_MISC",
                 "DATABASE_ACCESS",
