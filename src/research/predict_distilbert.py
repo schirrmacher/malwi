@@ -249,3 +249,27 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
             "message": f"Inference_Err: {str(e)}",
             "prediction_debug": prediction_debug_info,
         }
+
+
+def get_model_version_string(base_version: str) -> str:
+    """Get complete version string including model information."""
+    try:
+        initialize_models()
+
+        version_str = f"👹 v{base_version}"
+
+        if HF_MODEL_INSTANCE is not None:
+            try:
+                # Get HuggingFace commit hash if available
+                if hasattr(HF_MODEL_INSTANCE, "config"):
+                    config = HF_MODEL_INSTANCE.config
+                    if hasattr(config, "_commit_hash") and config._commit_hash:
+                        version_str += f" (models commit: {config._commit_hash[:8]})"
+            except Exception:
+                pass
+
+    except Exception:
+        # Fallback to basic version if model loading fails
+        version_str = f"👹 v{base_version}"
+
+    return version_str

@@ -6,6 +6,7 @@ from research.disassemble_python import (
     process_files,
     MalwiReport,
 )
+from research.predict_distilbert import get_model_version_string
 from common.messaging import (
     configure_messaging,
     banner,
@@ -20,7 +21,10 @@ from malwi._version import __version__
 def main():
     parser = argparse.ArgumentParser(description="malwi - AI Python Malware Scanner")
     parser.add_argument(
-        "--version", "-v", action="version", version=f"👹 v{__version__}"
+        "--version",
+        "-v",
+        action="version",
+        version=get_model_version_string(__version__),
     )
     parser.add_argument(
         "path", metavar="PATH", help="Specify the package file or folder path."
