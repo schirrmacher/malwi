@@ -70,9 +70,9 @@ class TestMalwiObject:
         assert prediction is None
         assert malwi_obj.maliciousness is None
         mock_get_pred.assert_not_called()
-        
+
     @patch(
-        "research.disassemble_python.get_node_text_prediction", 
+        "research.disassemble_python.get_node_text_prediction",
         return_value=MOCK_PREDICTION_RESULT,
     )
     def test_predict_with_special_tokens(self, mock_get_pred):
@@ -80,12 +80,12 @@ class TestMalwiObject:
         code_with_special = compile("print('hello')", "test.py", "exec")
         obj = MalwiObject(
             name="<module>",
-            language="python", 
+            language="python",
             file_source_code="print('hello')",
             file_path="test.py",
             code_type=code_with_special,
         )
-        
+
         prediction = obj.predict()
         assert prediction == MOCK_PREDICTION_RESULT
         assert obj.maliciousness == MOCK_PREDICTION_RESULT["probabilities"][1]

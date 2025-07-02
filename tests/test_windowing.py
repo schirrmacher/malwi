@@ -10,7 +10,6 @@ from research.predict_distilbert import get_node_text_prediction, initialize_mod
 
 
 class TestWindowingPrediction(unittest.TestCase):
-
     def setUp(self):
         """
         This method runs before each test.

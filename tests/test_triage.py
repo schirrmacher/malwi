@@ -53,10 +53,11 @@ class TestProcessObjectFile(unittest.TestCase):
     def test_process_object_file_exception_from_malwiobject(self):
         mock_file_path = Path("dummy/test.yaml")
         mock_out_path = Path("output_dir")
-        
-        with patch("research.triage.MalwiObject") as MockTriageModuleMalwiObject, \
-             patch("research.triage.triage") as mock_triage_module_triage_func:
-            
+
+        with (
+            patch("research.triage.MalwiObject") as MockTriageModuleMalwiObject,
+            patch("research.triage.triage") as mock_triage_module_triage_func,
+        ):
             MockTriageModuleMalwiObject.from_file.side_effect = Exception(
                 "MalwiObject error"
             )
@@ -68,16 +69,19 @@ class TestProcessObjectFile(unittest.TestCase):
                 # llm_model defaults to "gemma3" in the function signature if not provided
             )
 
-            MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
+            MockTriageModuleMalwiObject.from_file.assert_called_once_with(
+                mock_file_path
+            )
             mock_triage_module_triage_func.assert_not_called()
 
     def test_process_object_file_exception_from_triage(self):
         mock_file_path = Path("dummy/test.yaml")
         mock_out_path = Path("output_dir")
-        
-        with patch("research.triage.MalwiObject") as MockTriageModuleMalwiObject, \
-             patch("research.triage.triage") as mock_triage_module_triage_func:
-            
+
+        with (
+            patch("research.triage.MalwiObject") as MockTriageModuleMalwiObject,
+            patch("research.triage.triage") as mock_triage_module_triage_func,
+        ):
             mock_malwi_instance = MagicMock()
             MockTriageModuleMalwiObject.from_file.return_value = [mock_malwi_instance]
             mock_triage_module_triage_func.side_effect = Exception("Triage error")
@@ -89,7 +93,9 @@ class TestProcessObjectFile(unittest.TestCase):
                 # llm_model defaults to "gemma3"
             )
 
-            MockTriageModuleMalwiObject.from_file.assert_called_once_with(mock_file_path)
+            MockTriageModuleMalwiObject.from_file.assert_called_once_with(
+                mock_file_path
+            )
             mock_triage_module_triage_func.assert_called_once()
 
     @patch("research.triage.triage")

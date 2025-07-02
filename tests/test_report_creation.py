@@ -38,7 +38,7 @@ class MockMalwiObject:
     def to_dict(self) -> dict:
         code_display_value = self.code or "<source not available>"
         if "\n" in code_display_value:
-            final_code_value = LiteralStr(code_display_value.strip())
+            final_code_value = code_display_value.strip()
         else:
             final_code_value = code_display_value
 
@@ -57,7 +57,6 @@ class MockMalwiObject:
 
 
 class TestMalwiReport(unittest.TestCase):
-
     def setUp(self):
         """Set up common mock objects and reports for tests."""
         self.malicious_obj = MockMalwiObject(
@@ -86,6 +85,7 @@ class TestMalwiReport(unittest.TestCase):
             malicious=True,
             confidence=0.88,
             activities=["SYSTEM_CALL", "FILE_OPERATION"],
+            input="/tmp",
         )
 
         self.benign_report = MalwiReport(
@@ -98,11 +98,15 @@ class TestMalwiReport(unittest.TestCase):
             malicious=False,
             confidence=0.99,
             activities=[],
+            input="/tmp/script.py",
         )
 
     def test_generate_report_data(self):
         """Test the internal data generation logic."""
         data = self.malicious_report._generate_report_data()
+
+        # Check input field is at top level
+        self.assertEqual(data["input"], "/tmp")
 
         stats = data["statistics"]
         self.assertEqual(stats["total_files"], 2)

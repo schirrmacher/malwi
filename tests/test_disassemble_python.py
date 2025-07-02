@@ -256,6 +256,7 @@ class TestOutputFormatting:
             malicious=False,
             confidence=0.1,
             activities=[],
+            input=str(tmp_path),
         )
         output = io.StringIO()
         report.to_report_csv(output)
@@ -281,7 +282,9 @@ class TestFileProcessingAndCollection:
     ):
         p = tmp_path / "valid.py"
         p.write_text(valid_py_content)
-        all_objects, malicious_objects = process_single_file(p, predict=False, retrieve_source_code=True)
+        all_objects, malicious_objects = process_single_file(
+            p, predict=False, retrieve_source_code=True
+        )
         assert all_objects is not None
         assert len(all_objects) == 4
         assert len(malicious_objects) == 0  # No predictions made
@@ -293,7 +296,12 @@ class TestFileProcessingAndCollection:
 
     @patch(
         "research.disassemble_python.svm_predict",
-        return_value={"malicious": False, "confidence": 0.1, "confidence_benign": 0.9, "confidence_malicious": 0.1},
+        return_value={
+            "malicious": False,
+            "confidence": 0.1,
+            "confidence_benign": 0.9,
+            "confidence_malicious": 0.1,
+        },
     )
     @patch(
         "research.disassemble_python.get_node_text_prediction",

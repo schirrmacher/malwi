@@ -10,7 +10,6 @@ from typing import Dict, Any, Optional
 from common.messaging import (
     configure_messaging,
     info,
-    success,
     warning,
     error,
     progress,
@@ -155,7 +154,7 @@ def main():
                 f"Could not initialize ML models: {e}. Maliciousness prediction will be disabled."
             )
 
-    result = process_files(
+    _ = process_files(  # Result shown in report
         input_path=Path(args.path),
         accepted_extensions=["py"],
         predict=True,
@@ -163,8 +162,8 @@ def main():
         malicious_only=True,
     )
 
-    token_stats = MalwiObject.collect_token_stats(result.objects)
-    prediction = predict(token_stats)
+    # token_stats = MalwiObject.collect_token_stats(result.objects)
+    # prediction = predict(token_stats)  # Currently unused, result shown in report
 
     # Temporarily disable these outputs to fix tqdm - they're shown in the final report anyway
     pass
