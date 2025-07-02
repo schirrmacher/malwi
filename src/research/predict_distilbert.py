@@ -90,6 +90,12 @@ def initialize_models(
                 HF_DEVICE_INSTANCE = torch.device("cuda:0")
                 HF_DEVICE_IDS = [0]
                 USE_MULTI_GPU = False
+        elif torch.backends.mps.is_available():
+            # Apple Silicon GPU setup
+            print("Found Apple Silicon GPU, using MPS")
+            HF_DEVICE_INSTANCE = torch.device("mps")
+            HF_DEVICE_IDS = None
+            USE_MULTI_GPU = False
         else:
             # CPU fallback
             print("No GPUs found, using CPU")
@@ -108,11 +114,14 @@ def _get_windowed_predictions(
     input_ids: torch.Tensor, attention_mask: torch.Tensor
 ) -> List[Dict[str, Any]]:
     """
-    Run inference on multiple sliding windows of a single long input.
+    Run inference on a batch of sliding windows of a single long input.
+    This function expects input tensors to be on the CPU.
     """
-    window_results = []
     max_length = get_thread_tokenizer().model_max_length
     num_tokens = attention_mask.sum().item()
+
+    batch_input_ids = []
+    batch_attention_mask = []
 
     # The loop correctly iterates through all valid starting positions.
     for i in range(0, num_tokens, WINDOW_STRIDE):
@@ -124,51 +133,273 @@ def _get_windowed_predictions(
 
         padding_needed = max_length - len(window_input_ids)
         if padding_needed > 0:
+            # Pad on CPU
             pad_tensor = torch.tensor(
-                [get_thread_tokenizer().pad_token_id] * padding_needed,
-                device=HF_DEVICE_INSTANCE,
+                [get_thread_tokenizer().pad_token_id] * padding_needed
             )
             window_input_ids = torch.cat([window_input_ids, pad_tensor])
 
-            mask_pad_tensor = torch.tensor(
-                [0] * padding_needed, device=HF_DEVICE_INSTANCE
-            )
+            mask_pad_tensor = torch.tensor([0] * padding_needed)
             window_attention_mask = torch.cat([window_attention_mask, mask_pad_tensor])
 
-        model_inputs = {
-            "input_ids": window_input_ids.unsqueeze(0),
-            "attention_mask": window_attention_mask.unsqueeze(0),
-        }
+        batch_input_ids.append(window_input_ids)
+        batch_attention_mask.append(window_attention_mask)
 
+    if not batch_input_ids:
+        return []
+
+    # Stack tensors and move the entire batch to the GPU
+    model_inputs = {
+        "input_ids": torch.stack(batch_input_ids).to(HF_DEVICE_INSTANCE),
+        "attention_mask": torch.stack(batch_attention_mask).to(HF_DEVICE_INSTANCE),
+    }
+
+    try:
         with torch.no_grad():
             outputs = HF_MODEL_INSTANCE(**model_inputs)
 
+        window_results = []
         if hasattr(outputs, "logits"):
             logits = outputs.logits
-            probabilities = F.softmax(logits, dim=-1).cpu()[0]
-            prediction_idx = torch.argmax(probabilities).item()
+            probabilities_batch = F.softmax(logits, dim=-1).cpu()
+            predictions_idx_batch = torch.argmax(probabilities_batch, dim=-1)
             label_map = {0: "Benign", 1: "Malicious"}
-            predicted_label = label_map.get(
-                prediction_idx, f"Unknown_Index_{prediction_idx}"
-            )
 
-            window_results.append(
-                {
-                    "window_index": len(window_results),
-                    "index": prediction_idx,
-                    "label": predicted_label,
-                    "probabilities": probabilities.tolist(),
+            for i in range(len(predictions_idx_batch)):
+                prediction_idx = predictions_idx_batch[i].item()
+                predicted_label = label_map.get(
+                    prediction_idx, f"Unknown_Index_{prediction_idx}"
+                )
+                window_results.append(
+                    {
+                        "window_index": i,
+                        "index": prediction_idx,
+                        "label": predicted_label,
+                        "probabilities": probabilities_batch[i].tolist(),
+                    }
+                )
+
+        return window_results
+
+    finally:
+        # Clean up GPU memory after windowing operations
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        # Clear tensors
+        if "model_inputs" in locals():
+            del model_inputs
+        if "outputs" in locals():
+            del outputs
+
+
+def get_batch_text_predictions(text_inputs: List[str]) -> List[Dict[str, Any]]:
+    """
+    Process multiple text inputs in a single batch for optimal GPU utilization.
+    Returns predictions in the same order as input.
+    """
+    if not text_inputs:
+        return []
+
+    if (
+        HF_MODEL_INSTANCE is None
+        or HF_TOKENIZER_INSTANCE is None
+        or HF_DEVICE_INSTANCE is None
+    ):
+        error_result = {
+            "status": "error",
+            "message": "Model_Not_Loaded",
+            "prediction_debug": {"batch_size": len(text_inputs)},
+        }
+        return [error_result] * len(text_inputs)
+
+    try:
+        tokenizer = get_thread_tokenizer()
+        max_length = tokenizer.model_max_length
+        batch_results = []
+
+        # Separate short and long texts for different processing strategies
+        short_texts = []
+        short_indices = []
+        long_texts = []
+        long_indices = []
+
+        for i, text in enumerate(text_inputs):
+            if not isinstance(text, str):
+                batch_results.append(
+                    {
+                        "status": "error",
+                        "message": "Input_Error_Invalid_Text_Input_Type",
+                        "prediction_debug": {"input_index": i},
+                    }
+                )
+                continue
+
+            # Quick tokenization to check length
+            test_tokens = tokenizer(
+                text, return_tensors="pt", padding=False, truncation=False
+            )
+            num_tokens = test_tokens["input_ids"].shape[1]
+
+            if num_tokens <= max_length:
+                short_texts.append((i, text, test_tokens))
+                short_indices.append(i)
+            else:
+                long_texts.append((i, text))
+                long_indices.append(i)
+
+        # Initialize results array
+        results = [None] * len(text_inputs)
+
+        # Process short texts in batches
+        if short_texts:
+            _process_short_texts_batch(short_texts, results, tokenizer, max_length)
+
+        # Process long texts individually (windowing required)
+        if long_texts:
+            _process_long_texts_batch(long_texts, results)
+
+        # Fill any remaining None values with errors
+        for i, result in enumerate(results):
+            if result is None:
+                results[i] = {
+                    "status": "error",
+                    "message": "Processing_Error",
+                    "prediction_debug": {"input_index": i},
                 }
-            )
 
-        # --- THIS BLOCK IS REMOVED ---
-        # if end_idx >= num_tokens:
-        #     break
+        return results
 
-    return window_results
+    except Exception as e:
+        logging.error(f"Exception during batch inference: {e}", exc_info=True)
+        error_result = {
+            "status": "error",
+            "message": f"Batch_Inference_Error: {str(e)}",
+            "prediction_debug": {"batch_size": len(text_inputs)},
+        }
+        return [error_result] * len(text_inputs)
+
+
+def _process_short_texts_batch(short_texts, results, tokenizer, max_length):
+    """Process texts that fit within model max_length in efficient batches."""
+    # Dynamic batch sizing based on available GPU memory
+    if torch.cuda.is_available():
+        try:
+            # Check available GPU memory
+            gpu_memory_gb = torch.cuda.get_device_properties(
+                HF_DEVICE_INSTANCE
+            ).total_memory / (1024**3)
+            if gpu_memory_gb >= 8:
+                BATCH_SIZE = 16  # Larger batch for high-memory GPUs
+            elif gpu_memory_gb >= 4:
+                BATCH_SIZE = 8  # Standard batch size
+            else:
+                BATCH_SIZE = 4  # Conservative for low-memory GPUs
+        except Exception:
+            BATCH_SIZE = 8  # Fallback
+    else:
+        BATCH_SIZE = 4  # Conservative for CPU/MPS
+
+    for batch_start in range(0, len(short_texts), BATCH_SIZE):
+        batch_end = min(batch_start + BATCH_SIZE, len(short_texts))
+        batch = short_texts[batch_start:batch_end]
+
+        # Prepare batch tensors
+        batch_input_ids = []
+        batch_attention_masks = []
+
+        for _, text, tokens in batch:
+            input_ids = tokens["input_ids"][0]
+            attention_mask = tokens["attention_mask"][0]
+
+            # Pad to max_length
+            padding_needed = max_length - len(input_ids)
+            if padding_needed > 0:
+                pad_tensor = torch.tensor([tokenizer.pad_token_id] * padding_needed)
+                input_ids = torch.cat([input_ids, pad_tensor])
+
+                mask_pad_tensor = torch.tensor([0] * padding_needed)
+                attention_mask = torch.cat([attention_mask, mask_pad_tensor])
+
+            batch_input_ids.append(input_ids)
+            batch_attention_masks.append(attention_mask)
+
+        # Stack and move to GPU
+        model_inputs = {
+            "input_ids": torch.stack(batch_input_ids).to(HF_DEVICE_INSTANCE),
+            "attention_mask": torch.stack(batch_attention_masks).to(HF_DEVICE_INSTANCE),
+        }
+
+        try:
+            with torch.no_grad():
+                outputs = HF_MODEL_INSTANCE(**model_inputs)
+
+            # Process batch results
+            if hasattr(outputs, "logits"):
+                logits = outputs.logits
+                probabilities_batch = F.softmax(logits, dim=-1).cpu()
+                predictions_idx_batch = torch.argmax(probabilities_batch, dim=-1)
+                label_map = {0: "Benign", 1: "Malicious"}
+
+                for batch_idx, (original_idx, text, _) in enumerate(batch):
+                    prediction_idx = predictions_idx_batch[batch_idx].item()
+                    predicted_label = label_map.get(
+                        prediction_idx, f"Unknown_Index_{prediction_idx}"
+                    )
+
+                    results[original_idx] = {
+                        "status": "success",
+                        "index": prediction_idx,
+                        "label": predicted_label,
+                        "probabilities": probabilities_batch[batch_idx].tolist(),
+                        "prediction_debug": {
+                            "tokenization_performed": True,
+                            "windowing_performed": False,
+                            "batch_processed": True,
+                            "original_text_snippet": text[:200] + "..."
+                            if len(text) > 200
+                            else text,
+                        },
+                    }
+
+        finally:
+            # Explicit GPU memory cleanup
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            # Clear intermediate tensors
+            del model_inputs
+            if "outputs" in locals():
+                del outputs
+
+
+def _process_long_texts_batch(long_texts, results):
+    """Process long texts that require windowing - can still batch windows."""
+    for original_idx, text in long_texts:
+        # Use existing windowing logic but could be optimized further
+        result = get_node_text_prediction_single(text)
+        results[original_idx] = result
 
 
 def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
+    """
+    Single text prediction - now optimized to use batch processing internally.
+    Maintained for backward compatibility.
+    """
+    if isinstance(text_input, str):
+        batch_results = get_batch_text_predictions([text_input])
+        return (
+            batch_results[0]
+            if batch_results
+            else {"status": "error", "message": "Batch_Processing_Failed"}
+        )
+    else:
+        return {
+            "status": "error",
+            "message": "Input_Error_Invalid_Text_Input_Type",
+            "prediction_debug": {"tokenization_performed": False},
+        }
+
+
+def get_node_text_prediction_single(text_input: str) -> Dict[str, Any]:
     prediction_debug_info: Dict[str, Any] = {
         "tokenization_performed": False,
         "windowing_performed": False,
@@ -197,7 +428,7 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
             "prediction_debug": prediction_debug_info,
         }
     try:
-        # Tokenize the entire input without truncation to check its length
+        # Tokenize on CPU
         inputs = get_thread_tokenizer()(
             text_input,
             return_tensors="pt",
@@ -206,8 +437,8 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
         )
         prediction_debug_info["tokenization_performed"] = True
 
-        input_ids = inputs.get("input_ids").to(HF_DEVICE_INSTANCE)
-        attention_mask = inputs.get("attention_mask").to(HF_DEVICE_INSTANCE)
+        input_ids = inputs.get("input_ids")
+        attention_mask = inputs.get("attention_mask")
 
         if input_ids is None or input_ids.numel() == 0:
             return {
@@ -223,6 +454,7 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
         if num_tokens > max_length:
             prediction_debug_info["windowing_performed"] = True
 
+            # This function now expects CPU tensors and handles batching + GPU transfer
             window_predictions = _get_windowed_predictions(input_ids, attention_mask)
 
             prediction_debug_info["window_count"] = len(window_predictions)
@@ -250,19 +482,24 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
 
         # --- Single-Window Logic (input is not long) ---
         else:
-            # The input is short enough, so we pad it to max_length and predict
-            padded_inputs = get_thread_tokenizer()(
-                text_input,
-                return_tensors="pt",
-                padding="max_length",
-                truncation=True,
-                max_length=max_length,
-            )
+            # The input is short enough, pad it and predict
+            padding_needed = max_length - num_tokens
+            if padding_needed > 0:
+                # Pad on CPU
+                pad_tensor = torch.tensor(
+                    [get_thread_tokenizer().pad_token_id] * padding_needed
+                )
+                input_ids = torch.cat([input_ids[0], pad_tensor]).unsqueeze(0)
+
+                mask_pad_tensor = torch.tensor([0] * padding_needed)
+                attention_mask = torch.cat(
+                    [attention_mask[0], mask_pad_tensor]
+                ).unsqueeze(0)
+
+            # Move to GPU for inference
             model_inputs = {
-                "input_ids": padded_inputs["input_ids"].to(HF_DEVICE_INSTANCE),
-                "attention_mask": padded_inputs["attention_mask"].to(
-                    HF_DEVICE_INSTANCE
-                ),
+                "input_ids": input_ids.to(HF_DEVICE_INSTANCE),
+                "attention_mask": attention_mask.to(HF_DEVICE_INSTANCE),
             }
 
             with torch.no_grad():

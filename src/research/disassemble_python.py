@@ -14,6 +14,7 @@ import warnings
 import argparse
 import questionary
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from enum import Enum
 from pathlib import Path
@@ -31,6 +32,7 @@ from research.mapping import (
 )
 from research.predict_distilbert import (
     get_node_text_prediction,
+    get_batch_text_predictions,
     initialize_models as initialize_distilbert_models,
     get_model_version_string,
 )
@@ -226,6 +228,66 @@ def disassemble_python_file(
         all_objects_data=all_objects,
         errors=current_file_errors,
     )
+
+    return all_objects
+
+
+def _process_files_parallel(
+    accepted_files, tqdm_desc, disable_tqdm, silent
+) -> List["MalwiObject"]:
+    """
+    Process multiple files in parallel for optimal performance.
+    Returns all MalwiObjects from all files.
+    """
+    all_objects = []
+    max_workers = min(
+        4, len(accepted_files)
+    )  # Limit workers to avoid resource exhaustion
+
+    def process_single_file_wrapper(file_path):
+        """Wrapper function for parallel processing."""
+        try:
+            source_code = file_path.read_text(encoding="utf-8", errors="replace")
+            objects: List[MalwiObject] = disassemble_python_file(
+                source_code, file_path=str(file_path)
+            )
+            return objects
+        except Exception as e:
+            if not silent:
+                file_error(file_path, e, "critical processing")
+            return []
+
+    # Use ThreadPoolExecutor for parallel I/O operations
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all file processing tasks
+        future_to_file = {
+            executor.submit(process_single_file_wrapper, file_path): file_path
+            for file_path in accepted_files
+        }
+
+        # Process completed tasks with progress bar
+        with tqdm(
+            total=len(accepted_files),
+            desc=tqdm_desc,
+            unit="file",
+            ncols=100,
+            disable=disable_tqdm,
+            leave=False,
+            file=sys.stderr,
+            dynamic_ncols=True,
+            miniters=1,
+            mininterval=0.1,
+        ) as pbar:
+            for future in as_completed(future_to_file):
+                try:
+                    objects = future.result()
+                    all_objects.extend(objects)
+                except Exception as e:
+                    if not silent:
+                        file_path = future_to_file[future]
+                        file_error(file_path, e, "parallel processing")
+                finally:
+                    pbar.update(1)
 
     return all_objects
 
@@ -539,48 +601,67 @@ def process_files(
 
     # Configure progress bar
     tqdm_desc = (
-        f"Processing directory '{input_path.name}'"
+        f"Phase 1/2: Analyzing files in '{input_path.name}'"
         if input_path.is_dir() and len(accepted_files) > 1
-        else f"Processing '{input_path.name}'"
+        else f"Phase 1/2: Analyzing '{input_path.name}'"
     )
 
     disable_tqdm = silent or (len(accepted_files) <= 1 and input_path.is_file())
 
-    for file_path in tqdm(
-        accepted_files,
-        desc=tqdm_desc,
-        unit="file",
-        ncols=100,
-        disable=disable_tqdm,
-        leave=False,
-        file=sys.stderr,  # Explicitly set stderr
-        dynamic_ncols=True,  # Better terminal handling
-        miniters=1,  # Force updates
-        mininterval=0.1,  # Minimum update interval
-    ):
-        try:
-            file_all_objects, file_malicious_objects = process_single_file(
-                file_path,
-                predict=predict,
-                retrieve_source_code=retrieve_source_code,
-                maliciousness_threshold=malicious_threshold,
-            )
-            all_objects.extend(file_all_objects)
-            malicious_objects.extend(file_malicious_objects)
-            files_processed_count += 1
-
-            if triaging_type:
-                triage(
-                    file_all_objects,
-                    out_path="triaging",
-                    malicious_threshold=malicious_threshold,
-                    triaging_type=triaging_type,
-                    llm_api_key=llm_api_key,
+    # Parallel file processing for better performance
+    if len(accepted_files) > 1:
+        all_objects.extend(
+            _process_files_parallel(accepted_files, tqdm_desc, disable_tqdm, silent)
+        )
+        files_processed_count = len(accepted_files)
+    else:
+        # Single file - process directly (no overhead from threading)
+        for file_path in tqdm(
+            accepted_files,
+            desc=tqdm_desc,
+            unit="file",
+            ncols=100,
+            disable=disable_tqdm,
+            leave=False,
+            file=sys.stderr,  # Explicitly set stderr
+            dynamic_ncols=True,  # Better terminal handling
+            miniters=1,  # Force updates
+            mininterval=0.1,  # Minimum update interval
+        ):
+            try:
+                source_code = file_path.read_text(encoding="utf-8", errors="replace")
+                objects: List[MalwiObject] = disassemble_python_file(
+                    source_code, file_path=str(file_path)
                 )
+                all_objects.extend(objects)
+                files_processed_count += 1
 
-        except Exception as e:
-            if not silent:
-                file_error(file_path, e, "critical processing")
+            except Exception as e:
+                if not silent:
+                    file_error(file_path, e, "critical processing")
+
+    if predict:
+        predict_in_parallel(all_objects, silent=silent)
+        for obj in all_objects:
+            if (
+                malicious_threshold
+                and obj.maliciousness
+                and obj.maliciousness > malicious_threshold
+            ):
+                malicious_objects.append(obj)
+
+    if retrieve_source_code:
+        for obj in all_objects:
+            obj.retrieve_source_code()
+
+    if triaging_type:
+        triage(
+            all_objects,
+            out_path="triaging",
+            malicious_threshold=malicious_threshold,
+            triaging_type=triaging_type,
+            llm_api_key=llm_api_key,
+        )
 
     if len(malicious_objects) == 0:
         return MalwiReport(
@@ -831,6 +912,64 @@ Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
             )
         else:
             manual_triage(obj, code_hash, benign_path, malicious_path)
+
+
+def predict_in_parallel(objects: List["MalwiObject"], silent: bool = False):
+    """Tokenize and predict on a list of objects using optimized batch processing."""
+    if not objects:
+        return
+
+    # Phase 1: Tokenize all objects in parallel
+    token_strings = []
+    valid_objects = []
+
+    with ThreadPoolExecutor() as executor:
+        future_to_obj = {executor.submit(obj.to_token_string): obj for obj in objects}
+        for future in tqdm(
+            as_completed(future_to_obj),
+            total=len(objects),
+            desc="Phase 2a/2: Tokenizing objects",
+            unit="object",
+            ncols=100,
+            disable=silent,
+            leave=False,
+            file=sys.stderr,
+            dynamic_ncols=True,
+        ):
+            obj = future_to_obj[future]
+            token_string = future.result()
+
+            # Check if object contains relevant tokens
+            if any(
+                token in token_string
+                for token in SPECIAL_TOKENS.get("python", {}).values()
+            ):
+                token_strings.append(token_string)
+                valid_objects.append(obj)
+            else:
+                obj.maliciousness = None
+
+    # Phase 2: Batch prediction on all valid token strings
+    if token_strings and valid_objects:
+        batch_predictions = get_batch_text_predictions(token_strings)
+
+        # Update progress bar for batch prediction phase
+        with tqdm(
+            total=len(valid_objects),
+            desc="Phase 2b/2: Batch malware detection",
+            unit="object",
+            ncols=100,
+            disable=silent,
+            leave=False,
+            file=sys.stderr,
+            dynamic_ncols=True,
+        ) as pbar:
+            for obj, prediction in zip(valid_objects, batch_predictions):
+                if prediction and "probabilities" in prediction:
+                    obj.maliciousness = prediction["probabilities"][1]
+                else:
+                    obj.maliciousness = None
+                pbar.update(1)
 
 
 class LiteralStr(str):

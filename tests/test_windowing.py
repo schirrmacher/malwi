@@ -59,19 +59,22 @@ class TestWindowingPrediction(unittest.TestCase):
         logits_window_2 = torch.tensor([[-0.847, 0.847]])
         logits_window_3 = torch.tensor([[1.386, -1.386]])
 
-        # With WINDOW_STRIDE=128 and max_length=512, for 1000 tokens we get 8 windows
-        # Windows start at: 0, 128, 256, 384, 512, 640, 768, 896
-        mock_model_outputs = [
-            MagicMock(logits=logits_window_1),
-            MagicMock(logits=logits_window_2),  # Window 2 has highest maliciousness
-            MagicMock(logits=logits_window_3),
-            MagicMock(logits=logits_window_1),
-            MagicMock(logits=logits_window_1),
-            MagicMock(logits=logits_window_1),
-            MagicMock(logits=logits_window_1),
-            MagicMock(logits=logits_window_1),
-        ]
-        mock_model.side_effect = mock_model_outputs
+        # The model is now called once with a batch of all windows.
+        all_logits = torch.cat(
+            [
+                logits_window_1,
+                logits_window_2,  # This one is the most malicious
+                logits_window_3,
+                logits_window_1,
+                logits_window_1,
+                logits_window_1,
+                logits_window_1,
+                logits_window_1,
+            ],
+            dim=0,
+        )
+
+        mock_model.return_value = MagicMock(logits=all_logits)
 
         # --- 2. Call the Function under Test ---
 
@@ -106,12 +109,10 @@ class TestWindowingPrediction(unittest.TestCase):
         )
         self.assertEqual(
             debug_info["window_count"],
-            3,
+            8,  # We expect 8 windows now
         )
         self.assertEqual(
             debug_info["aggregation_strategy"], "max_malicious_probability"
         )
-        self.assertEqual(
-            mock_model.call_count,
-            3,
-        )
+        # The model should only be called once with the entire batch
+        mock_model.assert_called_once()

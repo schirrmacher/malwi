@@ -7,7 +7,9 @@
       "Bash(git tag:*)",
       "Bash(uv sync:*)",
       "Bash(git add:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(uv run ruff:*)"
     ]
   },
   "enableAllProjectMcpServers": false
