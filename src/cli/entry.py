@@ -38,7 +38,7 @@ def run_batch_scan(child_folder: Path, args) -> dict:
             input_path=child_folder,
             accepted_extensions=args.extensions,
             predict=True,
-            retrieve_source_code=args.no_snippets,
+            retrieve_source_code=not args.no_snippets,
             silent=True,  # Silent for individual folder processing in batch mode
             triaging_type=None,
             malicious_threshold=args.threshold,
@@ -46,9 +46,9 @@ def run_batch_scan(child_folder: Path, args) -> dict:
 
         # Generate output based on format
         if args.format == "yaml":
-            output = report.to_report_yaml(include_source_files=args.no_sources)
+            output = report.to_report_yaml()
         elif args.format == "json":
-            output = report.to_report_json(include_source_files=args.no_sources)
+            output = report.to_report_json()
         elif args.format == "markdown":
             output = report.to_report_markdown()
         else:
@@ -222,12 +222,6 @@ def main():
         help="Do not add code snippets of findings in the output to increase performance.",
         default=True,
     )
-    speed_group.add_argument(
-        "--no-sources",
-        action="store_false",
-        help="Avoid full source files being added to the output (required for loading objects from files, e.g. after triaging).",
-        default=True,
-    )
 
     developer_group = parser.add_argument_group("Developer Options")
 
@@ -330,13 +324,9 @@ def main():
     output = ""
 
     if args.format == "yaml":
-        output = report.to_report_yaml(
-            include_source_files=args.no_sources,
-        )
+        output = report.to_report_yaml()
     elif args.format == "json":
-        output = report.to_report_json(
-            include_source_files=args.no_sources,
-        )
+        output = report.to_report_json()
     elif args.format == "markdown":
         output = report.to_report_markdown()
     else:

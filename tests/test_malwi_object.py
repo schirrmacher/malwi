@@ -2,7 +2,6 @@ import json
 import yaml
 import types
 import pytest
-import base64
 import tempfile
 
 from pathlib import Path
@@ -121,8 +120,6 @@ def get_fake_code_object():
 
 
 def test_from_file_reads_yaml_correctly():
-    fake_source = "print('hello world')"
-    encoded_source = base64.b64encode(fake_source.encode("utf-8")).decode("utf-8")
 
     yaml_data = {
         "statistics": {
@@ -145,7 +142,6 @@ def test_from_file_reads_yaml_correctly():
                 ],
             }
         ],
-        "sources": {"example.py": encoded_source},
     }
 
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as tmp:
@@ -159,26 +155,13 @@ def test_from_file_reads_yaml_correctly():
 
     assert obj.name == "test_function"
     assert obj.file_path == "example.py"
-    assert obj.file_source_code == "print('hello world')"
+    assert obj.file_source_code == ""  # Sources field removed from reports
     assert isinstance(obj.code_type, types.CodeType)
-    assert (
-        obj.to_token_string()
-        == "suspicious resume push_null load_name USER_IO load_const hello world call pop_top return_const None"
-    )
+    assert obj.to_token_string() == "suspicious resume return_const None"  # Empty source results in minimal bytecode
     assert obj.warnings == ["suspicious"]
 
 
 def test_from_file_reads_object_correctly():
-    fake_source = """
-class Dog:
-    def speak(self):
-        return "Woof!"
-
-class Cat:
-    def speak(self):
-        return "Meow!"
-"""
-    encoded_source = base64.b64encode(fake_source.encode("utf-8")).decode("utf-8")
 
     yaml_data = {
         "statistics": {
@@ -201,7 +184,6 @@ class Cat:
                 ],
             }
         ],
-        "sources": {"example.py": encoded_source},
     }
 
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as tmp:
@@ -216,5 +198,5 @@ class Cat:
     assert obj.name == "Cat.speak"
     assert obj.file_path == "example.py"
     assert isinstance(obj.code_type, types.CodeType)
-    assert obj.to_token_string() == "suspicious resume return_const Meow!"
+    assert obj.to_token_string() == "suspicious resume return_const None"  # Empty source results in minimal bytecode
     assert obj.warnings == ["suspicious"]

@@ -1,7 +1,6 @@
 import io
 import json
 import yaml
-import base64
 import unittest
 
 from typing import List
@@ -119,12 +118,6 @@ class TestMalwiReport(unittest.TestCase):
             data["details"][0]["contents"][0]["name"], self.malicious_obj.name
         )
 
-        self.assertIn(self.malicious_obj.file_path, data["sources"])
-        decoded_source = base64.b64decode(
-            data["sources"][self.malicious_obj.file_path]
-        ).decode("utf-8")
-        self.assertEqual(decoded_source, self.malicious_obj.file_source_code)
-
     def test_to_report_csv(self):
         """Test CSV report generation."""
         string_io = io.StringIO()
@@ -154,7 +147,6 @@ class TestMalwiReport(unittest.TestCase):
         self.assertEqual(data["statistics"]["malicious_objects"], 1)
         self.assertEqual(len(data["details"]), 1)
         self.assertEqual(data["details"][0]["contents"][0]["name"], "evil_func")
-        self.assertIn("sources", data)
 
     def test_to_demo_text_malicious(self):
         """Test the simple text output for a malicious report."""

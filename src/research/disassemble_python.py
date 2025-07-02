@@ -6,7 +6,6 @@ import csv
 import yaml
 import json
 import types
-import base64
 import inspect
 import pathlib
 import hashlib
@@ -284,10 +283,7 @@ class MalwiReport:
         default_factory=lambda: get_model_version_string(__version__)
     )  # Malwi version with model hash
 
-    def _generate_report_data(
-        self,
-        include_source_files: bool = True,
-    ) -> Dict[str, Any]:
+    def _generate_report_data(self) -> Dict[str, Any]:
         processed_objects_count = len(self.all_objects)
 
         summary_statistics = {
@@ -314,9 +310,6 @@ class MalwiReport:
             "details": [],
         }
 
-        if include_source_files:
-            report_data["sources"] = {}
-
         for obj in self.all_objects:
             is_malicious = (
                 obj.maliciousness is not None and obj.maliciousness > self.threshold
@@ -325,11 +318,6 @@ class MalwiReport:
             if is_malicious:
                 obj.retrieve_source_code()
                 report_data["details"].append(obj.to_dict())
-
-                if include_source_files:
-                    report_data["sources"][obj.file_path] = base64.b64encode(
-                        obj.file_source_code.encode("utf-8", errors="replace")
-                    ).decode("utf-8")
 
         return report_data
 
@@ -346,28 +334,18 @@ class MalwiReport:
                 ]
             )
 
-    def to_report_json(
-        self,
-        include_source_files: bool = True,
-    ) -> str:
-        report_data = self._generate_report_data(
-            include_source_files=include_source_files,
-        )
+    def to_report_json(self) -> str:
+        report_data = self._generate_report_data()
         return json.dumps(report_data, indent=4)
 
-    def to_report_yaml(
-        self,
-        include_source_files: bool = True,
-    ) -> str:
-        report_data = self._generate_report_data(
-            include_source_files=include_source_files,
-        )
+    def to_report_yaml(self) -> str:
+        report_data = self._generate_report_data()
         return yaml.dump(
             report_data, sort_keys=False, width=float("inf"), default_flow_style=False
         )
 
     def to_demo_text(self) -> str:
-        report_data = self._generate_report_data(include_source_files=True)
+        report_data = self._generate_report_data()
         stats = report_data["statistics"]
         result = report_data["result"]
 
@@ -400,7 +378,7 @@ class MalwiReport:
     def to_report_markdown(
         self,
     ) -> str:
-        report_data = self._generate_report_data(include_source_files=True)
+        report_data = self._generate_report_data()
 
         stats = report_data["statistics"]
 
@@ -1067,8 +1045,8 @@ class MalwiObject:
                     if not details:
                         continue
                     file_path = detail.get("path", "") or ""
-                    raw_source = data.get("sources", {}).get(file_path)
-                    source = base64.b64decode(raw_source).decode("utf-8")
+                    # Sources field has been removed - skip loading from file
+                    source = ""
                     contents = detail.get("contents", [])
 
                     if not contents:

@@ -241,7 +241,6 @@ class TestBatchMode:
         args.extensions = ["py"]
         args.quiet = True
         args.no_snippets = True
-        args.no_sources = True
         args.model_path = None
         args.tokenizer_path = None
         args.svm_path = None
@@ -362,7 +361,6 @@ class TestBatchMode:
         args.extensions = ["py"]
         args.quiet = True
         args.no_snippets = True
-        args.no_sources = True
         args.model_path = None
         args.tokenizer_path = None
         args.svm_path = None
@@ -382,7 +380,7 @@ class TestBatchMode:
                     input_path=test_folder,
                     accepted_extensions=["py"],
                     predict=True,
-                    retrieve_source_code=True,
+                    retrieve_source_code=False,  # no_snippets=True means retrieve_source_code=False
                     silent=True,
                     triaging_type=None,
                     malicious_threshold=0.7,
@@ -409,7 +407,6 @@ class TestBatchMode:
         args.extensions = ["py"]
         args.quiet = True
         args.no_snippets = True
-        args.no_sources = True
         args.model_path = None
         args.tokenizer_path = None
         args.svm_path = None
@@ -445,7 +442,6 @@ class TestBatchMode:
             args.extensions = ["py"]
             args.quiet = True
             args.no_snippets = True
-            args.no_sources = True
             args.model_path = None
             args.tokenizer_path = None
             args.svm_path = None
@@ -535,7 +531,6 @@ class TestBatchMode:
         args.extensions = ["py"]
         args.quiet = True
         args.no_snippets = True
-        args.no_sources = True
         args.model_path = None
         args.tokenizer_path = None
         args.svm_path = None
