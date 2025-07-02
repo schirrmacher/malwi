@@ -170,8 +170,8 @@ def process_random_samples(
                 continue
 
             # Calculate SHA256 hash of the tokens
-            tokens_hash = hashlib.sha256(decision_tokens.encode('utf-8')).hexdigest()
-            
+            tokens_hash = hashlib.sha256(decision_tokens.encode("utf-8")).hexdigest()
+
             row_data = {
                 "package": package_name,
                 "label": label,
@@ -228,8 +228,8 @@ def process_package_directories(
                 continue
 
             # Calculate SHA256 hash of the tokens
-            tokens_hash = hashlib.sha256(decision_tokens.encode('utf-8')).hexdigest()
-            
+            tokens_hash = hashlib.sha256(decision_tokens.encode("utf-8")).hexdigest()
+
             row_data = {
                 "package": package_name,
                 "label": label,

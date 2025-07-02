@@ -294,8 +294,17 @@ class MalwiReport:
             "malicious_objects": len(self.malicious_objects),
         }
 
+        # Determine the result based on malicious flag and malicious objects count
+        if self.malicious:
+            result = "malicious"
+        elif len(self.malicious_objects) > 0:
+            result = "suspicious"
+        else:
+            result = "good"
+
         report_data = {
             "version": self.version,
+            "result": result,
             "statistics": summary_statistics,
             "details": [],
         }
@@ -355,15 +364,17 @@ class MalwiReport:
     def to_demo_text(self) -> str:
         report_data = self._generate_report_data(include_source_files=True)
         stats = report_data["statistics"]
+        result = report_data["result"]
 
         txt = f"- files: {stats['total_files']}\n"
         txt += f"  ├── scanned: {stats['processed_files']}\n"
         txt += f"  └── skipped: {stats['skipped_files']}\n"
         txt += f"- objects: {stats['processed_objects']}\n"
 
-        activity_list = list(self.activities)
-        if self.malicious:
+        # Use the same three-state result system as other report formats
+        if result == "malicious":
             txt += f"  └── malicious: {stats['malicious_objects']} \n"
+            activity_list = list(self.activities)
             for i, activity in enumerate(activity_list):
                 if i == len(list(activity_list)) - 1:
                     txt += f"      └── {activity.lower().replace('_', ' ')}\n"
@@ -371,13 +382,12 @@ class MalwiReport:
                     txt += f"      ├── {activity.lower().replace('_', ' ')}\n"
             txt += "\n"
             txt += f"=> 👹 malicious {self.confidence:.2f}\n"
-        else:
-            if stats["malicious_objects"] > 0:
-                txt += f"  └── interesting: {stats['malicious_objects']}\n\n"
-                txt += f"=> 🟢 ok {self.confidence:.2f}\n"
-            else:
-                txt += "\n"
-                txt += "=> 🟢 clean\n"
+        elif result == "suspicious":
+            txt += f"  └── suspicious: {stats['malicious_objects']}\n\n"
+            txt += f"=> ⚠️  suspicious {self.confidence:.2f}\n"
+        else:  # result == "good"
+            txt += "\n"
+            txt += "=> 🟢 good\n"
 
         return txt
 
@@ -393,10 +403,15 @@ class MalwiReport:
         txt += "## Summary\n\n"
         txt += "Based on the analyzed patterns, the code is evaluated as:\n\n"
 
-        if self.malicious:
+        # Use the same result classification
+        result = report_data["result"]
+        if result == "malicious":
             txt += f"> 👹 **Malicious**: `{self.confidence}`\n\n"
-        else:
-            txt += f"> 🟢 **Not malicious**: `{self.confidence}`\n\n"
+        elif result == "suspicious":
+            txt += f"> ⚠️  **Suspicious**: `{self.confidence}`\n\n"
+            txt += f"> *Found {stats['malicious_objects']} malicious objects but overall classification is not malicious*\n\n"
+        else:  # good
+            txt += f"> 🟢 **Good**: `{self.confidence}`\n\n"
 
         txt += f"- Files: {stats['total_files']}\n"
         txt += f"- Skipped: {stats['skipped_files']}\n"

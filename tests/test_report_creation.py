@@ -165,7 +165,7 @@ class TestMalwiReport(unittest.TestCase):
         text = self.benign_report.to_demo_text()
         self.assertIn("- files: 1", text)
         self.assertIn("objects: 1", text)
-        self.assertIn("clean", text)
+        self.assertIn("good", text)
 
     def test_to_report_markdown(self):
         """Test Markdown report generation."""
