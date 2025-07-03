@@ -22,13 +22,13 @@ uv sync
 
 **Testing:**
 ```bash
-pytest
+uv run pytest tests
 ```
 
 **Linting:**
 ```bash
-ruff check .
-ruff format .
+uv run ruff check .
+uv run ruff format .
 ```
 
 **Training Models:**
