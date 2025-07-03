@@ -85,6 +85,8 @@ class TestMalwiReport(unittest.TestCase):
             confidence=0.88,
             activities=["SYSTEM_CALL", "FILE_OPERATION"],
             input="/tmp",
+            start="2024-01-01T12:00:00",
+            duration=2.5,
         )
 
         self.benign_report = MalwiReport(
@@ -98,6 +100,8 @@ class TestMalwiReport(unittest.TestCase):
             confidence=0.99,
             activities=[],
             input="/tmp/script.py",
+            start="2024-01-01T12:00:00",
+            duration=1.0,
         )
 
     def test_generate_report_data(self):
@@ -111,6 +115,8 @@ class TestMalwiReport(unittest.TestCase):
         self.assertEqual(stats["total_files"], 2)
         self.assertEqual(stats["processed_objects"], 2)
         self.assertEqual(stats["malicious_objects"], 1)
+        self.assertEqual(stats["start"], "2024-01-01T12:00:00")
+        self.assertEqual(stats["duration"], 2.5)
 
         self.assertEqual(len(data["details"]), 1)
         self.assertEqual(data["details"][0]["path"], self.malicious_obj.file_path)

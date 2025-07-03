@@ -257,6 +257,8 @@ class TestOutputFormatting:
             confidence=0.1,
             activities=[],
             input=str(tmp_path),
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
         output = io.StringIO()
         report.to_report_csv(output)

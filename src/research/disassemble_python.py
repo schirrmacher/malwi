@@ -5,6 +5,7 @@ import sys
 import csv
 import yaml
 import json
+import time
 import types
 import inspect
 import pathlib
@@ -12,6 +13,7 @@ import hashlib
 import warnings
 import argparse
 import questionary
+from datetime import datetime
 
 from tqdm import tqdm
 from enum import Enum
@@ -279,6 +281,8 @@ class MalwiReport:
     confidence: float
     activities: List[str]
     input: str  # The targeted folder/file path
+    start: str  # ISO 8601 timestamp when scan started
+    duration: float  # Duration in seconds
     version: str = field(
         default_factory=lambda: get_model_version_string(__version__)
     )  # Malwi version with model hash
@@ -292,6 +296,8 @@ class MalwiReport:
             "processed_files": len(self.all_files) - len(self.skipped_files),
             "processed_objects": processed_objects_count,
             "malicious_objects": len(self.malicious_objects),
+            "start": self.start,
+            "duration": self.duration,
         }
 
         # Determine the result based on malicious flag and malicious objects count
@@ -490,6 +496,10 @@ def process_files(
     predict_svm: bool = True,
     llm_api_key: Optional[str] = None,
 ) -> MalwiReport:
+    # Track timing and timestamp
+    start_time = time.time()
+    start_timestamp = datetime.now().isoformat()
+
     # Configure messaging to respect silent mode
     msg = get_message_manager()
     msg.set_quiet(silent)
@@ -507,6 +517,7 @@ def process_files(
     files_processed_count = 0
 
     if not accepted_files:
+        duration = time.time() - start_time
         return MalwiReport(
             all_objects=[],
             malicious_objects=[],
@@ -518,6 +529,8 @@ def process_files(
             confidence=1.0,
             activities=[],
             input=str(input_path),
+            start=start_timestamp,
+            duration=duration,
         )
 
     # Configure progress bar
@@ -566,6 +579,7 @@ def process_files(
                 file_error(file_path, e, "critical processing")
 
     if len(malicious_objects) == 0:
+        duration = time.time() - start_time
         return MalwiReport(
             all_objects=all_objects,
             malicious_objects=[],
@@ -577,9 +591,12 @@ def process_files(
             confidence=1.0,
             activities=[],
             input=str(input_path),
+            start=start_timestamp,
+            duration=duration,
         )
 
     if not predict_svm:
+        duration = time.time() - start_time
         return MalwiReport(
             all_objects=all_objects,
             malicious_objects=malicious_objects,
@@ -591,6 +608,8 @@ def process_files(
             confidence=0.0,
             activities=[],
             input=str(input_path),
+            start=start_timestamp,
+            duration=duration,
         )
 
     token_stats = MalwiObject.collect_token_stats(
@@ -621,6 +640,7 @@ def process_files(
         malicious = True
         confidence = prediction["confidence_malicious"]
 
+    duration = time.time() - start_time
     return MalwiReport(
         all_objects=all_objects,
         malicious_objects=malicious_objects,
@@ -632,6 +652,8 @@ def process_files(
         confidence=confidence,
         activities=top_activities_string,
         input=str(input_path),
+        start=start_timestamp,
+        duration=duration,
     )
 
 

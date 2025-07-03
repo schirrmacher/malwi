@@ -58,7 +58,10 @@ def test_malwi_report_exports():
         confidence=1.0,
         activities=[],
         input="/test/path",
-    )
+    
+            start="2024-01-01T12:00:00",
+            duration=1.5,
+        )
 
     # Test export methods - version should contain base version
     json_output = report.to_report_json()

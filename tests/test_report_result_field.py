@@ -20,6 +20,8 @@ class TestReportResultField:
             confidence=1.0,
             activities=[],
             input="/test",
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
 
         data = report._generate_report_data()
@@ -46,6 +48,8 @@ class TestReportResultField:
             confidence=0.6,
             activities=[],
             input="test.py",
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
 
         data = report._generate_report_data()
@@ -72,6 +76,8 @@ class TestReportResultField:
             confidence=0.95,
             activities=["FILESYSTEM_ACCESS", "NETWORK_HTTP_REQUEST"],
             input="test.py",
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
 
         data = report._generate_report_data()
@@ -90,6 +96,9 @@ class TestReportResultField:
             confidence=1.0,
             activities=[],
             input="/test",
+        
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
 
         json_output = report.to_report_json()
@@ -108,6 +117,9 @@ class TestReportResultField:
             confidence=1.0,
             activities=[],
             input="/test",
+        
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
 
         yaml_output = report.to_report_yaml()
@@ -127,6 +139,9 @@ class TestReportResultField:
             confidence=1.0,
             activities=[],
             input="/test",
+        
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
         markdown = good_report.to_report_markdown()
         assert "> 🟢 **Good**:" in markdown
@@ -151,6 +166,8 @@ class TestReportResultField:
             confidence=0.6,
             activities=[],
             input="test.py",
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
         markdown = suspicious_report.to_report_markdown()
         assert "> ⚠️  **Suspicious**:" in markdown
@@ -171,6 +188,8 @@ class TestReportResultField:
             confidence=0.95,
             activities=[],
             input="test.py",
+            start="2024-01-01T12:00:00",
+            duration=1.5,
         )
         markdown = malicious_report.to_report_markdown()
         assert "> 👹 **Malicious**:" in markdown
