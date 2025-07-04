@@ -358,7 +358,21 @@ class MalwiReport:
         txt = f"- target: {report_data['input']}\n"
         txt += f"- files: {stats['total_files']}\n"
         txt += f"  ├── scanned: {stats['processed_files']}\n"
-        txt += f"  └── skipped: {stats['skipped_files']}\n"
+
+        if result == "malicious":
+            txt += f"  ├── skipped: {stats['skipped_files']}\n"
+            txt += "  └── suspicious:\n"
+            malicious_files = sorted(
+                set(obj.file_path for obj in self.malicious_objects)
+            )
+            for i, file_path in enumerate(malicious_files):
+                if i == len(malicious_files) - 1:
+                    txt += f"      └── {file_path}\n"
+                else:
+                    txt += f"      ├── {file_path}\n"
+        else:
+            txt += f"  └── skipped: {stats['skipped_files']}\n"
+
         txt += f"- objects: {stats['processed_objects']}\n"
 
         # Use the same three-state result system as other report formats
@@ -373,7 +387,18 @@ class MalwiReport:
             txt += "\n"
             txt += f"=> 👹 malicious {self.confidence:.2f}\n"
         elif result == "suspicious":
-            txt += f"  └── suspicious: {stats['malicious_objects']}\n\n"
+            txt += f"  └── suspicious: {stats['malicious_objects']}\n"
+
+            # Add file paths for suspicious objects
+            malicious_files = sorted(
+                set(obj.file_path for obj in self.malicious_objects)
+            )
+            for i, file_path in enumerate(malicious_files):
+                if i == len(malicious_files) - 1:
+                    txt += f"      └── {file_path}\n"
+                else:
+                    txt += f"      ├── {file_path}\n"
+            txt += "\n"
             txt += f"=> ⚠️ suspicious {self.confidence:.2f}\n"
         else:  # result == "good"
             txt += "\n"

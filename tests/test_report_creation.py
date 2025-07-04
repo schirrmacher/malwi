@@ -161,6 +161,7 @@ class TestMalwiReport(unittest.TestCase):
         self.assertIn("malicious: 1", text)
         self.assertIn("system call", text)
         self.assertIn("=> 👹 malicious 0.88", text)
+        self.assertIn("/tmp/malware.py", text)  # Check file path is included
 
     def test_to_demo_text_benign(self):
         """Test the simple text output for a benign report."""
