@@ -158,7 +158,8 @@ STORE_NAME           platform_module
 LOAD_NAME            platform_module
 CALL_FUNCTION        0
 STORE_NAME           platform
-LOAD_NAME            e
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 LOAD_CONST           'fs'
 STORE_NAME           moduleName
 LOAD_NAME            require
@@ -193,7 +194,7 @@ LOAD_CONST           "1.2. Variable Declarations: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           "hello"
 STORE_NAME           stringLiteral
-LOAD_NAME            b
+BINARY_OPERATION     
 STORE_NAME           templateLiteral
 LOAD_CONST           123.45
 STORE_NAME           numberLiteral
@@ -212,6 +213,7 @@ LOAD_CONST           2.0
 LOAD_CONST           3.0
 BUILD_LIST           3
 STORE_NAME           arrayLiteral
+LOAD_CONST           /ab+c/i
 STORE_NAME           regexLiteral
 LOAD_NAME            console
 LOAD_CONST           "1.3. Literals: PASSED"
@@ -259,6 +261,7 @@ BINARY_ADD
 LOAD_NAME            str1
 LOAD_NAME            str1
 LOAD_CONST           1.0
+BINARY_SUBSCR        
 LOAD_NAME            str1
 LOAD_CONST           1.0
 LOAD_CONST           4.0
@@ -297,6 +300,7 @@ STORE_NAME           obj
 LOAD_NAME            obj
 LOAD_NAME            obj
 LOAD_CONST           'age'
+BINARY_SUBSCR        
 LOAD_CONST           "New York"
 STORE_NAME           obj.city
 LOAD_NAME            obj
@@ -362,13 +366,18 @@ LOAD_CONST           0.0
 BINARY_OPERATION     
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_NAME            k
+LOAD_CONST           1.0
+BINARY_SUBTRACT      
+STORE_NAME           k
 LOAD_NAME            console
 LOAD_CONST           "3.3. Loops: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            Error
 LOAD_CONST           "Intentional error"
+CALL_FUNCTION        1
 BINARY_OPERATION     
-LOAD_NAME            e
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            console
 LOAD_CONST           "3.4. try/catch/finally: PASSED"
 CALL_FUNCTION        1
@@ -376,14 +385,14 @@ LOAD_NAME            console
 LOAD_CONST           "\n--- 4. Functions and Scopes ---"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <greet>
-    LOAD_NAME            name
+    BINARY_OPERATION     
     RETURN_VALUE         
 STORE_NAME           greet
 LOAD_NAME            greet
 LOAD_CONST           "World"
 CALL_FUNCTION        1
 LOAD_NAME            name
-LOAD_NAME            name
+BINARY_OPERATION     
 RETURN_VALUE         
 STORE_NAME           farewell
 LOAD_NAME            farewell
@@ -416,6 +425,9 @@ MAKE_FUNCTION        <makeCounter>
     LOAD_CONST           0.0
     STORE_NAME           count
     LOAD_NAME            count
+    LOAD_CONST           1.0
+    BINARY_ADD           
+    STORE_NAME           count
     LOAD_NAME            count
     RETURN_VALUE         
     RETURN_VALUE         
@@ -440,11 +452,13 @@ MAKE_FUNCTION        <Car>
     STORE_NAME           this.model
     RETURN_VALUE         
 STORE_NAME           Car
+BINARY_OPERATION     
 RETURN_VALUE         
 STORE_NAME           Car.prototype.getInfo
 LOAD_NAME            Car
 LOAD_CONST           'Ford'
 LOAD_CONST           'Focus'
+CALL_FUNCTION        2
 STORE_NAME           myCarOld
 LOAD_NAME            myCarOld
 CALL_FUNCTION        0
@@ -455,6 +469,7 @@ MAKE_CLASS           <Vehicle>
     LOAD_NAME            name
     LOAD_NAME            name
     STORE_NAME           this.name
+    BINARY_OPERATION     
     RETURN_VALUE         
 STORE_NAME           Vehicle
 MAKE_CLASS           <Motorcycle>
@@ -464,11 +479,13 @@ MAKE_CLASS           <Motorcycle>
     CALL_FUNCTION        1
     LOAD_NAME            brand
     STORE_NAME           this.brand
+    BINARY_OPERATION     
     RETURN_VALUE         
 STORE_NAME           Motorcycle
 LOAD_NAME            Motorcycle
 LOAD_CONST           'Ninja'
 LOAD_CONST           'Kawasaki'
+CALL_FUNCTION        2
 STORE_NAME           bike
 LOAD_NAME            bike
 CALL_FUNCTION        0
@@ -491,11 +508,13 @@ MAKE_CLASS           <Rectangle>
     LOAD_NAME            Rectangle
     LOAD_NAME            size
     LOAD_NAME            size
+    CALL_FUNCTION        2
     RETURN_VALUE         
 STORE_NAME           Rectangle
 LOAD_NAME            Rectangle
 LOAD_CONST           10.0
 LOAD_CONST           5.0
+CALL_FUNCTION        2
 STORE_NAME           rect
 LOAD_NAME            rect
 LOAD_CONST           20.0
@@ -517,6 +536,7 @@ MAKE_FUNCTION        <delay>
         LOAD_NAME            ms
         CALL_FUNCTION        2
         RETURN_VALUE         
+    CALL_FUNCTION        1
     RETURN_VALUE         
 STORE_NAME           delay
 MAKE_FUNCTION        <myAsyncFunction>
@@ -539,7 +559,8 @@ LOAD_CONST           1.0
 STORE_NAME           id
 LOAD_CONST           True
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
-LOAD_NAME            id
+LOAD_CONST           
+BINARY_OPERATION     
 LOAD_NAME            idGenerator
 CALL_FUNCTION        0
 STORE_NAME           gen
@@ -570,8 +591,6 @@ LOAD_CONST           3.0
 LOAD_CONST           4.0
 BUILD_LIST           2
 STORE_NAME           arr2
-LOAD_NAME            arr1
-LOAD_NAME            arr2
 BUILD_LIST           2
 STORE_NAME           combined
 LOAD_CONST           1.0
@@ -598,6 +617,7 @@ LOAD_NAME            console
 LOAD_CONST           "7.1. JSON: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            Date
+CALL_FUNCTION        0
 STORE_NAME           now
 LOAD_NAME            now
 CALL_FUNCTION        0
@@ -606,11 +626,13 @@ CALL_FUNCTION        0
 LOAD_NAME            console
 LOAD_CONST           "7.2. Date: PASSED"
 CALL_FUNCTION        1
+LOAD_CONST           /\S+@\S+\.\S+/
 STORE_NAME           emailRegex
 LOAD_NAME            emailRegex
 LOAD_CONST           "test@example.com"
 CALL_FUNCTION        1
 LOAD_CONST           "The rain in Spain"
+LOAD_CONST           /ain/g
 CALL_FUNCTION        1
 LOAD_NAME            console
 LOAD_CONST           "7.3. Regular Expressions: PASSED"
@@ -689,6 +711,7 @@ LOAD_CONST           "5"
 BINARY_OPERATION     
 STORE_NAME           notStrictEqual
 LOAD_NAME            Date
+CALL_FUNCTION        0
 LOAD_NAME            Date
 BINARY_OPERATION     
 STORE_NAME           instanceOf
@@ -710,8 +733,9 @@ CALL_FUNCTION        1
 STORE_NAME           arrowResult
 LOAD_CONST           "World"
 STORE_NAME           name
-LOAD_NAME            name
+BINARY_OPERATION     
 STORE_NAME           templateStr
+BINARY_OPERATION     
 STORE_NAME           multilineTemplate
 LOAD_CONST           1.0
 LOAD_CONST           2.0
@@ -726,7 +750,6 @@ BUILD_MAP            2
 STORE_NAME           obj
 LOAD_NAME            obj
 STORE_NAME           { a, b }
-LOAD_NAME            arr
 LOAD_CONST           4.0
 LOAD_CONST           5.0
 BUILD_LIST           3
@@ -738,9 +761,10 @@ LOAD_NAME            JSON
 LOAD_CONST           "invalid json"
 CALL_FUNCTION        1
 STORE_NAME           riskyOp
-LOAD_NAME            error
+JUMP_FORWARD         <JUMP_TARGET>
 LOAD_CONST           True
 STORE_NAME           errorHandled
+JUMP_FORWARD         <JUMP_TARGET>
 LOAD_CONST           True
 STORE_NAME           cleanupDone
 LOAD_NAME            i
@@ -759,6 +783,7 @@ STORE_NAME           processed
 LOAD_NAME            obj
 LOAD_NAME            obj
 LOAD_NAME            key
+BINARY_SUBSCR        
 STORE_NAME           value
 LOAD_CONST           2.0
 STORE_NAME           switchVal
@@ -793,6 +818,7 @@ MAKE_FUNCTION        <lambda>
 LOAD_CONST           0.0
 CALL_FUNCTION        2
 STORE_NAME           reducedVal
+LOAD_CONST           /test/gi
 STORE_NAME           regex
 LOAD_NAME            regex
 LOAD_CONST           "Test string"
@@ -802,6 +828,7 @@ MAKE_CLASS           <Parent>
     LOAD_NAME            name
     LOAD_NAME            name
     STORE_NAME           this.name
+    BINARY_OPERATION     
     RETURN_VALUE         
 STORE_NAME           Parent
 MAKE_CLASS           <Child>
@@ -811,12 +838,13 @@ MAKE_CLASS           <Child>
     CALL_FUNCTION        1
     LOAD_NAME            age
     STORE_NAME           this.age
-    CALL_FUNCTION        0
+    BINARY_OPERATION     
     RETURN_VALUE         
 STORE_NAME           Child
 LOAD_NAME            Child
 LOAD_CONST           "Test"
 LOAD_CONST           25.0
+CALL_FUNCTION        2
 STORE_NAME           childInstance
 MAKE_FUNCTION        <asyncFunc>
     LOAD_NAME            Promise
@@ -830,6 +858,7 @@ MAKE_FUNCTION        <asyncFunc>
         LOAD_CONST           1.0
         CALL_FUNCTION        2
         RETURN_VALUE         
+    CALL_FUNCTION        1
     STORE_NAME           promise
     LOAD_NAME            promise
     STORE_NAME           result
@@ -837,6 +866,8 @@ MAKE_FUNCTION        <asyncFunc>
     RETURN_VALUE         
 STORE_NAME           asyncFunc
 LOAD_NAME            obj
+BINARY_OPERATION     
+BINARY_OPERATION     
 STORE_NAME           optional
 LOAD_NAME            nullVal
 LOAD_CONST           "default"
@@ -845,6 +876,7 @@ STORE_NAME           nullish
 MAKE_FUNCTION        <testThrow>
     LOAD_NAME            Error
     LOAD_CONST           "Test error"
+    CALL_FUNCTION        1
     BINARY_OPERATION     
     RETURN_VALUE         
 STORE_NAME           testThrow

@@ -129,17 +129,15 @@ IMPORT_FROM          windll
 IMPORT_FROM          wintypes
 LOAD_CONST           True
 STORE_NAME           ctypes_available
-LOAD_NAME            ImportError
-LOAD_CONST           False
-STORE_NAME           ctypes_available
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 IMPORT_NAME          win32api
 IMPORT_FROM          win32api
 IMPORT_FROM          GetSystemMetrics
 LOAD_CONST           True
 STORE_NAME           win32_available
-LOAD_NAME            ImportError
-LOAD_CONST           False
-STORE_NAME           win32_available
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 IMPORT_NAME          requests
 IMPORT_FROM          requests
 IMPORT_FROM          get
@@ -147,25 +145,27 @@ IMPORT_FROM          post
 IMPORT_FROM          Session
 LOAD_CONST           True
 STORE_NAME           requests_available
-LOAD_NAME            ImportError
-LOAD_CONST           False
-STORE_NAME           requests_available
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 IMPORT_NAME          keyring
 IMPORT_FROM          keyring
 IMPORT_FROM          get_password
 IMPORT_FROM          set_password
-LOAD_NAME            ImportError
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 IMPORT_NAME          sqlite3
 IMPORT_FROM          sqlite3
 IMPORT_FROM          connect
 IMPORT_FROM          Row
-LOAD_NAME            ImportError
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 IMPORT_NAME          winreg
 IMPORT_FROM          winreg
 IMPORT_FROM          OpenKey
 IMPORT_FROM          QueryValueEx
 IMPORT_FROM          HKEY_LOCAL_MACHINE
-LOAD_NAME            ImportError
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 MAKE_FUNCTION        <dynamic_import_test>
     LOAD_CONST           "os"
     STORE_NAME           module_name
@@ -319,26 +319,31 @@ LOAD_NAME            s1
 BINARY_OPERATION     
 LOAD_NAME            s1
 LOAD_CONST           1.0
+BINARY_SUBSCR        
 LOAD_NAME            s1
 LOAD_CONST           1.0
 BINARY_OPERATION     
+BINARY_SUBSCR        
 LOAD_NAME            s1
-LOAD_CONST           1.0
-LOAD_CONST           4.0
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
 LOAD_NAME            len
 LOAD_NAME            s1
 CALL_FUNCTION        1
 LOAD_CONST           "Hello"
-LOAD_NAME            lower
+LOAD_ATTR            lower
 CALL_FUNCTION        0
 LOAD_CONST           "world"
-LOAD_NAME            upper
+LOAD_ATTR            upper
 CALL_FUNCTION        0
 LOAD_CONST           "  spaced  "
-LOAD_NAME            strip
+LOAD_ATTR            strip
 CALL_FUNCTION        0
 LOAD_CONST           "comma,separated"
-LOAD_NAME            split
+LOAD_ATTR            split
 LOAD_CONST           ","
 CALL_FUNCTION        1
 LOAD_NAME            print
@@ -353,11 +358,11 @@ LOAD_NAME            len
 LOAD_NAME            my_list
 CALL_FUNCTION        1
 LOAD_NAME            my_list
-LOAD_NAME            append
+LOAD_ATTR            append
 LOAD_CONST           4.0
 CALL_FUNCTION        1
 LOAD_NAME            my_list
-LOAD_NAME            pop
+LOAD_ATTR            pop
 CALL_FUNCTION        0
 LOAD_CONST           "one"
 STORE_NAME           my_list[0]
@@ -370,15 +375,21 @@ BUILD_LIST           3
 STORE_NAME           nested_list
 LOAD_NAME            nested_list
 LOAD_CONST           1.0
+BINARY_SUBSCR        
 LOAD_CONST           1.0
-LOAD_NAME            x
-LOAD_NAME            x
-BINARY_MULTIPLY      
-LOAD_NAME            x
+BINARY_SUBSCR        
+BUILD_LIST           0
 LOAD_NAME            range
 LOAD_CONST           5.0
 CALL_FUNCTION        1
-BUILD_LIST           1
+GET_ITER             
+FOR_ITER             12
+STORE_NAME           x
+LOAD_NAME            x
+LOAD_NAME            x
+BINARY_MULTIPLY      
+BINARY_OPERATION     
+JUMP_FORWARD         <JUMP_TARGET>
 STORE_NAME           list_comp
 LOAD_NAME            print
 LOAD_CONST           "2.3. List Type: PASSED"
@@ -393,15 +404,14 @@ LOAD_NAME            my_tuple
 CALL_FUNCTION        1
 LOAD_NAME            my_tuple
 LOAD_CONST           1.0
+BINARY_SUBSCR        
 LOAD_CONST           "new"
 STORE_NAME           my_tuple[1]
 LOAD_NAME            print
 LOAD_CONST           "2.4. Tuple Immutability: FAILED"
 CALL_FUNCTION        1
-LOAD_NAME            TypeError
-LOAD_NAME            print
-LOAD_CONST           "2.4. Tuple Immutability: PASSED"
-CALL_FUNCTION        1
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            my_tuple
 STORE_NAME           a, b, c
 LOAD_NAME            print
@@ -415,6 +425,7 @@ BUILD_MAP            2
 STORE_NAME           my_dict
 LOAD_NAME            my_dict
 LOAD_CONST           "one"
+BINARY_SUBSCR        
 LOAD_CONST           3.0
 STORE_NAME           my_dict["three"]
 LOAD_CONST           "three"
@@ -422,29 +433,34 @@ LOAD_NAME            my_dict
 BINARY_OPERATION     
 LOAD_NAME            list
 LOAD_NAME            my_dict
-LOAD_NAME            keys
+LOAD_ATTR            keys
 CALL_FUNCTION        0
 CALL_FUNCTION        1
 LOAD_NAME            list
 LOAD_NAME            my_dict
-LOAD_NAME            values
+LOAD_ATTR            values
 CALL_FUNCTION        0
 CALL_FUNCTION        1
 LOAD_NAME            my_dict
 LOAD_CONST           "two"
+BINARY_SUBSCR        
 BINARY_OPERATION     
 LOAD_CONST           "two"
 LOAD_NAME            my_dict
 BINARY_OPERATION     
+BUILD_MAP            0
+LOAD_NAME            range
+LOAD_CONST           3.0
+CALL_FUNCTION        1
+GET_ITER             
+FOR_ITER             13
+STORE_NAME           x
 LOAD_NAME            x
 LOAD_NAME            x
 LOAD_NAME            x
 BINARY_MULTIPLY      
-LOAD_NAME            x
-LOAD_NAME            range
-LOAD_CONST           3.0
-CALL_FUNCTION        1
-BUILD_MAP            1
+BINARY_OPERATION     
+JUMP_FORWARD         <JUMP_TARGET>
 STORE_NAME           dict_comp
 LOAD_NAME            print
 LOAD_CONST           "2.5. Dictionary Type: PASSED"
@@ -456,14 +472,14 @@ LOAD_CONST           3.0
 BUILD_SET            4
 STORE_NAME           my_set
 LOAD_NAME            my_set
-LOAD_NAME            add
+LOAD_ATTR            add
 LOAD_CONST           4.0
 CALL_FUNCTION        1
 LOAD_CONST           4.0
 LOAD_NAME            my_set
 BINARY_OPERATION     
 LOAD_NAME            my_set
-LOAD_NAME            remove
+LOAD_ATTR            remove
 LOAD_CONST           2.0
 CALL_FUNCTION        1
 LOAD_CONST           2.0
@@ -491,13 +507,18 @@ BINARY_SUBTRACT
 LOAD_NAME            set1
 LOAD_NAME            set2
 BINARY_OPERATION     
-LOAD_NAME            x
-LOAD_NAME            x
+BUILD_SET            0
 LOAD_CONST           "abracadabra"
+GET_ITER             
+FOR_ITER             12
+STORE_NAME           x
 LOAD_NAME            x
 LOAD_CONST           "abc"
 BINARY_OPERATION     
-BUILD_SET            1
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+LOAD_NAME            x
+BINARY_OPERATION     
+JUMP_FORWARD         <JUMP_TARGET>
 STORE_NAME           set_comp
 LOAD_NAME            print
 LOAD_CONST           "2.6. Set Type: PASSED"
@@ -595,13 +616,8 @@ CALL_FUNCTION        1
 LOAD_CONST           1.0
 LOAD_CONST           0.0
 BINARY_DIVIDE        
-LOAD_NAME            ZeroDivisionError
-LOAD_NAME            print
-LOAD_CONST           "3.7. try/except: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            print
-LOAD_CONST           "3.7. finally: PASSED"
-CALL_FUNCTION        1
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 MAKE_CLASS           <MyContext>
     MAKE_FUNCTION        <__enter__>
         LOAD_NAME            print
@@ -648,19 +664,19 @@ LOAD_CONST           2.0
 LOAD_CONST           3.0
 CALL_FUNCTION        3
 LOAD_NAME            func_with_args
-LOAD_NAME            a
+LOAD_CONST           a
 LOAD_CONST           5.0
-LOAD_NAME            b
+LOAD_CONST           b
 LOAD_CONST           5.0
-CALL_FUNCTION        2
+BINARY_OPERATION     
 LOAD_NAME            func_with_args
-LOAD_NAME            c
+LOAD_CONST           c
 LOAD_CONST           1.0
-LOAD_NAME            b
+LOAD_CONST           b
 LOAD_CONST           2.0
-LOAD_NAME            a
+LOAD_CONST           a
 LOAD_CONST           3.0
-CALL_FUNCTION        3
+BINARY_OPERATION     
 MAKE_FUNCTION        <func_with_arbitrary_args>
     LOAD_NAME            args
     LOAD_NAME            kwargs
@@ -669,11 +685,11 @@ STORE_NAME           func_with_arbitrary_args
 LOAD_NAME            func_with_arbitrary_args
 LOAD_CONST           1.0
 LOAD_CONST           2.0
-LOAD_NAME            name
+LOAD_CONST           name
 LOAD_CONST           "test"
-LOAD_NAME            value
+LOAD_CONST           value
 LOAD_CONST           123.0
-CALL_FUNCTION        4
+BINARY_OPERATION     
 STORE_NAME           args_val, kwargs_val
 MAKE_FUNCTION        <lambda>
     LOAD_NAME            x
@@ -733,12 +749,12 @@ MAKE_CLASS           <MyClass>
     STORE_NAME           __init__
     MAKE_FUNCTION        <instance_method>
         LOAD_NAME            self
-        LOAD_NAME            instance_variable
+        LOAD_ATTR            instance_variable
         RETURN_VALUE         
     STORE_NAME           instance_method
     MAKE_FUNCTION        <class_method>
         LOAD_NAME            cls
-        LOAD_NAME            class_variable
+        LOAD_ATTR            class_variable
         RETURN_VALUE         
     STORE_NAME           class_method
     MAKE_FUNCTION        <static_method>
@@ -751,17 +767,17 @@ LOAD_CONST           20.0
 CALL_FUNCTION        1
 STORE_NAME           obj
 LOAD_NAME            obj
-LOAD_NAME            instance_variable
+LOAD_ATTR            instance_variable
 LOAD_NAME            obj
-LOAD_NAME            instance_method
+LOAD_ATTR            instance_method
 CALL_FUNCTION        0
 LOAD_NAME            MyClass
-LOAD_NAME            class_variable
+LOAD_ATTR            class_variable
 LOAD_NAME            MyClass
-LOAD_NAME            class_method
+LOAD_ATTR            class_method
 CALL_FUNCTION        0
 LOAD_NAME            MyClass
-LOAD_NAME            static_method
+LOAD_ATTR            static_method
 CALL_FUNCTION        0
 LOAD_NAME            print
 LOAD_CONST           "5.1. Classes: PASSED"
@@ -788,13 +804,13 @@ LOAD_NAME            Child
 CALL_FUNCTION        0
 STORE_NAME           child_obj
 LOAD_NAME            child_obj
-LOAD_NAME            method_a
+LOAD_ATTR            method_a
 CALL_FUNCTION        0
 LOAD_NAME            child_obj
-LOAD_NAME            method_b
+LOAD_ATTR            method_b
 CALL_FUNCTION        0
 LOAD_NAME            child_obj
-LOAD_NAME            method_c
+LOAD_ATTR            method_c
 CALL_FUNCTION        0
 LOAD_NAME            print
 LOAD_CONST           "5.2. Inheritance: PASSED"
@@ -810,14 +826,14 @@ MAKE_CLASS           <Vector>
     MAKE_FUNCTION        <__add__>
         LOAD_NAME            Vector
         LOAD_NAME            self
-        LOAD_NAME            x
+        LOAD_ATTR            x
         LOAD_NAME            other
-        LOAD_NAME            x
+        LOAD_ATTR            x
         BINARY_ADD           
         LOAD_NAME            self
-        LOAD_NAME            y
+        LOAD_ATTR            y
         LOAD_NAME            other
-        LOAD_NAME            y
+        LOAD_ATTR            y
         BINARY_ADD           
         CALL_FUNCTION        2
         RETURN_VALUE         
@@ -836,14 +852,14 @@ MAKE_CLASS           <Vector>
         BINARY_OPERATION     
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
         LOAD_NAME            self
-        LOAD_NAME            x
+        LOAD_ATTR            x
         RETURN_VALUE         
         LOAD_NAME            index
         LOAD_CONST           1.0
         BINARY_OPERATION     
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
         LOAD_NAME            self
-        LOAD_NAME            y
+        LOAD_ATTR            y
         RETURN_VALUE         
         LOAD_NAME            IndexError
         BINARY_OPERATION     
@@ -872,6 +888,7 @@ LOAD_NAME            v3
 CALL_FUNCTION        1
 LOAD_NAME            v3
 LOAD_CONST           0.0
+BINARY_SUBSCR        
 LOAD_NAME            print
 LOAD_CONST           "5.3. Dunder Methods: PASSED"
 CALL_FUNCTION        1
@@ -883,7 +900,7 @@ MAKE_CLASS           <Circle>
     STORE_NAME           __init__
     MAKE_FUNCTION        <radius>
         LOAD_NAME            self
-        LOAD_NAME            _radius
+        LOAD_ATTR            _radius
         RETURN_VALUE         
     STORE_NAME           radius
     MAKE_FUNCTION        <radius>
@@ -902,7 +919,7 @@ MAKE_CLASS           <Circle>
     MAKE_FUNCTION        <area>
         LOAD_CONST           3.14
         LOAD_NAME            self
-        LOAD_NAME            _radius
+        LOAD_ATTR            _radius
         LOAD_CONST           2.0
         BINARY_OPERATION     
         BINARY_MULTIPLY      
@@ -914,20 +931,18 @@ LOAD_CONST           5.0
 CALL_FUNCTION        1
 STORE_NAME           c
 LOAD_NAME            c
-LOAD_NAME            radius
+LOAD_ATTR            radius
 LOAD_NAME            c
-LOAD_NAME            area
+LOAD_ATTR            area
 LOAD_CONST           10.0
 STORE_NAME           c.radius
 LOAD_NAME            c
-LOAD_NAME            radius
+LOAD_ATTR            radius
 LOAD_CONST           1.0
 BINARY_OPERATION     
 STORE_NAME           c.radius
-LOAD_NAME            ValueError
-LOAD_NAME            print
-LOAD_CONST           "5.4. Properties: PASSED"
-CALL_FUNCTION        1
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            print
 LOAD_CONST           "\n--- 6. Advanced Features ---"
 CALL_FUNCTION        1
@@ -939,7 +954,7 @@ MAKE_FUNCTION        <my_decorator>
         LOAD_NAME            func
         LOAD_NAME            args
         LOAD_NAME            kwargs
-        CALL_FUNCTION        2
+        BINARY_OPERATION     
         STORE_NAME           result
         LOAD_NAME            print
         LOAD_CONST           "Something is happening after the function is called."
@@ -963,7 +978,8 @@ MAKE_FUNCTION        <my_generator>
     LOAD_NAME            range
     LOAD_NAME            n
     CALL_FUNCTION        1
-    LOAD_NAME            i
+    LOAD_CONST           
+    BINARY_OPERATION     
     RETURN_VALUE         
 STORE_NAME           my_generator
 LOAD_NAME            my_generator
@@ -982,10 +998,8 @@ CALL_FUNCTION        1
 LOAD_NAME            next
 LOAD_NAME            gen
 CALL_FUNCTION        1
-LOAD_NAME            StopIteration
-LOAD_NAME            print
-LOAD_CONST           "6.2. Generators: PASSED"
-CALL_FUNCTION        1
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 MAKE_FUNCTION        <my_coroutine>
     BINARY_OPERATION     
     LOAD_CONST           "Coroutine finished"
@@ -1000,7 +1014,7 @@ MAKE_FUNCTION        <main_async>
     RETURN_VALUE         
 STORE_NAME           main_async
 LOAD_NAME            asyncio
-LOAD_NAME            run
+LOAD_ATTR            run
 LOAD_NAME            main_async
 CALL_FUNCTION        0
 CALL_FUNCTION        1
@@ -1010,7 +1024,7 @@ MAKE_CLASS           <MyMeta>
         STORE_NAME           dct["new_attribute"]
         LOAD_NAME            super
         CALL_FUNCTION        0
-        LOAD_NAME            __new__
+        LOAD_ATTR            __new__
         LOAD_NAME            cls
         LOAD_NAME            name
         LOAD_NAME            bases
@@ -1027,7 +1041,7 @@ LOAD_NAME            MyClassWithMeta
 LOAD_CONST           "new_attribute"
 CALL_FUNCTION        2
 LOAD_NAME            MyClassWithMeta
-LOAD_NAME            new_attribute
+LOAD_ATTR            new_attribute
 LOAD_NAME            print
 LOAD_CONST           "6.4. Metaclasses: PASSED"
 CALL_FUNCTION        1
@@ -1046,19 +1060,19 @@ LOAD_NAME            print
 LOAD_CONST           "\n--- 7. Standard Library Usage ---"
 CALL_FUNCTION        1
 LOAD_NAME            math
-LOAD_NAME            sqrt
+LOAD_ATTR            sqrt
 LOAD_CONST           16.0
 CALL_FUNCTION        1
 LOAD_NAME            math
-LOAD_NAME            isclose
+LOAD_ATTR            isclose
 LOAD_NAME            math
-LOAD_NAME            pi
+LOAD_ATTR            pi
 LOAD_CONST           3.14159
-LOAD_NAME            rel_tol
+LOAD_CONST           rel_tol
 LOAD_CONST           1e-05
-CALL_FUNCTION        3
+BINARY_OPERATION     
 LOAD_NAME            cmath
-LOAD_NAME            sqrt
+LOAD_ATTR            sqrt
 LOAD_CONST           1.0
 BINARY_OPERATION     
 CALL_FUNCTION        1
@@ -1066,7 +1080,7 @@ LOAD_NAME            print
 LOAD_CONST           "7.1. math and cmath: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            collections
-LOAD_NAME            deque
+LOAD_ATTR            deque
 LOAD_CONST           1.0
 LOAD_CONST           2.0
 LOAD_CONST           3.0
@@ -1074,11 +1088,11 @@ BUILD_LIST           3
 CALL_FUNCTION        1
 STORE_NAME           d
 LOAD_NAME            d
-LOAD_NAME            appendleft
+LOAD_ATTR            appendleft
 LOAD_CONST           0.0
 CALL_FUNCTION        1
 LOAD_NAME            collections
-LOAD_NAME            namedtuple
+LOAD_ATTR            namedtuple
 LOAD_CONST           "Point"
 LOAD_CONST           "x"
 LOAD_CONST           "y"
@@ -1091,19 +1105,19 @@ LOAD_CONST           2.0
 CALL_FUNCTION        2
 STORE_NAME           p
 LOAD_NAME            p
-LOAD_NAME            x
+LOAD_ATTR            x
 LOAD_NAME            p
-LOAD_NAME            y
+LOAD_ATTR            y
 LOAD_NAME            print
 LOAD_CONST           "7.2. collections: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            itertools
-LOAD_NAME            count
-LOAD_NAME            start
+LOAD_ATTR            count
+LOAD_CONST           start
 LOAD_CONST           5.0
-LOAD_NAME            step
+LOAD_CONST           step
 LOAD_CONST           2.0
-CALL_FUNCTION        2
+BINARY_OPERATION     
 STORE_NAME           counter
 LOAD_NAME            next
 LOAD_NAME            counter
@@ -1113,7 +1127,7 @@ LOAD_NAME            counter
 CALL_FUNCTION        1
 LOAD_NAME            list
 LOAD_NAME            itertools
-LOAD_NAME            permutations
+LOAD_ATTR            permutations
 LOAD_CONST           "AB"
 CALL_FUNCTION        1
 CALL_FUNCTION        1
@@ -1124,19 +1138,20 @@ CALL_FUNCTION        1
 LOAD_CONST           '{"name": "John", "age": 30}'
 STORE_NAME           json_string
 LOAD_NAME            json
-LOAD_NAME            loads
+LOAD_ATTR            loads
 LOAD_NAME            json_string
 CALL_FUNCTION        1
 STORE_NAME           data
 LOAD_NAME            data
 LOAD_CONST           "name"
+BINARY_SUBSCR        
 LOAD_NAME            json
-LOAD_NAME            dumps
+LOAD_ATTR            dumps
 LOAD_NAME            data
 CALL_FUNCTION        1
 STORE_NAME           new_json_string
 LOAD_NAME            json
-LOAD_NAME            loads
+LOAD_ATTR            loads
 LOAD_NAME            new_json_string
 CALL_FUNCTION        1
 LOAD_NAME            print
@@ -1145,13 +1160,13 @@ CALL_FUNCTION        1
 LOAD_CONST           "The rain in Spain"
 STORE_NAME           text
 LOAD_NAME            re
-LOAD_NAME            search
+LOAD_ATTR            search
 LOAD_CONST           r"^The.*Spain$"
 LOAD_NAME            text
 CALL_FUNCTION        2
 STORE_NAME           match
 LOAD_NAME            re
-LOAD_NAME            findall
+LOAD_ATTR            findall
 LOAD_CONST           r"ai"
 LOAD_NAME            text
 CALL_FUNCTION        2
@@ -1304,57 +1319,65 @@ STORE_NAME           lambda_result
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 JUMP_FORWARD         <JUMP_TARGET>
 STORE_NAME           ternary_result
-LOAD_NAME            x
-LOAD_CONST           2.0
-BINARY_MULTIPLY      
-LOAD_NAME            x
+BUILD_LIST           0
 LOAD_NAME            range
 LOAD_CONST           3.0
 CALL_FUNCTION        1
-BUILD_LIST           1
+GET_ITER             
+FOR_ITER             12
+STORE_NAME           x
+LOAD_NAME            x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+BINARY_OPERATION     
+JUMP_FORWARD         <JUMP_TARGET>
 STORE_NAME           list_comp
+BUILD_MAP            0
+LOAD_NAME            range
+LOAD_CONST           3.0
+CALL_FUNCTION        1
+GET_ITER             
+FOR_ITER             13
+STORE_NAME           x
 LOAD_NAME            x
 LOAD_NAME            x
 LOAD_CONST           2.0
 BINARY_MULTIPLY      
-LOAD_NAME            x
-LOAD_NAME            range
-LOAD_CONST           3.0
-CALL_FUNCTION        1
-BUILD_MAP            1
+BINARY_OPERATION     
+JUMP_FORWARD         <JUMP_TARGET>
 STORE_NAME           dict_comp
-LOAD_NAME            x
-LOAD_CONST           2.0
-BINARY_MULTIPLY      
-LOAD_NAME            x
+BUILD_SET            0
 LOAD_NAME            range
 LOAD_CONST           3.0
 CALL_FUNCTION        1
-BUILD_SET            1
+GET_ITER             
+FOR_ITER             12
+STORE_NAME           x
+LOAD_NAME            x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+BINARY_OPERATION     
+JUMP_FORWARD         <JUMP_TARGET>
 STORE_NAME           set_comp
-LOAD_NAME            x
-LOAD_CONST           2.0
-BINARY_MULTIPLY      
-LOAD_NAME            x
 LOAD_NAME            range
 LOAD_CONST           3.0
 CALL_FUNCTION        1
+GET_ITER             
+FOR_ITER             11
+STORE_NAME           x
+LOAD_NAME            x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+BINARY_OPERATION     
+JUMP_FORWARD         <JUMP_TARGET>
 STORE_NAME           gen_expr
 LOAD_CONST           1.0
 LOAD_CONST           0.0
 BINARY_DIVIDE        
 STORE_NAME           risky_operation
-LOAD_NAME            ZeroDivisionError
-LOAD_CONST           True
-STORE_NAME           error_handled
-LOAD_NAME            Exception
-LOAD_NAME            e
-LOAD_NAME            str
-LOAD_NAME            e
-CALL_FUNCTION        1
-STORE_NAME           other_error
-LOAD_CONST           True
-STORE_NAME           cleanup_done
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            range
 LOAD_CONST           2.0
 CALL_FUNCTION        1
