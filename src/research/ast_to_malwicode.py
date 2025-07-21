@@ -58,6 +58,20 @@ class OpCode(Enum):
     CALL_FUNCTION = auto()
     MAKE_FUNCTION = auto()
     RETURN_VALUE = auto()
+    POP_JUMP_IF_FALSE = auto()
+    JUMP_FORWARD = auto()
+    GET_ITER = auto()
+    FOR_ITER = auto()
+    BUILD_LIST = auto()
+    BUILD_TUPLE = auto()
+    BUILD_SET = auto()
+    BUILD_MAP = auto()
+    STORE_SUBSCR = auto()
+    UNARY_NEGATIVE = auto()
+    UNARY_NOT = auto()
+    UNARY_INVERT = auto()
+    IMPORT_NAME = auto()
+    IMPORT_FROM = auto()
 
 
 def get_parser_instance(language_name: str) -> Optional[Parser]:
@@ -133,6 +147,50 @@ class ASTCompiler:
                 (OpCode.LOAD_NAME, cls._get_node_text(node, source_code_bytes))
             )
 
+        # --- Handle Data Structures ---
+        elif node_type in ["list", "array"]:  # PY: list, JS: array
+            element_count = 0
+            for element in node.children:
+                if element.type not in [
+                    "[",
+                    "]",
+                    ",",
+                ]:
+                    bytecode.extend(cls._generate_bytecode(element, source_code_bytes))
+                    element_count += 1
+            bytecode.append((OpCode.BUILD_LIST, element_count))
+        elif node_type == "tuple":
+            element_count = 0
+            for element in node.children:
+                if element.type not in ["(", ")", ","]:
+                    bytecode.extend(cls._generate_bytecode(element, source_code_bytes))
+                    element_count += 1
+            bytecode.append((OpCode.BUILD_TUPLE, element_count))
+        elif node_type == "set":
+            element_count = 0
+            for element in node.children:
+                if element.type not in ["{", "}", ","]:
+                    bytecode.extend(cls._generate_bytecode(element, source_code_bytes))
+                    element_count += 1
+            bytecode.append((OpCode.BUILD_SET, element_count))
+        elif node_type in ["dictionary", "object"]:  # PY: dictionary, JS: object
+            pair_count = 0
+            for pair in node.children:
+                if pair.type in ["pair", "property_identifier"]:
+                    if pair.child_by_field_name("key"):
+                        bytecode.extend(
+                            cls._generate_bytecode(
+                                pair.child_by_field_name("key"), source_code_bytes
+                            )
+                        )
+                        bytecode.extend(
+                            cls._generate_bytecode(
+                                pair.child_by_field_name("value"), source_code_bytes
+                            )
+                        )
+                        pair_count += 1
+            bytecode.append((OpCode.BUILD_MAP, pair_count))
+
         # --- Handle Expressions and Calls ---
         elif node_type in [
             "binary_operator",
@@ -206,6 +264,38 @@ class ASTCompiler:
                     cls._generate_bytecode(return_val_node, source_code_bytes)
                 )
             bytecode.append((OpCode.RETURN_VALUE, None))
+
+        # --- Control Flow ---
+        elif node_type == "if_statement":
+            condition_node = node.child_by_field_name("condition")
+            consequence_node = node.child_by_field_name("consequence")
+            alternative_node = node.child_by_field_name("alternative")
+
+            bytecode.extend(cls._generate_bytecode(condition_node, source_code_bytes))
+
+            # Placeholder for jump address
+            jump_instr_index = len(bytecode)
+            bytecode.append((OpCode.POP_JUMP_IF_FALSE, -1))
+
+            consequence_bytecode = cls._generate_bytecode(
+                consequence_node, source_code_bytes
+            )
+            bytecode.extend(consequence_bytecode)
+
+            if alternative_node:
+                # Placeholder for jump over else block
+                jump_over_else_index = len(bytecode)
+                bytecode.append((OpCode.JUMP_FORWARD, -1))
+                bytecode[jump_instr_index] = (OpCode.POP_JUMP_IF_FALSE, len(bytecode))
+
+                alternative_bytecode = cls._generate_bytecode(
+                    alternative_node, source_code_bytes
+                )
+                bytecode.extend(alternative_bytecode)
+                bytecode[jump_over_else_index] = (OpCode.JUMP_FORWARD, len(bytecode))
+
+            else:
+                bytecode[jump_instr_index] = (OpCode.POP_JUMP_IF_FALSE, len(bytecode))
 
         # --- Handle Function and Program Structure ---
         elif node_type in [
