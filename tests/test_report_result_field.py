@@ -96,7 +96,6 @@ class TestReportResultField:
             confidence=1.0,
             activities=[],
             input="/test",
-        
             start="2024-01-01T12:00:00",
             duration=1.5,
         )
@@ -117,7 +116,6 @@ class TestReportResultField:
             confidence=1.0,
             activities=[],
             input="/test",
-        
             start="2024-01-01T12:00:00",
             duration=1.5,
         )
@@ -139,7 +137,6 @@ class TestReportResultField:
             confidence=1.0,
             activities=[],
             input="/test",
-        
             start="2024-01-01T12:00:00",
             duration=1.5,
         )

@@ -120,7 +120,6 @@ def get_fake_code_object():
 
 
 def test_from_file_reads_yaml_correctly():
-
     yaml_data = {
         "statistics": {
             "total_files": 1,
@@ -157,12 +156,13 @@ def test_from_file_reads_yaml_correctly():
     assert obj.file_path == "example.py"
     assert obj.file_source_code == ""  # Sources field removed from reports
     assert isinstance(obj.code_type, types.CodeType)
-    assert obj.to_token_string() == "suspicious resume return_const None"  # Empty source results in minimal bytecode
+    assert (
+        obj.to_token_string() == "suspicious resume return_const None"
+    )  # Empty source results in minimal bytecode
     assert obj.warnings == ["suspicious"]
 
 
 def test_from_file_reads_object_correctly():
-
     yaml_data = {
         "statistics": {
             "total_files": 1,
@@ -198,5 +198,7 @@ def test_from_file_reads_object_correctly():
     assert obj.name == "Cat.speak"
     assert obj.file_path == "example.py"
     assert isinstance(obj.code_type, types.CodeType)
-    assert obj.to_token_string() == "suspicious resume return_const None"  # Empty source results in minimal bytecode
+    assert (
+        obj.to_token_string() == "suspicious resume return_const None"
+    )  # Empty source results in minimal bytecode
     assert obj.warnings == ["suspicious"]
