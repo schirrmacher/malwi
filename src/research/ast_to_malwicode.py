@@ -38,6 +38,29 @@ class CodeObject:
             f"CodeObject(name={self.name}, path={self.path}, location={self.location})"
         )
 
+    def to_string(self, indent_level: int = 0) -> str:
+        """
+        Formats the bytecode of this CodeObject into a readable,
+        indented string, normalizing jump addresses for consistent output.
+        """
+        result_lines = []
+        indent = "    " * indent_level
+        for opcode, arg in self.byte_code:
+            # Normalize jump targets for consistent test output
+            if opcode in (OpCode.POP_JUMP_IF_FALSE, OpCode.JUMP_FORWARD):
+                arg_str = "<JUMP_TARGET>"
+            elif isinstance(arg, CodeObject):
+                # Handle nested function/class by recursively calling its own to_string
+                result_lines.append(f"{indent}{opcode.name:<20} <{arg.name}>")
+                result_lines.append(arg.to_string(indent_level + 1))
+                continue  # Skip the rest of the loop for this item
+            else:
+                arg_str = str(arg) if arg is not None else ""
+
+            result_lines.append(f"{indent}{opcode.name:<20} {arg_str.strip()}")
+
+        return "\n".join(result_lines)
+
 
 def collect_files_by_extension(
     path: Path, accepted_extensions: List[str]
@@ -153,6 +176,7 @@ class ASTCompiler:
             "-": OpCode.BINARY_SUBTRACT,
             "*": OpCode.BINARY_MULTIPLY,
             "/": OpCode.BINARY_DIVIDE,
+            ">": OpCode.BINARY_OPERATION,
         }
 
         # --- Handle Literals and Identifiers ---
@@ -199,18 +223,26 @@ class ASTCompiler:
         elif node_type in ["dictionary", "object"]:
             pair_count = 0
             for pair in node.children:
-                if pair.type in ["pair", "property_identifier"]:
-                    if pair.child_by_field_name("key"):
+                if pair.type in [
+                    "pair",
+                    "property_identifier",
+                ]:  # JS uses property_identifier for {key: val} shorthand
+                    key_node = pair.child_by_field_name("key") or (
+                        pair if pair.type == "property_identifier" else None
+                    )
+                    value_node = pair.child_by_field_name("value") or key_node
+
+                    if key_node:
                         bytecode.extend(
                             self._generate_bytecode(
-                                pair.child_by_field_name("key"),
+                                key_node,
                                 source_code_bytes,
                                 file_path,
                             )
                         )
                         bytecode.extend(
                             self._generate_bytecode(
-                                pair.child_by_field_name("value"),
+                                value_node,
                                 source_code_bytes,
                                 file_path,
                             )
@@ -255,31 +287,28 @@ class ASTCompiler:
             bytecode.append((OpCode.CALL_FUNCTION, arg_count))
 
         # --- Handle Statements ---
-        elif node_type in ["assignment", "assignment_expression"]:
-            bytecode.extend(
-                self._generate_bytecode(
-                    node.child_by_field_name("right"), source_code_bytes, file_path
-                )
+        elif node_type in [
+            "assignment",
+            "assignment_expression",
+            "variable_declarator",
+        ]:
+            # This handles python `a=b`, JS `a=b`, and JS `var a=b`
+            value_node = node.child_by_field_name("right") or node.child_by_field_name(
+                "value"
             )
-            var_name = self._get_node_text(
-                node.child_by_field_name("left"), source_code_bytes
+            name_node = node.child_by_field_name("left") or node.child_by_field_name(
+                "name"
             )
-            bytecode.append((OpCode.STORE_NAME, var_name))
 
-        elif node_type == "variable_declarator":
-            if node.child_by_field_name("value"):
+            if value_node and name_node:
                 bytecode.extend(
-                    self._generate_bytecode(
-                        node.child_by_field_name("value"), source_code_bytes, file_path
-                    )
+                    self._generate_bytecode(value_node, source_code_bytes, file_path)
                 )
-                var_name = self._get_node_text(
-                    node.child_by_field_name("name"), source_code_bytes
-                )
+                var_name = self._get_node_text(name_node, source_code_bytes)
                 bytecode.append((OpCode.STORE_NAME, var_name))
 
         elif node_type == "return_statement":
-            if node.child_count > 1:
+            if node.child_count > 1 and node.children[1].type not in [";"]:
                 return_val_node = node.children[1]
                 bytecode.extend(
                     self._generate_bytecode(
@@ -309,14 +338,18 @@ class ASTCompiler:
             if alternative_node:
                 jump_over_else_index = len(bytecode)
                 bytecode.append((OpCode.JUMP_FORWARD, -1))
+                # Set jump target for the initial if to point after the 'then' block
                 bytecode[jump_instr_index] = (OpCode.POP_JUMP_IF_FALSE, len(bytecode))
 
                 alternative_bytecode = self._generate_bytecode(
                     alternative_node, source_code_bytes, file_path
                 )
                 bytecode.extend(alternative_bytecode)
+                # Set the jump to point after the 'else' block
                 bytecode[jump_over_else_index] = (OpCode.JUMP_FORWARD, len(bytecode))
+
             else:
+                # If no 'else', the jump just goes to the end of the 'then' block
                 bytecode[jump_instr_index] = (OpCode.POP_JUMP_IF_FALSE, len(bytecode))
 
         # --- High-Level Structures (Functions, Classes) ---
@@ -363,7 +396,14 @@ class ASTCompiler:
             bytecode.append((OpCode.STORE_NAME, class_name))
 
         # --- Block, Module, and Program Handling ---
-        elif node_type in ["block", "module", "program"]:
+        elif node_type in [
+            "block",
+            "module",
+            "program",
+            "expression_statement",
+            "lexical_declaration",
+            "variable_declaration",
+        ]:
             for child in node.children:
                 bytecode.extend(
                     self._generate_bytecode(child, source_code_bytes, file_path)
@@ -396,22 +436,11 @@ class ASTCompiler:
 
 def print_code_object(code_obj: CodeObject, indent_level: int = 0):
     """Recursively prints a CodeObject and its nested functions/classes."""
-    indent = "    " * indent_level
-    print(
-        f"{indent}--- CodeObject '{code_obj.name}' from {code_obj.path.name} (lines {code_obj.location[0]}-{code_obj.location[1]}) ---"
-    )
-
-    for i, (opcode, arg) in enumerate(code_obj.byte_code):
-        if opcode in (OpCode.MAKE_FUNCTION, OpCode.MAKE_CLASS) and isinstance(
-            arg, CodeObject
-        ):
-            print(f"{indent}{i:04d}: {opcode.name:<20} <{arg.name}>")
-            print_code_object(arg, indent_level + 1)
-        else:
-            print(
-                f"{indent}{i:04d}: {opcode.name:<20} {arg if arg is not None else ''}"
-            )
-    print(f"{indent}{'-' * 80}")
+    header = f"--- CodeObject '{code_obj.name}' from {code_obj.path.name} (lines {code_obj.location[0]}-{code_obj.location[1]}) ---"
+    separator = "-" * len(header)
+    print(header)
+    print(code_obj.to_string())
+    print(separator)
 
 
 def process_file(file_path: Path, compiler: ASTCompiler) -> Optional[CodeObject]:
