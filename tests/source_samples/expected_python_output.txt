@@ -1,20 +1,198 @@
-LOAD_NAME            sys
-LOAD_NAME            math
-LOAD_NAME            cmath
-LOAD_NAME            collections
-LOAD_NAME            itertools
-LOAD_NAME            json
-LOAD_NAME            re
-LOAD_NAME            asyncio
-LOAD_NAME            functools
-LOAD_NAME            wraps
-LOAD_NAME            typing
-LOAD_NAME            Any
-LOAD_NAME            List
-LOAD_NAME            Dict
-LOAD_NAME            Tuple
-LOAD_NAME            Set
-LOAD_NAME            Optional
+IMPORT_NAME          sys
+IMPORT_NAME          math
+IMPORT_NAME          cmath
+IMPORT_NAME          collections
+IMPORT_NAME          itertools
+IMPORT_NAME          json
+IMPORT_NAME          re
+IMPORT_NAME          asyncio
+IMPORT_FROM          functools
+IMPORT_FROM          wraps
+IMPORT_FROM          typing
+IMPORT_FROM          Any
+IMPORT_FROM          List
+IMPORT_FROM          Dict
+IMPORT_FROM          Tuple
+IMPORT_FROM          Set
+IMPORT_FROM          Optional
+IMPORT_NAME          os
+IMPORT_NAME          subprocess
+IMPORT_NAME          socket
+IMPORT_NAME          urllib.request
+IMPORT_NAME          base64
+IMPORT_NAME          pickle
+IMPORT_NAME          marshal
+IMPORT_NAME          types
+IMPORT_NAME          importlib
+IMPORT_NAME          tempfile
+IMPORT_NAME          shutil
+IMPORT_NAME          pathlib
+IMPORT_FROM          os
+IMPORT_FROM          environ
+IMPORT_FROM          path
+IMPORT_FROM          listdir
+IMPORT_FROM          sys
+IMPORT_FROM          argv
+IMPORT_FROM          exit
+IMPORT_FROM          modules
+IMPORT_FROM          path
+IMPORT_FROM          sys_path
+IMPORT_FROM          subprocess
+IMPORT_FROM          run
+IMPORT_FROM          Popen
+IMPORT_FROM          PIPE
+IMPORT_FROM          call
+IMPORT_FROM          socket
+IMPORT_FROM          socket
+IMPORT_FROM          AF_INET
+IMPORT_FROM          SOCK_STREAM
+IMPORT_FROM          urllib.parse
+IMPORT_FROM          urlparse
+IMPORT_FROM          urljoin
+IMPORT_FROM          urllib.request
+IMPORT_FROM          urlopen
+IMPORT_FROM          Request
+IMPORT_FROM          base64
+IMPORT_FROM          b64encode
+IMPORT_FROM          b64decode
+IMPORT_FROM          decodebytes
+IMPORT_FROM          pickle
+IMPORT_FROM          loads
+IMPORT_FROM          dumps
+IMPORT_FROM          load
+IMPORT_FROM          dump
+IMPORT_FROM          marshal
+IMPORT_FROM          loads
+IMPORT_FROM          marshal_loads
+IMPORT_FROM          dumps
+IMPORT_FROM          marshal_dumps
+IMPORT_FROM          types
+IMPORT_FROM          CodeType
+IMPORT_FROM          ModuleType
+IMPORT_FROM          importlib
+IMPORT_FROM          import_module
+IMPORT_FROM          util
+IMPORT_FROM          tempfile
+IMPORT_FROM          mkstemp
+IMPORT_FROM          mkdtemp
+IMPORT_FROM          NamedTemporaryFile
+IMPORT_FROM          shutil
+IMPORT_FROM          rmtree
+IMPORT_FROM          copytree
+IMPORT_FROM          move
+IMPORT_FROM          pathlib
+IMPORT_FROM          Path
+IMPORT_FROM          PurePath
+IMPORT_NAME          os
+IMPORT_NAME          operating_system
+IMPORT_NAME          subprocess
+IMPORT_NAME          subproc
+IMPORT_NAME          socket
+IMPORT_NAME          sock
+IMPORT_NAME          urllib.request
+IMPORT_NAME          web_request
+IMPORT_NAME          base64
+IMPORT_NAME          b64
+IMPORT_NAME          pickle
+IMPORT_NAME          pkl
+IMPORT_NAME          marshal
+IMPORT_NAME          marsh
+IMPORT_NAME          types
+IMPORT_NAME          tp
+IMPORT_NAME          importlib
+IMPORT_NAME          imp_lib
+IMPORT_FROM          os.path
+IMPORT_FROM          join
+IMPORT_FROM          exists
+IMPORT_FROM          isfile
+IMPORT_FROM          isdir
+IMPORT_FROM          basename
+IMPORT_FROM          dirname
+IMPORT_FROM          os.path
+IMPORT_FROM          join
+IMPORT_FROM          path_join
+IMPORT_FROM          exists
+IMPORT_FROM          path_exists
+IMPORT_FROM          urllib.request
+IMPORT_FROM          urlopen
+IMPORT_FROM          open_url
+IMPORT_FROM          Request
+IMPORT_FROM          web_request_obj
+IMPORT_FROM          base64
+IMPORT_FROM          b64encode
+IMPORT_FROM          encode_b64
+IMPORT_FROM          b64decode
+IMPORT_FROM          decode_b64
+IMPORT_NAME          ctypes
+IMPORT_FROM          ctypes
+IMPORT_FROM          windll
+IMPORT_FROM          wintypes
+LOAD_CONST           True
+STORE_NAME           ctypes_available
+LOAD_NAME            ImportError
+LOAD_CONST           False
+STORE_NAME           ctypes_available
+IMPORT_NAME          win32api
+IMPORT_FROM          win32api
+IMPORT_FROM          GetSystemMetrics
+LOAD_CONST           True
+STORE_NAME           win32_available
+LOAD_NAME            ImportError
+LOAD_CONST           False
+STORE_NAME           win32_available
+IMPORT_NAME          requests
+IMPORT_FROM          requests
+IMPORT_FROM          get
+IMPORT_FROM          post
+IMPORT_FROM          Session
+LOAD_CONST           True
+STORE_NAME           requests_available
+LOAD_NAME            ImportError
+LOAD_CONST           False
+STORE_NAME           requests_available
+IMPORT_NAME          keyring
+IMPORT_FROM          keyring
+IMPORT_FROM          get_password
+IMPORT_FROM          set_password
+LOAD_NAME            ImportError
+IMPORT_NAME          sqlite3
+IMPORT_FROM          sqlite3
+IMPORT_FROM          connect
+IMPORT_FROM          Row
+LOAD_NAME            ImportError
+IMPORT_NAME          winreg
+IMPORT_FROM          winreg
+IMPORT_FROM          OpenKey
+IMPORT_FROM          QueryValueEx
+IMPORT_FROM          HKEY_LOCAL_MACHINE
+LOAD_NAME            ImportError
+MAKE_FUNCTION        <dynamic_import_test>
+    LOAD_CONST           "os"
+    STORE_NAME           module_name
+    LOAD_NAME            __import__
+    LOAD_NAME            module_name
+    CALL_FUNCTION        1
+    STORE_NAME           imported_os
+    LOAD_NAME            getattr
+    LOAD_NAME            imported_os
+    LOAD_CONST           "system"
+    CALL_FUNCTION        2
+    STORE_NAME           getattr_call
+    LOAD_NAME            getattr
+    LOAD_NAME            __builtins__
+    LOAD_CONST           "exec"
+    CALL_FUNCTION        2
+    STORE_NAME           exec_func
+    LOAD_NAME            getattr
+    LOAD_NAME            __builtins__
+    LOAD_CONST           "eval"
+    CALL_FUNCTION        2
+    STORE_NAME           eval_func
+    RETURN_VALUE         
+STORE_NAME           dynamic_import_test
+LOAD_NAME            print
+LOAD_CONST           "--- Extended Import Test Cases: COMPLETED ---"
+CALL_FUNCTION        1
 LOAD_NAME            print
 LOAD_CONST           "--- Python Compiler Test Suite: Starting ---"
 CALL_FUNCTION        1
@@ -60,8 +238,11 @@ STORE_NAME           byte_string
 LOAD_NAME            print
 LOAD_CONST           "1.3. String Literals: PASSED"
 CALL_FUNCTION        1
+LOAD_CONST           True
 STORE_NAME           true_literal
+LOAD_CONST           False
 STORE_NAME           false_literal
+LOAD_CONST           
 STORE_NAME           none_literal
 LOAD_NAME            print
 LOAD_CONST           "1.4. Boolean and None Literals: PASSED"
@@ -94,9 +275,12 @@ LOAD_NAME            a
 LOAD_NAME            b
 BINARY_OPERATION     
 LOAD_CONST           5.0
+BINARY_OPERATION     
 STORE_NAME           c
 LOAD_NAME            c
+BINARY_OPERATION     
 LOAD_NAME            c
+BINARY_OPERATION     
 LOAD_NAME            abs
 LOAD_NAME            c
 CALL_FUNCTION        1
@@ -129,12 +313,15 @@ LOAD_CONST           3.0
 BINARY_MULTIPLY      
 LOAD_CONST           "e"
 LOAD_NAME            s1
+BINARY_OPERATION     
 LOAD_CONST           "x"
 LOAD_NAME            s1
+BINARY_OPERATION     
 LOAD_NAME            s1
 LOAD_CONST           1.0
 LOAD_NAME            s1
 LOAD_CONST           1.0
+BINARY_OPERATION     
 LOAD_NAME            s1
 LOAD_CONST           1.0
 LOAD_CONST           4.0
@@ -191,6 +378,7 @@ LOAD_NAME            x
 LOAD_NAME            range
 LOAD_CONST           5.0
 CALL_FUNCTION        1
+BUILD_LIST           1
 STORE_NAME           list_comp
 LOAD_NAME            print
 LOAD_CONST           "2.3. List Type: PASSED"
@@ -231,6 +419,7 @@ LOAD_CONST           3.0
 STORE_NAME           my_dict["three"]
 LOAD_CONST           "three"
 LOAD_NAME            my_dict
+BINARY_OPERATION     
 LOAD_NAME            list
 LOAD_NAME            my_dict
 LOAD_NAME            keys
@@ -243,8 +432,10 @@ CALL_FUNCTION        0
 CALL_FUNCTION        1
 LOAD_NAME            my_dict
 LOAD_CONST           "two"
+BINARY_OPERATION     
 LOAD_CONST           "two"
 LOAD_NAME            my_dict
+BINARY_OPERATION     
 LOAD_NAME            x
 LOAD_NAME            x
 LOAD_NAME            x
@@ -253,6 +444,7 @@ LOAD_NAME            x
 LOAD_NAME            range
 LOAD_CONST           3.0
 CALL_FUNCTION        1
+BUILD_MAP            1
 STORE_NAME           dict_comp
 LOAD_NAME            print
 LOAD_CONST           "2.5. Dictionary Type: PASSED"
@@ -269,12 +461,14 @@ LOAD_CONST           4.0
 CALL_FUNCTION        1
 LOAD_CONST           4.0
 LOAD_NAME            my_set
+BINARY_OPERATION     
 LOAD_NAME            my_set
 LOAD_NAME            remove
 LOAD_CONST           2.0
 CALL_FUNCTION        1
 LOAD_CONST           2.0
 LOAD_NAME            my_set
+BINARY_OPERATION     
 LOAD_CONST           1.0
 LOAD_CONST           2.0
 LOAD_CONST           3.0
@@ -302,6 +496,8 @@ LOAD_NAME            x
 LOAD_CONST           "abracadabra"
 LOAD_NAME            x
 LOAD_CONST           "abc"
+BINARY_OPERATION     
+BUILD_SET            1
 STORE_NAME           set_comp
 LOAD_NAME            print
 LOAD_CONST           "2.6. Set Type: PASSED"
@@ -313,12 +509,14 @@ LOAD_CONST           10.0
 STORE_NAME           x
 LOAD_NAME            x
 LOAD_CONST           5.0
+BINARY_OPERATION     
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_CONST           "greater"
 STORE_NAME           result
 JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            x
 LOAD_CONST           5.0
+BINARY_OPERATION     
 LOAD_CONST           "equal"
 STORE_NAME           result
 LOAD_NAME            print
@@ -326,43 +524,50 @@ LOAD_CONST           "3.1. if/elif/else: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           0.0
 STORE_NAME           total
-LOAD_NAME            i
 LOAD_NAME            range
 LOAD_CONST           5.0
 CALL_FUNCTION        1
 LOAD_NAME            total
 LOAD_NAME            i
-LOAD_NAME            i
+BINARY_OPERATION     
+STORE_NAME           total
 LOAD_CONST           1.0
 LOAD_CONST           2.0
 LOAD_CONST           3.0
 BUILD_LIST           3
 LOAD_NAME            i
 LOAD_CONST           4.0
+BINARY_OPERATION     
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
-LOAD_NAME            print
-LOAD_CONST           "3.3. for/else: PASSED"
-CALL_FUNCTION        1
+BINARY_OPERATION     
 LOAD_CONST           5.0
 STORE_NAME           count
 LOAD_NAME            count
 LOAD_CONST           0.0
+BINARY_OPERATION     
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_NAME            count
 LOAD_CONST           1.0
+BINARY_OPERATION     
+STORE_NAME           count
 LOAD_CONST           3.0
 STORE_NAME           count
 LOAD_NAME            count
 LOAD_CONST           0.0
-LOAD_NAME            count
-LOAD_CONST           1.0
-LOAD_NAME            count
-LOAD_CONST           1.0
+BINARY_OPERATION     
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
-LOAD_NAME            print
-LOAD_CONST           "3.5. while/else: PASSED"
-CALL_FUNCTION        1
+LOAD_NAME            count
+LOAD_CONST           1.0
+BINARY_OPERATION     
+STORE_NAME           count
+LOAD_NAME            count
+LOAD_CONST           1.0
+BINARY_OPERATION     
+BINARY_OPERATION     
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+BINARY_OPERATION     
+LOAD_CONST           False
 STORE_NAME           found_even
-LOAD_NAME            i
 LOAD_NAME            range
 LOAD_CONST           10.0
 CALL_FUNCTION        1
@@ -370,13 +575,19 @@ LOAD_NAME            i
 LOAD_CONST           2.0
 BINARY_OPERATION     
 LOAD_CONST           0.0
+BINARY_OPERATION     
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
+BINARY_OPERATION     
 LOAD_NAME            i
 LOAD_CONST           5.0
+BINARY_OPERATION     
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
+BINARY_OPERATION     
 LOAD_NAME            i
 LOAD_CONST           4.0
+BINARY_OPERATION     
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
+LOAD_CONST           True
 STORE_NAME           found_even
 LOAD_NAME            print
 LOAD_CONST           "3.6. break and continue: PASSED"
@@ -406,9 +617,6 @@ MAKE_CLASS           <MyContext>
         RETURN_VALUE         
     STORE_NAME           __exit__
 STORE_NAME           MyContext
-LOAD_NAME            MyContext
-CALL_FUNCTION        0
-LOAD_NAME            cm
 LOAD_NAME            print
 LOAD_CONST           "3.8. with statement: PASSED"
 CALL_FUNCTION        1
@@ -467,11 +675,11 @@ LOAD_NAME            value
 LOAD_CONST           123.0
 CALL_FUNCTION        4
 STORE_NAME           args_val, kwargs_val
-LOAD_NAME            x
-LOAD_NAME            y
-LOAD_NAME            x
-LOAD_NAME            y
-BINARY_MULTIPLY      
+MAKE_FUNCTION        <lambda>
+    LOAD_NAME            x
+    LOAD_NAME            y
+    BINARY_MULTIPLY      
+    RETURN_VALUE         
 STORE_NAME           multiply
 LOAD_NAME            multiply
 LOAD_CONST           3.0
@@ -484,6 +692,8 @@ MAKE_FUNCTION        <outer_func>
         LOAD_NAME            x
         LOAD_NAME            x
         LOAD_CONST           1.0
+        BINARY_OPERATION     
+        STORE_NAME           x
         LOAD_NAME            x
         RETURN_VALUE         
     STORE_NAME           inner_func
@@ -526,13 +736,11 @@ MAKE_CLASS           <MyClass>
         LOAD_NAME            instance_variable
         RETURN_VALUE         
     STORE_NAME           instance_method
-    LOAD_NAME            classmethod
     MAKE_FUNCTION        <class_method>
         LOAD_NAME            cls
         LOAD_NAME            class_variable
         RETURN_VALUE         
     STORE_NAME           class_method
-    LOAD_NAME            staticmethod
     MAKE_FUNCTION        <static_method>
         LOAD_CONST           "static"
         RETURN_VALUE         
@@ -625,17 +833,20 @@ MAKE_CLASS           <Vector>
     MAKE_FUNCTION        <__getitem__>
         LOAD_NAME            index
         LOAD_CONST           0.0
+        BINARY_OPERATION     
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
         LOAD_NAME            self
         LOAD_NAME            x
         RETURN_VALUE         
         LOAD_NAME            index
         LOAD_CONST           1.0
+        BINARY_OPERATION     
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
         LOAD_NAME            self
         LOAD_NAME            y
         RETURN_VALUE         
         LOAD_NAME            IndexError
+        BINARY_OPERATION     
         RETURN_VALUE         
     STORE_NAME           __getitem__
 STORE_NAME           Vector
@@ -670,26 +881,24 @@ MAKE_CLASS           <Circle>
         STORE_NAME           self._radius
         RETURN_VALUE         
     STORE_NAME           __init__
-    LOAD_NAME            property
     MAKE_FUNCTION        <radius>
         LOAD_NAME            self
         LOAD_NAME            _radius
         RETURN_VALUE         
     STORE_NAME           radius
-    LOAD_NAME            radius
-    LOAD_NAME            setter
     MAKE_FUNCTION        <radius>
         LOAD_NAME            value
         LOAD_CONST           0.0
+        BINARY_OPERATION     
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
         LOAD_NAME            ValueError
         LOAD_CONST           "Radius cannot be negative"
         CALL_FUNCTION        1
+        BINARY_OPERATION     
         LOAD_NAME            value
         STORE_NAME           self._radius
         RETURN_VALUE         
     STORE_NAME           radius
-    LOAD_NAME            property
     MAKE_FUNCTION        <area>
         LOAD_CONST           3.14
         LOAD_NAME            self
@@ -713,6 +922,7 @@ STORE_NAME           c.radius
 LOAD_NAME            c
 LOAD_NAME            radius
 LOAD_CONST           1.0
+BINARY_OPERATION     
 STORE_NAME           c.radius
 LOAD_NAME            ValueError
 LOAD_NAME            print
@@ -722,9 +932,6 @@ LOAD_NAME            print
 LOAD_CONST           "\n--- 6. Advanced Features ---"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <my_decorator>
-    LOAD_NAME            wraps
-    LOAD_NAME            func
-    CALL_FUNCTION        1
     MAKE_FUNCTION        <wrapper>
         LOAD_NAME            print
         LOAD_CONST           "Something is happening before the function is called."
@@ -743,7 +950,6 @@ MAKE_FUNCTION        <my_decorator>
     LOAD_NAME            wrapper
     RETURN_VALUE         
 STORE_NAME           my_decorator
-LOAD_NAME            my_decorator
 MAKE_FUNCTION        <say_whee>
     LOAD_CONST           "Whee!"
     RETURN_VALUE         
@@ -754,7 +960,6 @@ LOAD_NAME            print
 LOAD_CONST           "6.1. Decorators: PASSED"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <my_generator>
-    LOAD_NAME            i
     LOAD_NAME            range
     LOAD_NAME            n
     CALL_FUNCTION        1
@@ -782,16 +987,12 @@ LOAD_NAME            print
 LOAD_CONST           "6.2. Generators: PASSED"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <my_coroutine>
-    LOAD_NAME            asyncio
-    LOAD_NAME            sleep
-    LOAD_CONST           0.01
-    CALL_FUNCTION        1
+    BINARY_OPERATION     
     LOAD_CONST           "Coroutine finished"
     RETURN_VALUE         
 STORE_NAME           my_coroutine
 MAKE_FUNCTION        <main_async>
-    LOAD_NAME            my_coroutine
-    CALL_FUNCTION        0
+    BINARY_OPERATION     
     STORE_NAME           result
     LOAD_NAME            print
     LOAD_CONST           "6.3. Coroutines (async/await): PASSED"
@@ -859,6 +1060,7 @@ CALL_FUNCTION        3
 LOAD_NAME            cmath
 LOAD_NAME            sqrt
 LOAD_CONST           1.0
+BINARY_OPERATION     
 CALL_FUNCTION        1
 LOAD_NAME            print
 LOAD_CONST           "7.1. math and cmath: PASSED"
@@ -987,6 +1189,7 @@ LOAD_NAME            hasattr
 LOAD_NAME            dyn_obj
 LOAD_CONST           "dynamic_attr"
 CALL_FUNCTION        2
+BINARY_OPERATION     
 LOAD_NAME            print
 LOAD_CONST           "8.1. Dynamic attribute access: PASSED"
 CALL_FUNCTION        1
@@ -1010,6 +1213,7 @@ LOAD_NAME            isinstance
 LOAD_CONST           "hello"
 LOAD_NAME            int
 CALL_FUNCTION        2
+BINARY_OPERATION     
 LOAD_NAME            issubclass
 LOAD_NAME            bool
 LOAD_NAME            int
@@ -1018,8 +1222,229 @@ LOAD_NAME            type
 LOAD_CONST           123.0
 CALL_FUNCTION        1
 LOAD_NAME            int
+BINARY_OPERATION     
 LOAD_NAME            print
 LOAD_CONST           "8.3. Type introspection: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            print
+LOAD_CONST           "\n--- 9. Missing Node Types Coverage ---"
+CALL_FUNCTION        1
+LOAD_CONST           True
+STORE_NAME           bool_true
+LOAD_CONST           False
+STORE_NAME           bool_false
+LOAD_CONST           
+STORE_NAME           none_val
+LOAD_CONST           ...
+STORE_NAME           ellipsis_val
+LOAD_CONST           42.0
+BINARY_OPERATION     
+STORE_NAME           negative_num
+LOAD_CONST           42.0
+BINARY_OPERATION     
+STORE_NAME           positive_num
+LOAD_CONST           42.0
+BINARY_OPERATION     
+STORE_NAME           bitwise_not
+LOAD_CONST           True
+BINARY_OPERATION     
+STORE_NAME           logical_not
+LOAD_CONST           10.0
+STORE_NAME           aug_val
+LOAD_NAME            aug_val
+LOAD_CONST           5.0
+BINARY_OPERATION     
+STORE_NAME           aug_val
+LOAD_NAME            aug_val
+LOAD_CONST           2.0
+BINARY_OPERATION     
+STORE_NAME           aug_val
+LOAD_NAME            aug_val
+LOAD_CONST           3.0
+BINARY_OPERATION     
+STORE_NAME           aug_val
+LOAD_NAME            aug_val
+LOAD_CONST           2.0
+BINARY_OPERATION     
+STORE_NAME           aug_val
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+BINARY_OPERATION     
+LOAD_CONST           2.0
+LOAD_CONST           1.0
+BINARY_OPERATION     
+BINARY_OPERATION     
+LOAD_CONST           3.0
+LOAD_CONST           3.0
+BINARY_OPERATION     
+BINARY_OPERATION     
+STORE_NAME           comp_result
+LOAD_NAME            bool_true
+LOAD_CONST           True
+BINARY_OPERATION     
+STORE_NAME           is_result
+LOAD_CONST           "a"
+LOAD_CONST           "abc"
+BINARY_OPERATION     
+STORE_NAME           in_result
+LOAD_CONST           "z"
+LOAD_CONST           "abc"
+BINARY_OPERATION     
+STORE_NAME           not_in_result
+MAKE_FUNCTION        <lambda>
+    LOAD_NAME            x
+    LOAD_CONST           2.0
+    BINARY_MULTIPLY      
+    RETURN_VALUE         
+STORE_NAME           lambda_func
+LOAD_NAME            lambda_func
+LOAD_CONST           5.0
+CALL_FUNCTION        1
+STORE_NAME           lambda_result
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
+STORE_NAME           ternary_result
+LOAD_NAME            x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+LOAD_NAME            x
+LOAD_NAME            range
+LOAD_CONST           3.0
+CALL_FUNCTION        1
+BUILD_LIST           1
+STORE_NAME           list_comp
+LOAD_NAME            x
+LOAD_NAME            x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+LOAD_NAME            x
+LOAD_NAME            range
+LOAD_CONST           3.0
+CALL_FUNCTION        1
+BUILD_MAP            1
+STORE_NAME           dict_comp
+LOAD_NAME            x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+LOAD_NAME            x
+LOAD_NAME            range
+LOAD_CONST           3.0
+CALL_FUNCTION        1
+BUILD_SET            1
+STORE_NAME           set_comp
+LOAD_NAME            x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+LOAD_NAME            x
+LOAD_NAME            range
+LOAD_CONST           3.0
+CALL_FUNCTION        1
+STORE_NAME           gen_expr
+LOAD_CONST           1.0
+LOAD_CONST           0.0
+BINARY_DIVIDE        
+STORE_NAME           risky_operation
+LOAD_NAME            ZeroDivisionError
+LOAD_CONST           True
+STORE_NAME           error_handled
+LOAD_NAME            Exception
+LOAD_NAME            e
+LOAD_NAME            str
+LOAD_NAME            e
+CALL_FUNCTION        1
+STORE_NAME           other_error
+LOAD_CONST           True
+STORE_NAME           cleanup_done
+LOAD_NAME            range
+LOAD_CONST           2.0
+CALL_FUNCTION        1
+LOAD_NAME            i
+LOAD_CONST           10.0
+BINARY_OPERATION     
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+BINARY_OPERATION     
+LOAD_CONST           0.0
+STORE_NAME           count
+LOAD_NAME            count
+LOAD_CONST           2.0
+BINARY_OPERATION     
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+LOAD_NAME            count
+LOAD_CONST           1.0
+BINARY_OPERATION     
+STORE_NAME           count
+MAKE_CLASS           <SimpleContext>
+    MAKE_FUNCTION        <__enter__>
+        LOAD_CONST           "context_value"
+        RETURN_VALUE         
+    STORE_NAME           __enter__
+    MAKE_FUNCTION        <__exit__>
+        LOAD_CONST           False
+        RETURN_VALUE         
+    STORE_NAME           __exit__
+STORE_NAME           SimpleContext
+LOAD_NAME            ctx_val
+STORE_NAME           context_result
+LOAD_CONST           1.0
+LOAD_CONST           1.0
+BINARY_OPERATION     
+BINARY_OPERATION     
+MAKE_FUNCTION        <empty_func>
+    RETURN_VALUE         
+STORE_NAME           empty_func
+LOAD_NAME            range
+LOAD_CONST           5.0
+CALL_FUNCTION        1
+LOAD_NAME            i
+LOAD_CONST           1.0
+BINARY_OPERATION     
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+BINARY_OPERATION     
+LOAD_NAME            i
+LOAD_CONST           3.0
+BINARY_OPERATION     
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+BINARY_OPERATION     
+MAKE_FUNCTION        <test_raise>
+    LOAD_NAME            ValueError
+    LOAD_CONST           "Test error"
+    CALL_FUNCTION        1
+    BINARY_OPERATION     
+    RETURN_VALUE         
+STORE_NAME           test_raise
+IMPORT_FROM          math
+IMPORT_FROM          sqrt
+IMPORT_FROM          square_root
+IMPORT_NAME          sys
+IMPORT_NAME          system
+LOAD_CONST           "global"
+STORE_NAME           global_var
+MAKE_FUNCTION        <test_global>
+    LOAD_NAME            global_var
+    LOAD_CONST           "modified"
+    STORE_NAME           global_var
+    RETURN_VALUE         
+STORE_NAME           test_global
+MAKE_FUNCTION        <outer>
+    LOAD_CONST           "outer"
+    STORE_NAME           nonlocal_var
+    MAKE_FUNCTION        <inner>
+        LOAD_NAME            nonlocal_var
+        LOAD_CONST           "inner"
+        STORE_NAME           nonlocal_var
+        RETURN_VALUE         
+    STORE_NAME           inner
+    LOAD_NAME            inner
+    CALL_FUNCTION        0
+    LOAD_NAME            nonlocal_var
+    RETURN_VALUE         
+STORE_NAME           outer
+LOAD_CONST           42.0
+STORE_NAME           temp_var
+LOAD_NAME            temp_var
+BINARY_OPERATION     
+LOAD_NAME            print
+LOAD_CONST           "9. Missing Node Types Coverage: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            print
 LOAD_CONST           "\n--- Python Compiler Test Suite: Finished ---"

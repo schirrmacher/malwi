@@ -6,6 +6,97 @@
 // A successful execution of this file, with all tests passing,
 // indicates a high degree of compatibility and correctness for a JavaScript engine.
 
+// ==============================================================================
+// Extended Import Test Cases - For malware analysis import pattern testing
+// ==============================================================================
+
+// ES6 Import Statements - Testing modern JavaScript import syntax
+// Note: These would normally require module context, but we're testing the compiler's parsing
+
+// ES6 Default imports
+import React from 'react';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import os from 'os';
+import child_process from 'child_process';
+
+// Named imports
+import { readFile, writeFile, existsSync } from 'fs';
+import { join, resolve, dirname, basename } from 'path';
+import { createHash, randomBytes, pbkdf2Sync } from 'crypto';
+import { platform, arch, tmpdir, homedir } from 'os';
+import { exec, spawn, fork } from 'child_process';
+
+// Mixed imports (default + named)
+import express, { Router, static as staticFiles } from 'express';
+import axios, { get, post, put, delete as del } from 'axios';
+
+// Aliased imports
+import { readFile as read, writeFile as write } from 'fs';
+import { join as pathJoin, resolve as pathResolve } from 'path';
+import { createHash as hash, randomBytes as random } from 'crypto';
+
+// Wildcard imports (namespace imports)
+import * as fsModule from 'fs';
+import * as pathModule from 'path';
+import * as cryptoModule from 'crypto';
+import * as osModule from 'os';
+
+// Side-effect imports (imports without bindings)
+import 'core-js/stable';
+import './malicious-polyfill.js';
+import '../../../config/secret-keys.json';
+
+// Potentially suspicious module patterns (common in malware)
+import keytar from 'keytar';
+import node_pty from 'node-pty';
+import screenshot_desktop from 'screenshot-desktop';
+import robotjs from 'robotjs';
+import mic from 'mic';
+import systeminformation from 'systeminformation';
+
+// Export statements (also part of ES6 modules)
+export const exportedConst = 'test-export';
+export function exportedFunction() { return 'exported'; }
+export default { defaultExport: true };
+
+// CommonJS require() patterns (also commonly seen)
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const os = require('os');
+const childProcess = require('child_process');
+const util = require('util');
+const stream = require('stream');
+const events = require('events');
+
+// Destructured require
+const { readFile, writeFile, existsSync } = require('fs');
+const { join, resolve, dirname } = require('path');
+const { createHash, randomBytes } = require('crypto');
+const { exec, spawn } = require('child_process');
+
+// Aliased require
+const cp = require('child_process');
+const fsPromises = require('fs').promises;
+const pathUtils = require('path');
+
+// Conditional require (evasion pattern)
+let platform_module;
+try {
+    platform_module = require('os');
+    const platform = platform_module.platform();
+} catch (e) {
+    // Fallback or evasion
+}
+
+// Dynamic require (obfuscation pattern)
+const moduleName = 'fs';
+const dynamicModule = require(moduleName);
+const encodedModule = require(Buffer.from('ZnM=', 'base64').toString());
+
+console.log("--- Extended Import Test Cases: COMPLETED ---");
 console.log("--- JavaScript Compiler Test Suite: Starting ---");
 
 // ==============================================================================
@@ -341,6 +432,153 @@ const dynamicObj = {};
 const propName = "dynamicProperty";
 dynamicObj[propName] = "success";
 console.log("8.2. Dynamic properties: PASSED");
+
+// ==============================================================================
+// 9. Missing Node Types Coverage
+// ==============================================================================
+
+console.log("\n--- 9. Missing Node Types Coverage ---");
+
+// 9.1. Boolean and null literals
+const trueVal = true;
+const falseVal = false;
+const nullVal = null;
+const undefinedVal = undefined;
+
+// 9.2. Unary operators
+const negativeNum = -42;
+const positiveNum = +42;
+const bitwiseNot = ~42;
+const logicalNot = !true;
+const typeofOp = typeof 42;
+
+// 9.3. Augmented assignment
+let augVal = 10;
+augVal += 5;
+augVal -= 2;
+augVal *= 3;
+augVal /= 2;
+
+// 9.4. Comparison and logical operators
+const compResult = 1 < 2 && 2 > 1 || 3 === 3;
+const strictEqual = 5 === 5;
+const notStrictEqual = 5 !== "5";
+const instanceOf = new Date() instanceof Date;
+
+// 9.5. Arrow functions
+const arrowFunc = x => x * 2;
+const arrowFunc2 = (a, b) => a + b;
+const arrowResult = arrowFunc(5);
+
+// 9.6. Template literals
+const name = "World";
+const templateStr = `Hello, ${name}!`;
+const multilineTemplate = `Line 1
+Line 2`;
+
+// 9.7. Destructuring
+const arr = [1, 2, 3];
+const [first, second] = arr;
+const obj = { a: 1, b: 2 };
+const { a, b } = obj;
+
+// 9.8. Spread operator
+const newArr = [...arr, 4, 5];
+const newObj = { ...obj, c: 3 };
+
+// 9.9. Try/catch/finally
+try {
+    const riskyOp = JSON.parse("invalid json");
+} catch (error) {
+    const errorHandled = true;
+} finally {
+    const cleanupDone = true;
+}
+
+// 9.10. For loops variations
+for (let i = 0; i < 3; i++) {
+    if (i === 1) continue;
+    if (i === 2) break;
+}
+
+for (const item of arr) {
+    const processed = item;
+}
+
+for (const key in obj) {
+    const value = obj[key];
+}
+
+// 9.11. Switch statement
+const switchVal = 2;
+switch (switchVal) {
+    case 1:
+        const case1 = true;
+        break;
+    case 2:
+        const case2 = true;
+        break;
+    default:
+        const defaultCase = true;
+}
+
+// 9.12. Conditional (ternary) operator
+const ternaryResult = 5 > 0 ? "positive" : "negative";
+
+// 9.13. Array and object methods
+const mappedArr = arr.map(x => x * 2);
+const filteredArr = arr.filter(x => x > 1);
+const reducedVal = arr.reduce((acc, x) => acc + x, 0);
+
+// 9.14. Regular expressions
+const regex = /test/gi;
+const regexTest = regex.test("Test string");
+
+// 9.15. Classes with inheritance
+class Parent {
+    constructor(name) {
+        this.name = name;
+    }
+    
+    greet() {
+        return `Hello from ${this.name}`;
+    }
+}
+
+class Child extends Parent {
+    constructor(name, age) {
+        super(name);
+        this.age = age;
+    }
+    
+    greetWithAge() {
+        return `${super.greet()}, age ${this.age}`;
+    }
+}
+
+const childInstance = new Child("Test", 25);
+
+// 9.16. Async/await and Promises
+async function asyncFunc() {
+    const promise = new Promise(resolve => setTimeout(() => resolve("done"), 1));
+    const result = await promise;
+    return result;
+}
+
+// 9.17. Import/export (commented as they need module context)
+// import { someFunc } from './module.js';
+// export const exportedVal = 42;
+
+// 9.18. Optional chaining and nullish coalescing
+const optional = obj?.deep?.property;
+const nullish = nullVal ?? "default";
+
+// 9.19. Throw statement
+function testThrow() {
+    throw new Error("Test error");
+}
+
+console.log("9. Missing Node Types Coverage: PASSED");
 
 
 console.log("\n--- JavaScript Compiler Test Suite: Finished ---");

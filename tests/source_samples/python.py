@@ -17,6 +17,116 @@ import asyncio
 from functools import wraps
 from typing import Any, List, Dict, Tuple, Set, Optional
 
+# ==============================================================================
+# Extended Import Test Cases - For malware analysis import pattern testing
+# ==============================================================================
+
+# Standard library imports (common in legitimate code)
+import os
+import subprocess
+import socket
+import urllib.request
+import base64
+import pickle
+import marshal
+import types
+import importlib
+import tempfile
+import shutil
+import pathlib
+
+# From imports with various patterns
+from os import environ, path, listdir
+from sys import argv, exit, modules, path as sys_path
+from subprocess import run, Popen, PIPE, call
+from socket import socket, AF_INET, SOCK_STREAM
+from urllib.parse import urlparse, urljoin
+from urllib.request import urlopen, Request
+from base64 import b64encode, b64decode, decodebytes
+from pickle import loads, dumps, load, dump
+from marshal import loads as marshal_loads, dumps as marshal_dumps
+from types import CodeType, ModuleType
+from importlib import import_module, util
+from tempfile import mkstemp, mkdtemp, NamedTemporaryFile
+from shutil import rmtree, copytree, move
+from pathlib import Path, PurePath
+
+# Aliased imports (can be used to obfuscate intent)
+import os as operating_system
+import subprocess as subproc
+import socket as sock
+import urllib.request as web_request
+import base64 as b64
+import pickle as pkl
+import marshal as marsh
+import types as tp
+import importlib as imp_lib
+
+# Multiple from-imports on one line
+from os.path import join, exists, isfile, isdir, basename, dirname
+
+# Nested module imports
+from os.path import join as path_join, exists as path_exists
+from urllib.request import urlopen as open_url, Request as web_request_obj
+from base64 import b64encode as encode_b64, b64decode as decode_b64
+
+# Conditional imports (pattern often seen in malware for evasion)
+try:
+    import ctypes
+    from ctypes import windll, wintypes
+
+    ctypes_available = True
+except ImportError:
+    ctypes_available = False
+
+try:
+    import win32api
+    from win32api import GetSystemMetrics
+
+    win32_available = True
+except ImportError:
+    win32_available = False
+
+try:
+    import requests
+    from requests import get, post, Session
+
+    requests_available = True
+except ImportError:
+    requests_available = False
+
+# Potentially suspicious imports (common in malware)
+try:
+    import keyring
+    from keyring import get_password, set_password
+except ImportError:
+    pass
+
+try:
+    import sqlite3
+    from sqlite3 import connect, Row
+except ImportError:
+    pass
+
+try:
+    import winreg
+    from winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
+except ImportError:
+    pass
+
+
+# Dynamic imports (often used in malware for obfuscation)
+def dynamic_import_test():
+    # These patterns are commonly used to evade static analysis
+    module_name = "os"
+    imported_os = __import__(module_name)
+
+    getattr_call = getattr(imported_os, "system")
+    exec_func = getattr(__builtins__, "exec")
+    eval_func = getattr(__builtins__, "eval")
+
+
+print("--- Extended Import Test Cases: COMPLETED ---")
 print("--- Python Compiler Test Suite: Starting ---")
 
 # ==============================================================================
@@ -573,6 +683,137 @@ not isinstance("hello", int)
 issubclass(bool, int)
 type(123) is int
 print("8.3. Type introspection: PASSED")
+
+# ==============================================================================
+# 9. Missing Node Types Coverage
+# ==============================================================================
+
+print("\n--- 9. Missing Node Types Coverage ---")
+
+# 9.1. Boolean literals (true, false, none)
+bool_true = True
+bool_false = False
+none_val = None
+ellipsis_val = ...
+
+# 9.2. Unary operators
+negative_num = -42
+positive_num = +42
+bitwise_not = ~42
+logical_not = not True
+
+# 9.3. Augmented assignment
+aug_val = 10
+aug_val += 5
+aug_val -= 2
+aug_val *= 3
+aug_val //= 2
+
+# 9.4. Comparison and boolean operators
+comp_result = 1 < 2 and 2 > 1 or 3 == 3
+is_result = bool_true is True
+in_result = "a" in "abc"
+not_in_result = "z" not in "abc"
+
+# 9.5. Lambda expressions
+lambda_func = lambda x: x * 2
+lambda_result = lambda_func(5)
+
+# 9.6. Conditional expressions (ternary)
+ternary_result = "positive" if 5 > 0 else "negative"
+
+# 9.7. List/dict/set comprehensions
+list_comp = [x * 2 for x in range(3)]
+dict_comp = {x: x * 2 for x in range(3)}
+set_comp = {x * 2 for x in range(3)}
+gen_expr = (x * 2 for x in range(3))
+
+# 9.8. Try/except/finally
+try:
+    risky_operation = 1 / 0
+except ZeroDivisionError:
+    error_handled = True
+except Exception as e:
+    other_error = str(e)
+finally:
+    cleanup_done = True
+
+# 9.9. For/while loops with else
+for i in range(2):
+    if i == 10:  # Never true
+        break
+else:
+    for_else_executed = True
+
+count = 0
+while count < 2:
+    count += 1
+else:
+    while_else_executed = True
+
+
+# 9.10. With statement
+class SimpleContext:
+    def __enter__(self):
+        return "context_value"
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
+with SimpleContext() as ctx_val:
+    context_result = ctx_val
+
+# 9.11. Assert statement
+assert 1 == 1, "This should never fail"
+
+
+# 9.12. Pass, break, continue statements
+def empty_func():
+    pass
+
+
+for i in range(5):
+    if i == 1:
+        continue
+    if i == 3:
+        break
+
+
+# 9.13. Raise statement
+def test_raise():
+    raise ValueError("Test error")
+
+
+# 9.14. Import statements (already at top, but adding variety)
+from math import sqrt as square_root
+import sys as system
+
+# 9.15. Global and nonlocal statements
+global_var = "global"
+
+
+def test_global():
+    global global_var
+    global_var = "modified"
+
+
+def outer():
+    nonlocal_var = "outer"
+
+    def inner():
+        nonlocal nonlocal_var
+        nonlocal_var = "inner"
+
+    inner()
+    return nonlocal_var
+
+
+# 9.16. Delete statement
+temp_var = 42
+del temp_var
+
+print("9. Missing Node Types Coverage: PASSED")
 
 
 print("\n--- Python Compiler Test Suite: Finished ---")
