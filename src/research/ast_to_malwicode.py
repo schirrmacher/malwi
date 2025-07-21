@@ -87,6 +87,7 @@ class OpCode(Enum):
 
     LOAD_CONST = auto()
     LOAD_NAME = auto()
+    LOAD_PARAM = auto()
     STORE_NAME = auto()
     BINARY_ADD = auto()
     BINARY_SUBTRACT = auto()
@@ -168,6 +169,9 @@ class ASTCompiler:
         # Adapted to use the requested Parser API
         self.parser = Parser(Language(language_object))
 
+        # Track function parameters for LOAD_PARAM vs LOAD_NAME distinction
+        self.current_function_params = set()
+
     def treesitter_ast_to_malwicode(
         self, root_node: Node, source_code_bytes: bytes, file_path: Path
     ) -> CodeObject:
@@ -190,6 +194,166 @@ class ASTCompiler:
         return source_code_bytes[node.start_byte : node.end_byte].decode(
             "utf-8", errors="replace"
         )
+
+    def _extract_function_parameters(self, node: Node, source_code_bytes: bytes) -> set:
+        """Extract parameter names from function definition node."""
+        params = set()
+
+        # Handle different function types
+        if node.type == "arrow_function":
+            params.update(self._extract_arrow_function_params(node, source_code_bytes))
+        elif node.type in ["lambda"]:
+            params.update(self._extract_lambda_params(node, source_code_bytes))
+        else:
+            # Regular function definitions
+            params.update(
+                self._extract_regular_function_params(node, source_code_bytes)
+            )
+
+        return params
+
+    def _extract_arrow_function_params(
+        self, node: Node, source_code_bytes: bytes
+    ) -> set:
+        """Extract parameters from JavaScript arrow functions."""
+        params = set()
+
+        # Check for parameter/parameters field
+        param_node = node.child_by_field_name("parameter") or node.child_by_field_name(
+            "parameters"
+        )
+        if param_node:
+            if param_node.type == "identifier":
+                # Single parameter: x => x * 2
+                param_name = self._get_node_text(param_node, source_code_bytes)
+                params.add(param_name)
+            elif param_node.type == "formal_parameters":
+                # Multiple parameters: (x, y) => x + y
+                params.update(
+                    self._extract_from_formal_parameters(param_node, source_code_bytes)
+                )
+
+        # Fallback: check direct children for single identifier
+        for child in node.named_children:
+            if child.type == "identifier":
+                param_name = self._get_node_text(child, source_code_bytes)
+                params.add(param_name)
+
+        return params
+
+    def _extract_lambda_params(self, node: Node, source_code_bytes: bytes) -> set:
+        """Extract parameters from Python lambda functions."""
+        params = set()
+
+        # Look for parameters in lambda
+        for child in node.named_children:
+            if child.type in ["parameters", "lambda_parameters"]:
+                if child.type == "lambda_parameters":
+                    # Lambda uses lambda_parameters, extract identifiers directly
+                    for param_child in child.named_children:
+                        if param_child.type == "identifier":
+                            param_name = self._get_node_text(
+                                param_child, source_code_bytes
+                            )
+                            params.add(param_name)
+                else:
+                    params.update(
+                        self._extract_from_parameters(child, source_code_bytes)
+                    )
+            elif child.type == "identifier":
+                # Single parameter lambda
+                param_name = self._get_node_text(child, source_code_bytes)
+                params.add(param_name)
+
+        return params
+
+    def _extract_regular_function_params(
+        self, node: Node, source_code_bytes: bytes
+    ) -> set:
+        """Extract parameters from regular function definitions."""
+        params = set()
+
+        for child in node.named_children:
+            if child.type in ["parameters", "formal_parameters"]:
+                if child.type == "parameters":
+                    params.update(
+                        self._extract_from_parameters(child, source_code_bytes)
+                    )
+                else:  # formal_parameters
+                    params.update(
+                        self._extract_from_formal_parameters(child, source_code_bytes)
+                    )
+
+        return params
+
+    def _extract_from_parameters(
+        self, params_node: Node, source_code_bytes: bytes
+    ) -> set:
+        """Extract parameter names from Python parameters node."""
+        params = set()
+
+        for param_child in params_node.named_children:
+            param_name = self._extract_single_parameter_name(
+                param_child, source_code_bytes
+            )
+            if param_name:
+                params.add(param_name)
+
+        return params
+
+    def _extract_from_formal_parameters(
+        self, params_node: Node, source_code_bytes: bytes
+    ) -> set:
+        """Extract parameter names from JavaScript formal_parameters node."""
+        params = set()
+
+        for param_child in params_node.named_children:
+            if param_child.type == "identifier":
+                param_name = self._get_node_text(param_child, source_code_bytes)
+                params.add(param_name)
+
+        return params
+
+    def _extract_single_parameter_name(
+        self, param_node: Node, source_code_bytes: bytes
+    ) -> str:
+        """Extract parameter name from a single parameter node (Python)."""
+        if param_node.type == "identifier":
+            # Simple parameter: def func(param):
+            return self._get_node_text(param_node, source_code_bytes)
+
+        elif param_node.type in [
+            "parameter",
+            "required_parameter",
+            "optional_parameter",
+        ]:
+            # Python typed parameters: def func(param: int):
+            for child in param_node.named_children:
+                if child.type == "identifier":
+                    return self._get_node_text(child, source_code_bytes)
+
+        elif param_node.type in [
+            "default_parameter",
+            "typed_parameter",
+            "typed_default_parameter",
+        ]:
+            # Parameters with defaults/types: def func(param: int = 1):
+            name_node = param_node.child_by_field_name("name")
+            if name_node:
+                return self._get_node_text(name_node, source_code_bytes)
+
+        elif param_node.type in ["list_splat_pattern", "dictionary_splat_pattern"]:
+            # Handle *args, **kwargs
+            for child in param_node.named_children:
+                if child.type == "identifier":
+                    return self._get_node_text(child, source_code_bytes)
+
+        # Fallback: try to get any identifier in the parameter node
+        for child in param_node.named_children:
+            if child.type == "identifier":
+                return self._get_node_text(child, source_code_bytes)
+
+        return None
 
     def _generate_bytecode(
         self, node: Node, source_code_bytes: bytes, file_path: Path
@@ -283,9 +447,12 @@ class ASTCompiler:
             str_content = self._get_node_text(node, source_code_bytes)
             bytecode.append((OpCode.LOAD_CONST, str_content))
         elif node_type == "identifier":
-            bytecode.append(
-                (OpCode.LOAD_NAME, self._get_node_text(node, source_code_bytes))
-            )
+            identifier_name = self._get_node_text(node, source_code_bytes)
+            # Use LOAD_PARAM if this identifier is a function parameter
+            if identifier_name in self.current_function_params:
+                bytecode.append((OpCode.LOAD_PARAM, identifier_name))
+            else:
+                bytecode.append((OpCode.LOAD_NAME, identifier_name))
         # Boolean and None literals
         elif node_type in ["true", "false"]:
             bytecode.append((OpCode.LOAD_CONST, node_type == "true"))
@@ -1026,6 +1193,11 @@ class ASTCompiler:
             # Process lambda/arrow functions
             body_node = node.child_by_field_name("body")
             if body_node:
+                # Extract parameters and set context for this function
+                params = self._extract_function_parameters(node, source_code_bytes)
+                previous_params = self.current_function_params
+                self.current_function_params = params
+
                 func_body_bytecode = self._generate_bytecode(
                     body_node, source_code_bytes, file_path
                 )
@@ -1034,6 +1206,9 @@ class ASTCompiler:
                     or func_body_bytecode[-1][0] != OpCode.RETURN_VALUE
                 ):
                     func_body_bytecode.append((OpCode.RETURN_VALUE, None))
+
+                # Restore previous parameter context
+                self.current_function_params = previous_params
 
                 func_source = self._get_node_text(body_node, source_code_bytes)
                 location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
@@ -1218,6 +1393,11 @@ class ASTCompiler:
             )
             body_node = node.child_by_field_name("body")
 
+            # Extract parameters and set context for this function
+            params = self._extract_function_parameters(node, source_code_bytes)
+            previous_params = self.current_function_params
+            self.current_function_params = params
+
             func_body_bytecode = self._generate_bytecode(
                 body_node, source_code_bytes, file_path
             )
@@ -1226,6 +1406,9 @@ class ASTCompiler:
                 or func_body_bytecode[-1][0] != OpCode.RETURN_VALUE
             ):
                 func_body_bytecode.append((OpCode.RETURN_VALUE, None))
+
+            # Restore previous parameter context
+            self.current_function_params = previous_params
 
             func_source = self._get_node_text(body_node, source_code_bytes)
             location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)

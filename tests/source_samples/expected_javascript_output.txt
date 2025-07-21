@@ -286,7 +286,7 @@ LOAD_CONST           "one"
 STORE_NAME           arr[0]
 LOAD_NAME            arr
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            x
+    LOAD_PARAM           x
     BINARY_OPERATION     typeof
     RETURN_VALUE         
 CALL_FUNCTION        1
@@ -399,8 +399,8 @@ LOAD_NAME            farewell
 LOAD_CONST           "World"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            x
-    LOAD_NAME            x
+    LOAD_PARAM           x
+    LOAD_PARAM           x
     BINARY_MULTIPLY      
     RETURN_VALUE         
 STORE_NAME           square
@@ -408,7 +408,7 @@ LOAD_NAME            square
 LOAD_CONST           4.0
 CALL_FUNCTION        1
 MAKE_FUNCTION        <paramsTest>
-    LOAD_NAME            a
+    LOAD_PARAM           a
     LOAD_NAME            b
     LOAD_NAME            rest
     BUILD_LIST           3
@@ -446,9 +446,9 @@ LOAD_NAME            console
 LOAD_CONST           "\n--- 5. Object-Oriented Programming ---"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <Car>
-    LOAD_NAME            make
+    LOAD_PARAM           make
     STORE_NAME           this.make
-    LOAD_NAME            model
+    LOAD_PARAM           model
     STORE_NAME           this.model
     RETURN_VALUE         
 STORE_NAME           Car
@@ -532,7 +532,7 @@ MAKE_FUNCTION        <delay>
     LOAD_NAME            Promise
     MAKE_FUNCTION        <lambda>
         LOAD_NAME            setTimeout
-        LOAD_NAME            resolve
+        LOAD_PARAM           resolve
         LOAD_NAME            ms
         CALL_FUNCTION        2
         RETURN_VALUE         
@@ -716,14 +716,14 @@ LOAD_NAME            Date
 COMPARE_INSTANCEOF   
 STORE_NAME           instanceOf
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            x
+    LOAD_PARAM           x
     LOAD_CONST           2.0
     BINARY_MULTIPLY      
     RETURN_VALUE         
 STORE_NAME           arrowFunc
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            a
-    LOAD_NAME            b
+    LOAD_PARAM           a
+    LOAD_PARAM           b
     BINARY_ADD           
     RETURN_VALUE         
 STORE_NAME           arrowFunc2
@@ -795,7 +795,7 @@ LOAD_CONST           "negative"
 STORE_NAME           ternaryResult
 LOAD_NAME            arr
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            x
+    LOAD_PARAM           x
     LOAD_CONST           2.0
     BINARY_MULTIPLY      
     RETURN_VALUE         
@@ -803,7 +803,7 @@ CALL_FUNCTION        1
 STORE_NAME           mappedArr
 LOAD_NAME            arr
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            x
+    LOAD_PARAM           x
     LOAD_CONST           1.0
     COMPARE_GREATER      
     RETURN_VALUE         
@@ -811,8 +811,8 @@ CALL_FUNCTION        1
 STORE_NAME           filteredArr
 LOAD_NAME            arr
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            acc
-    LOAD_NAME            x
+    LOAD_PARAM           acc
+    LOAD_PARAM           x
     BINARY_ADD           
     RETURN_VALUE         
 LOAD_CONST           0.0

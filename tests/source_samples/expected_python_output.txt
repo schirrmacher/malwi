@@ -647,10 +647,10 @@ LOAD_NAME            greet
 LOAD_CONST           "World"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <func_with_args>
-    LOAD_NAME            a
-    LOAD_NAME            b
+    LOAD_PARAM           a
+    LOAD_PARAM           b
     BINARY_ADD           
-    LOAD_NAME            c
+    LOAD_PARAM           c
     BINARY_ADD           
     RETURN_VALUE         
 STORE_NAME           func_with_args
@@ -678,8 +678,8 @@ LOAD_CONST           a
 LOAD_CONST           3.0
 BINARY_OPERATION     
 MAKE_FUNCTION        <func_with_arbitrary_args>
-    LOAD_NAME            args
-    LOAD_NAME            kwargs
+    LOAD_PARAM           args
+    LOAD_PARAM           kwargs
     RETURN_VALUE         
 STORE_NAME           func_with_arbitrary_args
 LOAD_NAME            func_with_arbitrary_args
@@ -692,8 +692,8 @@ LOAD_CONST           123.0
 BINARY_OPERATION     
 STORE_NAME           args_val, kwargs_val
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            x
-    LOAD_NAME            y
+    LOAD_PARAM           x
+    LOAD_PARAM           y
     BINARY_MULTIPLY      
     RETURN_VALUE         
 STORE_NAME           multiply
@@ -743,17 +743,17 @@ MAKE_CLASS           <MyClass>
     LOAD_CONST           10.0
     STORE_NAME           class_variable
     MAKE_FUNCTION        <__init__>
-        LOAD_NAME            instance_variable
+        LOAD_PARAM           instance_variable
         STORE_NAME           self.instance_variable
         RETURN_VALUE         
     STORE_NAME           __init__
     MAKE_FUNCTION        <instance_method>
-        LOAD_NAME            self
+        LOAD_PARAM           self
         LOAD_ATTR            instance_variable
         RETURN_VALUE         
     STORE_NAME           instance_method
     MAKE_FUNCTION        <class_method>
-        LOAD_NAME            cls
+        LOAD_PARAM           cls
         LOAD_ATTR            class_variable
         RETURN_VALUE         
     STORE_NAME           class_method
@@ -817,22 +817,22 @@ LOAD_CONST           "5.2. Inheritance: PASSED"
 CALL_FUNCTION        1
 MAKE_CLASS           <Vector>
     MAKE_FUNCTION        <__init__>
-        LOAD_NAME            x
+        LOAD_PARAM           x
         STORE_NAME           self.x
-        LOAD_NAME            y
+        LOAD_PARAM           y
         STORE_NAME           self.y
         RETURN_VALUE         
     STORE_NAME           __init__
     MAKE_FUNCTION        <__add__>
         LOAD_NAME            Vector
-        LOAD_NAME            self
+        LOAD_PARAM           self
         LOAD_ATTR            x
-        LOAD_NAME            other
+        LOAD_PARAM           other
         LOAD_ATTR            x
         BINARY_ADD           
-        LOAD_NAME            self
+        LOAD_PARAM           self
         LOAD_ATTR            y
-        LOAD_NAME            other
+        LOAD_PARAM           other
         LOAD_ATTR            y
         BINARY_ADD           
         CALL_FUNCTION        2
@@ -847,18 +847,18 @@ MAKE_CLASS           <Vector>
         RETURN_VALUE         
     STORE_NAME           __len__
     MAKE_FUNCTION        <__getitem__>
-        LOAD_NAME            index
+        LOAD_PARAM           index
         LOAD_CONST           0.0
         COMPARE_OP           
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
-        LOAD_NAME            self
+        LOAD_PARAM           self
         LOAD_ATTR            x
         RETURN_VALUE         
-        LOAD_NAME            index
+        LOAD_PARAM           index
         LOAD_CONST           1.0
         COMPARE_OP           
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
-        LOAD_NAME            self
+        LOAD_PARAM           self
         LOAD_ATTR            y
         RETURN_VALUE         
         LOAD_NAME            IndexError
@@ -894,17 +894,17 @@ LOAD_CONST           "5.3. Dunder Methods: PASSED"
 CALL_FUNCTION        1
 MAKE_CLASS           <Circle>
     MAKE_FUNCTION        <__init__>
-        LOAD_NAME            radius
+        LOAD_PARAM           radius
         STORE_NAME           self._radius
         RETURN_VALUE         
     STORE_NAME           __init__
     MAKE_FUNCTION        <radius>
-        LOAD_NAME            self
+        LOAD_PARAM           self
         LOAD_ATTR            _radius
         RETURN_VALUE         
     STORE_NAME           radius
     MAKE_FUNCTION        <radius>
-        LOAD_NAME            value
+        LOAD_PARAM           value
         LOAD_CONST           0.0
         COMPARE_OP           
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
@@ -912,13 +912,13 @@ MAKE_CLASS           <Circle>
         LOAD_CONST           "Radius cannot be negative"
         CALL_FUNCTION        1
         BINARY_OPERATION     
-        LOAD_NAME            value
+        LOAD_PARAM           value
         STORE_NAME           self._radius
         RETURN_VALUE         
     STORE_NAME           radius
     MAKE_FUNCTION        <area>
         LOAD_CONST           3.14
-        LOAD_NAME            self
+        LOAD_PARAM           self
         LOAD_ATTR            _radius
         LOAD_CONST           2.0
         BINARY_POWER         
@@ -952,8 +952,8 @@ MAKE_FUNCTION        <my_decorator>
         LOAD_CONST           "Something is happening before the function is called."
         CALL_FUNCTION        1
         LOAD_NAME            func
-        LOAD_NAME            args
-        LOAD_NAME            kwargs
+        LOAD_PARAM           args
+        LOAD_PARAM           kwargs
         BINARY_OPERATION     
         STORE_NAME           result
         LOAD_NAME            print
@@ -976,7 +976,7 @@ LOAD_CONST           "6.1. Decorators: PASSED"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <my_generator>
     LOAD_NAME            range
-    LOAD_NAME            n
+    LOAD_PARAM           n
     CALL_FUNCTION        1
     LOAD_CONST           
     BINARY_OPERATION     
@@ -1025,10 +1025,10 @@ MAKE_CLASS           <MyMeta>
         LOAD_NAME            super
         CALL_FUNCTION        0
         LOAD_ATTR            __new__
-        LOAD_NAME            cls
-        LOAD_NAME            name
-        LOAD_NAME            bases
-        LOAD_NAME            dct
+        LOAD_PARAM           cls
+        LOAD_PARAM           name
+        LOAD_PARAM           bases
+        LOAD_PARAM           dct
         CALL_FUNCTION        4
         RETURN_VALUE         
     STORE_NAME           __new__
@@ -1307,7 +1307,7 @@ LOAD_CONST           "abc"
 COMPARE_OP           
 STORE_NAME           not_in_result
 MAKE_FUNCTION        <lambda>
-    LOAD_NAME            x
+    LOAD_PARAM           x
     LOAD_CONST           2.0
     BINARY_MULTIPLY      
     RETURN_VALUE         
