@@ -181,9 +181,27 @@ class ASTCompiler:
 
         # --- Handle Literals and Identifiers ---
         if node_type in ["integer", "float", "number"]:
-            bytecode.append(
-                (OpCode.LOAD_CONST, float(self._get_node_text(node, source_code_bytes)))
-            )
+            text = self._get_node_text(node, source_code_bytes)
+            try:
+                # Handle complex numbers (Python) and BigInt (JavaScript)
+                if text.endswith("j") or text.endswith("J"):
+                    # Python complex number - convert to float representation
+                    # For malware analysis, we just need numeric representation
+                    numeric_part = text[:-1]
+                    if numeric_part:
+                        value = float(numeric_part)
+                    else:
+                        value = 1.0  # 'j' alone represents 1j
+                elif text.endswith("n"):
+                    # JavaScript BigInt - strip the 'n' and convert to float
+                    value = float(text[:-1])
+                else:
+                    # Regular integer or float
+                    value = float(text)
+                bytecode.append((OpCode.LOAD_CONST, value))
+            except ValueError:
+                # Fallback: treat as string if conversion fails
+                bytecode.append((OpCode.LOAD_CONST, text))
         elif node_type == "string":
             str_content = self._get_node_text(node, source_code_bytes)
             bytecode.append((OpCode.LOAD_CONST, str_content))

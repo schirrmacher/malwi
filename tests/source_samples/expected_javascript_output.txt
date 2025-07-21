@@ -1,0 +1,462 @@
+LOAD_NAME            console
+LOAD_CONST           "--- JavaScript Compiler Test Suite: Starting ---"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- 1. Basic Syntax and Literals ---"
+CALL_FUNCTION        1
+LOAD_CONST           1.0
+STORE_NAME           a
+LOAD_CONST           2.0
+STORE_NAME           b
+LOAD_CONST           3.0
+STORE_NAME           c
+LOAD_NAME            console
+LOAD_CONST           "1.2. Variable Declarations: PASSED"
+CALL_FUNCTION        1
+LOAD_CONST           "hello"
+STORE_NAME           stringLiteral
+LOAD_NAME            b
+STORE_NAME           templateLiteral
+LOAD_CONST           123.45
+STORE_NAME           numberLiteral
+LOAD_CONST           9007199254740991.0
+STORE_NAME           bigIntLiteral
+STORE_NAME           booleanLiteral
+STORE_NAME           nullLiteral
+STORE_NAME           undefinedLiteral
+LOAD_CONST           "value"
+BUILD_MAP            1
+STORE_NAME           objectLiteral
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+BUILD_LIST           3
+STORE_NAME           arrayLiteral
+STORE_NAME           regexLiteral
+LOAD_NAME            console
+LOAD_CONST           "1.3. Literals: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- 2. Data Types and Operations ---"
+CALL_FUNCTION        1
+LOAD_CONST           10.0
+STORE_NAME           n1
+LOAD_CONST           4.0
+STORE_NAME           n2
+LOAD_NAME            n1
+LOAD_NAME            n2
+BINARY_ADD           
+LOAD_NAME            n1
+LOAD_NAME            n2
+BINARY_SUBTRACT      
+LOAD_NAME            n1
+LOAD_NAME            n2
+BINARY_MULTIPLY      
+LOAD_NAME            n1
+LOAD_NAME            n2
+BINARY_DIVIDE        
+LOAD_NAME            n1
+LOAD_NAME            n2
+BINARY_OPERATION     
+LOAD_NAME            n1
+LOAD_CONST           2.0
+BINARY_OPERATION     
+LOAD_NAME            Math
+LOAD_CONST           144.0
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "2.1. Number and Math: PASSED"
+CALL_FUNCTION        1
+LOAD_CONST           "hello"
+STORE_NAME           str1
+LOAD_CONST           "world"
+STORE_NAME           str2
+LOAD_NAME            str1
+LOAD_CONST           " "
+BINARY_ADD           
+LOAD_NAME            str2
+BINARY_ADD           
+LOAD_NAME            str1
+LOAD_NAME            str1
+LOAD_CONST           1.0
+LOAD_NAME            str1
+LOAD_CONST           1.0
+LOAD_CONST           4.0
+CALL_FUNCTION        2
+LOAD_NAME            str1
+CALL_FUNCTION        0
+LOAD_NAME            console
+LOAD_CONST           "2.2. String: PASSED"
+CALL_FUNCTION        1
+LOAD_CONST           1.0
+LOAD_CONST           "two"
+LOAD_CONST           3.0
+BUILD_LIST           3
+STORE_NAME           arr
+LOAD_NAME            arr
+LOAD_NAME            arr
+LOAD_CONST           4.0
+CALL_FUNCTION        1
+LOAD_NAME            arr
+CALL_FUNCTION        0
+LOAD_CONST           "one"
+STORE_NAME           arr[0]
+LOAD_NAME            arr
+LOAD_NAME            x
+LOAD_NAME            x
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "2.3. Array: PASSED"
+CALL_FUNCTION        1
+LOAD_CONST           "John"
+LOAD_CONST           30.0
+BUILD_MAP            2
+STORE_NAME           obj
+LOAD_NAME            obj
+LOAD_NAME            obj
+LOAD_CONST           'age'
+LOAD_CONST           "New York"
+STORE_NAME           obj.city
+LOAD_NAME            obj
+LOAD_NAME            Object
+LOAD_NAME            obj
+CALL_FUNCTION        1
+LOAD_NAME            Object
+LOAD_NAME            obj
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "2.4. Object: PASSED"
+CALL_FUNCTION        1
+LOAD_CONST           1.0
+LOAD_CONST           '1'
+BINARY_OPERATION     
+LOAD_CONST           1.0
+LOAD_CONST           '1'
+BINARY_OPERATION     
+LOAD_CONST           '5'
+LOAD_CONST           3.0
+BINARY_SUBTRACT      
+LOAD_CONST           '5'
+LOAD_CONST           3.0
+BINARY_ADD           
+LOAD_NAME            console
+LOAD_CONST           "2.5. Type Coercion: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- 3. Control Flow ---"
+CALL_FUNCTION        1
+LOAD_CONST           0.0
+STORE_NAME           num
+LOAD_NAME            num
+LOAD_CONST           0.0
+BINARY_OPERATION     
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
+LOAD_NAME            num
+LOAD_CONST           0.0
+BINARY_OPERATION     
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+JUMP_FORWARD         <JUMP_TARGET>
+LOAD_NAME            console
+LOAD_CONST           "3.1. if/else: PASSED"
+CALL_FUNCTION        1
+LOAD_CONST           'Monday'
+STORE_NAME           day
+LOAD_NAME            day
+LOAD_CONST           'Monday'
+LOAD_CONST           'Tuesday'
+LOAD_NAME            console
+LOAD_CONST           "3.2. switch: PASSED"
+CALL_FUNCTION        1
+LOAD_CONST           0.0
+STORE_NAME           i
+LOAD_NAME            i
+LOAD_CONST           3.0
+BINARY_OPERATION     
+LOAD_NAME            i
+LOAD_NAME            key
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+BUILD_MAP            2
+LOAD_NAME            val
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+BUILD_LIST           3
+LOAD_CONST           3.0
+STORE_NAME           k
+LOAD_NAME            k
+LOAD_CONST           0.0
+BINARY_OPERATION     
+LOAD_NAME            k
+LOAD_NAME            console
+LOAD_CONST           "3.3. Loops: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            Error
+LOAD_CONST           "Intentional error"
+LOAD_NAME            e
+LOAD_NAME            console
+LOAD_CONST           "3.4. try/catch/finally: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- 4. Functions and Scopes ---"
+CALL_FUNCTION        1
+MAKE_FUNCTION        <greet>
+    LOAD_NAME            name
+    RETURN_VALUE         
+STORE_NAME           greet
+LOAD_NAME            greet
+LOAD_CONST           "World"
+CALL_FUNCTION        1
+LOAD_NAME            name
+LOAD_NAME            name
+RETURN_VALUE         
+STORE_NAME           farewell
+LOAD_NAME            farewell
+LOAD_CONST           "World"
+CALL_FUNCTION        1
+LOAD_NAME            x
+LOAD_NAME            x
+LOAD_NAME            x
+BINARY_MULTIPLY      
+STORE_NAME           square
+LOAD_NAME            square
+LOAD_CONST           4.0
+CALL_FUNCTION        1
+MAKE_FUNCTION        <paramsTest>
+    LOAD_NAME            a
+    LOAD_NAME            b
+    LOAD_NAME            rest
+    BUILD_LIST           3
+    RETURN_VALUE         
+STORE_NAME           paramsTest
+LOAD_NAME            paramsTest
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+LOAD_CONST           4.0
+LOAD_CONST           5.0
+CALL_FUNCTION        5
+MAKE_FUNCTION        <makeCounter>
+    LOAD_CONST           0.0
+    STORE_NAME           count
+    LOAD_NAME            count
+    LOAD_NAME            count
+    RETURN_VALUE         
+    RETURN_VALUE         
+STORE_NAME           makeCounter
+LOAD_NAME            makeCounter
+CALL_FUNCTION        0
+STORE_NAME           counter
+LOAD_NAME            counter
+CALL_FUNCTION        0
+LOAD_NAME            counter
+CALL_FUNCTION        0
+LOAD_NAME            console
+LOAD_CONST           "4.1-4.5. Functions and Scopes: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- 5. Object-Oriented Programming ---"
+CALL_FUNCTION        1
+MAKE_FUNCTION        <Car>
+    LOAD_NAME            make
+    STORE_NAME           this.make
+    LOAD_NAME            model
+    STORE_NAME           this.model
+    RETURN_VALUE         
+STORE_NAME           Car
+RETURN_VALUE         
+STORE_NAME           Car.prototype.getInfo
+LOAD_NAME            Car
+LOAD_CONST           'Ford'
+LOAD_CONST           'Focus'
+STORE_NAME           myCarOld
+LOAD_NAME            myCarOld
+CALL_FUNCTION        0
+LOAD_NAME            console
+LOAD_CONST           "5.1. Constructor Functions: PASSED"
+CALL_FUNCTION        1
+MAKE_CLASS           <Vehicle>
+    LOAD_NAME            name
+    LOAD_NAME            name
+    STORE_NAME           this.name
+    RETURN_VALUE         
+STORE_NAME           Vehicle
+MAKE_CLASS           <Motorcycle>
+    LOAD_NAME            name
+    LOAD_NAME            brand
+    LOAD_NAME            name
+    CALL_FUNCTION        1
+    LOAD_NAME            brand
+    STORE_NAME           this.brand
+    RETURN_VALUE         
+STORE_NAME           Motorcycle
+LOAD_NAME            Motorcycle
+LOAD_CONST           'Ninja'
+LOAD_CONST           'Kawasaki'
+STORE_NAME           bike
+LOAD_NAME            bike
+CALL_FUNCTION        0
+LOAD_NAME            console
+LOAD_CONST           "5.2. ES6 Classes: PASSED"
+CALL_FUNCTION        1
+MAKE_CLASS           <Rectangle>
+    LOAD_NAME            width
+    LOAD_NAME            height
+    LOAD_NAME            width
+    STORE_NAME           this._width
+    LOAD_NAME            height
+    STORE_NAME           this._height
+    BINARY_MULTIPLY      
+    RETURN_VALUE         
+    LOAD_NAME            value
+    LOAD_NAME            value
+    STORE_NAME           this._width
+    LOAD_NAME            size
+    LOAD_NAME            Rectangle
+    LOAD_NAME            size
+    LOAD_NAME            size
+    RETURN_VALUE         
+STORE_NAME           Rectangle
+LOAD_NAME            Rectangle
+LOAD_CONST           10.0
+LOAD_CONST           5.0
+STORE_NAME           rect
+LOAD_NAME            rect
+LOAD_CONST           20.0
+STORE_NAME           rect.width
+LOAD_NAME            Rectangle
+LOAD_CONST           8.0
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "5.3. Getters, Setters, Static: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- 6. Advanced Features (ES6+) ---"
+CALL_FUNCTION        1
+MAKE_FUNCTION        <delay>
+    LOAD_NAME            Promise
+    LOAD_NAME            resolve
+    LOAD_NAME            setTimeout
+    LOAD_NAME            resolve
+    LOAD_NAME            ms
+    CALL_FUNCTION        2
+    RETURN_VALUE         
+STORE_NAME           delay
+MAKE_FUNCTION        <myAsyncFunction>
+    LOAD_NAME            delay
+    LOAD_CONST           50.0
+    CALL_FUNCTION        1
+    LOAD_CONST           "Async work done"
+    RETURN_VALUE         
+STORE_NAME           myAsyncFunction
+LOAD_NAME            myAsyncFunction
+CALL_FUNCTION        0
+LOAD_NAME            result
+LOAD_NAME            console
+LOAD_CONST           "6.1. Promises and async/await: PASSED"
+CALL_FUNCTION        1
+CALL_FUNCTION        1
+LOAD_NAME            idGenerator
+LOAD_CONST           1.0
+STORE_NAME           id
+LOAD_NAME            id
+LOAD_NAME            idGenerator
+CALL_FUNCTION        0
+STORE_NAME           gen
+LOAD_NAME            gen
+CALL_FUNCTION        0
+LOAD_NAME            gen
+CALL_FUNCTION        0
+LOAD_NAME            console
+LOAD_CONST           "6.2. Generators: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "6.3. Modules: Syntax parsed (requires module runner)"
+CALL_FUNCTION        1
+LOAD_CONST           "a"
+LOAD_CONST           "b"
+LOAD_CONST           "c"
+BUILD_LIST           3
+STORE_NAME           [first, , third]
+LOAD_CONST           "Jane"
+LOAD_CONST           25.0
+BUILD_MAP            2
+STORE_NAME           { name: personName, age }
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+BUILD_LIST           2
+STORE_NAME           arr1
+LOAD_CONST           3.0
+LOAD_CONST           4.0
+BUILD_LIST           2
+STORE_NAME           arr2
+LOAD_NAME            arr1
+LOAD_NAME            arr2
+BUILD_LIST           2
+STORE_NAME           combined
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+BUILD_MAP            3
+STORE_NAME           { x, ...restObj }
+LOAD_NAME            console
+LOAD_CONST           "6.4. Destructuring and Spread/Rest: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- 7. Built-in Objects ---"
+CALL_FUNCTION        1
+LOAD_CONST           '{"fruit":"apple","size":"large"}'
+STORE_NAME           jsonString
+LOAD_NAME            JSON
+LOAD_NAME            jsonString
+CALL_FUNCTION        1
+STORE_NAME           jsonObj
+LOAD_NAME            JSON
+LOAD_NAME            jsonObj
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "7.1. JSON: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            Date
+STORE_NAME           now
+LOAD_NAME            now
+CALL_FUNCTION        0
+LOAD_NAME            now
+CALL_FUNCTION        0
+LOAD_NAME            console
+LOAD_CONST           "7.2. Date: PASSED"
+CALL_FUNCTION        1
+STORE_NAME           emailRegex
+LOAD_NAME            emailRegex
+LOAD_CONST           "test@example.com"
+CALL_FUNCTION        1
+LOAD_CONST           "The rain in Spain"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "7.3. Regular Expressions: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- 8. Dynamic Features ---"
+CALL_FUNCTION        1
+LOAD_NAME            eval
+LOAD_CONST           "2 + 2"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "8.1. eval(): PASSED"
+CALL_FUNCTION        1
+BUILD_MAP            0
+STORE_NAME           dynamicObj
+LOAD_CONST           "dynamicProperty"
+STORE_NAME           propName
+LOAD_CONST           "success"
+STORE_NAME           dynamicObj[propName]
+LOAD_NAME            console
+LOAD_CONST           "8.2. Dynamic properties: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "\n--- JavaScript Compiler Test Suite: Finished ---"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_CONST           "--- All tests completed. Check output for any errors. ---"
+CALL_FUNCTION        1
