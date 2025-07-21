@@ -92,6 +92,29 @@ class OpCode(Enum):
     BINARY_SUBTRACT = auto()
     BINARY_MULTIPLY = auto()
     BINARY_DIVIDE = auto()
+    BINARY_MODULO = auto()
+    BINARY_POWER = auto()
+    BINARY_FLOOR_DIVIDE = auto()
+    BINARY_AND = auto()
+    BINARY_OR = auto()
+    BINARY_XOR = auto()
+    BINARY_LSHIFT = auto()
+    BINARY_RSHIFT = auto()
+    COMPARE_OP = auto()
+    COMPARE_LESS = auto()
+    COMPARE_GREATER = auto()
+    COMPARE_EQUAL = auto()
+    COMPARE_NOT_EQUAL = auto()
+    COMPARE_LESS_EQUAL = auto()
+    COMPARE_GREATER_EQUAL = auto()
+    COMPARE_IN = auto()
+    COMPARE_NOT_IN = auto()
+    COMPARE_IS = auto()
+    COMPARE_IS_NOT = auto()
+    COMPARE_INSTANCEOF = auto()
+    LOGICAL_AND = auto()
+    LOGICAL_OR = auto()
+    LOGICAL_NOT = auto()
     BINARY_OPERATION = auto()  # Fallback for unhandled operators
     CALL_FUNCTION = auto()
     MAKE_FUNCTION = auto()
@@ -175,11 +198,54 @@ class ASTCompiler:
         node_type = node.type
 
         binary_operator_mapping = {
+            # Arithmetic operators
             "+": OpCode.BINARY_ADD,
             "-": OpCode.BINARY_SUBTRACT,
             "*": OpCode.BINARY_MULTIPLY,
             "/": OpCode.BINARY_DIVIDE,
-            ">": OpCode.BINARY_OPERATION,
+            "%": OpCode.BINARY_MODULO,
+            "**": OpCode.BINARY_POWER,
+            "//": OpCode.BINARY_FLOOR_DIVIDE,
+            # Bitwise operators
+            "&": OpCode.BINARY_AND,
+            "|": OpCode.BINARY_OR,
+            "^": OpCode.BINARY_XOR,
+            "<<": OpCode.BINARY_LSHIFT,
+            ">>": OpCode.BINARY_RSHIFT,
+            # Comparison operators
+            "<": OpCode.COMPARE_LESS,
+            ">": OpCode.COMPARE_GREATER,
+            "==": OpCode.COMPARE_EQUAL,
+            "===": OpCode.COMPARE_EQUAL,  # JavaScript strict equality
+            "!=": OpCode.COMPARE_NOT_EQUAL,
+            "!==": OpCode.COMPARE_NOT_EQUAL,  # JavaScript strict inequality
+            "<=": OpCode.COMPARE_LESS_EQUAL,
+            ">=": OpCode.COMPARE_GREATER_EQUAL,
+            "in": OpCode.COMPARE_IN,
+            "not in": OpCode.COMPARE_NOT_IN,
+            "is": OpCode.COMPARE_IS,
+            "is not": OpCode.COMPARE_IS_NOT,
+            "instanceof": OpCode.COMPARE_INSTANCEOF,
+            # Logical operators
+            "and": OpCode.LOGICAL_AND,
+            "or": OpCode.LOGICAL_OR,
+            "&&": OpCode.LOGICAL_AND,  # JavaScript
+            "||": OpCode.LOGICAL_OR,  # JavaScript
+        }
+
+        unary_operator_mapping = {
+            # Arithmetic unary operators
+            "-": OpCode.UNARY_NEGATIVE,
+            "+": OpCode.BINARY_OPERATION,  # Unary plus (no specific opcode needed)
+            # Bitwise unary operators
+            "~": OpCode.UNARY_INVERT,
+            # Logical unary operators
+            "not": OpCode.LOGICAL_NOT,
+            "!": OpCode.LOGICAL_NOT,  # JavaScript
+            # Other operators
+            "typeof": OpCode.BINARY_OPERATION,  # JavaScript typeof
+            "void": OpCode.BINARY_OPERATION,  # JavaScript void
+            "delete": OpCode.BINARY_OPERATION,  # JavaScript delete
         }
 
         # --- Handle Literals and Identifiers ---
@@ -294,7 +360,9 @@ class ASTCompiler:
             if op_node:
                 op_text = self._get_node_text(op_node, source_code_bytes)
                 op_code = binary_operator_mapping.get(op_text, OpCode.BINARY_OPERATION)
-                bytecode.append((op_code, None))
+                bytecode.append(
+                    (op_code, op_text if op_code == OpCode.BINARY_OPERATION else None)
+                )
         elif node_type in ["unary_operator", "unary_expression"]:
             operand_node = node.child_by_field_name("operand") or node.children[-1]
             bytecode.extend(
@@ -303,14 +371,16 @@ class ASTCompiler:
             op_node = node.child_by_field_name("operator") or node.children[0]
             if op_node:
                 op_text = self._get_node_text(op_node, source_code_bytes)
-                if op_text in ["-", "+"]:
-                    bytecode.append((OpCode.BINARY_OPERATION, None))  # Unary plus/minus
-                else:
-                    bytecode.append((OpCode.BINARY_OPERATION, None))  # Other unary ops
+                op_code = unary_operator_mapping.get(op_text, OpCode.BINARY_OPERATION)
+                bytecode.append(
+                    (op_code, op_text if op_code == OpCode.BINARY_OPERATION else None)
+                )
         elif node_type in ["boolean_operator", "logical_expression"]:
             # Handle 'and', 'or', '&&', '||' operators
             left_node = node.child_by_field_name("left")
             right_node = node.child_by_field_name("right")
+            op_node = node.child_by_field_name("operator")
+
             if left_node and right_node:
                 bytecode.extend(
                     self._generate_bytecode(left_node, source_code_bytes, file_path)
@@ -318,20 +388,34 @@ class ASTCompiler:
                 bytecode.extend(
                     self._generate_bytecode(right_node, source_code_bytes, file_path)
                 )
-                bytecode.append((OpCode.BINARY_OPERATION, None))
+
+                if op_node:
+                    op_text = self._get_node_text(op_node, source_code_bytes)
+                    op_code = binary_operator_mapping.get(
+                        op_text, OpCode.BINARY_OPERATION
+                    )
+                    bytecode.append(
+                        (
+                            op_code,
+                            op_text if op_code == OpCode.BINARY_OPERATION else None,
+                        )
+                    )
+                else:
+                    bytecode.append((OpCode.BINARY_OPERATION, None))
         elif node_type in ["comparison_operator"]:
             # Handle comparison chains like 'a < b < c'
             for child in node.named_children:
                 bytecode.extend(
                     self._generate_bytecode(child, source_code_bytes, file_path)
                 )
-            bytecode.append((OpCode.BINARY_OPERATION, None))
+            # For comparison chains, we'll use the generic COMPARE_OP
+            bytecode.append((OpCode.COMPARE_OP, None))
         elif node_type in ["not_operator"]:
             operand_node = node.child_by_field_name("operand") or node.children[-1]
             bytecode.extend(
                 self._generate_bytecode(operand_node, source_code_bytes, file_path)
             )
-            bytecode.append((OpCode.BINARY_OPERATION, None))
+            bytecode.append((OpCode.LOGICAL_NOT, None))
 
         elif node_type in ["call", "call_expression"]:
             func_node = node.child_by_field_name("function")
@@ -345,24 +429,34 @@ class ASTCompiler:
             kwarg_count = 0
             has_starargs = False
             has_kwargs = False
-            
+
             if args_node:
                 for arg in args_node.children:
                     if arg.type not in [",", "(", ")"]:
                         if arg.type == "list_splat":
                             # Handle *args
-                            argument_node = arg.child_by_field_name("argument") or arg.named_children[0]
+                            argument_node = (
+                                arg.child_by_field_name("argument")
+                                or arg.named_children[0]
+                            )
                             if argument_node:
                                 bytecode.extend(
-                                    self._generate_bytecode(argument_node, source_code_bytes, file_path)
+                                    self._generate_bytecode(
+                                        argument_node, source_code_bytes, file_path
+                                    )
                                 )
                                 has_starargs = True
                         elif arg.type == "dictionary_splat":
                             # Handle **kwargs
-                            argument_node = arg.child_by_field_name("argument") or arg.named_children[0]
+                            argument_node = (
+                                arg.child_by_field_name("argument")
+                                or arg.named_children[0]
+                            )
                             if argument_node:
                                 bytecode.extend(
-                                    self._generate_bytecode(argument_node, source_code_bytes, file_path)
+                                    self._generate_bytecode(
+                                        argument_node, source_code_bytes, file_path
+                                    )
                                 )
                                 has_kwargs = True
                         elif arg.type == "keyword_argument":
@@ -370,19 +464,25 @@ class ASTCompiler:
                             name_node = arg.child_by_field_name("name")
                             value_node = arg.child_by_field_name("value")
                             if name_node and value_node:
-                                key_name = self._get_node_text(name_node, source_code_bytes)
+                                key_name = self._get_node_text(
+                                    name_node, source_code_bytes
+                                )
                                 bytecode.append((OpCode.LOAD_CONST, key_name))
                                 bytecode.extend(
-                                    self._generate_bytecode(value_node, source_code_bytes, file_path)
+                                    self._generate_bytecode(
+                                        value_node, source_code_bytes, file_path
+                                    )
                                 )
                                 kwarg_count += 1
                         else:
                             # Regular positional argument
                             bytecode.extend(
-                                self._generate_bytecode(arg, source_code_bytes, file_path)
+                                self._generate_bytecode(
+                                    arg, source_code_bytes, file_path
+                                )
                             )
                             arg_count += 1
-            
+
             # Choose appropriate call instruction based on argument types
             if has_kwargs or kwarg_count > 0:
                 bytecode.append((OpCode.BINARY_OPERATION, None))  # CALL_FUNCTION_KW
@@ -415,7 +515,9 @@ class ASTCompiler:
             constructor_node = node.child_by_field_name("constructor")
             if constructor_node:
                 bytecode.extend(
-                    self._generate_bytecode(constructor_node, source_code_bytes, file_path)
+                    self._generate_bytecode(
+                        constructor_node, source_code_bytes, file_path
+                    )
                 )
 
             # Process arguments
@@ -439,12 +541,14 @@ class ASTCompiler:
 
         elif node_type in ["yield_expression", "yield"]:
             # Handle Python yield and yield from expressions
-            value_node = node.child_by_field_name("argument") or node.child_by_field_name("value")
-            
+            value_node = node.child_by_field_name(
+                "argument"
+            ) or node.child_by_field_name("value")
+
             # Check if this is "yield from" (Python) or just "yield"
             yield_text = self._get_node_text(node, source_code_bytes)
             is_yield_from = "yield from" in yield_text or "yield*" in yield_text
-            
+
             if value_node:
                 bytecode.extend(
                     self._generate_bytecode(value_node, source_code_bytes, file_path)
@@ -452,7 +556,7 @@ class ASTCompiler:
             else:
                 # yield without value yields None
                 bytecode.append((OpCode.LOAD_CONST, None))
-            
+
             if is_yield_from:
                 bytecode.append((OpCode.BINARY_OPERATION, None))  # YIELD_FROM
             else:
@@ -466,7 +570,9 @@ class ASTCompiler:
                     expr_node = child.child_by_field_name("expression")
                     if expr_node:
                         bytecode.extend(
-                            self._generate_bytecode(expr_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                expr_node, source_code_bytes, file_path
+                            )
                         )
                 else:
                     # Handle regular string parts
@@ -474,7 +580,9 @@ class ASTCompiler:
                         self._generate_bytecode(child, source_code_bytes, file_path)
                     )
             # Concatenate all parts
-            bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for string formatting
+            bytecode.append(
+                (OpCode.BINARY_OPERATION, None)
+            )  # Placeholder for string formatting
 
         elif node_type == "regex":
             # Handle regex literals
@@ -488,7 +596,9 @@ class ASTCompiler:
                 bytecode.extend(
                     self._generate_bytecode(argument_node, source_code_bytes, file_path)
                 )
-                bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for spread
+                bytecode.append(
+                    (OpCode.BINARY_OPERATION, None)
+                )  # Placeholder for spread
 
         elif node_type in ["optional_chain"]:
             # Handle ?. optional chaining
@@ -496,7 +606,9 @@ class ASTCompiler:
                 bytecode.extend(
                     self._generate_bytecode(child, source_code_bytes, file_path)
                 )
-            bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for optional access
+            bytecode.append(
+                (OpCode.BINARY_OPERATION, None)
+            )  # Placeholder for optional access
 
         # --- Handle Statements ---
         elif node_type in [
@@ -792,9 +904,13 @@ class ASTCompiler:
             # Then check condition
             if condition_node:
                 bytecode.extend(
-                    self._generate_bytecode(condition_node, source_code_bytes, file_path)
+                    self._generate_bytecode(
+                        condition_node, source_code_bytes, file_path
+                    )
                 )
-                bytecode.append((OpCode.POP_JUMP_IF_TRUE, len(bytecode) - 10))  # Jump back to start
+                bytecode.append(
+                    (OpCode.POP_JUMP_IF_TRUE, len(bytecode) - 10)
+                )  # Jump back to start
 
         elif node_type == "debugger_statement":
             # JavaScript debugger statement
@@ -811,7 +927,9 @@ class ASTCompiler:
 
             if statement_node:
                 bytecode.extend(
-                    self._generate_bytecode(statement_node, source_code_bytes, file_path)
+                    self._generate_bytecode(
+                        statement_node, source_code_bytes, file_path
+                    )
                 )
 
         elif node_type in ["try_statement"]:
@@ -819,59 +937,61 @@ class ASTCompiler:
             body_node = node.child_by_field_name("body")
             except_clauses = []
             finally_clause = None
-            
+
             # Collect except and finally clauses
             for child in node.children:
                 if child.type in ["except_clause", "catch_clause"]:
                     except_clauses.append(child)
                 elif child.type == "finally_clause":
                     finally_clause = child
-            
+
             # Generate try block
             if body_node:
                 bytecode.extend(
                     self._generate_bytecode(body_node, source_code_bytes, file_path)
                 )
-            
+
             # Jump over except blocks if no exception
             jump_to_finally = len(bytecode)
             bytecode.append((OpCode.JUMP_FORWARD, -1))  # Will be patched
-            
+
             # Generate except clauses
             except_handlers = []
             for except_clause in except_clauses:
                 except_start = len(bytecode)
                 except_handlers.append(except_start)
-                
+
                 # Check if this except has a specific exception type
                 exception_node = except_clause.child_by_field_name("type")
                 if exception_node:
                     # Generate code to match exception type
                     bytecode.extend(
-                        self._generate_bytecode(exception_node, source_code_bytes, file_path)
+                        self._generate_bytecode(
+                            exception_node, source_code_bytes, file_path
+                        )
                     )
                     bytecode.append((OpCode.BINARY_OPERATION, None))  # Exception match
-                
+
                 # Handle exception variable binding (as e)
                 name_node = except_clause.child_by_field_name("name")
                 if name_node:
                     var_name = self._get_node_text(name_node, source_code_bytes)
                     bytecode.append((OpCode.STORE_NAME, var_name))
-                
+
                 # Generate except block body
                 body_node = except_clause.child_by_field_name("body")
                 if body_node:
                     bytecode.extend(
                         self._generate_bytecode(body_node, source_code_bytes, file_path)
                     )
-                
+
                 # Jump to finally/end
                 bytecode.append((OpCode.JUMP_FORWARD, jump_to_finally))
-            
+
             # Patch jump to finally
             finally_start = len(bytecode)
             bytecode[jump_to_finally] = (OpCode.JUMP_FORWARD, finally_start)
-            
+
             # Generate finally clause
             if finally_clause:
                 body_node = finally_clause.child_by_field_name("body")
@@ -955,13 +1075,13 @@ class ASTCompiler:
             # Handle walrus operator (:=) in Python
             target_node = node.child_by_field_name("name")
             value_node = node.child_by_field_name("value")
-            
+
             if value_node:
                 # Generate bytecode for the value expression
                 bytecode.extend(
                     self._generate_bytecode(value_node, source_code_bytes, file_path)
                 )
-                
+
                 # Store the value in the target variable
                 if target_node:
                     target_name = self._get_node_text(target_node, source_code_bytes)
@@ -971,62 +1091,78 @@ class ASTCompiler:
 
         elif node_type in ["subscript", "subscript_expression"]:
             # Handle array/dict subscript access and slicing: obj[key] or obj[start:end:step]
-            object_node = node.child_by_field_name("object") or node.child_by_field_name("value")
-            index_node = node.child_by_field_name("index") or node.child_by_field_name("subscript")
-            
+            object_node = node.child_by_field_name(
+                "object"
+            ) or node.child_by_field_name("value")
+            index_node = node.child_by_field_name("index") or node.child_by_field_name(
+                "subscript"
+            )
+
             if object_node:
                 bytecode.extend(
                     self._generate_bytecode(object_node, source_code_bytes, file_path)
                 )
-            
+
             if index_node:
                 if index_node.type == "slice":
                     # Handle slice notation [start:stop:step]
                     start_node = index_node.child_by_field_name("start")
-                    stop_node = index_node.child_by_field_name("stop") 
+                    stop_node = index_node.child_by_field_name("stop")
                     step_node = index_node.child_by_field_name("step")
-                    
+
                     # Load slice components (None for missing parts)
                     if start_node:
                         bytecode.extend(
-                            self._generate_bytecode(start_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                start_node, source_code_bytes, file_path
+                            )
                         )
                     else:
                         bytecode.append((OpCode.LOAD_CONST, None))
-                    
+
                     if stop_node:
                         bytecode.extend(
-                            self._generate_bytecode(stop_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                stop_node, source_code_bytes, file_path
+                            )
                         )
                     else:
                         bytecode.append((OpCode.LOAD_CONST, None))
-                    
+
                     if step_node:
                         bytecode.extend(
-                            self._generate_bytecode(step_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                step_node, source_code_bytes, file_path
+                            )
                         )
                     else:
                         bytecode.append((OpCode.LOAD_CONST, None))
-                    
+
                     bytecode.append((OpCode.BINARY_OPERATION, None))  # BUILD_SLICE
                     bytecode.append((OpCode.BINARY_SUBSCR, None))
                 else:
                     # Regular subscript access
                     bytecode.extend(
-                        self._generate_bytecode(index_node, source_code_bytes, file_path)
+                        self._generate_bytecode(
+                            index_node, source_code_bytes, file_path
+                        )
                     )
                     bytecode.append((OpCode.BINARY_SUBSCR, None))
 
         elif node_type == "attribute":
             # Handle attribute access: obj.attr
-            object_node = node.child_by_field_name("object") or node.child_by_field_name("value")
-            attribute_node = node.child_by_field_name("attribute") or node.child_by_field_name("property")
-            
+            object_node = node.child_by_field_name(
+                "object"
+            ) or node.child_by_field_name("value")
+            attribute_node = node.child_by_field_name(
+                "attribute"
+            ) or node.child_by_field_name("property")
+
             if object_node:
                 bytecode.extend(
                     self._generate_bytecode(object_node, source_code_bytes, file_path)
                 )
-            
+
             if attribute_node:
                 attr_name = self._get_node_text(attribute_node, source_code_bytes)
                 bytecode.append((OpCode.LOAD_ATTR, attr_name))
@@ -1037,10 +1173,14 @@ class ASTCompiler:
             for child in node.named_children:
                 if child.type == "interpolation":
                     # Handle {expression} in f-string
-                    expr_node = child.named_children[0] if child.named_children else None
+                    expr_node = (
+                        child.named_children[0] if child.named_children else None
+                    )
                     if expr_node:
                         bytecode.extend(
-                            self._generate_bytecode(expr_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                expr_node, source_code_bytes, file_path
+                            )
                         )
                         string_parts += 1
                 else:
@@ -1048,7 +1188,7 @@ class ASTCompiler:
                     text_content = self._get_node_text(child, source_code_bytes)
                     bytecode.append((OpCode.LOAD_CONST, text_content))
                     string_parts += 1
-            
+
             # Build the formatted string
             if string_parts > 1:
                 bytecode.append((OpCode.BINARY_OPERATION, None))  # String format/join
@@ -1109,7 +1249,7 @@ class ASTCompiler:
         # --- Comprehensions and Generators ---
         elif node_type in [
             "list_comprehension",
-            "dictionary_comprehension", 
+            "dictionary_comprehension",
             "set_comprehension",
             "generator_expression",
         ]:
@@ -1117,7 +1257,7 @@ class ASTCompiler:
             element_expr = None
             for_clauses = []
             if_clauses = []
-            
+
             for child in node.named_children:
                 if child.type == "for_in_clause":
                     # Handle: for var in iterable
@@ -1126,7 +1266,10 @@ class ASTCompiler:
                     for_clauses.append((var_node, iterable_node))
                 elif child.type == "if_clause":
                     # Handle: if condition
-                    condition_node = child.child_by_field_name("condition") or child.named_children[0]
+                    condition_node = (
+                        child.child_by_field_name("condition")
+                        or child.named_children[0]
+                    )
                     if_clauses.append(condition_node)
                 elif child.type in ["pair"]:
                     # Dictionary comprehension key:value pair
@@ -1135,7 +1278,7 @@ class ASTCompiler:
                     # Expression to evaluate (list/set element)
                     if not element_expr:
                         element_expr = child
-            
+
             # Generate bytecode for comprehension
             # Start with empty collection
             if node_type == "list_comprehension":
@@ -1144,41 +1287,47 @@ class ASTCompiler:
                 bytecode.append((OpCode.BUILD_MAP, 0))
             elif node_type == "set_comprehension":
                 bytecode.append((OpCode.BUILD_SET, 0))
-            
+
             # Process for clauses (nested loops)
             for var_node, iterable_node in for_clauses:
                 if iterable_node:
                     bytecode.extend(
-                        self._generate_bytecode(iterable_node, source_code_bytes, file_path)
+                        self._generate_bytecode(
+                            iterable_node, source_code_bytes, file_path
+                        )
                     )
                     bytecode.append((OpCode.GET_ITER, None))
-                    
+
                     # Loop start
                     loop_start = len(bytecode)
                     bytecode.append((OpCode.FOR_ITER, -1))  # Will be patched
-                    
+
                     if var_node:
                         var_name = self._get_node_text(var_node, source_code_bytes)
                         bytecode.append((OpCode.STORE_NAME, var_name))
-                    
+
                     # Process if clauses (filters)
                     for condition_node in if_clauses:
                         bytecode.extend(
-                            self._generate_bytecode(condition_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                condition_node, source_code_bytes, file_path
+                            )
                         )
                         bytecode.append((OpCode.POP_JUMP_IF_FALSE, loop_start))
-                    
+
                     # Generate element expression
                     if element_expr:
                         bytecode.extend(
-                            self._generate_bytecode(element_expr, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                element_expr, source_code_bytes, file_path
+                            )
                         )
                         # Add to collection (simplified)
                         bytecode.append((OpCode.BINARY_OPERATION, None))
-                    
+
                     # Jump back to loop start
                     bytecode.append((OpCode.JUMP_FORWARD, loop_start))
-                    
+
                     # Patch FOR_ITER to jump here when done
                     bytecode[loop_start] = (OpCode.FOR_ITER, len(bytecode))
 
@@ -1215,25 +1364,35 @@ class ASTCompiler:
             for child in node.children:
                 if child.type in ["case_clause", "case", "switch_case"]:
                     # Process case value/pattern
-                    value_node = child.child_by_field_name("value") or child.child_by_field_name("pattern")
+                    value_node = child.child_by_field_name(
+                        "value"
+                    ) or child.child_by_field_name("pattern")
                     if value_node:
                         bytecode.extend(
-                            self._generate_bytecode(value_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                value_node, source_code_bytes, file_path
+                            )
                         )
-                        bytecode.append((OpCode.BINARY_OPERATION, None))  # Compare with subject
+                        bytecode.append(
+                            (OpCode.BINARY_OPERATION, None)
+                        )  # Compare with subject
 
                     # Process case body
                     body_node = child.child_by_field_name("body")
                     if body_node:
                         bytecode.extend(
-                            self._generate_bytecode(body_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                body_node, source_code_bytes, file_path
+                            )
                         )
                 elif child.type in ["switch_default", "else_clause"]:
                     # Process default case
                     body_node = child.child_by_field_name("body")
                     if body_node:
                         bytecode.extend(
-                            self._generate_bytecode(body_node, source_code_bytes, file_path)
+                            self._generate_bytecode(
+                                body_node, source_code_bytes, file_path
+                            )
                         )
 
         # --- Block, Module, and Program Handling ---

@@ -267,20 +267,20 @@ LOAD_NAME            b
 BINARY_DIVIDE        
 LOAD_NAME            a
 LOAD_NAME            b
-BINARY_OPERATION     
+BINARY_FLOOR_DIVIDE  
 LOAD_NAME            a
 LOAD_NAME            b
-BINARY_OPERATION     
+BINARY_MODULO        
 LOAD_NAME            a
 LOAD_NAME            b
-BINARY_OPERATION     
+BINARY_POWER         
 LOAD_CONST           5.0
-BINARY_OPERATION     
+UNARY_NEGATIVE       
 STORE_NAME           c
 LOAD_NAME            c
-BINARY_OPERATION     
+BINARY_OPERATION     +
 LOAD_NAME            c
-BINARY_OPERATION     
+UNARY_NEGATIVE       
 LOAD_NAME            abs
 LOAD_NAME            c
 CALL_FUNCTION        1
@@ -313,16 +313,16 @@ LOAD_CONST           3.0
 BINARY_MULTIPLY      
 LOAD_CONST           "e"
 LOAD_NAME            s1
-BINARY_OPERATION     
+COMPARE_OP           
 LOAD_CONST           "x"
 LOAD_NAME            s1
-BINARY_OPERATION     
+COMPARE_OP           
 LOAD_NAME            s1
 LOAD_CONST           1.0
 BINARY_SUBSCR        
 LOAD_NAME            s1
 LOAD_CONST           1.0
-BINARY_OPERATION     
+UNARY_NEGATIVE       
 BINARY_SUBSCR        
 LOAD_NAME            s1
 LOAD_CONST           
@@ -430,7 +430,7 @@ LOAD_CONST           3.0
 STORE_NAME           my_dict["three"]
 LOAD_CONST           "three"
 LOAD_NAME            my_dict
-BINARY_OPERATION     
+COMPARE_OP           
 LOAD_NAME            list
 LOAD_NAME            my_dict
 LOAD_ATTR            keys
@@ -447,7 +447,7 @@ BINARY_SUBSCR
 BINARY_OPERATION     
 LOAD_CONST           "two"
 LOAD_NAME            my_dict
-BINARY_OPERATION     
+COMPARE_OP           
 BUILD_MAP            0
 LOAD_NAME            range
 LOAD_CONST           3.0
@@ -477,14 +477,14 @@ LOAD_CONST           4.0
 CALL_FUNCTION        1
 LOAD_CONST           4.0
 LOAD_NAME            my_set
-BINARY_OPERATION     
+COMPARE_OP           
 LOAD_NAME            my_set
 LOAD_ATTR            remove
 LOAD_CONST           2.0
 CALL_FUNCTION        1
 LOAD_CONST           2.0
 LOAD_NAME            my_set
-BINARY_OPERATION     
+COMPARE_OP           
 LOAD_CONST           1.0
 LOAD_CONST           2.0
 LOAD_CONST           3.0
@@ -497,16 +497,16 @@ BUILD_SET            3
 STORE_NAME           set2
 LOAD_NAME            set1
 LOAD_NAME            set2
-BINARY_OPERATION     
+BINARY_OR            
 LOAD_NAME            set1
 LOAD_NAME            set2
-BINARY_OPERATION     
+BINARY_AND           
 LOAD_NAME            set1
 LOAD_NAME            set2
 BINARY_SUBTRACT      
 LOAD_NAME            set1
 LOAD_NAME            set2
-BINARY_OPERATION     
+BINARY_XOR           
 BUILD_SET            0
 LOAD_CONST           "abracadabra"
 GET_ITER             
@@ -514,7 +514,7 @@ FOR_ITER             12
 STORE_NAME           x
 LOAD_NAME            x
 LOAD_CONST           "abc"
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_NAME            x
 BINARY_OPERATION     
@@ -530,14 +530,14 @@ LOAD_CONST           10.0
 STORE_NAME           x
 LOAD_NAME            x
 LOAD_CONST           5.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_CONST           "greater"
 STORE_NAME           result
 JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            x
 LOAD_CONST           5.0
-BINARY_OPERATION     
+COMPARE_OP           
 LOAD_CONST           "equal"
 STORE_NAME           result
 LOAD_NAME            print
@@ -558,14 +558,14 @@ LOAD_CONST           3.0
 BUILD_LIST           3
 LOAD_NAME            i
 LOAD_CONST           4.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 LOAD_CONST           5.0
 STORE_NAME           count
 LOAD_NAME            count
 LOAD_CONST           0.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_NAME            count
 LOAD_CONST           1.0
@@ -575,7 +575,7 @@ LOAD_CONST           3.0
 STORE_NAME           count
 LOAD_NAME            count
 LOAD_CONST           0.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_NAME            count
 LOAD_CONST           1.0
@@ -583,8 +583,8 @@ BINARY_OPERATION
 STORE_NAME           count
 LOAD_NAME            count
 LOAD_CONST           1.0
-BINARY_OPERATION     
-BINARY_OPERATION     
+UNARY_NEGATIVE       
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 LOAD_CONST           False
@@ -594,19 +594,19 @@ LOAD_CONST           10.0
 CALL_FUNCTION        1
 LOAD_NAME            i
 LOAD_CONST           2.0
-BINARY_OPERATION     
+BINARY_MODULO        
 LOAD_CONST           0.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 LOAD_NAME            i
 LOAD_CONST           5.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 LOAD_NAME            i
 LOAD_CONST           4.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_CONST           True
 STORE_NAME           found_even
@@ -849,14 +849,14 @@ MAKE_CLASS           <Vector>
     MAKE_FUNCTION        <__getitem__>
         LOAD_NAME            index
         LOAD_CONST           0.0
-        BINARY_OPERATION     
+        COMPARE_OP           
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
         LOAD_NAME            self
         LOAD_ATTR            x
         RETURN_VALUE         
         LOAD_NAME            index
         LOAD_CONST           1.0
-        BINARY_OPERATION     
+        COMPARE_OP           
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
         LOAD_NAME            self
         LOAD_ATTR            y
@@ -906,7 +906,7 @@ MAKE_CLASS           <Circle>
     MAKE_FUNCTION        <radius>
         LOAD_NAME            value
         LOAD_CONST           0.0
-        BINARY_OPERATION     
+        COMPARE_OP           
         POP_JUMP_IF_FALSE    <JUMP_TARGET>
         LOAD_NAME            ValueError
         LOAD_CONST           "Radius cannot be negative"
@@ -921,7 +921,7 @@ MAKE_CLASS           <Circle>
         LOAD_NAME            self
         LOAD_ATTR            _radius
         LOAD_CONST           2.0
-        BINARY_OPERATION     
+        BINARY_POWER         
         BINARY_MULTIPLY      
         RETURN_VALUE         
     STORE_NAME           area
@@ -939,7 +939,7 @@ STORE_NAME           c.radius
 LOAD_NAME            c
 LOAD_ATTR            radius
 LOAD_CONST           1.0
-BINARY_OPERATION     
+UNARY_NEGATIVE       
 STORE_NAME           c.radius
 JUMP_FORWARD         <JUMP_TARGET>
 JUMP_FORWARD         <JUMP_TARGET>
@@ -1074,7 +1074,7 @@ BINARY_OPERATION
 LOAD_NAME            cmath
 LOAD_ATTR            sqrt
 LOAD_CONST           1.0
-BINARY_OPERATION     
+UNARY_NEGATIVE       
 CALL_FUNCTION        1
 LOAD_NAME            print
 LOAD_CONST           "7.1. math and cmath: PASSED"
@@ -1204,7 +1204,7 @@ LOAD_NAME            hasattr
 LOAD_NAME            dyn_obj
 LOAD_CONST           "dynamic_attr"
 CALL_FUNCTION        2
-BINARY_OPERATION     
+LOGICAL_NOT          
 LOAD_NAME            print
 LOAD_CONST           "8.1. Dynamic attribute access: PASSED"
 CALL_FUNCTION        1
@@ -1228,7 +1228,7 @@ LOAD_NAME            isinstance
 LOAD_CONST           "hello"
 LOAD_NAME            int
 CALL_FUNCTION        2
-BINARY_OPERATION     
+LOGICAL_NOT          
 LOAD_NAME            issubclass
 LOAD_NAME            bool
 LOAD_NAME            int
@@ -1237,7 +1237,7 @@ LOAD_NAME            type
 LOAD_CONST           123.0
 CALL_FUNCTION        1
 LOAD_NAME            int
-BINARY_OPERATION     
+COMPARE_OP           
 LOAD_NAME            print
 LOAD_CONST           "8.3. Type introspection: PASSED"
 CALL_FUNCTION        1
@@ -1253,16 +1253,16 @@ STORE_NAME           none_val
 LOAD_CONST           ...
 STORE_NAME           ellipsis_val
 LOAD_CONST           42.0
-BINARY_OPERATION     
+UNARY_NEGATIVE       
 STORE_NAME           negative_num
 LOAD_CONST           42.0
-BINARY_OPERATION     
+BINARY_OPERATION     +
 STORE_NAME           positive_num
 LOAD_CONST           42.0
-BINARY_OPERATION     
+UNARY_INVERT         
 STORE_NAME           bitwise_not
 LOAD_CONST           True
-BINARY_OPERATION     
+LOGICAL_NOT          
 STORE_NAME           logical_not
 LOAD_CONST           10.0
 STORE_NAME           aug_val
@@ -1284,27 +1284,27 @@ BINARY_OPERATION
 STORE_NAME           aug_val
 LOAD_CONST           1.0
 LOAD_CONST           2.0
-BINARY_OPERATION     
+COMPARE_OP           
 LOAD_CONST           2.0
 LOAD_CONST           1.0
-BINARY_OPERATION     
-BINARY_OPERATION     
+COMPARE_OP           
+LOGICAL_AND          
 LOAD_CONST           3.0
 LOAD_CONST           3.0
-BINARY_OPERATION     
-BINARY_OPERATION     
+COMPARE_OP           
+LOGICAL_OR           
 STORE_NAME           comp_result
 LOAD_NAME            bool_true
 LOAD_CONST           True
-BINARY_OPERATION     
+COMPARE_OP           
 STORE_NAME           is_result
 LOAD_CONST           "a"
 LOAD_CONST           "abc"
-BINARY_OPERATION     
+COMPARE_OP           
 STORE_NAME           in_result
 LOAD_CONST           "z"
 LOAD_CONST           "abc"
-BINARY_OPERATION     
+COMPARE_OP           
 STORE_NAME           not_in_result
 MAKE_FUNCTION        <lambda>
     LOAD_NAME            x
@@ -1383,14 +1383,14 @@ LOAD_CONST           2.0
 CALL_FUNCTION        1
 LOAD_NAME            i
 LOAD_CONST           10.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 LOAD_CONST           0.0
 STORE_NAME           count
 LOAD_NAME            count
 LOAD_CONST           2.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_NAME            count
 LOAD_CONST           1.0
@@ -1410,7 +1410,7 @@ LOAD_NAME            ctx_val
 STORE_NAME           context_result
 LOAD_CONST           1.0
 LOAD_CONST           1.0
-BINARY_OPERATION     
+COMPARE_OP           
 BINARY_OPERATION     
 MAKE_FUNCTION        <empty_func>
     RETURN_VALUE         
@@ -1420,12 +1420,12 @@ LOAD_CONST           5.0
 CALL_FUNCTION        1
 LOAD_NAME            i
 LOAD_CONST           1.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 LOAD_NAME            i
 LOAD_CONST           3.0
-BINARY_OPERATION     
+COMPARE_OP           
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 MAKE_FUNCTION        <test_raise>

@@ -239,10 +239,10 @@ LOAD_NAME            n2
 BINARY_DIVIDE        
 LOAD_NAME            n1
 LOAD_NAME            n2
-BINARY_OPERATION     
+BINARY_MODULO        
 LOAD_NAME            n1
 LOAD_CONST           2.0
-BINARY_OPERATION     
+BINARY_POWER         
 LOAD_NAME            Math
 LOAD_CONST           144.0
 CALL_FUNCTION        1
@@ -287,7 +287,7 @@ STORE_NAME           arr[0]
 LOAD_NAME            arr
 MAKE_FUNCTION        <lambda>
     LOAD_NAME            x
-    BINARY_OPERATION     
+    BINARY_OPERATION     typeof
     RETURN_VALUE         
 CALL_FUNCTION        1
 LOAD_NAME            console
@@ -304,7 +304,7 @@ BINARY_SUBSCR
 LOAD_CONST           "New York"
 STORE_NAME           obj.city
 LOAD_NAME            obj
-BINARY_OPERATION     
+BINARY_OPERATION     delete
 LOAD_NAME            Object
 LOAD_NAME            obj
 CALL_FUNCTION        1
@@ -316,10 +316,10 @@ LOAD_CONST           "2.4. Object: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           1.0
 LOAD_CONST           '1'
-BINARY_OPERATION     
+COMPARE_EQUAL        
 LOAD_CONST           1.0
 LOAD_CONST           '1'
-BINARY_OPERATION     
+COMPARE_EQUAL        
 LOAD_CONST           '5'
 LOAD_CONST           3.0
 BINARY_SUBTRACT      
@@ -336,12 +336,12 @@ LOAD_CONST           0.0
 STORE_NAME           num
 LOAD_NAME            num
 LOAD_CONST           0.0
-BINARY_OPERATION     
+COMPARE_GREATER      
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            num
 LOAD_CONST           0.0
-BINARY_OPERATION     
+COMPARE_LESS         
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            console
@@ -363,7 +363,7 @@ LOAD_CONST           3.0
 STORE_NAME           k
 LOAD_NAME            k
 LOAD_CONST           0.0
-BINARY_OPERATION     
+COMPARE_GREATER      
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 LOAD_NAME            k
 LOAD_CONST           1.0
@@ -666,19 +666,19 @@ LOAD_CONST
 STORE_NAME           nullVal
 STORE_NAME           undefinedVal
 LOAD_CONST           42.0
-BINARY_OPERATION     
+UNARY_NEGATIVE       
 STORE_NAME           negativeNum
 LOAD_CONST           42.0
-BINARY_OPERATION     
+BINARY_OPERATION     +
 STORE_NAME           positiveNum
 LOAD_CONST           42.0
-BINARY_OPERATION     
+UNARY_INVERT         
 STORE_NAME           bitwiseNot
 LOAD_CONST           True
-BINARY_OPERATION     
+LOGICAL_NOT          
 STORE_NAME           logicalNot
 LOAD_CONST           42.0
-BINARY_OPERATION     
+BINARY_OPERATION     typeof
 STORE_NAME           typeofOp
 LOAD_CONST           10.0
 STORE_NAME           augVal
@@ -692,28 +692,28 @@ LOAD_NAME            augVal
 LOAD_CONST           2.0
 LOAD_CONST           1.0
 LOAD_CONST           2.0
-BINARY_OPERATION     
+COMPARE_LESS         
 LOAD_CONST           2.0
 LOAD_CONST           1.0
-BINARY_OPERATION     
-BINARY_OPERATION     
+COMPARE_GREATER      
+LOGICAL_AND          
 LOAD_CONST           3.0
 LOAD_CONST           3.0
-BINARY_OPERATION     
-BINARY_OPERATION     
+COMPARE_EQUAL        
+LOGICAL_OR           
 STORE_NAME           compResult
 LOAD_CONST           5.0
 LOAD_CONST           5.0
-BINARY_OPERATION     
+COMPARE_EQUAL        
 STORE_NAME           strictEqual
 LOAD_CONST           5.0
 LOAD_CONST           "5"
-BINARY_OPERATION     
+COMPARE_NOT_EQUAL    
 STORE_NAME           notStrictEqual
 LOAD_NAME            Date
 CALL_FUNCTION        0
 LOAD_NAME            Date
-BINARY_OPERATION     
+COMPARE_INSTANCEOF   
 STORE_NAME           instanceOf
 MAKE_FUNCTION        <lambda>
     LOAD_NAME            x
@@ -769,12 +769,12 @@ LOAD_CONST           True
 STORE_NAME           cleanupDone
 LOAD_NAME            i
 LOAD_CONST           1.0
-BINARY_OPERATION     
+COMPARE_EQUAL        
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 LOAD_NAME            i
 LOAD_CONST           2.0
-BINARY_OPERATION     
+COMPARE_EQUAL        
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 BINARY_OPERATION     
 LOAD_NAME            arr
@@ -789,7 +789,7 @@ LOAD_CONST           2.0
 STORE_NAME           switchVal
 LOAD_CONST           5.0
 LOAD_CONST           0.0
-BINARY_OPERATION     
+COMPARE_GREATER      
 LOAD_CONST           "positive"
 LOAD_CONST           "negative"
 STORE_NAME           ternaryResult
@@ -805,7 +805,7 @@ LOAD_NAME            arr
 MAKE_FUNCTION        <lambda>
     LOAD_NAME            x
     LOAD_CONST           1.0
-    BINARY_OPERATION     
+    COMPARE_GREATER      
     RETURN_VALUE         
 CALL_FUNCTION        1
 STORE_NAME           filteredArr
@@ -871,7 +871,7 @@ BINARY_OPERATION
 STORE_NAME           optional
 LOAD_NAME            nullVal
 LOAD_CONST           "default"
-BINARY_OPERATION     
+BINARY_OPERATION     ??
 STORE_NAME           nullish
 MAKE_FUNCTION        <testThrow>
     LOAD_NAME            Error
