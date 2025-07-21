@@ -1466,6 +1466,70 @@ LOAD_CONST           42.0
 STORE_NAME           temp_var
 LOAD_NAME            temp_var
 BINARY_OPERATION     
+LOAD_CONST           0xFF
+LOAD_CONST           0x0F
+BINARY_AND           
+STORE_NAME           bitwise_and
+LOAD_CONST           0x10
+LOAD_CONST           0x01
+BINARY_OR            
+STORE_NAME           bitwise_or
+LOAD_CONST           0xAA
+LOAD_CONST           0x55
+BINARY_XOR           
+STORE_NAME           bitwise_xor
+LOAD_CONST           8.0
+LOAD_CONST           2.0
+BINARY_LSHIFT        
+STORE_NAME           left_shift
+LOAD_CONST           32.0
+LOAD_CONST           3.0
+BINARY_RSHIFT        
+STORE_NAME           right_shift
+LOAD_CONST           17.0
+LOAD_CONST           5.0
+BINARY_FLOOR_DIVIDE  
+STORE_NAME           floor_div
+LOAD_CONST           5.0
+LOAD_CONST           50.0
+STORE_NAME           x, y
+LOAD_CONST           1.0
+LOAD_NAME            x
+LOAD_CONST           10.0
+COMPARE_OP           
+LOAD_CONST           0.0
+LOAD_NAME            y
+LOAD_CONST           100.0
+COMPARE_OP           
+LOGICAL_AND          
+STORE_NAME           chained_comp
+LOAD_CONST           0.0
+LOAD_NAME            x
+LOAD_CONST           10.0
+COMPARE_OP           
+STORE_NAME           is_between
+LOAD_NAME            x
+LOAD_CONST           5.0
+COMPARE_OP           
+STORE_NAME           greater_equal
+LOAD_NAME            y
+LOAD_CONST           100.0
+COMPARE_OP           
+STORE_NAME           less_equal
+LOAD_NAME            x
+LOAD_NAME            y
+COMPARE_OP           
+STORE_NAME           not_equal
+LOAD_NAME            len
+LOAD_CONST           "test"
+CALL_FUNCTION        1
+STORE_NAME           n
+LOAD_NAME            n
+LOAD_CONST           3.0
+COMPARE_OP           
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+LOAD_NAME            n
+STORE_NAME           walrus_result
 LOAD_NAME            print
 LOAD_CONST           "9. Missing Node Types Coverage: PASSED"
 CALL_FUNCTION        1

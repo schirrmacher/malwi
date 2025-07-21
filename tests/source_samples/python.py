@@ -813,6 +813,35 @@ def outer():
 temp_var = 42
 del temp_var
 
+# 9.17. Missing Operators for Malware Analysis Coverage
+# Bitwise operations (common in malware obfuscation)
+bitwise_and = 0xFF & 0x0F  # Bitwise AND
+bitwise_or = 0x10 | 0x01  # Bitwise OR
+bitwise_xor = 0xAA ^ 0x55  # Bitwise XOR
+left_shift = 8 << 2  # Left shift
+right_shift = 32 >> 3  # Right shift
+
+# Floor division (often used in calculations)
+floor_div = 17 // 5
+
+# Matrix multiplication (if using numpy-like operations)
+# Note: This would require numpy arrays for real execution, testing parsing only
+# matrix_mul_example = "array_a @ array_b"  # Uncomment if numpy available
+
+# Chained comparisons (common in validation logic)
+x, y = 5, 50
+chained_comp = 1 < x < 10 and 0 <= y <= 100
+is_between = 0 < x <= 10
+
+# Additional comparison operators
+greater_equal = x >= 5
+less_equal = y <= 100
+not_equal = x != y
+
+# Walrus operator in context (already tested above but adding more examples)
+if (n := len("test")) > 3:
+    walrus_result = n
+
 print("9. Missing Node Types Coverage: PASSED")
 
 

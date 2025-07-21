@@ -100,6 +100,9 @@ class OpCode(Enum):
     BINARY_XOR = auto()
     BINARY_LSHIFT = auto()
     BINARY_RSHIFT = auto()
+    BINARY_UNSIGNED_RSHIFT = auto()  # JavaScript >>> operator
+    BINARY_MATMUL = auto()  # Python @ operator
+    BINARY_NULLISH_COALESCING = auto()  # JavaScript ?? operator
     COMPARE_OP = auto()
     COMPARE_LESS = auto()
     COMPARE_GREATER = auto()
@@ -212,6 +215,11 @@ class ASTCompiler:
             "^": OpCode.BINARY_XOR,
             "<<": OpCode.BINARY_LSHIFT,
             ">>": OpCode.BINARY_RSHIFT,
+            ">>>": OpCode.BINARY_UNSIGNED_RSHIFT,  # JavaScript unsigned right shift
+            # Matrix operations
+            "@": OpCode.BINARY_MATMUL,  # Python matrix multiplication
+            # Nullish coalescing
+            "??": OpCode.BINARY_NULLISH_COALESCING,  # JavaScript nullish coalescing
             # Comparison operators
             "<": OpCode.COMPARE_LESS,
             ">": OpCode.COMPARE_GREATER,

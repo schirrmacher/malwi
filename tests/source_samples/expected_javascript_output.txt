@@ -871,7 +871,7 @@ BINARY_OPERATION
 STORE_NAME           optional
 LOAD_NAME            nullVal
 LOAD_CONST           "default"
-BINARY_OPERATION     ??
+BINARY_NULLISH_COALESCING 
 STORE_NAME           nullish
 MAKE_FUNCTION        <testThrow>
     LOAD_NAME            Error
@@ -880,6 +880,53 @@ MAKE_FUNCTION        <testThrow>
     BINARY_OPERATION     
     RETURN_VALUE         
 STORE_NAME           testThrow
+LOAD_CONST           0xFF
+LOAD_CONST           0x0F
+BINARY_AND           
+STORE_NAME           bitwiseAnd
+LOAD_CONST           0x10
+LOAD_CONST           0x01
+BINARY_OR            
+STORE_NAME           bitwiseOr
+LOAD_CONST           0xAA
+LOAD_CONST           0x55
+BINARY_XOR           
+STORE_NAME           bitwiseXor
+LOAD_CONST           8.0
+LOAD_CONST           2.0
+BINARY_LSHIFT        
+STORE_NAME           leftShift
+LOAD_CONST           32.0
+LOAD_CONST           3.0
+BINARY_RSHIFT        
+STORE_NAME           rightShift
+LOAD_CONST           32.0
+LOAD_CONST           2.0
+BINARY_UNSIGNED_RSHIFT 
+STORE_NAME           unsignedRightShift
+LOAD_CONST           5.0
+LOAD_CONST           5.0
+COMPARE_EQUAL        
+STORE_NAME           strictEqualTest
+LOAD_CONST           5.0
+LOAD_CONST           "5"
+COMPARE_NOT_EQUAL    
+STORE_NAME           strictNotEqualTest
+LOAD_CONST           
+LOAD_CONST           "default"
+BINARY_NULLISH_COALESCING 
+STORE_NAME           nullishCoalescing
+LOAD_CONST           "fallback"
+BINARY_NULLISH_COALESCING 
+STORE_NAME           undefinedCoalescing
+LOAD_CONST           "value"
+BUILD_MAP            1
+STORE_NAME           testObj
+LOAD_NAME            testObj
+BINARY_OPERATION     delete
+LOAD_CONST           0.0
+BINARY_OPERATION     void
+STORE_NAME           voidResult
 LOAD_NAME            console
 LOAD_CONST           "9. Missing Node Types Coverage: PASSED"
 CALL_FUNCTION        1

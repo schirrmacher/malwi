@@ -578,6 +578,28 @@ function testThrow() {
     throw new Error("Test error");
 }
 
+// 9.20. Missing Operators for Malware Analysis Coverage
+// Bitwise operations (common in malware obfuscation)
+const bitwiseAnd = 0xFF & 0x0F;        // Bitwise AND
+const bitwiseOr = 0x10 | 0x01;         // Bitwise OR  
+const bitwiseXor = 0xAA ^ 0x55;        // Bitwise XOR
+const leftShift = 8 << 2;              // Left shift
+const rightShift = 32 >> 3;            // Right shift
+const unsignedRightShift = 32 >>> 2;   // Unsigned right shift (JavaScript-specific)
+
+// Strict equality/inequality (type checking)
+const strictEqualTest = (5 === 5);     // Strict equality
+const strictNotEqualTest = (5 !== "5"); // Strict inequality
+
+// Nullish coalescing operator (modern evasion)
+const nullishCoalescing = null ?? "default";
+const undefinedCoalescing = undefined ?? "fallback";
+
+// Delete and void operators (property manipulation)
+const testObj = { prop: "value" };
+delete testObj.prop;                    // Delete operator
+const voidResult = void 0;             // Void operator
+
 console.log("9. Missing Node Types Coverage: PASSED");
 
 
