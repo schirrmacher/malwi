@@ -134,6 +134,52 @@ class CodeObject:
 
         return "\n".join(result_lines)
 
+    def to_oneline(self, separator: str = " ") -> str:
+        """
+        Formats all bytecode instructions in a single line with opcodes and values.
+
+        Args:
+            separator: String to separate instructions (default: " ")
+
+        Returns:
+            String with opcodes and their values joined by the separator
+        """
+        instruction_parts = []
+
+        for instruction in self.byte_code:
+            # Check for legacy tuple format and convert if needed
+            if isinstance(instruction, tuple):
+                opcode, arg = instruction
+                instruction = Instruction(opcode, arg)
+
+            # Handle nested CodeObjects - show reference name
+            if isinstance(instruction.arg, CodeObject):
+                instruction_parts.append(
+                    f"{instruction.opcode.name} <{instruction.arg.name}>"
+                )
+                continue
+
+            # Add opcode and argument if it exists
+            if instruction.arg is not None:
+                # Handle special cases for consistent output
+                if instruction.opcode.name in ("POP_JUMP_IF_FALSE", "JUMP_FORWARD"):
+                    arg_str = "<JUMP_TARGET>"
+                elif instruction.opcode.name in (
+                    "MAKE_FUNCTION",
+                    "ASYNC_FUNCTION",
+                    "GENERATOR_FUNCTION",
+                    "MAKE_CLASS",
+                ) and isinstance(instruction.arg, str):
+                    arg_str = f"<{instruction.arg}>"
+                else:
+                    arg_str = str(instruction.arg)
+
+                instruction_parts.append(f"{instruction.opcode.name} {arg_str}")
+            else:
+                instruction_parts.append(instruction.opcode.name)
+
+        return separator.join(instruction_parts)
+
 
 def emit(opcode: "OpCode", arg: Any = None) -> Instruction:
     """Helper function to create Instruction objects."""
