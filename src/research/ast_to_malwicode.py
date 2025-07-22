@@ -994,8 +994,38 @@ class ASTCompiler:
                 bytecode.extend(
                     self._generate_bytecode(value_node, source_code_bytes, file_path)
                 )
-                var_name = self._get_node_text(name_node, source_code_bytes)
-                bytecode.append(emit(OpCode.STORE_NAME, var_name))
+
+                # Handle destructuring patterns (e.g., const { exec, spawn } = ...)
+                if name_node.type == "object_pattern":
+                    # Extract individual identifiers from destructuring pattern
+                    for child in name_node.named_children:
+                        if child.type == "shorthand_property_identifier_pattern":
+                            identifier_name = self._get_node_text(
+                                child, source_code_bytes
+                            )
+                            bytecode.append(emit(OpCode.STORE_NAME, identifier_name))
+                        elif child.type == "pair_pattern":
+                            # Handle { key: alias } patterns
+                            value_child = child.child_by_field_name("value")
+                            if value_child and value_child.type == "identifier":
+                                identifier_name = self._get_node_text(
+                                    value_child, source_code_bytes
+                                )
+                                bytecode.append(
+                                    emit(OpCode.STORE_NAME, identifier_name)
+                                )
+                elif name_node.type == "array_pattern":
+                    # Handle array destructuring [a, b] = ...
+                    for child in name_node.named_children:
+                        if child.type == "identifier":
+                            identifier_name = self._get_node_text(
+                                child, source_code_bytes
+                            )
+                            bytecode.append(emit(OpCode.STORE_NAME, identifier_name))
+                else:
+                    # Regular single variable assignment
+                    var_name = self._get_node_text(name_node, source_code_bytes)
+                    bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
         elif node_type == "return_statement":
             if node.child_count > 1 and node.children[1].type not in [";"]:

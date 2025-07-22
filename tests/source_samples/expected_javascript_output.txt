@@ -126,19 +126,25 @@ STORE_NAME           events
 LOAD_NAME            require
 LOAD_CONST           'fs'
 CALL_FUNCTION        1
-STORE_NAME           { readFile, writeFile, existsSync }
+STORE_NAME           readFile
+STORE_NAME           writeFile
+STORE_NAME           existsSync
 LOAD_NAME            require
 LOAD_CONST           'path'
 CALL_FUNCTION        1
-STORE_NAME           { join, resolve, dirname }
+STORE_NAME           join
+STORE_NAME           resolve
+STORE_NAME           dirname
 LOAD_NAME            require
 LOAD_CONST           'crypto'
 CALL_FUNCTION        1
-STORE_NAME           { createHash, randomBytes }
+STORE_NAME           createHash
+STORE_NAME           randomBytes
 LOAD_NAME            require
 LOAD_CONST           'child_process'
 CALL_FUNCTION        1
-STORE_NAME           { exec, spawn }
+STORE_NAME           exec
+STORE_NAME           spawn
 LOAD_NAME            require
 LOAD_CONST           'child_process'
 CALL_FUNCTION        1
@@ -547,11 +553,13 @@ LOAD_CONST           "a"
 LOAD_CONST           "b"
 LOAD_CONST           "c"
 BUILD_LIST           3
-STORE_NAME           [first, , third]
+STORE_NAME           first
+STORE_NAME           third
 LOAD_CONST           "Jane"
 LOAD_CONST           25.0
 BUILD_MAP            2
-STORE_NAME           { name: personName, age }
+STORE_NAME           personName
+STORE_NAME           age
 LOAD_CONST           1.0
 LOAD_CONST           2.0
 BUILD_LIST           2
@@ -566,7 +574,7 @@ LOAD_CONST           1.0
 LOAD_CONST           2.0
 LOAD_CONST           3.0
 BUILD_MAP            3
-STORE_NAME           { x, ...restObj }
+STORE_NAME           x
 LOAD_NAME            console
 LOAD_ATTR            log
 LOAD_CONST           "6.4. Destructuring and Spread/Rest: PASSED"
@@ -719,13 +727,15 @@ LOAD_CONST           3.0
 BUILD_LIST           3
 STORE_NAME           arr
 LOAD_NAME            arr
-STORE_NAME           [first, second]
+STORE_NAME           first
+STORE_NAME           second
 LOAD_CONST           1.0
 LOAD_CONST           2.0
 BUILD_MAP            2
 STORE_NAME           obj
 LOAD_NAME            obj
-STORE_NAME           { a, b }
+STORE_NAME           a
+STORE_NAME           b
 LOAD_CONST           4.0
 LOAD_CONST           5.0
 BUILD_LIST           3
