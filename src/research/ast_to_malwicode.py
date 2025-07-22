@@ -147,6 +147,9 @@ class OpCode(Enum):
     WITH_CONTEXT = auto()
     ENTER_CONTEXT = auto()
     EXIT_CONTEXT = auto()
+    TYPEOF_OPERATOR = auto()
+    VOID_OPERATOR = auto()
+    DELETE_OPERATOR = auto()
 
 
 class ASTCompiler:
@@ -430,10 +433,10 @@ class ASTCompiler:
             # Logical unary operators
             "not": OpCode.LOGICAL_NOT,
             "!": OpCode.LOGICAL_NOT,  # JavaScript
-            # Other operators
-            "typeof": OpCode.BINARY_OPERATION,  # JavaScript typeof
-            "void": OpCode.BINARY_OPERATION,  # JavaScript void
-            "delete": OpCode.BINARY_OPERATION,  # JavaScript delete
+            # JavaScript-specific unary operators
+            "typeof": OpCode.TYPEOF_OPERATOR,  # JavaScript typeof
+            "void": OpCode.VOID_OPERATOR,  # JavaScript void
+            "delete": OpCode.DELETE_OPERATOR,  # JavaScript delete
         }
 
         # --- Handle Literals and Identifiers ---

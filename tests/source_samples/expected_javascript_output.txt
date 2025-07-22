@@ -307,7 +307,7 @@ LOAD_NAME            arr
 LOAD_ATTR            map
 MAKE_FUNCTION        <lambda>
     LOAD_PARAM           x
-    BINARY_OPERATION     typeof
+    TYPEOF_OPERATOR      
     RETURN_VALUE         
 CALL_FUNCTION        1
 LOAD_NAME            console
@@ -327,7 +327,7 @@ LOAD_CONST           "New York"
 STORE_NAME           obj.city
 LOAD_NAME            obj
 LOAD_ATTR            age
-BINARY_OPERATION     delete
+DELETE_OPERATOR      
 LOAD_NAME            Object
 LOAD_ATTR            keys
 LOAD_NAME            obj
@@ -749,7 +749,7 @@ LOAD_CONST           True
 LOGICAL_NOT          
 STORE_NAME           logicalNot
 LOAD_CONST           42.0
-BINARY_OPERATION     typeof
+TYPEOF_OPERATOR      
 STORE_NAME           typeofOp
 LOAD_CONST           10.0
 STORE_NAME           augVal
@@ -1001,9 +1001,9 @@ BUILD_MAP            1
 STORE_NAME           testObj
 LOAD_NAME            testObj
 LOAD_ATTR            prop
-BINARY_OPERATION     delete
+DELETE_OPERATOR      
 LOAD_CONST           0.0
-BINARY_OPERATION     void
+VOID_OPERATOR        
 STORE_NAME           voidResult
 LOAD_NAME            console
 LOAD_ATTR            log
