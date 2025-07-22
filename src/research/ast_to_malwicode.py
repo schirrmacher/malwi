@@ -1895,11 +1895,8 @@ class ASTCompiler:
             )
             return None
 
-    def process_file(self, file_path: Path) -> Optional[List[CodeObject]]:
-        """Processes a single file to generate and print its Malwicode."""
-        print(
-            f"--- Processing {self.language_name.capitalize()} File: {file_path.name} ---"
-        )
+    def process_file(self, file_path: Path) -> List[CodeObject]:
+        """Processes a single file and returns its generated CodeObjects."""
         try:
             source_code_bytes = file_path.read_bytes()
 
@@ -1914,18 +1911,11 @@ class ASTCompiler:
                     source_code_bytes=source_code_bytes,
                     file_path=file_path,
                 )
-                # Print all CodeObjects (root, functions, classes)
-                for i, code_obj in enumerate(malwicode_objects):
-                    if i == 0:
-                        print(f"Root CodeObject ({code_obj.name}):")
-                    else:
-                        print(f"\n{code_obj.name}:")
-                    print_code_object(code_obj)
                 return malwicode_objects
 
         except Exception as e:
             logging.error(f"Failed to process {file_path}: {e}")
-        return None
+        return []
 
 
 def print_code_object(code_obj: CodeObject, indent_level: int = 0):
@@ -1987,7 +1977,17 @@ def main() -> None:
 
         compiler_instance = compilers.get(lang)
         if compiler_instance:
-            compiler_instance.process_file(source)
+            print(
+                f"--- Processing {compiler_instance.language_name.capitalize()} File: {source.name} ---"
+            )
+            code_objects = compiler_instance.process_file(source)
+            # Print all CodeObjects (root, functions, classes)
+            for i, code_obj in enumerate(code_objects):
+                if i == 0:
+                    print(f"Root CodeObject ({code_obj.name}):")
+                else:
+                    print(f"\n{code_obj.name}:")
+                print_code_object(code_obj)
         else:
             print(f"Skipping unsupported file extension: {source.name}")
 
