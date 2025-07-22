@@ -33,7 +33,11 @@ class Instruction:
 
         Args:
             format_mode: How to format the output ("default", "compact", "detailed", "mapped")
-            mapping: Optional mapping for arguments in "mapped" mode
+            mapping: Optional mapping for arguments in "mapped" mode (overrides auto-mapping)
+
+        In "mapped" mode, arguments are automatically mapped to type names:
+        - str -> STRING, int -> INTEGER, float -> FLOAT, bool -> BOOLEAN
+        - list/tuple -> LIST, dict -> DICT, objects -> CLASS_NAME
         """
         if format_mode == "compact":
             return (
@@ -46,11 +50,35 @@ class Instruction:
                 f" (type: {type(self.arg).__name__})" if self.arg is not None else ""
             )
             return f"{self.opcode.name:<20} {self.arg}{arg_info}"
-        elif format_mode == "mapped" and mapping:
-            mapped_arg = (
-                mapping.get(str(self.arg), self.arg) if self.arg is not None else None
+        elif format_mode == "mapped":
+            if self.arg is None:
+                mapped_arg = None
+            elif mapping and str(self.arg) in mapping:
+                # Use external mapping if provided
+                mapped_arg = mapping[str(self.arg)]
+            else:
+                # Auto-map based on type
+                if isinstance(self.arg, str):
+                    mapped_arg = "STRING"
+                elif isinstance(self.arg, bool):
+                    mapped_arg = "BOOLEAN"
+                elif isinstance(self.arg, int):
+                    mapped_arg = "INTEGER"
+                elif isinstance(self.arg, float):
+                    mapped_arg = "FLOAT"
+                elif isinstance(self.arg, (list, tuple)):
+                    mapped_arg = "LIST"
+                elif isinstance(self.arg, dict):
+                    mapped_arg = "DICT"
+                elif hasattr(self.arg, "__class__"):
+                    # For objects, use the class name
+                    mapped_arg = self.arg.__class__.__name__.upper()
+                else:
+                    mapped_arg = str(self.arg)
+
+            return (
+                f"{self.opcode.name:<20} {mapped_arg if mapped_arg is not None else ''}"
             )
-            return f"{self.opcode.name:<20} {mapped_arg}"
         else:  # default format
             # Handle special cases for consistent output
             if self.opcode in (OpCode.POP_JUMP_IF_FALSE, OpCode.JUMP_FORWARD):

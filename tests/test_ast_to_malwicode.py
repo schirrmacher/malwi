@@ -150,7 +150,7 @@ def test_python_mapping_feature(python_compiler: ASTCompiler, source_path: Path)
     with open(expected_mapping_file, "r") as f:
         expected_mapping_string = f.read().strip()
 
-    # Generate mapping output format (to be defined based on mapping feature)
+    # Generate mapping output format using the new "mapped" format
     mapping_output_parts = []
     for i, code_obj in enumerate(code_objects):
         if i == 0:
@@ -158,8 +158,8 @@ def test_python_mapping_feature(python_compiler: ASTCompiler, source_path: Path)
         else:
             mapping_output_parts.append(f"\n{code_obj.name} - Mapping:")
 
-        # Add oneline representation for now (will be updated for actual mapping)
-        mapping_output_parts.append(code_obj.to_oneline(" | "))
+        # Add mapped representation using to_string with "mapped" format
+        mapping_output_parts.append(code_obj.to_string(format_mode="mapped"))
 
     generated_mapping_string = "\n".join(mapping_output_parts).strip()
     # Note: This assertion will be updated once the mapping feature is implemented
@@ -219,7 +219,7 @@ def test_javascript_mapping_feature(js_compiler: ASTCompiler, source_path: Path)
     with open(expected_mapping_file, "r") as f:
         expected_mapping_string = f.read().strip()
 
-    # Generate mapping output format (to be defined based on mapping feature)
+    # Generate mapping output format using the new "mapped" format
     mapping_output_parts = []
     for i, code_obj in enumerate(code_objects):
         if i == 0:
@@ -227,8 +227,8 @@ def test_javascript_mapping_feature(js_compiler: ASTCompiler, source_path: Path)
         else:
             mapping_output_parts.append(f"\n{code_obj.name} - Mapping:")
 
-        # Add oneline representation for now (will be updated for actual mapping)
-        mapping_output_parts.append(code_obj.to_oneline(" | "))
+        # Add mapped representation using to_string with "mapped" format
+        mapping_output_parts.append(code_obj.to_string(format_mode="mapped"))
 
     generated_mapping_string = "\n".join(mapping_output_parts).strip()
     # Note: This assertion will be updated once the mapping feature is implemented
