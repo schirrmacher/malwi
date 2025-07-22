@@ -112,54 +112,35 @@ class CodeObject:
 
     def to_string(
         self,
-        indent_level: int = 0,
         format_mode: str = "default",
+        separator: str = " ",
+        indent_level: int = 0,
         mapping: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
-        Formats the bytecode of this CodeObject into a readable,
-        indented string with various formatting options.
+        Formats the bytecode of this CodeObject with various formatting options.
 
         Args:
-            indent_level: Number of indentation levels
-            format_mode: Format style ("default", "compact", "detailed", "mapped")
+            format_mode: Format style ("default", "compact", "detailed", "mapped", "oneline", "oneline_mapped")
+            separator: String to separate instructions in oneline mode (default: " ")
+            indent_level: Number of indentation levels for multiline modes
             mapping: Optional mapping for arguments in "mapped" mode
-        """
-        result_lines = []
-        indent = "    " * indent_level
-
-        for instruction in self.byte_code:
-            # Check for legacy tuple format and convert if needed
-            if isinstance(instruction, tuple):
-                opcode, arg = instruction
-                instruction = Instruction(opcode, arg, self.language)
-
-            # Handle nested CodeObjects (legacy support)
-            if isinstance(instruction.arg, CodeObject):
-                result_lines.append(
-                    f"{indent}{instruction.opcode.name:<20} <{instruction.arg.name}>"
-                )
-                result_lines.append(
-                    instruction.arg.to_string(indent_level + 1, format_mode, mapping)
-                )
-                continue
-
-            # Format the instruction with the specified mode
-            formatted_line = instruction.to_string(format_mode, mapping)
-            result_lines.append(f"{indent}{formatted_line}")
-
-        return "\n".join(result_lines)
-
-    def to_oneline(self, separator: str = " ") -> str:
-        """
-        Formats all bytecode instructions in a single line with opcodes and values.
-
-        Args:
-            separator: String to separate instructions (default: " ")
 
         Returns:
-            String with opcodes and their values joined by the separator
+            Formatted string representation of the bytecode
         """
+        if format_mode in ["oneline", "oneline_mapped"]:
+            return self._format_oneline(separator, format_mode, mapping)
+        else:
+            return self._format_multiline(format_mode, indent_level, mapping)
+
+    def _format_oneline(
+        self,
+        separator: str = " ",
+        format_mode: str = "oneline",
+        mapping: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Format instructions as a single line with opcodes and values."""
         instruction_parts = []
 
         for instruction in self.byte_code:
@@ -177,24 +158,74 @@ class CodeObject:
 
             # Add opcode and argument if it exists
             if instruction.arg is not None:
-                # Handle special cases for consistent output
-                if instruction.opcode.name in ("POP_JUMP_IF_FALSE", "JUMP_FORWARD"):
-                    arg_str = "<JUMP_TARGET>"
-                elif instruction.opcode.name in (
-                    "MAKE_FUNCTION",
-                    "ASYNC_FUNCTION",
-                    "GENERATOR_FUNCTION",
-                    "MAKE_CLASS",
-                ) and isinstance(instruction.arg, str):
-                    arg_str = f"<{instruction.arg}>"
+                # Use mapping for oneline_mapped format mode
+                if format_mode == "oneline_mapped":
+                    # Use the same logic as the Instruction.to_string mapped mode
+                    if mapping and str(instruction.arg) in mapping:
+                        arg_str = mapping[str(instruction.arg)]
+                    else:
+                        # Use sophisticated mapping
+                        arg_str = map_argument(instruction.arg, instruction.language)
                 else:
-                    arg_str = str(instruction.arg)
+                    # Handle special cases for consistent output in regular oneline mode
+                    if instruction.opcode.name in ("POP_JUMP_IF_FALSE", "JUMP_FORWARD"):
+                        arg_str = "<JUMP_TARGET>"
+                    elif instruction.opcode.name in (
+                        "MAKE_FUNCTION",
+                        "ASYNC_FUNCTION",
+                        "GENERATOR_FUNCTION",
+                        "MAKE_CLASS",
+                    ) and isinstance(instruction.arg, str):
+                        arg_str = f"<{instruction.arg}>"
+                    else:
+                        arg_str = str(instruction.arg)
 
                 instruction_parts.append(f"{instruction.opcode.name} {arg_str}")
             else:
                 instruction_parts.append(instruction.opcode.name)
 
         return separator.join(instruction_parts)
+
+    def _format_multiline(
+        self,
+        format_mode: str = "default",
+        indent_level: int = 0,
+        mapping: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Format instructions as multiple indented lines."""
+        result_lines = []
+        indent = "    " * indent_level
+
+        for instruction in self.byte_code:
+            # Check for legacy tuple format and convert if needed
+            if isinstance(instruction, tuple):
+                opcode, arg = instruction
+                instruction = Instruction(opcode, arg, self.language)
+
+            # Handle nested CodeObjects (legacy support)
+            if isinstance(instruction.arg, CodeObject):
+                result_lines.append(
+                    f"{indent}{instruction.opcode.name:<20} <{instruction.arg.name}>"
+                )
+                result_lines.append(
+                    instruction.arg.to_string(
+                        format_mode, " ", indent_level + 1, mapping
+                    )
+                )
+                continue
+
+            # Format the instruction with the specified mode
+            formatted_line = instruction.to_string(format_mode, mapping)
+            result_lines.append(f"{indent}{formatted_line}")
+
+        return "\n".join(result_lines)
+
+    def to_oneline(self, separator: str = " ") -> str:
+        """
+        Legacy method for backward compatibility.
+        Use to_string(format_mode="oneline", separator=separator) instead.
+        """
+        return self.to_string(format_mode="oneline", separator=separator)
 
 
 def emit(opcode: "OpCode", arg: Any = None, language: str = "python") -> Instruction:
@@ -2095,11 +2126,7 @@ def main() -> None:
             code_objects = compiler_instance.process_file(source)
             # Print all CodeObjects (root, functions, classes)
             for i, code_obj in enumerate(code_objects):
-                if i == 0:
-                    print(f"Root CodeObject ({code_obj.name}):")
-                else:
-                    print(f"\n{code_obj.name}:")
-                print_code_object(code_obj)
+                print(f"{code_obj.to_string(format_mode='oneline_mapped')}")
         else:
             print(f"Skipping unsupported file extension: {source.name}")
 
