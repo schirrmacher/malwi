@@ -602,6 +602,95 @@ const voidResult = void 0;             // Void operator
 
 console.log("9. Missing Node Types Coverage: PASSED");
 
+// 9.21. BINARY_SUBSCR Test Cases (Array and Object Access Patterns)
+// These patterns are commonly used in malware for data access and obfuscation
+
+// Basic array access (should generate BINARY_SUBSCR)
+const testArray = [1, 2, 3, 4, 5];
+const firstElement = testArray[0];
+const lastElement = testArray[testArray.length - 1];
+const dynamicIndex = testArray[Math.floor(Math.random() * testArray.length)];
+
+// Object access with bracket notation (should generate BINARY_SUBSCR)
+const configObject = { 
+    apiKey: "secret123", 
+    endpoint: "https://malicious.com/api",
+    payload: { data: "encoded" }
+};
+const apiKey = configObject["apiKey"];
+const endpoint = configObject["endpoint"];
+const dynamicProperty = configObject["pay" + "load"];
+
+// Nested object/array access (should generate multiple BINARY_SUBSCR)
+const nestedStructure = {
+    users: [
+        { name: "admin", permissions: ["read", "write", "execute"] },
+        { name: "guest", permissions: ["read"] }
+    ],
+    config: {
+        servers: ["192.168.1.1", "10.0.0.1"],
+        ports: [80, 443, 8080]
+    }
+};
+const adminName = nestedStructure["users"][0]["name"];
+const adminPermissions = nestedStructure.users[0].permissions[2];
+const firstServer = nestedStructure["config"]["servers"][0];
+const httpsPort = nestedStructure.config.ports[1];
+
+// Variable-based property access (common in obfuscated malware)
+const propName = "endpoint";
+const keyName = "apiKey";
+const dynamicAccess1 = configObject[propName];
+const dynamicAccess2 = configObject[keyName];
+
+// Computed property access patterns
+const computedKey = "api" + "Key";
+const encodedKey = btoa("endpoint").substring(0, 8); // Base64 encode + substring
+const obfuscatedAccess = configObject[computedKey];
+
+// Array access with expressions (common in payload decoding)
+const payloadArray = new Array(10).fill(0).map((_, i) => i * 2);
+const calculatedIndex = payloadArray[5 + 2];
+const expressionIndex = payloadArray[Math.pow(2, 2)];
+const moduloIndex = payloadArray[15 % payloadArray.length];
+
+// String character access (used in string manipulation attacks)
+const maliciousString = "javascript:void(0)";
+const protocolChar = maliciousString[0];
+const colonChar = maliciousString[maliciousString.indexOf(":")];
+const voidPart = maliciousString[11]; // 'v' from void
+
+// Multi-dimensional array access
+const matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+];
+const centerElement = matrix[1][1];
+const cornerElement = matrix[0][0];
+const lastRowLastCol = matrix[matrix.length - 1][matrix[0].length - 1];
+
+// Object with array values access
+const commandMap = {
+    "exec": ["cmd.exe", "/c"],
+    "shell": ["powershell.exe", "-c"],
+    "bash": ["/bin/bash", "-c"]
+};
+const windowsCmd = commandMap["exec"][0];
+const powershellFlag = commandMap["shell"][1];
+
+// Buffer/typed array access (common in binary data manipulation)
+const buffer = new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]); // "Hello" in bytes
+const firstByte = buffer[0];
+const secondByte = buffer[1];
+
+// Access with variables from other scopes
+let globalIndex = 2;
+const scopedAccess = testArray[globalIndex];
+const functionBasedIndex = testArray[Math.floor(Math.random() * 3)];
+
+console.log("9.21. BINARY_SUBSCR Test Cases: PASSED");
+
 
 console.log("\n--- JavaScript Compiler Test Suite: Finished ---");
 console.log("--- All tests completed. Check output for any errors. ---");

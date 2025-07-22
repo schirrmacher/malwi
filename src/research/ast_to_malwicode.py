@@ -132,7 +132,6 @@ class OpCode(Enum):
     BUILD_TUPLE = auto()
     BUILD_SET = auto()
     BUILD_MAP = auto()
-    STORE_SUBSCR = auto()
     BINARY_SUBSCR = auto()
     LOAD_ATTR = auto()
     UNARY_NEGATIVE = auto()
@@ -142,6 +141,12 @@ class OpCode(Enum):
     IMPORT_FROM = auto()
     EXPORT_DEFAULT = auto()
     EXPORT_NAMED = auto()
+    AWAIT_EXPRESSION = auto()
+    ASYNC_FUNCTION = auto()
+    GENERATOR_FUNCTION = auto()
+    WITH_CONTEXT = auto()
+    ENTER_CONTEXT = auto()
+    EXIT_CONTEXT = auto()
 
 
 class ASTCompiler:
@@ -194,6 +199,17 @@ class ASTCompiler:
         return source_code_bytes[node.start_byte : node.end_byte].decode(
             "utf-8", errors="replace"
         )
+
+    def _contains_yield(self, node: Node, source_code_bytes: bytes) -> bool:
+        """Check if a node contains yield expressions (indicating a generator function)."""
+        if node.type in ["yield", "yield_expression", "yield_from_expression"]:
+            return True
+
+        for child in node.children:
+            if self._contains_yield(child, source_code_bytes):
+                return True
+
+        return False
 
     def _extract_function_parameters(self, node: Node, source_code_bytes: bytes) -> set:
         """Extract parameter names from function definition node."""
@@ -1176,18 +1192,57 @@ class ASTCompiler:
                     )
 
         elif node_type == "with_statement":
-            # Process with statements
-            for child in node.children:
-                if child.type == "with_item":
-                    bytecode.extend(
-                        self._generate_bytecode(child, source_code_bytes, file_path)
-                    )
+            # Process with statements - multiple context managers
+            with_items = []
 
+            # Look for with_clause first, then extract with_items from it
+            for child in node.children:
+                if child.type == "with_clause":
+                    for grandchild in child.children:
+                        if grandchild.type == "with_item":
+                            with_items.append(grandchild)
+
+            # Process each context manager
+            for with_item in with_items:
+                # Generate bytecode for the context expression
+                # The context expression is typically the first child that's not 'as' or identifier
+                context_expr = None
+                as_pattern = None
+
+                for child in with_item.children:
+                    if child.type == "as_pattern":
+                        # Extract the expression and the target from as_pattern
+                        for as_child in child.children:
+                            if as_child.type not in ["as", "identifier"]:
+                                context_expr = as_child
+                            elif as_child.type == "identifier":
+                                as_pattern = as_child
+                    elif child.type not in ["as", "identifier", ","]:
+                        context_expr = child
+
+                if context_expr:
+                    bytecode.extend(
+                        self._generate_bytecode(
+                            context_expr, source_code_bytes, file_path
+                        )
+                    )
+                    bytecode.append((OpCode.ENTER_CONTEXT, None))
+
+                    # Handle 'as' variable if present
+                    if as_pattern:
+                        var_name = self._get_node_text(as_pattern, source_code_bytes)
+                        bytecode.append((OpCode.STORE_NAME, var_name))
+
+            # Process the body
             body_node = node.child_by_field_name("body")
             if body_node:
                 bytecode.extend(
                     self._generate_bytecode(body_node, source_code_bytes, file_path)
                 )
+
+            # Exit contexts in reverse order
+            for _ in with_items:
+                bytecode.append((OpCode.EXIT_CONTEXT, None))
 
         elif node_type in ["lambda", "arrow_function"]:
             # Process lambda/arrow functions
@@ -1332,8 +1387,8 @@ class ASTCompiler:
                     )
                     bytecode.append((OpCode.BINARY_SUBSCR, None))
 
-        elif node_type == "attribute":
-            # Handle attribute access: obj.attr
+        elif node_type in ["attribute", "member_expression"]:
+            # Handle attribute access: obj.attr (Python) or obj.prop (JavaScript)
             object_node = node.child_by_field_name(
                 "object"
             ) or node.child_by_field_name("value")
@@ -1387,11 +1442,39 @@ class ASTCompiler:
             bytecode.append((OpCode.BINARY_ADD, None))
 
         # --- High-Level Structures (Functions, Classes) ---
-        elif node_type in ["function_definition", "function_declaration"]:
+        elif node_type in [
+            "function_definition",
+            "function_declaration",
+            "generator_function_declaration",
+        ]:
             func_name = self._get_node_text(
                 node.child_by_field_name("name"), source_code_bytes
             )
             body_node = node.child_by_field_name("body")
+
+            # Check if this is an async or generator function
+            is_async = False
+            is_generator = False
+
+            # Generator functions are explicitly marked by node type in JavaScript
+            if node_type == "generator_function_declaration":
+                is_generator = True
+
+            for child in node.children:
+                if (
+                    child.type == "async"
+                    or self._get_node_text(child, source_code_bytes) == "async"
+                ):
+                    is_async = True
+                elif (
+                    child.type == "*"
+                    or self._get_node_text(child, source_code_bytes) == "*"
+                ):
+                    is_generator = True
+
+            # Also check for generator functions by looking for yield in the body
+            if not is_generator and body_node:
+                is_generator = self._contains_yield(body_node, source_code_bytes)
 
             # Extract parameters and set context for this function
             params = self._extract_function_parameters(node, source_code_bytes)
@@ -1416,7 +1499,18 @@ class ASTCompiler:
                 func_name, func_body_bytecode, func_source, file_path, location
             )
 
-            bytecode.append((OpCode.MAKE_FUNCTION, func_code_obj))
+            # Use appropriate opcode based on function type
+            if is_async and is_generator:
+                # Async generator function
+                bytecode.append(
+                    (OpCode.ASYNC_FUNCTION, func_code_obj)
+                )  # Could add ASYNC_GENERATOR if needed
+            elif is_async:
+                bytecode.append((OpCode.ASYNC_FUNCTION, func_code_obj))
+            elif is_generator:
+                bytecode.append((OpCode.GENERATOR_FUNCTION, func_code_obj))
+            else:
+                bytecode.append((OpCode.MAKE_FUNCTION, func_code_obj))
             bytecode.append((OpCode.STORE_NAME, func_name))
 
         elif node_type in ["class_definition", "class_declaration"]:
@@ -1522,16 +1616,26 @@ class ASTCompiler:
                     # Patch FOR_ITER to jump here when done
                     bytecode[loop_start] = (OpCode.FOR_ITER, len(bytecode))
 
-        elif node_type == "await":
-            # Process await expressions
-            awaitable_node = node.child_by_field_name("awaitable")
+        elif node_type in ["await", "await_expression"]:
+            # Process await expressions: await expression
+            awaitable_node = node.child_by_field_name(
+                "awaitable"
+            ) or node.child_by_field_name("argument")
             if awaitable_node:
                 bytecode.extend(
                     self._generate_bytecode(
                         awaitable_node, source_code_bytes, file_path
                     )
                 )
-            bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for await
+            else:
+                # Fallback: look for first expression child
+                for child in node.named_children:
+                    if child.type not in ["await"]:  # Skip await keyword
+                        bytecode.extend(
+                            self._generate_bytecode(child, source_code_bytes, file_path)
+                        )
+                        break
+            bytecode.append((OpCode.AWAIT_EXPRESSION, None))
 
         elif node_type == "decorator":
             # Process decorators

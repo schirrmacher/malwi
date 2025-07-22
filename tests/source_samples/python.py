@@ -696,6 +696,17 @@ bool_false = False
 none_val = None
 ellipsis_val = ...
 
+
+# Ellipsis in function definitions (type hints)
+def function_with_ellipsis(*args, **kwargs) -> ...:
+    return ...
+
+
+# Ellipsis in subscripts (for numpy-like slicing)
+# Note: Would need actual array for real execution, testing parsing only
+# array_slice = some_array[..., 0]  # Uncomment if numpy available
+# matrix_slice = some_matrix[1, ..., -1]  # Uncomment if numpy available
+
 # 9.2. Unary operators
 negative_num = -42
 positive_num = +42
@@ -763,6 +774,10 @@ class SimpleContext:
 
 with SimpleContext() as ctx_val:
     context_result = ctx_val
+
+# Multiple context managers in one with statement
+with SimpleContext() as ctx1, SimpleContext() as ctx2:
+    multi_context_result = ctx1 + ctx2
 
 # 9.11. Assert statement
 assert 1 == 1, "This should never fail"
@@ -843,6 +858,102 @@ if (n := len("test")) > 3:
     walrus_result = n
 
 print("9. Missing Node Types Coverage: PASSED")
+
+# 9.18. BINARY_SUBSCR Test Cases (List, Dict, and Sequence Access Patterns)
+# These patterns are commonly used in malware for data access and obfuscation
+
+# Basic list access (should generate BINARY_SUBSCR)
+test_list = [1, 2, 3, 4, 5]
+first_element = test_list[0]
+last_element = test_list[-1]
+slice_access = test_list[1:4]
+step_slice = test_list[::2]
+
+# Dictionary access with bracket notation (should generate BINARY_SUBSCR)
+config_dict = {
+    "api_key": "secret123",
+    "endpoint": "https://malicious.com/api",
+    "payload": {"data": "encoded"},
+}
+api_key = config_dict["api_key"]
+endpoint = config_dict["endpoint"]
+dynamic_key = config_dict["pay" + "load"]
+
+# Nested list/dict access (should generate multiple BINARY_SUBSCR)
+nested_structure = {
+    "users": [
+        {"name": "admin", "permissions": ["read", "write", "execute"]},
+        {"name": "guest", "permissions": ["read"]},
+    ],
+    "config": {"servers": ["192.168.1.1", "10.0.0.1"], "ports": [80, 443, 8080]},
+}
+admin_name = nested_structure["users"][0]["name"]
+admin_permissions = nested_structure["users"][0]["permissions"][2]
+first_server = nested_structure["config"]["servers"][0]
+https_port = nested_structure["config"]["ports"][1]
+
+# Variable-based access (common in obfuscated malware)
+prop_name = "endpoint"
+key_name = "api_key"
+dynamic_access1 = config_dict[prop_name]
+dynamic_access2 = config_dict[key_name]
+
+# Computed key access patterns
+computed_key = "api" + "_key"
+import base64
+
+encoded_key = base64.b64encode(b"endpoint").decode()[:8]
+obfuscated_access = config_dict[computed_key]
+
+# List access with expressions (common in payload decoding)
+payload_list = list(range(0, 20, 2))
+calculated_index = payload_list[5 + 2]
+expression_index = payload_list[2**2]
+modulo_index = payload_list[15 % len(payload_list)]
+
+# String character access (used in string manipulation attacks)
+malicious_string = "eval(base64.b64decode(payload))"
+protocol_char = malicious_string[0]
+paren_char = malicious_string[malicious_string.find("(")]
+decode_part = malicious_string[12:18]
+
+# Multi-dimensional list access
+matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+center_element = matrix[1][1]
+corner_element = matrix[0][0]
+last_row_last_col = matrix[-1][-1]
+
+# Tuple access patterns
+command_tuple = ("python", "-c", "import os; os.system('malicious')")
+interpreter = command_tuple[0]
+flag = command_tuple[1]
+command_payload = command_tuple[2]
+
+# Bytes/bytearray access (common in binary data manipulation)
+byte_data = b"\x48\x65\x6c\x6c\x6f"  # "Hello" in bytes
+first_byte = byte_data[0]
+second_byte = byte_data[1]
+byte_slice = byte_data[1:4]
+
+# Access with variables from other scopes
+import random
+
+global_index = 2
+scoped_access = test_list[global_index]
+function_based_index = test_list[random.randint(0, len(test_list) - 1)]
+
+# Complex slicing patterns (Python-specific)
+complex_slice1 = test_list[1::2]  # Every other element starting from index 1
+complex_slice2 = test_list[::-1]  # Reverse the list
+complex_slice3 = test_list[len(test_list) // 2 :]  # Second half of list
+
+# Dictionary methods that return subscriptable objects
+dict_keys = list(config_dict.keys())
+dict_values = list(config_dict.values())
+first_key = dict_keys[0]
+first_value = dict_values[0]
+
+print("9.18. BINARY_SUBSCR Test Cases: PASSED")
 
 
 print("\n--- Python Compiler Test Suite: Finished ---")

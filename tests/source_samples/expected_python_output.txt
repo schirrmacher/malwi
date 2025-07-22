@@ -633,6 +633,9 @@ MAKE_CLASS           <MyContext>
         RETURN_VALUE         
     STORE_NAME           __exit__
 STORE_NAME           MyContext
+LOAD_NAME            cm
+ENTER_CONTEXT        
+EXIT_CONTEXT         
 LOAD_NAME            print
 LOAD_CONST           "3.8. with statement: PASSED"
 CALL_FUNCTION        1
@@ -974,7 +977,7 @@ CALL_FUNCTION        0
 LOAD_NAME            print
 LOAD_CONST           "6.1. Decorators: PASSED"
 CALL_FUNCTION        1
-MAKE_FUNCTION        <my_generator>
+GENERATOR_FUNCTION   <my_generator>
     LOAD_NAME            range
     LOAD_PARAM           n
     CALL_FUNCTION        1
@@ -1000,13 +1003,19 @@ LOAD_NAME            gen
 CALL_FUNCTION        1
 JUMP_FORWARD         <JUMP_TARGET>
 JUMP_FORWARD         <JUMP_TARGET>
-MAKE_FUNCTION        <my_coroutine>
-    BINARY_OPERATION     
+ASYNC_FUNCTION       <my_coroutine>
+    LOAD_NAME            asyncio
+    LOAD_ATTR            sleep
+    LOAD_CONST           0.01
+    CALL_FUNCTION        1
+    AWAIT_EXPRESSION     
     LOAD_CONST           "Coroutine finished"
     RETURN_VALUE         
 STORE_NAME           my_coroutine
-MAKE_FUNCTION        <main_async>
-    BINARY_OPERATION     
+ASYNC_FUNCTION       <main_async>
+    LOAD_NAME            my_coroutine
+    CALL_FUNCTION        0
+    AWAIT_EXPRESSION     
     STORE_NAME           result
     LOAD_NAME            print
     LOAD_CONST           "6.3. Coroutines (async/await): PASSED"
@@ -1252,6 +1261,10 @@ LOAD_CONST
 STORE_NAME           none_val
 LOAD_CONST           ...
 STORE_NAME           ellipsis_val
+MAKE_FUNCTION        <function_with_ellipsis>
+    LOAD_CONST           ...
+    RETURN_VALUE         
+STORE_NAME           function_with_ellipsis
 LOAD_CONST           42.0
 UNARY_NEGATIVE       
 STORE_NAME           negative_num
@@ -1407,7 +1420,20 @@ MAKE_CLASS           <SimpleContext>
     STORE_NAME           __exit__
 STORE_NAME           SimpleContext
 LOAD_NAME            ctx_val
+ENTER_CONTEXT        
+LOAD_NAME            ctx_val
 STORE_NAME           context_result
+EXIT_CONTEXT         
+LOAD_NAME            ctx1
+ENTER_CONTEXT        
+LOAD_NAME            ctx2
+ENTER_CONTEXT        
+LOAD_NAME            ctx1
+LOAD_NAME            ctx2
+BINARY_ADD           
+STORE_NAME           multi_context_result
+EXIT_CONTEXT         
+EXIT_CONTEXT         
 LOAD_CONST           1.0
 LOAD_CONST           1.0
 COMPARE_OP           
@@ -1532,6 +1558,335 @@ LOAD_NAME            n
 STORE_NAME           walrus_result
 LOAD_NAME            print
 LOAD_CONST           "9. Missing Node Types Coverage: PASSED"
+CALL_FUNCTION        1
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+LOAD_CONST           4.0
+LOAD_CONST           5.0
+BUILD_LIST           5
+STORE_NAME           test_list
+LOAD_NAME            test_list
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           first_element
+LOAD_NAME            test_list
+LOAD_CONST           1.0
+UNARY_NEGATIVE       
+BINARY_SUBSCR        
+STORE_NAME           last_element
+LOAD_NAME            test_list
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
+STORE_NAME           slice_access
+LOAD_NAME            test_list
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
+STORE_NAME           step_slice
+LOAD_CONST           "api_key"
+LOAD_CONST           "secret123"
+LOAD_CONST           "endpoint"
+LOAD_CONST           "https://malicious.com/api"
+LOAD_CONST           "payload"
+LOAD_CONST           "data"
+LOAD_CONST           "encoded"
+BUILD_MAP            1
+BUILD_MAP            3
+STORE_NAME           config_dict
+LOAD_NAME            config_dict
+LOAD_CONST           "api_key"
+BINARY_SUBSCR        
+STORE_NAME           api_key
+LOAD_NAME            config_dict
+LOAD_CONST           "endpoint"
+BINARY_SUBSCR        
+STORE_NAME           endpoint
+LOAD_NAME            config_dict
+LOAD_CONST           "pay"
+LOAD_CONST           "load"
+BINARY_ADD           
+BINARY_SUBSCR        
+STORE_NAME           dynamic_key
+LOAD_CONST           "users"
+LOAD_CONST           "name"
+LOAD_CONST           "admin"
+LOAD_CONST           "permissions"
+LOAD_CONST           "read"
+LOAD_CONST           "write"
+LOAD_CONST           "execute"
+BUILD_LIST           3
+BUILD_MAP            2
+LOAD_CONST           "name"
+LOAD_CONST           "guest"
+LOAD_CONST           "permissions"
+LOAD_CONST           "read"
+BUILD_LIST           1
+BUILD_MAP            2
+BUILD_LIST           2
+LOAD_CONST           "config"
+LOAD_CONST           "servers"
+LOAD_CONST           "192.168.1.1"
+LOAD_CONST           "10.0.0.1"
+BUILD_LIST           2
+LOAD_CONST           "ports"
+LOAD_CONST           80.0
+LOAD_CONST           443.0
+LOAD_CONST           8080.0
+BUILD_LIST           3
+BUILD_MAP            2
+BUILD_MAP            2
+STORE_NAME           nested_structure
+LOAD_NAME            nested_structure
+LOAD_CONST           "users"
+BINARY_SUBSCR        
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+LOAD_CONST           "name"
+BINARY_SUBSCR        
+STORE_NAME           admin_name
+LOAD_NAME            nested_structure
+LOAD_CONST           "users"
+BINARY_SUBSCR        
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+LOAD_CONST           "permissions"
+BINARY_SUBSCR        
+LOAD_CONST           2.0
+BINARY_SUBSCR        
+STORE_NAME           admin_permissions
+LOAD_NAME            nested_structure
+LOAD_CONST           "config"
+BINARY_SUBSCR        
+LOAD_CONST           "servers"
+BINARY_SUBSCR        
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           first_server
+LOAD_NAME            nested_structure
+LOAD_CONST           "config"
+BINARY_SUBSCR        
+LOAD_CONST           "ports"
+BINARY_SUBSCR        
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+STORE_NAME           https_port
+LOAD_CONST           "endpoint"
+STORE_NAME           prop_name
+LOAD_CONST           "api_key"
+STORE_NAME           key_name
+LOAD_NAME            config_dict
+LOAD_NAME            prop_name
+BINARY_SUBSCR        
+STORE_NAME           dynamic_access1
+LOAD_NAME            config_dict
+LOAD_NAME            key_name
+BINARY_SUBSCR        
+STORE_NAME           dynamic_access2
+LOAD_CONST           "api"
+LOAD_CONST           "_key"
+BINARY_ADD           
+STORE_NAME           computed_key
+IMPORT_NAME          base64
+LOAD_NAME            base64
+LOAD_ATTR            b64encode
+LOAD_CONST           b"endpoint"
+CALL_FUNCTION        1
+LOAD_ATTR            decode
+CALL_FUNCTION        0
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
+STORE_NAME           encoded_key
+LOAD_NAME            config_dict
+LOAD_NAME            computed_key
+BINARY_SUBSCR        
+STORE_NAME           obfuscated_access
+LOAD_NAME            list
+LOAD_NAME            range
+LOAD_CONST           0.0
+LOAD_CONST           20.0
+LOAD_CONST           2.0
+CALL_FUNCTION        3
+CALL_FUNCTION        1
+STORE_NAME           payload_list
+LOAD_NAME            payload_list
+LOAD_CONST           5.0
+LOAD_CONST           2.0
+BINARY_ADD           
+BINARY_SUBSCR        
+STORE_NAME           calculated_index
+LOAD_NAME            payload_list
+LOAD_CONST           2.0
+LOAD_CONST           2.0
+BINARY_POWER         
+BINARY_SUBSCR        
+STORE_NAME           expression_index
+LOAD_NAME            payload_list
+LOAD_CONST           15.0
+LOAD_NAME            len
+LOAD_NAME            payload_list
+CALL_FUNCTION        1
+BINARY_MODULO        
+BINARY_SUBSCR        
+STORE_NAME           modulo_index
+LOAD_CONST           "eval(base64.b64decode(payload))"
+STORE_NAME           malicious_string
+LOAD_NAME            malicious_string
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           protocol_char
+LOAD_NAME            malicious_string
+LOAD_NAME            malicious_string
+LOAD_ATTR            find
+LOAD_CONST           "("
+CALL_FUNCTION        1
+BINARY_SUBSCR        
+STORE_NAME           paren_char
+LOAD_NAME            malicious_string
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
+STORE_NAME           decode_part
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+BUILD_LIST           3
+LOAD_CONST           4.0
+LOAD_CONST           5.0
+LOAD_CONST           6.0
+BUILD_LIST           3
+LOAD_CONST           7.0
+LOAD_CONST           8.0
+LOAD_CONST           9.0
+BUILD_LIST           3
+BUILD_LIST           3
+STORE_NAME           matrix
+LOAD_NAME            matrix
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+STORE_NAME           center_element
+LOAD_NAME            matrix
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           corner_element
+LOAD_NAME            matrix
+LOAD_CONST           1.0
+UNARY_NEGATIVE       
+BINARY_SUBSCR        
+LOAD_CONST           1.0
+UNARY_NEGATIVE       
+BINARY_SUBSCR        
+STORE_NAME           last_row_last_col
+LOAD_CONST           "python"
+LOAD_CONST           "-c"
+LOAD_CONST           "import os; os.system('malicious')"
+BUILD_TUPLE          3
+STORE_NAME           command_tuple
+LOAD_NAME            command_tuple
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           interpreter
+LOAD_NAME            command_tuple
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+STORE_NAME           flag
+LOAD_NAME            command_tuple
+LOAD_CONST           2.0
+BINARY_SUBSCR        
+STORE_NAME           command_payload
+LOAD_CONST           b"\x48\x65\x6c\x6c\x6f"
+STORE_NAME           byte_data
+LOAD_NAME            byte_data
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           first_byte
+LOAD_NAME            byte_data
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+STORE_NAME           second_byte
+LOAD_NAME            byte_data
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
+STORE_NAME           byte_slice
+IMPORT_NAME          random
+LOAD_CONST           2.0
+STORE_NAME           global_index
+LOAD_NAME            test_list
+LOAD_NAME            global_index
+BINARY_SUBSCR        
+STORE_NAME           scoped_access
+LOAD_NAME            test_list
+LOAD_NAME            random
+LOAD_ATTR            randint
+LOAD_CONST           0.0
+LOAD_NAME            len
+LOAD_NAME            test_list
+CALL_FUNCTION        1
+LOAD_CONST           1.0
+BINARY_SUBTRACT      
+CALL_FUNCTION        2
+BINARY_SUBSCR        
+STORE_NAME           function_based_index
+LOAD_NAME            test_list
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
+STORE_NAME           complex_slice1
+LOAD_NAME            test_list
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
+STORE_NAME           complex_slice2
+LOAD_NAME            test_list
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BINARY_OPERATION     
+BINARY_SUBSCR        
+STORE_NAME           complex_slice3
+LOAD_NAME            list
+LOAD_NAME            config_dict
+LOAD_ATTR            keys
+CALL_FUNCTION        0
+CALL_FUNCTION        1
+STORE_NAME           dict_keys
+LOAD_NAME            list
+LOAD_NAME            config_dict
+LOAD_ATTR            values
+CALL_FUNCTION        0
+CALL_FUNCTION        1
+STORE_NAME           dict_values
+LOAD_NAME            dict_keys
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           first_key
+LOAD_NAME            dict_values
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           first_value
+LOAD_NAME            print
+LOAD_CONST           "9.18. BINARY_SUBSCR Test Cases: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            print
 LOAD_CONST           "\n--- Python Compiler Test Suite: Finished ---"

@@ -146,6 +146,7 @@ STORE_NAME           cp
 LOAD_NAME            require
 LOAD_CONST           'fs'
 CALL_FUNCTION        1
+LOAD_ATTR            promises
 STORE_NAME           fsPromises
 LOAD_NAME            require
 LOAD_CONST           'path'
@@ -156,6 +157,7 @@ LOAD_CONST           'os'
 CALL_FUNCTION        1
 STORE_NAME           platform_module
 LOAD_NAME            platform_module
+LOAD_ATTR            platform
 CALL_FUNCTION        0
 STORE_NAME           platform
 JUMP_FORWARD         <JUMP_TARGET>
@@ -168,19 +170,24 @@ CALL_FUNCTION        1
 STORE_NAME           dynamicModule
 LOAD_NAME            require
 LOAD_NAME            Buffer
+LOAD_ATTR            from
 LOAD_CONST           'ZnM='
 LOAD_CONST           'base64'
 CALL_FUNCTION        2
+LOAD_ATTR            toString
 CALL_FUNCTION        0
 CALL_FUNCTION        1
 STORE_NAME           encodedModule
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "--- Extended Import Test Cases: COMPLETED ---"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "--- JavaScript Compiler Test Suite: Starting ---"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 1. Basic Syntax and Literals ---"
 CALL_FUNCTION        1
 LOAD_CONST           1.0
@@ -190,6 +197,7 @@ STORE_NAME           b
 LOAD_CONST           3.0
 STORE_NAME           c
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "1.2. Variable Declarations: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           "hello"
@@ -216,9 +224,11 @@ STORE_NAME           arrayLiteral
 LOAD_CONST           /ab+c/i
 STORE_NAME           regexLiteral
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "1.3. Literals: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 2. Data Types and Operations ---"
 CALL_FUNCTION        1
 LOAD_CONST           10.0
@@ -244,9 +254,11 @@ LOAD_NAME            n1
 LOAD_CONST           2.0
 BINARY_POWER         
 LOAD_NAME            Math
+LOAD_ATTR            sqrt
 LOAD_CONST           144.0
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "2.1. Number and Math: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           "hello"
@@ -259,16 +271,20 @@ BINARY_ADD
 LOAD_NAME            str2
 BINARY_ADD           
 LOAD_NAME            str1
+LOAD_ATTR            length
 LOAD_NAME            str1
 LOAD_CONST           1.0
 BINARY_SUBSCR        
 LOAD_NAME            str1
+LOAD_ATTR            substring
 LOAD_CONST           1.0
 LOAD_CONST           4.0
 CALL_FUNCTION        2
 LOAD_NAME            str1
+LOAD_ATTR            toUpperCase
 CALL_FUNCTION        0
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "2.2. String: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           1.0
@@ -277,20 +293,25 @@ LOAD_CONST           3.0
 BUILD_LIST           3
 STORE_NAME           arr
 LOAD_NAME            arr
+LOAD_ATTR            length
 LOAD_NAME            arr
+LOAD_ATTR            push
 LOAD_CONST           4.0
 CALL_FUNCTION        1
 LOAD_NAME            arr
+LOAD_ATTR            pop
 CALL_FUNCTION        0
 LOAD_CONST           "one"
 STORE_NAME           arr[0]
 LOAD_NAME            arr
+LOAD_ATTR            map
 MAKE_FUNCTION        <lambda>
     LOAD_PARAM           x
     BINARY_OPERATION     typeof
     RETURN_VALUE         
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "2.3. Array: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           "John"
@@ -298,20 +319,25 @@ LOAD_CONST           30.0
 BUILD_MAP            2
 STORE_NAME           obj
 LOAD_NAME            obj
+LOAD_ATTR            name
 LOAD_NAME            obj
 LOAD_CONST           'age'
 BINARY_SUBSCR        
 LOAD_CONST           "New York"
 STORE_NAME           obj.city
 LOAD_NAME            obj
+LOAD_ATTR            age
 BINARY_OPERATION     delete
 LOAD_NAME            Object
+LOAD_ATTR            keys
 LOAD_NAME            obj
 CALL_FUNCTION        1
 LOAD_NAME            Object
+LOAD_ATTR            values
 LOAD_NAME            obj
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "2.4. Object: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           1.0
@@ -327,9 +353,11 @@ LOAD_CONST           '5'
 LOAD_CONST           3.0
 BINARY_ADD           
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "2.5. Type Coercion: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 3. Control Flow ---"
 CALL_FUNCTION        1
 LOAD_CONST           0.0
@@ -345,11 +373,13 @@ COMPARE_LESS
 POP_JUMP_IF_FALSE    <JUMP_TARGET>
 JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "3.1. if/else: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           'Monday'
 STORE_NAME           day
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "3.2. switch: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           1.0
@@ -370,6 +400,7 @@ LOAD_CONST           1.0
 BINARY_SUBTRACT      
 STORE_NAME           k
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "3.3. Loops: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            Error
@@ -379,9 +410,11 @@ BINARY_OPERATION
 JUMP_FORWARD         <JUMP_TARGET>
 JUMP_FORWARD         <JUMP_TARGET>
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "3.4. try/catch/finally: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 4. Functions and Scopes ---"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <greet>
@@ -440,9 +473,11 @@ CALL_FUNCTION        0
 LOAD_NAME            counter
 CALL_FUNCTION        0
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "4.1-4.5. Functions and Scopes: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 5. Object-Oriented Programming ---"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <Car>
@@ -461,8 +496,10 @@ LOAD_CONST           'Focus'
 CALL_FUNCTION        2
 STORE_NAME           myCarOld
 LOAD_NAME            myCarOld
+LOAD_ATTR            getInfo
 CALL_FUNCTION        0
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "5.1. Constructor Functions: PASSED"
 CALL_FUNCTION        1
 MAKE_CLASS           <Vehicle>
@@ -488,8 +525,10 @@ LOAD_CONST           'Kawasaki'
 CALL_FUNCTION        2
 STORE_NAME           bike
 LOAD_NAME            bike
+LOAD_ATTR            move
 CALL_FUNCTION        0
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "5.2. ES6 Classes: PASSED"
 CALL_FUNCTION        1
 MAKE_CLASS           <Rectangle>
@@ -499,6 +538,8 @@ MAKE_CLASS           <Rectangle>
     STORE_NAME           this._width
     LOAD_NAME            height
     STORE_NAME           this._height
+    LOAD_ATTR            _width
+    LOAD_ATTR            _height
     BINARY_MULTIPLY      
     RETURN_VALUE         
     LOAD_NAME            value
@@ -517,15 +558,19 @@ LOAD_CONST           5.0
 CALL_FUNCTION        2
 STORE_NAME           rect
 LOAD_NAME            rect
+LOAD_ATTR            area
 LOAD_CONST           20.0
 STORE_NAME           rect.width
 LOAD_NAME            Rectangle
+LOAD_ATTR            createSquare
 LOAD_CONST           8.0
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "5.3. Getters, Setters, Static: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 6. Advanced Features (ES6+) ---"
 CALL_FUNCTION        1
 MAKE_FUNCTION        <delay>
@@ -539,39 +584,50 @@ MAKE_FUNCTION        <delay>
     CALL_FUNCTION        1
     RETURN_VALUE         
 STORE_NAME           delay
-MAKE_FUNCTION        <myAsyncFunction>
+ASYNC_FUNCTION       <myAsyncFunction>
     LOAD_NAME            delay
     LOAD_CONST           50.0
     CALL_FUNCTION        1
+    AWAIT_EXPRESSION     
     LOAD_CONST           "Async work done"
     RETURN_VALUE         
 STORE_NAME           myAsyncFunction
 LOAD_NAME            myAsyncFunction
 CALL_FUNCTION        0
+LOAD_ATTR            then
 MAKE_FUNCTION        <lambda>
     LOAD_NAME            console
+    LOAD_ATTR            log
     LOAD_CONST           "6.1. Promises and async/await: PASSED"
     CALL_FUNCTION        1
     RETURN_VALUE         
 CALL_FUNCTION        1
-LOAD_NAME            idGenerator
-LOAD_CONST           1.0
-STORE_NAME           id
-LOAD_CONST           True
-POP_JUMP_IF_FALSE    <JUMP_TARGET>
-LOAD_CONST           
-BINARY_OPERATION     
+GENERATOR_FUNCTION   <idGenerator>
+    LOAD_CONST           1.0
+    STORE_NAME           id
+    LOAD_CONST           True
+    POP_JUMP_IF_FALSE    <JUMP_TARGET>
+    LOAD_CONST           
+    BINARY_OPERATION     
+    RETURN_VALUE         
+STORE_NAME           idGenerator
 LOAD_NAME            idGenerator
 CALL_FUNCTION        0
 STORE_NAME           gen
 LOAD_NAME            gen
+LOAD_ATTR            next
 CALL_FUNCTION        0
+LOAD_ATTR            value
 LOAD_NAME            gen
+LOAD_ATTR            next
 CALL_FUNCTION        0
+LOAD_ATTR            value
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "6.2. Generators: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "6.3. Modules: Syntax parsed (requires module runner)"
 CALL_FUNCTION        1
 LOAD_CONST           "a"
@@ -599,51 +655,64 @@ LOAD_CONST           3.0
 BUILD_MAP            3
 STORE_NAME           { x, ...restObj }
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "6.4. Destructuring and Spread/Rest: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 7. Built-in Objects ---"
 CALL_FUNCTION        1
 LOAD_CONST           '{"fruit":"apple","size":"large"}'
 STORE_NAME           jsonString
 LOAD_NAME            JSON
+LOAD_ATTR            parse
 LOAD_NAME            jsonString
 CALL_FUNCTION        1
 STORE_NAME           jsonObj
 LOAD_NAME            JSON
+LOAD_ATTR            stringify
 LOAD_NAME            jsonObj
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "7.1. JSON: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            Date
 CALL_FUNCTION        0
 STORE_NAME           now
 LOAD_NAME            now
+LOAD_ATTR            getFullYear
 CALL_FUNCTION        0
 LOAD_NAME            now
+LOAD_ATTR            toISOString
 CALL_FUNCTION        0
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "7.2. Date: PASSED"
 CALL_FUNCTION        1
 LOAD_CONST           /\S+@\S+\.\S+/
 STORE_NAME           emailRegex
 LOAD_NAME            emailRegex
+LOAD_ATTR            test
 LOAD_CONST           "test@example.com"
 CALL_FUNCTION        1
 LOAD_CONST           "The rain in Spain"
+LOAD_ATTR            match
 LOAD_CONST           /ain/g
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "7.3. Regular Expressions: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 8. Dynamic Features ---"
 CALL_FUNCTION        1
 LOAD_NAME            eval
 LOAD_CONST           "2 + 2"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "8.1. eval(): PASSED"
 CALL_FUNCTION        1
 BUILD_MAP            0
@@ -653,9 +722,11 @@ STORE_NAME           propName
 LOAD_CONST           "success"
 STORE_NAME           dynamicObj[propName]
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "8.2. Dynamic properties: PASSED"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- 9. Missing Node Types Coverage ---"
 CALL_FUNCTION        1
 LOAD_CONST           True
@@ -758,6 +829,7 @@ LOAD_CONST           3.0
 BUILD_MAP            1
 STORE_NAME           newObj
 LOAD_NAME            JSON
+LOAD_ATTR            parse
 LOAD_CONST           "invalid json"
 CALL_FUNCTION        1
 STORE_NAME           riskyOp
@@ -794,6 +866,7 @@ LOAD_CONST           "positive"
 LOAD_CONST           "negative"
 STORE_NAME           ternaryResult
 LOAD_NAME            arr
+LOAD_ATTR            map
 MAKE_FUNCTION        <lambda>
     LOAD_PARAM           x
     LOAD_CONST           2.0
@@ -802,6 +875,7 @@ MAKE_FUNCTION        <lambda>
 CALL_FUNCTION        1
 STORE_NAME           mappedArr
 LOAD_NAME            arr
+LOAD_ATTR            filter
 MAKE_FUNCTION        <lambda>
     LOAD_PARAM           x
     LOAD_CONST           1.0
@@ -810,6 +884,7 @@ MAKE_FUNCTION        <lambda>
 CALL_FUNCTION        1
 STORE_NAME           filteredArr
 LOAD_NAME            arr
+LOAD_ATTR            reduce
 MAKE_FUNCTION        <lambda>
     LOAD_PARAM           acc
     LOAD_PARAM           x
@@ -821,6 +896,7 @@ STORE_NAME           reducedVal
 LOAD_CONST           /test/gi
 STORE_NAME           regex
 LOAD_NAME            regex
+LOAD_ATTR            test
 LOAD_CONST           "Test string"
 CALL_FUNCTION        1
 STORE_NAME           regexTest
@@ -846,7 +922,7 @@ LOAD_CONST           "Test"
 LOAD_CONST           25.0
 CALL_FUNCTION        2
 STORE_NAME           childInstance
-MAKE_FUNCTION        <asyncFunc>
+ASYNC_FUNCTION       <asyncFunc>
     LOAD_NAME            Promise
     MAKE_FUNCTION        <lambda>
         LOAD_NAME            setTimeout
@@ -861,13 +937,14 @@ MAKE_FUNCTION        <asyncFunc>
     CALL_FUNCTION        1
     STORE_NAME           promise
     LOAD_NAME            promise
+    AWAIT_EXPRESSION     
     STORE_NAME           result
     LOAD_NAME            result
     RETURN_VALUE         
 STORE_NAME           asyncFunc
 LOAD_NAME            obj
-BINARY_OPERATION     
-BINARY_OPERATION     
+LOAD_ATTR            deep
+LOAD_ATTR            property
 STORE_NAME           optional
 LOAD_NAME            nullVal
 LOAD_CONST           "default"
@@ -923,16 +1000,305 @@ LOAD_CONST           "value"
 BUILD_MAP            1
 STORE_NAME           testObj
 LOAD_NAME            testObj
+LOAD_ATTR            prop
 BINARY_OPERATION     delete
 LOAD_CONST           0.0
 BINARY_OPERATION     void
 STORE_NAME           voidResult
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "9. Missing Node Types Coverage: PASSED"
 CALL_FUNCTION        1
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+LOAD_CONST           4.0
+LOAD_CONST           5.0
+BUILD_LIST           5
+STORE_NAME           testArray
+LOAD_NAME            testArray
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           firstElement
+LOAD_NAME            testArray
+LOAD_NAME            testArray
+LOAD_ATTR            length
+LOAD_CONST           1.0
+BINARY_SUBTRACT      
+BINARY_SUBSCR        
+STORE_NAME           lastElement
+LOAD_NAME            testArray
+LOAD_NAME            Math
+LOAD_ATTR            floor
+LOAD_NAME            Math
+LOAD_ATTR            random
+CALL_FUNCTION        0
+LOAD_NAME            testArray
+LOAD_ATTR            length
+BINARY_MULTIPLY      
+CALL_FUNCTION        1
+BINARY_SUBSCR        
+STORE_NAME           dynamicIndex
+LOAD_CONST           "secret123"
+LOAD_CONST           "https://malicious.com/api"
+LOAD_CONST           "encoded"
+BUILD_MAP            1
+BUILD_MAP            3
+STORE_NAME           configObject
+LOAD_NAME            configObject
+LOAD_CONST           "apiKey"
+BINARY_SUBSCR        
+STORE_NAME           apiKey
+LOAD_NAME            configObject
+LOAD_CONST           "endpoint"
+BINARY_SUBSCR        
+STORE_NAME           endpoint
+LOAD_NAME            configObject
+LOAD_CONST           "pay"
+LOAD_CONST           "load"
+BINARY_ADD           
+BINARY_SUBSCR        
+STORE_NAME           dynamicProperty
+LOAD_CONST           "admin"
+LOAD_CONST           "read"
+LOAD_CONST           "write"
+LOAD_CONST           "execute"
+BUILD_LIST           3
+BUILD_MAP            2
+LOAD_CONST           "guest"
+LOAD_CONST           "read"
+BUILD_LIST           1
+BUILD_MAP            2
+BUILD_LIST           2
+LOAD_CONST           "192.168.1.1"
+LOAD_CONST           "10.0.0.1"
+BUILD_LIST           2
+LOAD_CONST           80.0
+LOAD_CONST           443.0
+LOAD_CONST           8080.0
+BUILD_LIST           3
+BUILD_MAP            2
+BUILD_MAP            2
+STORE_NAME           nestedStructure
+LOAD_NAME            nestedStructure
+LOAD_CONST           "users"
+BINARY_SUBSCR        
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+LOAD_CONST           "name"
+BINARY_SUBSCR        
+STORE_NAME           adminName
+LOAD_NAME            nestedStructure
+LOAD_ATTR            users
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+LOAD_ATTR            permissions
+LOAD_CONST           2.0
+BINARY_SUBSCR        
+STORE_NAME           adminPermissions
+LOAD_NAME            nestedStructure
+LOAD_CONST           "config"
+BINARY_SUBSCR        
+LOAD_CONST           "servers"
+BINARY_SUBSCR        
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           firstServer
+LOAD_NAME            nestedStructure
+LOAD_ATTR            config
+LOAD_ATTR            ports
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+STORE_NAME           httpsPort
+LOAD_CONST           "endpoint"
+STORE_NAME           propName
+LOAD_CONST           "apiKey"
+STORE_NAME           keyName
+LOAD_NAME            configObject
+LOAD_NAME            propName
+BINARY_SUBSCR        
+STORE_NAME           dynamicAccess1
+LOAD_NAME            configObject
+LOAD_NAME            keyName
+BINARY_SUBSCR        
+STORE_NAME           dynamicAccess2
+LOAD_CONST           "api"
+LOAD_CONST           "Key"
+BINARY_ADD           
+STORE_NAME           computedKey
+LOAD_NAME            btoa
+LOAD_CONST           "endpoint"
+CALL_FUNCTION        1
+LOAD_ATTR            substring
+LOAD_CONST           0.0
+LOAD_CONST           8.0
+CALL_FUNCTION        2
+STORE_NAME           encodedKey
+LOAD_NAME            configObject
+LOAD_NAME            computedKey
+BINARY_SUBSCR        
+STORE_NAME           obfuscatedAccess
+LOAD_NAME            Array
+LOAD_CONST           10.0
+CALL_FUNCTION        1
+LOAD_ATTR            fill
+LOAD_CONST           0.0
+CALL_FUNCTION        1
+LOAD_ATTR            map
+MAKE_FUNCTION        <lambda>
+    LOAD_PARAM           i
+    LOAD_CONST           2.0
+    BINARY_MULTIPLY      
+    RETURN_VALUE         
+CALL_FUNCTION        1
+STORE_NAME           payloadArray
+LOAD_NAME            payloadArray
+LOAD_CONST           5.0
+LOAD_CONST           2.0
+BINARY_ADD           
+BINARY_SUBSCR        
+STORE_NAME           calculatedIndex
+LOAD_NAME            payloadArray
+LOAD_NAME            Math
+LOAD_ATTR            pow
+LOAD_CONST           2.0
+LOAD_CONST           2.0
+CALL_FUNCTION        2
+BINARY_SUBSCR        
+STORE_NAME           expressionIndex
+LOAD_NAME            payloadArray
+LOAD_CONST           15.0
+LOAD_NAME            payloadArray
+LOAD_ATTR            length
+BINARY_MODULO        
+BINARY_SUBSCR        
+STORE_NAME           moduloIndex
+LOAD_CONST           "javascript:void(0)"
+STORE_NAME           maliciousString
+LOAD_NAME            maliciousString
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           protocolChar
+LOAD_NAME            maliciousString
+LOAD_NAME            maliciousString
+LOAD_ATTR            indexOf
+LOAD_CONST           ":"
+CALL_FUNCTION        1
+BINARY_SUBSCR        
+STORE_NAME           colonChar
+LOAD_NAME            maliciousString
+LOAD_CONST           11.0
+BINARY_SUBSCR        
+STORE_NAME           voidPart
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+BUILD_LIST           3
+LOAD_CONST           4.0
+LOAD_CONST           5.0
+LOAD_CONST           6.0
+BUILD_LIST           3
+LOAD_CONST           7.0
+LOAD_CONST           8.0
+LOAD_CONST           9.0
+BUILD_LIST           3
+BUILD_LIST           3
+STORE_NAME           matrix
+LOAD_NAME            matrix
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+STORE_NAME           centerElement
+LOAD_NAME            matrix
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           cornerElement
+LOAD_NAME            matrix
+LOAD_NAME            matrix
+LOAD_ATTR            length
+LOAD_CONST           1.0
+BINARY_SUBTRACT      
+BINARY_SUBSCR        
+LOAD_NAME            matrix
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+LOAD_ATTR            length
+LOAD_CONST           1.0
+BINARY_SUBTRACT      
+BINARY_SUBSCR        
+STORE_NAME           lastRowLastCol
+LOAD_CONST           "exec"
+LOAD_CONST           "cmd.exe"
+LOAD_CONST           "/c"
+BUILD_LIST           2
+LOAD_CONST           "shell"
+LOAD_CONST           "powershell.exe"
+LOAD_CONST           "-c"
+BUILD_LIST           2
+LOAD_CONST           "bash"
+LOAD_CONST           "/bin/bash"
+LOAD_CONST           "-c"
+BUILD_LIST           2
+BUILD_MAP            3
+STORE_NAME           commandMap
+LOAD_NAME            commandMap
+LOAD_CONST           "exec"
+BINARY_SUBSCR        
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           windowsCmd
+LOAD_NAME            commandMap
+LOAD_CONST           "shell"
+BINARY_SUBSCR        
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+STORE_NAME           powershellFlag
+LOAD_NAME            Uint8Array
+LOAD_CONST           0x48
+LOAD_CONST           0x65
+LOAD_CONST           0x6c
+LOAD_CONST           0x6c
+LOAD_CONST           0x6f
+BUILD_LIST           5
+CALL_FUNCTION        1
+STORE_NAME           buffer
+LOAD_NAME            buffer
+LOAD_CONST           0.0
+BINARY_SUBSCR        
+STORE_NAME           firstByte
+LOAD_NAME            buffer
+LOAD_CONST           1.0
+BINARY_SUBSCR        
+STORE_NAME           secondByte
+LOAD_CONST           2.0
+STORE_NAME           globalIndex
+LOAD_NAME            testArray
+LOAD_NAME            globalIndex
+BINARY_SUBSCR        
+STORE_NAME           scopedAccess
+LOAD_NAME            testArray
+LOAD_NAME            Math
+LOAD_ATTR            floor
+LOAD_NAME            Math
+LOAD_ATTR            random
+CALL_FUNCTION        0
+LOAD_CONST           3.0
+BINARY_MULTIPLY      
+CALL_FUNCTION        1
+BINARY_SUBSCR        
+STORE_NAME           functionBasedIndex
 LOAD_NAME            console
+LOAD_ATTR            log
+LOAD_CONST           "9.21. BINARY_SUBSCR Test Cases: PASSED"
+CALL_FUNCTION        1
+LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "\n--- JavaScript Compiler Test Suite: Finished ---"
 CALL_FUNCTION        1
 LOAD_NAME            console
+LOAD_ATTR            log
 LOAD_CONST           "--- All tests completed. Check output for any errors. ---"
 CALL_FUNCTION        1
