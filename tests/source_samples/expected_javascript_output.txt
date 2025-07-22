@@ -1,3 +1,5 @@
+Root CodeObject (<module>):
+--- CodeObject '<module>' from javascript.js (lines 1-696) ---
 IMPORT_NAME          React
 LOAD_CONST           'react'
 IMPORT_NAME          fs
@@ -85,9 +87,7 @@ LOAD_CONST           'systeminformation'
 LOAD_CONST           'test-export'
 STORE_NAME           exportedConst
 EXPORT_NAMED         exportedFunction
-MAKE_FUNCTION        <exportedFunction>
-    LOAD_CONST           'exported'
-    RETURN_VALUE         
+MAKE_FUNCTION        <exportedFunction_ref_0>
 STORE_NAME           exportedFunction
 LOAD_CONST           True
 BUILD_MAP            1
@@ -305,10 +305,7 @@ LOAD_CONST           "one"
 STORE_NAME           arr[0]
 LOAD_NAME            arr
 LOAD_ATTR            map
-MAKE_FUNCTION        <lambda>
-    LOAD_PARAM           x
-    TYPEOF_OPERATOR      
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_1>
 CALL_FUNCTION        1
 LOAD_NAME            console
 LOAD_ATTR            log
@@ -417,9 +414,7 @@ LOAD_NAME            console
 LOAD_ATTR            log
 LOAD_CONST           "\n--- 4. Functions and Scopes ---"
 CALL_FUNCTION        1
-MAKE_FUNCTION        <greet>
-    BINARY_OPERATION     
-    RETURN_VALUE         
+MAKE_FUNCTION        <greet_ref_2>
 STORE_NAME           greet
 LOAD_NAME            greet
 LOAD_CONST           "World"
@@ -431,21 +426,12 @@ STORE_NAME           farewell
 LOAD_NAME            farewell
 LOAD_CONST           "World"
 CALL_FUNCTION        1
-MAKE_FUNCTION        <lambda>
-    LOAD_PARAM           x
-    LOAD_PARAM           x
-    BINARY_MULTIPLY      
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_3>
 STORE_NAME           square
 LOAD_NAME            square
 LOAD_CONST           4.0
 CALL_FUNCTION        1
-MAKE_FUNCTION        <paramsTest>
-    LOAD_PARAM           a
-    LOAD_NAME            b
-    LOAD_NAME            rest
-    BUILD_LIST           3
-    RETURN_VALUE         
+MAKE_FUNCTION        <paramsTest_ref_4>
 STORE_NAME           paramsTest
 LOAD_NAME            paramsTest
 LOAD_CONST           1.0
@@ -454,16 +440,7 @@ LOAD_CONST           3.0
 LOAD_CONST           4.0
 LOAD_CONST           5.0
 CALL_FUNCTION        5
-MAKE_FUNCTION        <makeCounter>
-    LOAD_CONST           0.0
-    STORE_NAME           count
-    LOAD_NAME            count
-    LOAD_CONST           1.0
-    BINARY_ADD           
-    STORE_NAME           count
-    LOAD_NAME            count
-    RETURN_VALUE         
-    RETURN_VALUE         
+MAKE_FUNCTION        <makeCounter_ref_5>
 STORE_NAME           makeCounter
 LOAD_NAME            makeCounter
 CALL_FUNCTION        0
@@ -480,12 +457,7 @@ LOAD_NAME            console
 LOAD_ATTR            log
 LOAD_CONST           "\n--- 5. Object-Oriented Programming ---"
 CALL_FUNCTION        1
-MAKE_FUNCTION        <Car>
-    LOAD_PARAM           make
-    STORE_NAME           this.make
-    LOAD_PARAM           model
-    STORE_NAME           this.model
-    RETURN_VALUE         
+MAKE_FUNCTION        <Car_ref_6>
 STORE_NAME           Car
 BINARY_OPERATION     
 RETURN_VALUE         
@@ -502,22 +474,9 @@ LOAD_NAME            console
 LOAD_ATTR            log
 LOAD_CONST           "5.1. Constructor Functions: PASSED"
 CALL_FUNCTION        1
-MAKE_CLASS           <Vehicle>
-    LOAD_NAME            name
-    LOAD_NAME            name
-    STORE_NAME           this.name
-    BINARY_OPERATION     
-    RETURN_VALUE         
+MAKE_CLASS           <Vehicle_ref_7>
 STORE_NAME           Vehicle
-MAKE_CLASS           <Motorcycle>
-    LOAD_NAME            name
-    LOAD_NAME            brand
-    LOAD_NAME            name
-    CALL_FUNCTION        1
-    LOAD_NAME            brand
-    STORE_NAME           this.brand
-    BINARY_OPERATION     
-    RETURN_VALUE         
+MAKE_CLASS           <Motorcycle_ref_8>
 STORE_NAME           Motorcycle
 LOAD_NAME            Motorcycle
 LOAD_CONST           'Ninja'
@@ -531,26 +490,7 @@ LOAD_NAME            console
 LOAD_ATTR            log
 LOAD_CONST           "5.2. ES6 Classes: PASSED"
 CALL_FUNCTION        1
-MAKE_CLASS           <Rectangle>
-    LOAD_NAME            width
-    LOAD_NAME            height
-    LOAD_NAME            width
-    STORE_NAME           this._width
-    LOAD_NAME            height
-    STORE_NAME           this._height
-    LOAD_ATTR            _width
-    LOAD_ATTR            _height
-    BINARY_MULTIPLY      
-    RETURN_VALUE         
-    LOAD_NAME            value
-    LOAD_NAME            value
-    STORE_NAME           this._width
-    LOAD_NAME            size
-    LOAD_NAME            Rectangle
-    LOAD_NAME            size
-    LOAD_NAME            size
-    CALL_FUNCTION        2
-    RETURN_VALUE         
+MAKE_CLASS           <Rectangle_ref_9>
 STORE_NAME           Rectangle
 LOAD_NAME            Rectangle
 LOAD_CONST           10.0
@@ -573,43 +513,16 @@ LOAD_NAME            console
 LOAD_ATTR            log
 LOAD_CONST           "\n--- 6. Advanced Features (ES6+) ---"
 CALL_FUNCTION        1
-MAKE_FUNCTION        <delay>
-    LOAD_NAME            Promise
-    MAKE_FUNCTION        <lambda>
-        LOAD_NAME            setTimeout
-        LOAD_PARAM           resolve
-        LOAD_NAME            ms
-        CALL_FUNCTION        2
-        RETURN_VALUE         
-    CALL_FUNCTION        1
-    RETURN_VALUE         
+MAKE_FUNCTION        <delay_ref_11>
 STORE_NAME           delay
-ASYNC_FUNCTION       <myAsyncFunction>
-    LOAD_NAME            delay
-    LOAD_CONST           50.0
-    CALL_FUNCTION        1
-    AWAIT_EXPRESSION     
-    LOAD_CONST           "Async work done"
-    RETURN_VALUE         
+ASYNC_FUNCTION       <myAsyncFunction_ref_12>
 STORE_NAME           myAsyncFunction
 LOAD_NAME            myAsyncFunction
 CALL_FUNCTION        0
 LOAD_ATTR            then
-MAKE_FUNCTION        <lambda>
-    LOAD_NAME            console
-    LOAD_ATTR            log
-    LOAD_CONST           "6.1. Promises and async/await: PASSED"
-    CALL_FUNCTION        1
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_13>
 CALL_FUNCTION        1
-GENERATOR_FUNCTION   <idGenerator>
-    LOAD_CONST           1.0
-    STORE_NAME           id
-    LOAD_CONST           True
-    POP_JUMP_IF_FALSE    <JUMP_TARGET>
-    LOAD_CONST           
-    BINARY_OPERATION     
-    RETURN_VALUE         
+GENERATOR_FUNCTION   <idGenerator_ref_14>
 STORE_NAME           idGenerator
 LOAD_NAME            idGenerator
 CALL_FUNCTION        0
@@ -786,17 +699,9 @@ CALL_FUNCTION        0
 LOAD_NAME            Date
 COMPARE_INSTANCEOF   
 STORE_NAME           instanceOf
-MAKE_FUNCTION        <lambda>
-    LOAD_PARAM           x
-    LOAD_CONST           2.0
-    BINARY_MULTIPLY      
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_15>
 STORE_NAME           arrowFunc
-MAKE_FUNCTION        <lambda>
-    LOAD_PARAM           a
-    LOAD_PARAM           b
-    BINARY_ADD           
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_16>
 STORE_NAME           arrowFunc2
 LOAD_NAME            arrowFunc
 LOAD_CONST           5.0
@@ -867,29 +772,17 @@ LOAD_CONST           "negative"
 STORE_NAME           ternaryResult
 LOAD_NAME            arr
 LOAD_ATTR            map
-MAKE_FUNCTION        <lambda>
-    LOAD_PARAM           x
-    LOAD_CONST           2.0
-    BINARY_MULTIPLY      
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_17>
 CALL_FUNCTION        1
 STORE_NAME           mappedArr
 LOAD_NAME            arr
 LOAD_ATTR            filter
-MAKE_FUNCTION        <lambda>
-    LOAD_PARAM           x
-    LOAD_CONST           1.0
-    COMPARE_GREATER      
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_18>
 CALL_FUNCTION        1
 STORE_NAME           filteredArr
 LOAD_NAME            arr
 LOAD_ATTR            reduce
-MAKE_FUNCTION        <lambda>
-    LOAD_PARAM           acc
-    LOAD_PARAM           x
-    BINARY_ADD           
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_19>
 LOAD_CONST           0.0
 CALL_FUNCTION        2
 STORE_NAME           reducedVal
@@ -900,47 +793,16 @@ LOAD_ATTR            test
 LOAD_CONST           "Test string"
 CALL_FUNCTION        1
 STORE_NAME           regexTest
-MAKE_CLASS           <Parent>
-    LOAD_NAME            name
-    LOAD_NAME            name
-    STORE_NAME           this.name
-    BINARY_OPERATION     
-    RETURN_VALUE         
+MAKE_CLASS           <Parent_ref_20>
 STORE_NAME           Parent
-MAKE_CLASS           <Child>
-    LOAD_NAME            name
-    LOAD_NAME            age
-    LOAD_NAME            name
-    CALL_FUNCTION        1
-    LOAD_NAME            age
-    STORE_NAME           this.age
-    BINARY_OPERATION     
-    RETURN_VALUE         
+MAKE_CLASS           <Child_ref_21>
 STORE_NAME           Child
 LOAD_NAME            Child
 LOAD_CONST           "Test"
 LOAD_CONST           25.0
 CALL_FUNCTION        2
 STORE_NAME           childInstance
-ASYNC_FUNCTION       <asyncFunc>
-    LOAD_NAME            Promise
-    MAKE_FUNCTION        <lambda>
-        LOAD_NAME            setTimeout
-        MAKE_FUNCTION        <lambda>
-            LOAD_NAME            resolve
-            LOAD_CONST           "done"
-            CALL_FUNCTION        1
-            RETURN_VALUE         
-        LOAD_CONST           1.0
-        CALL_FUNCTION        2
-        RETURN_VALUE         
-    CALL_FUNCTION        1
-    STORE_NAME           promise
-    LOAD_NAME            promise
-    AWAIT_EXPRESSION     
-    STORE_NAME           result
-    LOAD_NAME            result
-    RETURN_VALUE         
+ASYNC_FUNCTION       <asyncFunc_ref_24>
 STORE_NAME           asyncFunc
 LOAD_NAME            obj
 LOAD_ATTR            deep
@@ -950,12 +812,7 @@ LOAD_NAME            nullVal
 LOAD_CONST           "default"
 BINARY_NULLISH_COALESCING 
 STORE_NAME           nullish
-MAKE_FUNCTION        <testThrow>
-    LOAD_NAME            Error
-    LOAD_CONST           "Test error"
-    CALL_FUNCTION        1
-    BINARY_OPERATION     
-    RETURN_VALUE         
+MAKE_FUNCTION        <testThrow_ref_25>
 STORE_NAME           testThrow
 LOAD_CONST           0xFF
 LOAD_CONST           0x0F
@@ -1145,11 +1002,7 @@ LOAD_ATTR            fill
 LOAD_CONST           0.0
 CALL_FUNCTION        1
 LOAD_ATTR            map
-MAKE_FUNCTION        <lambda>
-    LOAD_PARAM           i
-    LOAD_CONST           2.0
-    BINARY_MULTIPLY      
-    RETURN_VALUE         
+MAKE_FUNCTION        <lambda_ref_26>
 CALL_FUNCTION        1
 STORE_NAME           payloadArray
 LOAD_NAME            payloadArray
@@ -1302,3 +1155,261 @@ LOAD_NAME            console
 LOAD_ATTR            log
 LOAD_CONST           "--- All tests completed. Check output for any errors. ---"
 CALL_FUNCTION        1
+--------------------------------------------------------------
+
+exportedFunction_ref_0:
+--- CodeObject 'exportedFunction_ref_0' from javascript.js (lines 61-61) ---
+LOAD_CONST           'exported'
+RETURN_VALUE         
+----------------------------------------------------------------------------
+
+lambda_ref_1:
+--- CodeObject 'lambda_ref_1' from javascript.js (lines 168-168) ---
+LOAD_PARAM           x
+TYPEOF_OPERATOR      
+RETURN_VALUE         
+--------------------------------------------------------------------
+
+greet_ref_2:
+--- CodeObject 'greet_ref_2' from javascript.js (lines 252-254) ---
+BINARY_OPERATION     
+RETURN_VALUE         
+-------------------------------------------------------------------
+
+lambda_ref_3:
+--- CodeObject 'lambda_ref_3' from javascript.js (lines 264-264) ---
+LOAD_PARAM           x
+LOAD_PARAM           x
+BINARY_MULTIPLY      
+RETURN_VALUE         
+--------------------------------------------------------------------
+
+paramsTest_ref_4:
+--- CodeObject 'paramsTest_ref_4' from javascript.js (lines 268-270) ---
+LOAD_PARAM           a
+LOAD_NAME            b
+LOAD_NAME            rest
+BUILD_LIST           3
+RETURN_VALUE         
+------------------------------------------------------------------------
+
+makeCounter_ref_5:
+--- CodeObject 'makeCounter_ref_5' from javascript.js (lines 274-280) ---
+LOAD_CONST           0.0
+STORE_NAME           count
+LOAD_NAME            count
+LOAD_CONST           1.0
+BINARY_ADD           
+STORE_NAME           count
+LOAD_NAME            count
+RETURN_VALUE         
+RETURN_VALUE         
+-------------------------------------------------------------------------
+
+Car_ref_6:
+--- CodeObject 'Car_ref_6' from javascript.js (lines 293-296) ---
+LOAD_PARAM           make
+STORE_NAME           this.make
+LOAD_PARAM           model
+STORE_NAME           this.model
+RETURN_VALUE         
+-----------------------------------------------------------------
+
+Vehicle_ref_7:
+--- CodeObject 'Vehicle_ref_7' from javascript.js (lines 305-312) ---
+LOAD_NAME            name
+LOAD_NAME            name
+STORE_NAME           this.name
+BINARY_OPERATION     
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+Motorcycle_ref_8:
+--- CodeObject 'Motorcycle_ref_8' from javascript.js (lines 314-323) ---
+LOAD_NAME            name
+LOAD_NAME            brand
+LOAD_NAME            name
+CALL_FUNCTION        1
+LOAD_NAME            brand
+STORE_NAME           this.brand
+BINARY_OPERATION     
+RETURN_VALUE         
+------------------------------------------------------------------------
+
+Rectangle_ref_9:
+--- CodeObject 'Rectangle_ref_9' from javascript.js (lines 329-343) ---
+LOAD_NAME            width
+LOAD_NAME            height
+LOAD_NAME            width
+STORE_NAME           this._width
+LOAD_NAME            height
+STORE_NAME           this._height
+LOAD_ATTR            _width
+LOAD_ATTR            _height
+BINARY_MULTIPLY      
+RETURN_VALUE         
+LOAD_NAME            value
+LOAD_NAME            value
+STORE_NAME           this._width
+LOAD_NAME            size
+LOAD_NAME            Rectangle
+LOAD_NAME            size
+LOAD_NAME            size
+CALL_FUNCTION        2
+RETURN_VALUE         
+-----------------------------------------------------------------------
+
+lambda_ref_10:
+--- CodeObject 'lambda_ref_10' from javascript.js (lines 358-358) ---
+LOAD_NAME            setTimeout
+LOAD_PARAM           resolve
+LOAD_NAME            ms
+CALL_FUNCTION        2
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+delay_ref_11:
+--- CodeObject 'delay_ref_11' from javascript.js (lines 357-359) ---
+LOAD_NAME            Promise
+MAKE_FUNCTION        <lambda_ref_10>
+CALL_FUNCTION        1
+RETURN_VALUE         
+--------------------------------------------------------------------
+
+myAsyncFunction_ref_12:
+--- CodeObject 'myAsyncFunction_ref_12' from javascript.js (lines 361-364) ---
+LOAD_NAME            delay
+LOAD_CONST           50.0
+CALL_FUNCTION        1
+AWAIT_EXPRESSION     
+LOAD_CONST           "Async work done"
+RETURN_VALUE         
+------------------------------------------------------------------------------
+
+lambda_ref_13:
+--- CodeObject 'lambda_ref_13' from javascript.js (lines 365-367) ---
+LOAD_NAME            console
+LOAD_ATTR            log
+LOAD_CONST           "6.1. Promises and async/await: PASSED"
+CALL_FUNCTION        1
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+idGenerator_ref_14:
+--- CodeObject 'idGenerator_ref_14' from javascript.js (lines 370-375) ---
+LOAD_CONST           1.0
+STORE_NAME           id
+LOAD_CONST           True
+POP_JUMP_IF_FALSE    <JUMP_TARGET>
+LOAD_CONST           
+BINARY_OPERATION     
+RETURN_VALUE         
+--------------------------------------------------------------------------
+
+lambda_ref_15:
+--- CodeObject 'lambda_ref_15' from javascript.js (lines 469-469) ---
+LOAD_PARAM           x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+lambda_ref_16:
+--- CodeObject 'lambda_ref_16' from javascript.js (lines 470-470) ---
+LOAD_PARAM           a
+LOAD_PARAM           b
+BINARY_ADD           
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+lambda_ref_17:
+--- CodeObject 'lambda_ref_17' from javascript.js (lines 529-529) ---
+LOAD_PARAM           x
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+lambda_ref_18:
+--- CodeObject 'lambda_ref_18' from javascript.js (lines 530-530) ---
+LOAD_PARAM           x
+LOAD_CONST           1.0
+COMPARE_GREATER      
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+lambda_ref_19:
+--- CodeObject 'lambda_ref_19' from javascript.js (lines 531-531) ---
+LOAD_PARAM           acc
+LOAD_PARAM           x
+BINARY_ADD           
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+Parent_ref_20:
+--- CodeObject 'Parent_ref_20' from javascript.js (lines 538-546) ---
+LOAD_NAME            name
+LOAD_NAME            name
+STORE_NAME           this.name
+BINARY_OPERATION     
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+Child_ref_21:
+--- CodeObject 'Child_ref_21' from javascript.js (lines 548-557) ---
+LOAD_NAME            name
+LOAD_NAME            age
+LOAD_NAME            name
+CALL_FUNCTION        1
+LOAD_NAME            age
+STORE_NAME           this.age
+BINARY_OPERATION     
+RETURN_VALUE         
+--------------------------------------------------------------------
+
+lambda_ref_22:
+--- CodeObject 'lambda_ref_22' from javascript.js (lines 563-563) ---
+LOAD_NAME            resolve
+LOAD_CONST           "done"
+CALL_FUNCTION        1
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+lambda_ref_23:
+--- CodeObject 'lambda_ref_23' from javascript.js (lines 563-563) ---
+LOAD_NAME            setTimeout
+MAKE_FUNCTION        <lambda_ref_22>
+LOAD_CONST           1.0
+CALL_FUNCTION        2
+RETURN_VALUE         
+---------------------------------------------------------------------
+
+asyncFunc_ref_24:
+--- CodeObject 'asyncFunc_ref_24' from javascript.js (lines 562-566) ---
+LOAD_NAME            Promise
+MAKE_FUNCTION        <lambda_ref_23>
+CALL_FUNCTION        1
+STORE_NAME           promise
+LOAD_NAME            promise
+AWAIT_EXPRESSION     
+STORE_NAME           result
+LOAD_NAME            result
+RETURN_VALUE         
+------------------------------------------------------------------------
+
+testThrow_ref_25:
+--- CodeObject 'testThrow_ref_25' from javascript.js (lines 577-579) ---
+LOAD_NAME            Error
+LOAD_CONST           "Test error"
+CALL_FUNCTION        1
+BINARY_OPERATION     
+RETURN_VALUE         
+------------------------------------------------------------------------
+
+lambda_ref_26:
+--- CodeObject 'lambda_ref_26' from javascript.js (lines 652-652) ---
+LOAD_PARAM           i
+LOAD_CONST           2.0
+BINARY_MULTIPLY      
+RETURN_VALUE         
+---------------------------------------------------------------------

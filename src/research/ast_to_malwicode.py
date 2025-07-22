@@ -53,6 +53,14 @@ class CodeObject:
                 result_lines.append(f"{indent}{opcode.name:<20} <{arg.name}>")
                 result_lines.append(arg.to_string(indent_level + 1))
                 continue  # Skip the rest of the loop for this item
+            elif opcode in (
+                OpCode.MAKE_FUNCTION,
+                OpCode.ASYNC_FUNCTION,
+                OpCode.GENERATOR_FUNCTION,
+                OpCode.MAKE_CLASS,
+            ) and isinstance(arg, str):
+                # Handle references to separate CodeObjects
+                arg_str = f"<{arg}>"
             else:
                 arg_str = str(arg) if arg is not None else ""
 
@@ -179,23 +187,43 @@ class ASTCompiler:
 
         # Track function parameters for LOAD_PARAM vs LOAD_NAME distinction
         self.current_function_params = set()
+        # Collection to store all CodeObjects (root, functions, classes)
+        self.code_objects = []
+        # Counter for generating unique reference names
+        self._next_ref_id = 0
 
     def treesitter_ast_to_malwicode(
         self, root_node: Node, source_code_bytes: bytes, file_path: Path
-    ) -> CodeObject:
+    ) -> List[CodeObject]:
         """
-        Public method to initiate the compilation of an AST to a CodeObject.
+        Public method to initiate the compilation of an AST to multiple CodeObjects.
+        Returns a list with the root CodeObject first, followed by function and class CodeObjects.
         """
+        # Reset collections for each compilation
+        self.code_objects = []
+        self._next_ref_id = 0
+
         source_code = source_code_bytes.decode("utf-8", errors="replace")
         location = (root_node.start_point[0] + 1, root_node.end_point[0] + 1)
         bytecode = self._generate_bytecode(root_node, source_code_bytes, file_path)
-        return CodeObject(
+
+        # Create root CodeObject
+        root_code_obj = CodeObject(
             name="<module>",
             byte_code=bytecode,
             source_code=source_code,
             path=file_path,
             location=location,
         )
+
+        # Return root CodeObject first, followed by function/class CodeObjects
+        return [root_code_obj] + self.code_objects
+
+    def _generate_ref_name(self, base_name: str) -> str:
+        """Generate a unique reference name for a CodeObject."""
+        ref_name = f"{base_name}_ref_{self._next_ref_id}"
+        self._next_ref_id += 1
+        return ref_name
 
     def _get_node_text(self, node: Node, source_code_bytes: bytes) -> str:
         """Helper to extract text from a node."""
@@ -1270,10 +1298,16 @@ class ASTCompiler:
 
                 func_source = self._get_node_text(body_node, source_code_bytes)
                 location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
+
+                # Create separate CodeObject and add to collection
+                func_ref_name = self._generate_ref_name("lambda")
                 func_code_obj = CodeObject(
-                    "lambda", func_body_bytecode, func_source, file_path, location
+                    func_ref_name, func_body_bytecode, func_source, file_path, location
                 )
-                bytecode.append((OpCode.MAKE_FUNCTION, func_code_obj))
+                self.code_objects.append(func_code_obj)
+
+                # Use reference name in bytecode instead of nested CodeObject
+                bytecode.append((OpCode.MAKE_FUNCTION, func_ref_name))
 
         elif node_type == "conditional_expression":
             # Handle ternary operator: condition ? true_expr : false_expr
@@ -1498,22 +1532,26 @@ class ASTCompiler:
 
             func_source = self._get_node_text(body_node, source_code_bytes)
             location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
-            func_code_obj = CodeObject(
-                func_name, func_body_bytecode, func_source, file_path, location
-            )
 
-            # Use appropriate opcode based on function type
+            # Create separate CodeObject and add to collection
+            func_ref_name = self._generate_ref_name(func_name)
+            func_code_obj = CodeObject(
+                func_ref_name, func_body_bytecode, func_source, file_path, location
+            )
+            self.code_objects.append(func_code_obj)
+
+            # Use appropriate opcode based on function type with reference name
             if is_async and is_generator:
                 # Async generator function
                 bytecode.append(
-                    (OpCode.ASYNC_FUNCTION, func_code_obj)
+                    (OpCode.ASYNC_FUNCTION, func_ref_name)
                 )  # Could add ASYNC_GENERATOR if needed
             elif is_async:
-                bytecode.append((OpCode.ASYNC_FUNCTION, func_code_obj))
+                bytecode.append((OpCode.ASYNC_FUNCTION, func_ref_name))
             elif is_generator:
-                bytecode.append((OpCode.GENERATOR_FUNCTION, func_code_obj))
+                bytecode.append((OpCode.GENERATOR_FUNCTION, func_ref_name))
             else:
-                bytecode.append((OpCode.MAKE_FUNCTION, func_code_obj))
+                bytecode.append((OpCode.MAKE_FUNCTION, func_ref_name))
             bytecode.append((OpCode.STORE_NAME, func_name))
 
         elif node_type in ["class_definition", "class_declaration"]:
@@ -1527,11 +1565,16 @@ class ASTCompiler:
             )
             class_source = self._get_node_text(body_node, source_code_bytes)
             location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
-            class_code_obj = CodeObject(
-                class_name, class_body_bytecode, class_source, file_path, location
-            )
 
-            bytecode.append((OpCode.MAKE_CLASS, class_code_obj))
+            # Create separate CodeObject and add to collection
+            class_ref_name = self._generate_ref_name(class_name)
+            class_code_obj = CodeObject(
+                class_ref_name, class_body_bytecode, class_source, file_path, location
+            )
+            self.code_objects.append(class_code_obj)
+
+            # Use reference name in bytecode instead of nested CodeObject
+            bytecode.append((OpCode.MAKE_CLASS, class_ref_name))
             bytecode.append((OpCode.STORE_NAME, class_name))
 
         # --- Comprehensions and Generators ---
@@ -1777,11 +1820,17 @@ def process_file(file_path: Path, compiler: ASTCompiler) -> Optional[CodeObject]
         )
 
         if ast:
-            malwicode_obj = compiler.treesitter_ast_to_malwicode(
+            malwicode_objects = compiler.treesitter_ast_to_malwicode(
                 root_node=ast, source_code_bytes=source_code_bytes, file_path=file_path
             )
-            print_code_object(malwicode_obj)
-            return malwicode_obj
+            # Print all CodeObjects (root, functions, classes)
+            for i, code_obj in enumerate(malwicode_objects):
+                if i == 0:
+                    print(f"Root CodeObject ({code_obj.name}):")
+                else:
+                    print(f"\n{code_obj.name}:")
+                print_code_object(code_obj)
+            return malwicode_objects
 
     except Exception as e:
         logging.error(f"Failed to process {file_path}: {e}")
