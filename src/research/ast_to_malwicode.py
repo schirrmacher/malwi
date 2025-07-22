@@ -2230,7 +2230,7 @@ def main() -> None:
                 else:
                     # Print to console
                     for i, code_obj in enumerate(code_objects):
-                        print(f"{code_obj.to_string(format_mode='oneline_mapped')}")
+                        print(f"{code_obj.to_string(format_mode='mapped')}")
             else:
                 if args.format == "console":
                     print(f"Skipping unsupported file extension: {source.name}")
