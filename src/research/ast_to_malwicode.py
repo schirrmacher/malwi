@@ -1895,6 +1895,38 @@ class ASTCompiler:
             )
             return None
 
+    def process_file(self, file_path: Path) -> Optional[List[CodeObject]]:
+        """Processes a single file to generate and print its Malwicode."""
+        print(
+            f"--- Processing {self.language_name.capitalize()} File: {file_path.name} ---"
+        )
+        try:
+            source_code_bytes = file_path.read_bytes()
+
+            ast = self.bytes_to_treesitter_ast(
+                source_code_bytes=source_code_bytes,
+                file_path=str(file_path),
+            )
+
+            if ast:
+                malwicode_objects = self.treesitter_ast_to_malwicode(
+                    root_node=ast,
+                    source_code_bytes=source_code_bytes,
+                    file_path=file_path,
+                )
+                # Print all CodeObjects (root, functions, classes)
+                for i, code_obj in enumerate(malwicode_objects):
+                    if i == 0:
+                        print(f"Root CodeObject ({code_obj.name}):")
+                    else:
+                        print(f"\n{code_obj.name}:")
+                    print_code_object(code_obj)
+                return malwicode_objects
+
+        except Exception as e:
+            logging.error(f"Failed to process {file_path}: {e}")
+        return None
+
 
 def print_code_object(code_obj: CodeObject, indent_level: int = 0):
     """Recursively prints a CodeObject and its nested functions/classes."""
@@ -1903,37 +1935,6 @@ def print_code_object(code_obj: CodeObject, indent_level: int = 0):
     print(header)
     print(code_obj.to_string())
     print(separator)
-
-
-def process_file(file_path: Path, compiler: ASTCompiler) -> Optional[CodeObject]:
-    """Processes a single file to generate and print its Malwicode."""
-    print(
-        f"--- Processing {compiler.language_name.capitalize()} File: {file_path.name} ---"
-    )
-    try:
-        source_code_bytes = file_path.read_bytes()
-
-        ast = compiler.bytes_to_treesitter_ast(
-            source_code_bytes=source_code_bytes,
-            file_path=str(file_path),
-        )
-
-        if ast:
-            malwicode_objects = compiler.treesitter_ast_to_malwicode(
-                root_node=ast, source_code_bytes=source_code_bytes, file_path=file_path
-            )
-            # Print all CodeObjects (root, functions, classes)
-            for i, code_obj in enumerate(malwicode_objects):
-                if i == 0:
-                    print(f"Root CodeObject ({code_obj.name}):")
-                else:
-                    print(f"\n{code_obj.name}:")
-                print_code_object(code_obj)
-            return malwicode_objects
-
-    except Exception as e:
-        logging.error(f"Failed to process {file_path}: {e}")
-    return None
 
 
 def main() -> None:
@@ -1986,7 +1987,7 @@ def main() -> None:
 
         compiler_instance = compilers.get(lang)
         if compiler_instance:
-            process_file(source, compiler_instance)
+            compiler_instance.process_file(source)
         else:
             print(f"Skipping unsupported file extension: {source.name}")
 
