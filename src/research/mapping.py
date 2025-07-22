@@ -276,6 +276,86 @@ def map_load_const_number_arg(
     return None
 
 
+def map_argument(arg: Any, language: str = "python") -> str:
+    """
+    Maps instruction arguments to semantic tokens using mapping.py logic with language support.
+    """
+    if isinstance(arg, str):
+        # Use sophisticated string mapping with proper language support
+        return map_string_argument(arg, language)
+    elif isinstance(arg, bool):
+        return "BOOLEAN"
+    elif isinstance(arg, int):
+        return "INTEGER"
+    elif isinstance(arg, float):
+        return "FLOAT"
+    elif isinstance(arg, (list, tuple)):
+        return "LIST"
+    elif isinstance(arg, dict):
+        return "DICT"
+    elif hasattr(arg, "__class__"):
+        return arg.__class__.__name__.upper()
+    else:
+        return str(arg)
+
+
+def map_string_argument(argval: str, language: str = "python") -> str:
+    """
+    Advanced string argument mapping using language-specific mappings.
+    Based on map_string_arg logic but with proper language parameter support.
+    """
+    prefix = "STRING"
+
+    # Get language-specific mappings
+    lang_function_mapping = FUNCTION_MAPPING.get(language, {})
+    lang_import_mapping = IMPORT_MAPPING.get(language, {})
+
+    # Sanitize argval to ensure it's a well-formed Unicode string
+    try:
+        sanitized_argval = argval.encode("utf-8", errors="replace").decode(
+            "utf-8", errors="replace"
+        )
+    except Exception:
+        sanitized_argval = str(argval)
+
+    argval = reduce_whitespace(remove_newlines(sanitized_argval))
+
+    # Check language-specific mappings first
+    if argval in lang_function_mapping:
+        return lang_function_mapping.get(argval)
+    elif argval in lang_import_mapping:
+        return lang_import_mapping.get(argval)
+    elif argval in SENSITIVE_PATHS:
+        return "STRING_SENSITIVE_FILE_PATH"
+    elif is_valid_ip(argval):
+        return "STRING_IP"
+    elif is_valid_url(argval):
+        return "STRING_URL"
+    elif is_file_path(argval):
+        return "STRING_FILE_PATH"
+    else:
+        # Short strings are returned as-is
+        if len(argval) <= STRING_MAX_LENGTH:
+            return argval
+
+        # Analyze content type for longer strings
+        if is_escaped_hex(argval):
+            prefix = "STRING_ESCAPED_HEX"
+        elif is_hex(argval):
+            prefix = "STRING_HEX"
+        elif is_base64(argval):
+            prefix = "STRING_BASE64"
+
+        # Add length and entropy analysis
+        length_suffix = map_string_length_to_token(len(argval))
+        try:
+            entropy = calculate_shannon_entropy(argval.encode("utf-8", errors="ignore"))
+        except Exception:
+            entropy = 0.0
+        entropy_suffix = map_entropy_to_token(entropy)
+        return f"{prefix}_{length_suffix}_{entropy_suffix}"
+
+
 def tokenize_code_type(
     code_type: Optional[types.CodeType], map_special_tokens: bool = True
 ) -> List[str]:

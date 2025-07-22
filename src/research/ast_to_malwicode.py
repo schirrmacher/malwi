@@ -6,6 +6,7 @@ from tree_sitter import Node
 from typing import Optional, Any, List, Tuple, Dict
 
 from tree_sitter import Parser, Language
+from research.mapping import map_argument
 
 # Import both language bindings
 import tree_sitter_python as tspython
@@ -18,9 +19,10 @@ class Instruction:
     Provides flexible string formatting for different output modes.
     """
 
-    def __init__(self, opcode: "OpCode", arg: Any = None):
+    def __init__(self, opcode: "OpCode", arg: Any = None, language: str = "python"):
         self.opcode = opcode
         self.arg = arg
+        self.language = language
 
     def __repr__(self) -> str:
         return f"Instruction({self.opcode.name}, {self.arg})"
@@ -57,24 +59,8 @@ class Instruction:
                 # Use external mapping if provided
                 mapped_arg = mapping[str(self.arg)]
             else:
-                # Auto-map based on type
-                if isinstance(self.arg, str):
-                    mapped_arg = "STRING"
-                elif isinstance(self.arg, bool):
-                    mapped_arg = "BOOLEAN"
-                elif isinstance(self.arg, int):
-                    mapped_arg = "INTEGER"
-                elif isinstance(self.arg, float):
-                    mapped_arg = "FLOAT"
-                elif isinstance(self.arg, (list, tuple)):
-                    mapped_arg = "LIST"
-                elif isinstance(self.arg, dict):
-                    mapped_arg = "DICT"
-                elif hasattr(self.arg, "__class__"):
-                    # For objects, use the class name
-                    mapped_arg = self.arg.__class__.__name__.upper()
-                else:
-                    mapped_arg = str(self.arg)
+                # Use sophisticated mapping
+                mapped_arg = map_argument(self.arg, self.language)
 
             return (
                 f"{self.opcode.name:<20} {mapped_arg if mapped_arg is not None else ''}"
@@ -110,12 +96,14 @@ class CodeObject:
         source_code: str,
         path: Path,
         location: Tuple[int, int],
+        language: str = "python",
     ):
         self.name = name
         self.byte_code = byte_code
         self.source_code = source_code
         self.path = path
         self.location = location
+        self.language = language
 
     def __repr__(self) -> str:
         return (
@@ -144,7 +132,7 @@ class CodeObject:
             # Check for legacy tuple format and convert if needed
             if isinstance(instruction, tuple):
                 opcode, arg = instruction
-                instruction = Instruction(opcode, arg)
+                instruction = Instruction(opcode, arg, self.language)
 
             # Handle nested CodeObjects (legacy support)
             if isinstance(instruction.arg, CodeObject):
@@ -178,7 +166,7 @@ class CodeObject:
             # Check for legacy tuple format and convert if needed
             if isinstance(instruction, tuple):
                 opcode, arg = instruction
-                instruction = Instruction(opcode, arg)
+                instruction = Instruction(opcode, arg, self.language)
 
             # Handle nested CodeObjects - show reference name
             if isinstance(instruction.arg, CodeObject):
@@ -209,9 +197,9 @@ class CodeObject:
         return separator.join(instruction_parts)
 
 
-def emit(opcode: "OpCode", arg: Any = None) -> Instruction:
+def emit(opcode: "OpCode", arg: Any = None, language: str = "python") -> Instruction:
     """Helper function to create Instruction objects."""
-    return Instruction(opcode, arg)
+    return Instruction(opcode, arg, language)
 
 
 def collect_files_by_extension(
@@ -359,6 +347,7 @@ class ASTCompiler:
             source_code=source_code,
             path=file_path,
             location=location,
+            language=self.language_name,
         )
 
         # Return root CodeObject first, followed by function/class CodeObjects
@@ -546,6 +535,10 @@ class ASTCompiler:
                 return self._get_node_text(child, source_code_bytes)
 
         return None
+
+    def _emit(self, opcode: "OpCode", arg: Any = None) -> Instruction:
+        """Helper method to create Instruction objects with the compiler's language."""
+        return emit(opcode, arg, self.language_name)
 
     def _generate_bytecode(
         self, node: Node, source_code_bytes: bytes, file_path: Path
@@ -1473,7 +1466,12 @@ class ASTCompiler:
                 # Create separate CodeObject and add to collection
                 func_ref_name = self._generate_ref_name("lambda")
                 func_code_obj = CodeObject(
-                    func_ref_name, func_body_bytecode, func_source, file_path, location
+                    func_ref_name,
+                    func_body_bytecode,
+                    func_source,
+                    file_path,
+                    location,
+                    self.language_name,
                 )
                 self.code_objects.append(func_code_obj)
 
@@ -1709,7 +1707,12 @@ class ASTCompiler:
             # Create separate CodeObject and add to collection
             func_ref_name = self._generate_ref_name(func_name)
             func_code_obj = CodeObject(
-                func_ref_name, func_body_bytecode, func_source, file_path, location
+                func_ref_name,
+                func_body_bytecode,
+                func_source,
+                file_path,
+                location,
+                self.language_name,
             )
             self.code_objects.append(func_code_obj)
 
@@ -1742,7 +1745,12 @@ class ASTCompiler:
             # Create separate CodeObject and add to collection
             class_ref_name = self._generate_ref_name(class_name)
             class_code_obj = CodeObject(
-                class_ref_name, class_body_bytecode, class_source, file_path, location
+                class_ref_name,
+                class_body_bytecode,
+                class_source,
+                file_path,
+                location,
+                self.language_name,
             )
             self.code_objects.append(class_code_obj)
 
