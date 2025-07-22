@@ -1,9 +1,11 @@
 import logging
 import argparse
+import csv
+import hashlib
 from enum import Enum, auto
 from pathlib import Path
 from tree_sitter import Node
-from typing import Optional, Any, List, Tuple, Dict
+from typing import Optional, Any, List, Tuple, Dict, TextIO
 
 from tree_sitter import Parser, Language
 from research.mapping import map_argument
@@ -11,6 +13,46 @@ from research.mapping import map_argument
 # Import both language bindings
 import tree_sitter_python as tspython
 import tree_sitter_javascript as tsjavascript
+
+
+class CSVWriter:
+    """Handles CSV output operations for AST to Malwicode compilation."""
+
+    def __init__(self, file_path: Path):
+        self.file_path = file_path
+        self.file_handle = None
+        self.writer = None
+        self._initialize_file()
+
+    def _initialize_file(self):
+        """Initialize CSV file with headers if needed."""
+        file_exists_before_open = self.file_path.is_file()
+        is_empty = not file_exists_before_open or self.file_path.stat().st_size == 0
+
+        self.file_handle = open(
+            self.file_path, "a", newline="", encoding="utf-8", errors="replace"
+        )
+        self.writer = csv.writer(self.file_handle)
+
+        if is_empty:
+            self.writer.writerow(["bytecode", "hash", "language", "filepath"])
+
+    def write_code_objects(self, code_objects: List["CodeObject"]) -> None:
+        """Write CodeObject data to CSV."""
+        for obj in code_objects:
+            self.writer.writerow(
+                [
+                    obj.to_string(format_mode="oneline_mapped"),
+                    obj.to_hash(),
+                    obj.language,
+                    obj.path,
+                ]
+            )
+
+    def close(self):
+        """Close the CSV file."""
+        if self.file_handle:
+            self.file_handle.close()
 
 
 class Instruction:
@@ -67,7 +109,11 @@ class Instruction:
             )
         else:  # default format
             # Handle special cases for consistent output
-            if self.opcode in (OpCode.POP_JUMP_IF_FALSE, OpCode.JUMP_FORWARD):
+            if self.opcode in (
+                OpCode.POP_JUMP_IF_FALSE,
+                OpCode.POP_JUMP_IF_TRUE,
+                OpCode.JUMP_FORWARD,
+            ):
                 arg_str = "<JUMP_TARGET>"
             elif self.opcode in (
                 OpCode.MAKE_FUNCTION,
@@ -168,7 +214,11 @@ class CodeObject:
                         arg_str = map_argument(instruction.arg, instruction.language)
                 else:
                     # Handle special cases for consistent output in regular oneline mode
-                    if instruction.opcode.name in ("POP_JUMP_IF_FALSE", "JUMP_FORWARD"):
+                    if instruction.opcode.name in (
+                        "POP_JUMP_IF_FALSE",
+                        "POP_JUMP_IF_TRUE",
+                        "JUMP_FORWARD",
+                    ):
                         arg_str = "<JUMP_TARGET>"
                     elif instruction.opcode.name in (
                         "MAKE_FUNCTION",
@@ -219,6 +269,19 @@ class CodeObject:
             result_lines.append(f"{indent}{formatted_line}")
 
         return "\n".join(result_lines)
+
+    def to_hash(self) -> str:
+        """
+        Generate SHA256 hash of the oneline_mapped string representation.
+
+        Returns:
+            Hexadecimal SHA256 hash string
+        """
+        oneline_mapped = self.to_string(format_mode="oneline_mapped")
+        encoded_string = oneline_mapped.encode("utf-8", errors="replace")
+        sha256_hash = hashlib.sha256()
+        sha256_hash.update(encoded_string)
+        return sha256_hash.hexdigest()
 
     def to_oneline(self, separator: str = " ") -> str:
         """
@@ -297,6 +360,7 @@ class OpCode(Enum):
     MAKE_CLASS = auto()
     RETURN_VALUE = auto()
     POP_JUMP_IF_FALSE = auto()
+    POP_JUMP_IF_TRUE = auto()
     JUMP_FORWARD = auto()
     GET_ITER = auto()
     FOR_ITER = auto()
@@ -2089,7 +2153,28 @@ def main() -> None:
         default=[".py", ".js"],
         help="A list of file extensions to process (e.g., .py .js).",
     )
+    parser.add_argument(
+        "-f",
+        "--format",
+        type=str,
+        choices=["console", "csv"],
+        default="console",
+        help="Output format (default: console). 'csv' saves to file with oneline_mapped format.",
+    )
+    parser.add_argument(
+        "-s",
+        "--save",
+        type=str,
+        default=None,
+        metavar="FILEPATH",
+        help="Path to save the output. Required when using --format csv.",
+    )
     args = parser.parse_args()
+
+    # Validate arguments
+    if args.format == "csv" and not args.save:
+        print("Error: --save is required when using --format csv")
+        return
 
     # Create a dictionary of compilers, one for each language.
     compilers: Dict[str, ASTCompiler] = {}
@@ -2110,25 +2195,57 @@ def main() -> None:
         print(f"No files with extensions {args.extensions} found in {args.input_path}")
         return
 
-    print(f"Found {sources_count} file(s) to process...")
-    for source in source_files:
-        lang = None
-        if source.suffix == ".py":
-            lang = "python"
-        elif source.suffix == ".js":
-            lang = "javascript"
+    # Initialize CSV writer if needed
+    csv_writer_instance: Optional[CSVWriter] = None
 
-        compiler_instance = compilers.get(lang)
-        if compiler_instance:
+    try:
+        if args.format == "csv":
+            print("Setting up CSV output...")
+            save_path = Path(args.save)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            csv_writer_instance = CSVWriter(save_path)
+            print(f"CSV output will be saved to: {save_path.resolve()}")
+
+        print(f"Found {sources_count} file(s) to process...")
+
+        for source in source_files:
+            lang = None
+            if source.suffix == ".py":
+                lang = "python"
+            elif source.suffix == ".js":
+                lang = "javascript"
+
+            compiler_instance = compilers.get(lang)
+            if compiler_instance:
+                if args.format == "console":
+                    print(
+                        f"--- Processing {compiler_instance.language_name.capitalize()} File: {source.name} ---"
+                    )
+
+                code_objects = compiler_instance.process_file(source)
+
+                if args.format == "csv":
+                    # Write to CSV
+                    csv_writer_instance.write_code_objects(code_objects)
+                else:
+                    # Print to console
+                    for i, code_obj in enumerate(code_objects):
+                        print(f"{code_obj.to_string(format_mode='oneline_mapped')}")
+            else:
+                if args.format == "console":
+                    print(f"Skipping unsupported file extension: {source.name}")
+
+        if args.format == "csv":
+            csv_writer_instance.close()
             print(
-                f"--- Processing {compiler_instance.language_name.capitalize()} File: {source.name} ---"
+                f"Successfully processed {sources_count} files to CSV: {save_path.resolve()}"
             )
-            code_objects = compiler_instance.process_file(source)
-            # Print all CodeObjects (root, functions, classes)
-            for i, code_obj in enumerate(code_objects):
-                print(f"{code_obj.to_string(format_mode='oneline_mapped')}")
-        else:
-            print(f"Skipping unsupported file extension: {source.name}")
+
+    except Exception as e:
+        print(f"Error during processing: {e}")
+        if csv_writer_instance:
+            csv_writer_instance.close()
+        return
 
 
 if __name__ == "__main__":
