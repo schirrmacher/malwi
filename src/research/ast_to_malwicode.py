@@ -12,6 +12,63 @@ import tree_sitter_python as tspython
 import tree_sitter_javascript as tsjavascript
 
 
+class Instruction:
+    """
+    Represents a single bytecode instruction with opcode and argument.
+    Provides flexible string formatting for different output modes.
+    """
+
+    def __init__(self, opcode: "OpCode", arg: Any = None):
+        self.opcode = opcode
+        self.arg = arg
+
+    def __repr__(self) -> str:
+        return f"Instruction({self.opcode.name}, {self.arg})"
+
+    def to_string(
+        self, format_mode: str = "default", mapping: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        Format the instruction as a string with various formatting options.
+
+        Args:
+            format_mode: How to format the output ("default", "compact", "detailed", "mapped")
+            mapping: Optional mapping for arguments in "mapped" mode
+        """
+        if format_mode == "compact":
+            return (
+                f"{self.opcode.name}: {self.arg}"
+                if self.arg is not None
+                else self.opcode.name
+            )
+        elif format_mode == "detailed":
+            arg_info = (
+                f" (type: {type(self.arg).__name__})" if self.arg is not None else ""
+            )
+            return f"{self.opcode.name:<20} {self.arg}{arg_info}"
+        elif format_mode == "mapped" and mapping:
+            mapped_arg = (
+                mapping.get(str(self.arg), self.arg) if self.arg is not None else None
+            )
+            return f"{self.opcode.name:<20} {mapped_arg}"
+        else:  # default format
+            # Handle special cases for consistent output
+            if self.opcode in (OpCode.POP_JUMP_IF_FALSE, OpCode.JUMP_FORWARD):
+                arg_str = "<JUMP_TARGET>"
+            elif self.opcode in (
+                OpCode.MAKE_FUNCTION,
+                OpCode.ASYNC_FUNCTION,
+                OpCode.GENERATOR_FUNCTION,
+                OpCode.MAKE_CLASS,
+            ) and isinstance(self.arg, str):
+                # Handle references to separate CodeObjects
+                arg_str = f"<{self.arg}>"
+            else:
+                arg_str = str(self.arg) if self.arg is not None else ""
+
+            return f"{self.opcode.name:<20} {arg_str.strip()}"
+
+
 class CodeObject:
     """
     A container for a compiled piece of code, including its bytecode,
@@ -21,7 +78,7 @@ class CodeObject:
     def __init__(
         self,
         name: str,
-        byte_code: List[Tuple[Enum, Any]],
+        byte_code: List[Instruction],
         source_code: str,
         path: Path,
         location: Tuple[int, int],
@@ -37,36 +94,50 @@ class CodeObject:
             f"CodeObject(name={self.name}, path={self.path}, location={self.location})"
         )
 
-    def to_string(self, indent_level: int = 0) -> str:
+    def to_string(
+        self,
+        indent_level: int = 0,
+        format_mode: str = "default",
+        mapping: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Formats the bytecode of this CodeObject into a readable,
-        indented string, normalizing jump addresses for consistent output.
+        indented string with various formatting options.
+
+        Args:
+            indent_level: Number of indentation levels
+            format_mode: Format style ("default", "compact", "detailed", "mapped")
+            mapping: Optional mapping for arguments in "mapped" mode
         """
         result_lines = []
         indent = "    " * indent_level
-        for opcode, arg in self.byte_code:
-            # Normalize jump targets for consistent test output
-            if opcode in (OpCode.POP_JUMP_IF_FALSE, OpCode.JUMP_FORWARD):
-                arg_str = "<JUMP_TARGET>"
-            elif isinstance(arg, CodeObject):
-                # Handle nested function/class by recursively calling its own to_string
-                result_lines.append(f"{indent}{opcode.name:<20} <{arg.name}>")
-                result_lines.append(arg.to_string(indent_level + 1))
-                continue  # Skip the rest of the loop for this item
-            elif opcode in (
-                OpCode.MAKE_FUNCTION,
-                OpCode.ASYNC_FUNCTION,
-                OpCode.GENERATOR_FUNCTION,
-                OpCode.MAKE_CLASS,
-            ) and isinstance(arg, str):
-                # Handle references to separate CodeObjects
-                arg_str = f"<{arg}>"
-            else:
-                arg_str = str(arg) if arg is not None else ""
 
-            result_lines.append(f"{indent}{opcode.name:<20} {arg_str.strip()}")
+        for instruction in self.byte_code:
+            # Check for legacy tuple format and convert if needed
+            if isinstance(instruction, tuple):
+                opcode, arg = instruction
+                instruction = Instruction(opcode, arg)
+
+            # Handle nested CodeObjects (legacy support)
+            if isinstance(instruction.arg, CodeObject):
+                result_lines.append(
+                    f"{indent}{instruction.opcode.name:<20} <{instruction.arg.name}>"
+                )
+                result_lines.append(
+                    instruction.arg.to_string(indent_level + 1, format_mode, mapping)
+                )
+                continue
+
+            # Format the instruction with the specified mode
+            formatted_line = instruction.to_string(format_mode, mapping)
+            result_lines.append(f"{indent}{formatted_line}")
 
         return "\n".join(result_lines)
+
+
+def emit(opcode: "OpCode", arg: Any = None) -> Instruction:
+    """Helper function to create Instruction objects."""
+    return Instruction(opcode, arg)
 
 
 def collect_files_by_extension(
@@ -404,7 +475,7 @@ class ASTCompiler:
 
     def _generate_bytecode(
         self, node: Node, source_code_bytes: bytes, file_path: Path
-    ) -> List[Tuple[OpCode, Any]]:
+    ) -> List[Instruction]:
         """
         Recursively traverses a Python or JavaScript AST and generates bytecode.
         """
@@ -486,27 +557,27 @@ class ASTCompiler:
                 else:
                     # Regular integer or float
                     value = float(text)
-                bytecode.append((OpCode.LOAD_CONST, value))
+                bytecode.append(emit(OpCode.LOAD_CONST, value))
             except ValueError:
                 # Fallback: treat as string if conversion fails
-                bytecode.append((OpCode.LOAD_CONST, text))
+                bytecode.append(emit(OpCode.LOAD_CONST, text))
         elif node_type == "string":
             str_content = self._get_node_text(node, source_code_bytes)
-            bytecode.append((OpCode.LOAD_CONST, str_content))
+            bytecode.append(emit(OpCode.LOAD_CONST, str_content))
         elif node_type == "identifier":
             identifier_name = self._get_node_text(node, source_code_bytes)
             # Use LOAD_PARAM if this identifier is a function parameter
             if identifier_name in self.current_function_params:
-                bytecode.append((OpCode.LOAD_PARAM, identifier_name))
+                bytecode.append(emit(OpCode.LOAD_PARAM, identifier_name))
             else:
-                bytecode.append((OpCode.LOAD_NAME, identifier_name))
+                bytecode.append(emit(OpCode.LOAD_NAME, identifier_name))
         # Boolean and None literals
         elif node_type in ["true", "false"]:
-            bytecode.append((OpCode.LOAD_CONST, node_type == "true"))
+            bytecode.append(emit(OpCode.LOAD_CONST, node_type == "true"))
         elif node_type in ["none", "null"]:
-            bytecode.append((OpCode.LOAD_CONST, None))
+            bytecode.append(emit(OpCode.LOAD_CONST, None))
         elif node_type == "ellipsis":
-            bytecode.append((OpCode.LOAD_CONST, "..."))
+            bytecode.append(emit(OpCode.LOAD_CONST, "..."))
 
         # --- Handle Data Structures ---
         elif node_type in ["list", "array"]:
@@ -517,7 +588,7 @@ class ASTCompiler:
                         self._generate_bytecode(element, source_code_bytes, file_path)
                     )
                     element_count += 1
-            bytecode.append((OpCode.BUILD_LIST, element_count))
+            bytecode.append(emit(OpCode.BUILD_LIST, element_count))
         elif node_type == "tuple":
             element_count = 0
             for element in node.children:
@@ -526,7 +597,7 @@ class ASTCompiler:
                         self._generate_bytecode(element, source_code_bytes, file_path)
                     )
                     element_count += 1
-            bytecode.append((OpCode.BUILD_TUPLE, element_count))
+            bytecode.append(emit(OpCode.BUILD_TUPLE, element_count))
         elif node_type == "set":
             element_count = 0
             for element in node.children:
@@ -535,7 +606,7 @@ class ASTCompiler:
                         self._generate_bytecode(element, source_code_bytes, file_path)
                     )
                     element_count += 1
-            bytecode.append((OpCode.BUILD_SET, element_count))
+            bytecode.append(emit(OpCode.BUILD_SET, element_count))
         elif node_type in ["dictionary", "object"]:
             pair_count = 0
             for pair in node.children:
@@ -564,7 +635,7 @@ class ASTCompiler:
                             )
                         )
                         pair_count += 1
-            bytecode.append((OpCode.BUILD_MAP, pair_count))
+            bytecode.append(emit(OpCode.BUILD_MAP, pair_count))
 
         # --- Handle Expressions and Calls ---
         elif node_type in ["binary_operator", "binary_expression"]:
@@ -583,7 +654,9 @@ class ASTCompiler:
                 op_text = self._get_node_text(op_node, source_code_bytes)
                 op_code = binary_operator_mapping.get(op_text, OpCode.BINARY_OPERATION)
                 bytecode.append(
-                    (op_code, op_text if op_code == OpCode.BINARY_OPERATION else None)
+                    emit(
+                        op_code, op_text if op_code == OpCode.BINARY_OPERATION else None
+                    )
                 )
         elif node_type in ["unary_operator", "unary_expression"]:
             operand_node = node.child_by_field_name("operand") or node.children[-1]
@@ -595,7 +668,9 @@ class ASTCompiler:
                 op_text = self._get_node_text(op_node, source_code_bytes)
                 op_code = unary_operator_mapping.get(op_text, OpCode.BINARY_OPERATION)
                 bytecode.append(
-                    (op_code, op_text if op_code == OpCode.BINARY_OPERATION else None)
+                    emit(
+                        op_code, op_text if op_code == OpCode.BINARY_OPERATION else None
+                    )
                 )
         elif node_type in ["boolean_operator", "logical_expression"]:
             # Handle 'and', 'or', '&&', '||' operators
@@ -617,13 +692,13 @@ class ASTCompiler:
                         op_text, OpCode.BINARY_OPERATION
                     )
                     bytecode.append(
-                        (
+                        emit(
                             op_code,
                             op_text if op_code == OpCode.BINARY_OPERATION else None,
                         )
                     )
                 else:
-                    bytecode.append((OpCode.BINARY_OPERATION, None))
+                    bytecode.append(emit(OpCode.BINARY_OPERATION, None))
         elif node_type in ["comparison_operator"]:
             # Handle comparison chains like 'a < b < c'
             for child in node.named_children:
@@ -631,13 +706,13 @@ class ASTCompiler:
                     self._generate_bytecode(child, source_code_bytes, file_path)
                 )
             # For comparison chains, we'll use the generic COMPARE_OP
-            bytecode.append((OpCode.COMPARE_OP, None))
+            bytecode.append(emit(OpCode.COMPARE_OP, None))
         elif node_type in ["not_operator"]:
             operand_node = node.child_by_field_name("operand") or node.children[-1]
             bytecode.extend(
                 self._generate_bytecode(operand_node, source_code_bytes, file_path)
             )
-            bytecode.append((OpCode.LOGICAL_NOT, None))
+            bytecode.append(emit(OpCode.LOGICAL_NOT, None))
 
         elif node_type in ["call", "call_expression"]:
             func_node = node.child_by_field_name("function")
@@ -689,7 +764,7 @@ class ASTCompiler:
                                 key_name = self._get_node_text(
                                     name_node, source_code_bytes
                                 )
-                                bytecode.append((OpCode.LOAD_CONST, key_name))
+                                bytecode.append(emit(OpCode.LOAD_CONST, key_name))
                                 bytecode.extend(
                                     self._generate_bytecode(
                                         value_node, source_code_bytes, file_path
@@ -707,11 +782,13 @@ class ASTCompiler:
 
             # Choose appropriate call instruction based on argument types
             if has_kwargs or kwarg_count > 0:
-                bytecode.append((OpCode.BINARY_OPERATION, None))  # CALL_FUNCTION_KW
+                bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # CALL_FUNCTION_KW
             elif has_starargs:
-                bytecode.append((OpCode.BINARY_OPERATION, None))  # CALL_FUNCTION_VAR
+                bytecode.append(
+                    emit(OpCode.BINARY_OPERATION, None)
+                )  # CALL_FUNCTION_VAR
             else:
-                bytecode.append((OpCode.CALL_FUNCTION, arg_count))
+                bytecode.append(emit(OpCode.CALL_FUNCTION, arg_count))
 
         elif node_type in ["update_expression"]:
             # Handle ++, -- operators (JavaScript)
@@ -722,15 +799,15 @@ class ASTCompiler:
                     self._generate_bytecode(argument_node, source_code_bytes, file_path)
                 )
                 # Perform increment/decrement
-                bytecode.append((OpCode.LOAD_CONST, 1.0))
+                bytecode.append(emit(OpCode.LOAD_CONST, 1.0))
                 op_text = self._get_node_text(node, source_code_bytes)
                 if "++" in op_text:
-                    bytecode.append((OpCode.BINARY_ADD, None))
+                    bytecode.append(emit(OpCode.BINARY_ADD, None))
                 else:  # "--"
-                    bytecode.append((OpCode.BINARY_SUBTRACT, None))
+                    bytecode.append(emit(OpCode.BINARY_SUBTRACT, None))
                 # Store back
                 var_name = self._get_node_text(argument_node, source_code_bytes)
-                bytecode.append((OpCode.STORE_NAME, var_name))
+                bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
         elif node_type in ["new_expression"]:
             # Handle `new Constructor()` calls
@@ -751,7 +828,7 @@ class ASTCompiler:
                         self._generate_bytecode(child, source_code_bytes, file_path)
                     )
                     arg_count += 1
-            bytecode.append((OpCode.CALL_FUNCTION, arg_count))
+            bytecode.append(emit(OpCode.CALL_FUNCTION, arg_count))
 
         elif node_type in ["sequence_expression"]:
             # Handle comma operator (JavaScript)
@@ -777,12 +854,12 @@ class ASTCompiler:
                 )
             else:
                 # yield without value yields None
-                bytecode.append((OpCode.LOAD_CONST, None))
+                bytecode.append(emit(OpCode.LOAD_CONST, None))
 
             if is_yield_from:
-                bytecode.append((OpCode.BINARY_OPERATION, None))  # YIELD_FROM
+                bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # YIELD_FROM
             else:
-                bytecode.append((OpCode.BINARY_OPERATION, None))  # YIELD_VALUE
+                bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # YIELD_VALUE
 
         elif node_type in ["template_string"]:
             # Handle template literals with ${} substitutions
@@ -803,13 +880,13 @@ class ASTCompiler:
                     )
             # Concatenate all parts
             bytecode.append(
-                (OpCode.BINARY_OPERATION, None)
+                emit(OpCode.BINARY_OPERATION, None)
             )  # Placeholder for string formatting
 
         elif node_type == "regex":
             # Handle regex literals
             pattern_text = self._get_node_text(node, source_code_bytes)
-            bytecode.append((OpCode.LOAD_CONST, pattern_text))
+            bytecode.append(emit(OpCode.LOAD_CONST, pattern_text))
 
         elif node_type in ["spread_element"]:
             # Handle ...spread syntax
@@ -819,7 +896,7 @@ class ASTCompiler:
                     self._generate_bytecode(argument_node, source_code_bytes, file_path)
                 )
                 bytecode.append(
-                    (OpCode.BINARY_OPERATION, None)
+                    emit(OpCode.BINARY_OPERATION, None)
                 )  # Placeholder for spread
 
         elif node_type in ["optional_chain"]:
@@ -829,7 +906,7 @@ class ASTCompiler:
                     self._generate_bytecode(child, source_code_bytes, file_path)
                 )
             bytecode.append(
-                (OpCode.BINARY_OPERATION, None)
+                emit(OpCode.BINARY_OPERATION, None)
             )  # Placeholder for optional access
 
         # --- Handle Statements ---
@@ -851,7 +928,7 @@ class ASTCompiler:
                     self._generate_bytecode(value_node, source_code_bytes, file_path)
                 )
                 var_name = self._get_node_text(name_node, source_code_bytes)
-                bytecode.append((OpCode.STORE_NAME, var_name))
+                bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
         elif node_type == "return_statement":
             if node.child_count > 1 and node.children[1].type not in [";"]:
@@ -861,7 +938,7 @@ class ASTCompiler:
                         return_val_node, source_code_bytes, file_path
                     )
                 )
-            bytecode.append((OpCode.RETURN_VALUE, None))
+            bytecode.append(emit(OpCode.RETURN_VALUE, None))
 
         # Additional statement types
         elif node_type == "augmented_assignment":
@@ -878,20 +955,24 @@ class ASTCompiler:
                     self._generate_bytecode(value_node, source_code_bytes, file_path)
                 )
                 # Perform operation
-                bytecode.append((OpCode.BINARY_OPERATION, None))
+                bytecode.append(emit(OpCode.BINARY_OPERATION, None))
                 # Store result
                 var_name = self._get_node_text(target_node, source_code_bytes)
-                bytecode.append((OpCode.STORE_NAME, var_name))
+                bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
         elif node_type == "pass_statement":
             # Pass is a no-op, but we'll add a placeholder
             pass
 
         elif node_type == "break_statement":
-            bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for break
+            bytecode.append(
+                emit(OpCode.BINARY_OPERATION, None)
+            )  # Placeholder for break
 
         elif node_type == "continue_statement":
-            bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for continue
+            bytecode.append(
+                emit(OpCode.BINARY_OPERATION, None)
+            )  # Placeholder for continue
 
         elif node_type == "assert_statement":
             # Process the assertion condition
@@ -902,7 +983,9 @@ class ASTCompiler:
                         condition_node, source_code_bytes, file_path
                     )
                 )
-            bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for assert
+            bytecode.append(
+                emit(OpCode.BINARY_OPERATION, None)
+            )  # Placeholder for assert
 
         elif node_type in ["raise_statement", "throw_statement"]:
             # Process the exception/error to raise
@@ -914,7 +997,7 @@ class ASTCompiler:
                     )
                 )
             bytecode.append(
-                (OpCode.BINARY_OPERATION, None)
+                emit(OpCode.BINARY_OPERATION, None)
             )  # Placeholder for raise/throw
 
         elif node_type in [
@@ -929,18 +1012,18 @@ class ASTCompiler:
                     # Python direct imports
                     name = self._get_node_text(child, source_code_bytes)
                     if node_type == "import_statement":
-                        bytecode.append((OpCode.IMPORT_NAME, name))
+                        bytecode.append(emit(OpCode.IMPORT_NAME, name))
                     elif node_type == "import_from_statement":
-                        bytecode.append((OpCode.IMPORT_FROM, name))
+                        bytecode.append(emit(OpCode.IMPORT_FROM, name))
                     else:  # import_declaration (JavaScript)
-                        bytecode.append((OpCode.IMPORT_NAME, name))
+                        bytecode.append(emit(OpCode.IMPORT_NAME, name))
                 elif child.type == "import_clause":
                     # JavaScript ES6 import clause - handle different import patterns
                     for import_child in child.named_children:
                         if import_child.type == "identifier":
                             # Default import: import React from 'react'
                             name = self._get_node_text(import_child, source_code_bytes)
-                            bytecode.append((OpCode.IMPORT_NAME, name))
+                            bytecode.append(emit(OpCode.IMPORT_NAME, name))
                         elif import_child.type == "named_imports":
                             # Named imports: import { x, y } from 'module'
                             for specifier in import_child.named_children:
@@ -950,7 +1033,9 @@ class ASTCompiler:
                                             name = self._get_node_text(
                                                 spec_child, source_code_bytes
                                             )
-                                            bytecode.append((OpCode.IMPORT_FROM, name))
+                                            bytecode.append(
+                                                emit(OpCode.IMPORT_FROM, name)
+                                            )
                         elif import_child.type == "namespace_import":
                             # Wildcard import: import * as fs from 'fs'
                             for namespace_child in import_child.named_children:
@@ -958,7 +1043,7 @@ class ASTCompiler:
                                     name = self._get_node_text(
                                         namespace_child, source_code_bytes
                                     )
-                                    bytecode.append((OpCode.IMPORT_NAME, name))
+                                    bytecode.append(emit(OpCode.IMPORT_NAME, name))
                 elif child.type == "aliased_import":
                     # Handle "import x as y" or "from x import y as z"
                     # Extract both the original and alias names
@@ -966,21 +1051,21 @@ class ASTCompiler:
                         if grandchild.type in ["identifier", "dotted_name"]:
                             name = self._get_node_text(grandchild, source_code_bytes)
                             if node_type == "import_statement":
-                                bytecode.append((OpCode.IMPORT_NAME, name))
+                                bytecode.append(emit(OpCode.IMPORT_NAME, name))
                             elif node_type == "import_from_statement":
-                                bytecode.append((OpCode.IMPORT_FROM, name))
+                                bytecode.append(emit(OpCode.IMPORT_FROM, name))
                             else:  # import_declaration (JavaScript)
-                                bytecode.append((OpCode.IMPORT_NAME, name))
+                                bytecode.append(emit(OpCode.IMPORT_NAME, name))
                 elif child.type == "import_specifier":
                     # Handle JavaScript import specifiers like "import { x, y } from 'module'" (fallback)
                     for grandchild in child.named_children:
                         if grandchild.type == "identifier":
                             name = self._get_node_text(grandchild, source_code_bytes)
-                            bytecode.append((OpCode.IMPORT_FROM, name))
+                            bytecode.append(emit(OpCode.IMPORT_FROM, name))
                 elif child.type == "string":
                     # Handle the module path in imports
                     module_path = self._get_node_text(child, source_code_bytes)
-                    bytecode.append((OpCode.LOAD_CONST, module_path))
+                    bytecode.append(emit(OpCode.LOAD_CONST, module_path))
                 else:
                     # Skip processing other children to avoid duplicating imports
                     pass
@@ -992,9 +1077,9 @@ class ASTCompiler:
                 if child.type == "identifier":
                     name = self._get_node_text(child, source_code_bytes)
                     if node_type == "export_default":
-                        bytecode.append((OpCode.EXPORT_DEFAULT, name))
+                        bytecode.append(emit(OpCode.EXPORT_DEFAULT, name))
                     else:
-                        bytecode.append((OpCode.EXPORT_NAMED, name))
+                        bytecode.append(emit(OpCode.EXPORT_NAMED, name))
                 elif child.type == "function_declaration":
                     # Handle export function name() {}
                     func_name = None
@@ -1005,7 +1090,7 @@ class ASTCompiler:
                             )
                             break
                     if func_name:
-                        bytecode.append((OpCode.EXPORT_NAMED, func_name))
+                        bytecode.append(emit(OpCode.EXPORT_NAMED, func_name))
                     bytecode.extend(
                         self._generate_bytecode(child, source_code_bytes, file_path)
                     )
@@ -1018,7 +1103,7 @@ class ASTCompiler:
                                     name = self._get_node_text(
                                         great_grandchild, source_code_bytes
                                     )
-                                    bytecode.append((OpCode.EXPORT_NAMED, name))
+                                    bytecode.append(emit(OpCode.EXPORT_NAMED, name))
                     bytecode.extend(
                         self._generate_bytecode(child, source_code_bytes, file_path)
                     )
@@ -1032,7 +1117,7 @@ class ASTCompiler:
             for child in node.named_children:
                 if child.type == "identifier":
                     name = self._get_node_text(child, source_code_bytes)
-                    bytecode.append((OpCode.LOAD_NAME, name))
+                    bytecode.append(emit(OpCode.LOAD_NAME, name))
 
         elif node_type == "delete_statement":
             # Process delete targets
@@ -1040,7 +1125,9 @@ class ASTCompiler:
                 bytecode.extend(
                     self._generate_bytecode(child, source_code_bytes, file_path)
                 )
-            bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for delete
+            bytecode.append(
+                emit(OpCode.BINARY_OPERATION, None)
+            )  # Placeholder for delete
 
         # --- Control Flow ---
         elif node_type == "if_statement":
@@ -1053,7 +1140,7 @@ class ASTCompiler:
             )
 
             jump_instr_index = len(bytecode)
-            bytecode.append((OpCode.POP_JUMP_IF_FALSE, -1))
+            bytecode.append(emit(OpCode.POP_JUMP_IF_FALSE, -1))
 
             consequence_bytecode = self._generate_bytecode(
                 consequence_node, source_code_bytes, file_path
@@ -1062,20 +1149,26 @@ class ASTCompiler:
 
             if alternative_node:
                 jump_over_else_index = len(bytecode)
-                bytecode.append((OpCode.JUMP_FORWARD, -1))
+                bytecode.append(emit(OpCode.JUMP_FORWARD, -1))
                 # Set jump target for the initial if to point after the 'then' block
-                bytecode[jump_instr_index] = (OpCode.POP_JUMP_IF_FALSE, len(bytecode))
+                bytecode[jump_instr_index] = emit(
+                    OpCode.POP_JUMP_IF_FALSE, len(bytecode)
+                )
 
                 alternative_bytecode = self._generate_bytecode(
                     alternative_node, source_code_bytes, file_path
                 )
                 bytecode.extend(alternative_bytecode)
                 # Set the jump to point after the 'else' block
-                bytecode[jump_over_else_index] = (OpCode.JUMP_FORWARD, len(bytecode))
+                bytecode[jump_over_else_index] = emit(
+                    OpCode.JUMP_FORWARD, len(bytecode)
+                )
 
             else:
                 # If no 'else', the jump just goes to the end of the 'then' block
-                bytecode[jump_instr_index] = (OpCode.POP_JUMP_IF_FALSE, len(bytecode))
+                bytecode[jump_instr_index] = emit(
+                    OpCode.POP_JUMP_IF_FALSE, len(bytecode)
+                )
 
         elif node_type in ["for_statement", "for_in_statement"]:
             # Process for loops
@@ -1105,7 +1198,7 @@ class ASTCompiler:
                         condition_node, source_code_bytes, file_path
                     )
                 )
-                bytecode.append((OpCode.POP_JUMP_IF_FALSE, len(bytecode) + 2))
+                bytecode.append(emit(OpCode.POP_JUMP_IF_FALSE, len(bytecode) + 2))
 
             if body_node:
                 bytecode.extend(
@@ -1131,12 +1224,14 @@ class ASTCompiler:
                     )
                 )
                 bytecode.append(
-                    (OpCode.POP_JUMP_IF_TRUE, len(bytecode) - 10)
+                    emit(OpCode.POP_JUMP_IF_TRUE, len(bytecode) - 10)
                 )  # Jump back to start
 
         elif node_type == "debugger_statement":
             # JavaScript debugger statement
-            bytecode.append((OpCode.BINARY_OPERATION, None))  # Placeholder for debugger
+            bytecode.append(
+                emit(OpCode.BINARY_OPERATION, None)
+            )  # Placeholder for debugger
 
         elif node_type == "labeled_statement":
             # Process labeled statements (JavaScript)
@@ -1145,7 +1240,7 @@ class ASTCompiler:
 
             if label_node:
                 label_name = self._get_node_text(label_node, source_code_bytes)
-                bytecode.append((OpCode.LOAD_CONST, label_name))
+                bytecode.append(emit(OpCode.LOAD_CONST, label_name))
 
             if statement_node:
                 bytecode.extend(
@@ -1175,7 +1270,7 @@ class ASTCompiler:
 
             # Jump over except blocks if no exception
             jump_to_finally = len(bytecode)
-            bytecode.append((OpCode.JUMP_FORWARD, -1))  # Will be patched
+            bytecode.append(emit(OpCode.JUMP_FORWARD, -1))  # Will be patched
 
             # Generate except clauses
             except_handlers = []
@@ -1192,13 +1287,15 @@ class ASTCompiler:
                             exception_node, source_code_bytes, file_path
                         )
                     )
-                    bytecode.append((OpCode.BINARY_OPERATION, None))  # Exception match
+                    bytecode.append(
+                        emit(OpCode.BINARY_OPERATION, None)
+                    )  # Exception match
 
                 # Handle exception variable binding (as e)
                 name_node = except_clause.child_by_field_name("name")
                 if name_node:
                     var_name = self._get_node_text(name_node, source_code_bytes)
-                    bytecode.append((OpCode.STORE_NAME, var_name))
+                    bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
                 # Generate except block body
                 body_node = except_clause.child_by_field_name("body")
@@ -1208,11 +1305,11 @@ class ASTCompiler:
                     )
 
                 # Jump to finally/end
-                bytecode.append((OpCode.JUMP_FORWARD, jump_to_finally))
+                bytecode.append(emit(OpCode.JUMP_FORWARD, jump_to_finally))
 
             # Patch jump to finally
             finally_start = len(bytecode)
-            bytecode[jump_to_finally] = (OpCode.JUMP_FORWARD, finally_start)
+            bytecode[jump_to_finally] = emit(OpCode.JUMP_FORWARD, finally_start)
 
             # Generate finally clause
             if finally_clause:
@@ -1257,12 +1354,12 @@ class ASTCompiler:
                             context_expr, source_code_bytes, file_path
                         )
                     )
-                    bytecode.append((OpCode.ENTER_CONTEXT, None))
+                    bytecode.append(emit(OpCode.ENTER_CONTEXT, None))
 
                     # Handle 'as' variable if present
                     if as_pattern:
                         var_name = self._get_node_text(as_pattern, source_code_bytes)
-                        bytecode.append((OpCode.STORE_NAME, var_name))
+                        bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
             # Process the body
             body_node = node.child_by_field_name("body")
@@ -1273,7 +1370,7 @@ class ASTCompiler:
 
             # Exit contexts in reverse order
             for _ in with_items:
-                bytecode.append((OpCode.EXIT_CONTEXT, None))
+                bytecode.append(emit(OpCode.EXIT_CONTEXT, None))
 
         elif node_type in ["lambda", "arrow_function"]:
             # Process lambda/arrow functions
@@ -1289,9 +1386,9 @@ class ASTCompiler:
                 )
                 if (
                     not func_body_bytecode
-                    or func_body_bytecode[-1][0] != OpCode.RETURN_VALUE
+                    or func_body_bytecode[-1].opcode != OpCode.RETURN_VALUE
                 ):
-                    func_body_bytecode.append((OpCode.RETURN_VALUE, None))
+                    func_body_bytecode.append(emit(OpCode.RETURN_VALUE, None))
 
                 # Restore previous parameter context
                 self.current_function_params = previous_params
@@ -1307,7 +1404,7 @@ class ASTCompiler:
                 self.code_objects.append(func_code_obj)
 
                 # Use reference name in bytecode instead of nested CodeObject
-                bytecode.append((OpCode.MAKE_FUNCTION, func_ref_name))
+                bytecode.append(emit(OpCode.MAKE_FUNCTION, func_ref_name))
 
         elif node_type == "conditional_expression":
             # Handle ternary operator: condition ? true_expr : false_expr
@@ -1323,7 +1420,7 @@ class ASTCompiler:
                 )
 
             jump_if_false = len(bytecode)
-            bytecode.append((OpCode.POP_JUMP_IF_FALSE, -1))
+            bytecode.append(emit(OpCode.POP_JUMP_IF_FALSE, -1))
 
             if consequence_node:
                 bytecode.extend(
@@ -1333,9 +1430,9 @@ class ASTCompiler:
                 )
 
             jump_over_else = len(bytecode)
-            bytecode.append((OpCode.JUMP_FORWARD, -1))
+            bytecode.append(emit(OpCode.JUMP_FORWARD, -1))
 
-            bytecode[jump_if_false] = (OpCode.POP_JUMP_IF_FALSE, len(bytecode))
+            bytecode[jump_if_false] = emit(OpCode.POP_JUMP_IF_FALSE, len(bytecode))
 
             if alternative_node:
                 bytecode.extend(
@@ -1344,7 +1441,7 @@ class ASTCompiler:
                     )
                 )
 
-            bytecode[jump_over_else] = (OpCode.JUMP_FORWARD, len(bytecode))
+            bytecode[jump_over_else] = emit(OpCode.JUMP_FORWARD, len(bytecode))
 
         elif node_type == "named_expression":
             # Handle walrus operator (:=) in Python
@@ -1360,9 +1457,9 @@ class ASTCompiler:
                 # Store the value in the target variable
                 if target_node:
                     target_name = self._get_node_text(target_node, source_code_bytes)
-                    bytecode.append((OpCode.STORE_NAME, target_name))
+                    bytecode.append(emit(OpCode.STORE_NAME, target_name))
                     # Load the variable back onto the stack (walrus returns the value)
-                    bytecode.append((OpCode.LOAD_NAME, target_name))
+                    bytecode.append(emit(OpCode.LOAD_NAME, target_name))
 
         elif node_type in ["subscript", "subscript_expression"]:
             # Handle array/dict subscript access and slicing: obj[key] or obj[start:end:step]
@@ -1393,7 +1490,7 @@ class ASTCompiler:
                             )
                         )
                     else:
-                        bytecode.append((OpCode.LOAD_CONST, None))
+                        bytecode.append(emit(OpCode.LOAD_CONST, None))
 
                     if stop_node:
                         bytecode.extend(
@@ -1402,7 +1499,7 @@ class ASTCompiler:
                             )
                         )
                     else:
-                        bytecode.append((OpCode.LOAD_CONST, None))
+                        bytecode.append(emit(OpCode.LOAD_CONST, None))
 
                     if step_node:
                         bytecode.extend(
@@ -1411,10 +1508,10 @@ class ASTCompiler:
                             )
                         )
                     else:
-                        bytecode.append((OpCode.LOAD_CONST, None))
+                        bytecode.append(emit(OpCode.LOAD_CONST, None))
 
-                    bytecode.append((OpCode.BINARY_OPERATION, None))  # BUILD_SLICE
-                    bytecode.append((OpCode.BINARY_SUBSCR, None))
+                    bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # BUILD_SLICE
+                    bytecode.append(emit(OpCode.BINARY_SUBSCR, None))
                 else:
                     # Regular subscript access
                     bytecode.extend(
@@ -1422,7 +1519,7 @@ class ASTCompiler:
                             index_node, source_code_bytes, file_path
                         )
                     )
-                    bytecode.append((OpCode.BINARY_SUBSCR, None))
+                    bytecode.append(emit(OpCode.BINARY_SUBSCR, None))
 
         elif node_type in ["attribute", "member_expression"]:
             # Handle attribute access: obj.attr (Python) or obj.prop (JavaScript)
@@ -1440,7 +1537,7 @@ class ASTCompiler:
 
             if attribute_node:
                 attr_name = self._get_node_text(attribute_node, source_code_bytes)
-                bytecode.append((OpCode.LOAD_ATTR, attr_name))
+                bytecode.append(emit(OpCode.LOAD_ATTR, attr_name))
 
         elif node_type in ["f_string", "formatted_string_literal"]:
             # Handle f-string with interpolation: f"Hello {name}!"
@@ -1461,12 +1558,14 @@ class ASTCompiler:
                 else:
                     # Handle regular string parts
                     text_content = self._get_node_text(child, source_code_bytes)
-                    bytecode.append((OpCode.LOAD_CONST, text_content))
+                    bytecode.append(emit(OpCode.LOAD_CONST, text_content))
                     string_parts += 1
 
             # Build the formatted string
             if string_parts > 1:
-                bytecode.append((OpCode.BINARY_OPERATION, None))  # String format/join
+                bytecode.append(
+                    emit(OpCode.BINARY_OPERATION, None)
+                )  # String format/join
 
         elif node_type == "concatenated_string":
             # Handle implicit string concatenation: "hello" "world"
@@ -1476,7 +1575,7 @@ class ASTCompiler:
                         self._generate_bytecode(child, source_code_bytes, file_path)
                     )
             # Concatenate strings
-            bytecode.append((OpCode.BINARY_ADD, None))
+            bytecode.append(emit(OpCode.BINARY_ADD, None))
 
         # --- High-Level Structures (Functions, Classes) ---
         elif node_type in [
@@ -1523,9 +1622,9 @@ class ASTCompiler:
             )
             if (
                 not func_body_bytecode
-                or func_body_bytecode[-1][0] != OpCode.RETURN_VALUE
+                or func_body_bytecode[-1].opcode != OpCode.RETURN_VALUE
             ):
-                func_body_bytecode.append((OpCode.RETURN_VALUE, None))
+                func_body_bytecode.append(emit(OpCode.RETURN_VALUE, None))
 
             # Restore previous parameter context
             self.current_function_params = previous_params
@@ -1544,15 +1643,15 @@ class ASTCompiler:
             if is_async and is_generator:
                 # Async generator function
                 bytecode.append(
-                    (OpCode.ASYNC_FUNCTION, func_ref_name)
+                    emit(OpCode.ASYNC_FUNCTION, func_ref_name)
                 )  # Could add ASYNC_GENERATOR if needed
             elif is_async:
-                bytecode.append((OpCode.ASYNC_FUNCTION, func_ref_name))
+                bytecode.append(emit(OpCode.ASYNC_FUNCTION, func_ref_name))
             elif is_generator:
-                bytecode.append((OpCode.GENERATOR_FUNCTION, func_ref_name))
+                bytecode.append(emit(OpCode.GENERATOR_FUNCTION, func_ref_name))
             else:
-                bytecode.append((OpCode.MAKE_FUNCTION, func_ref_name))
-            bytecode.append((OpCode.STORE_NAME, func_name))
+                bytecode.append(emit(OpCode.MAKE_FUNCTION, func_ref_name))
+            bytecode.append(emit(OpCode.STORE_NAME, func_name))
 
         elif node_type in ["class_definition", "class_declaration"]:
             class_name = self._get_node_text(
@@ -1574,8 +1673,8 @@ class ASTCompiler:
             self.code_objects.append(class_code_obj)
 
             # Use reference name in bytecode instead of nested CodeObject
-            bytecode.append((OpCode.MAKE_CLASS, class_ref_name))
-            bytecode.append((OpCode.STORE_NAME, class_name))
+            bytecode.append(emit(OpCode.MAKE_CLASS, class_ref_name))
+            bytecode.append(emit(OpCode.STORE_NAME, class_name))
 
         # --- Comprehensions and Generators ---
         elif node_type in [
@@ -1613,11 +1712,11 @@ class ASTCompiler:
             # Generate bytecode for comprehension
             # Start with empty collection
             if node_type == "list_comprehension":
-                bytecode.append((OpCode.BUILD_LIST, 0))
+                bytecode.append(emit(OpCode.BUILD_LIST, 0))
             elif node_type == "dictionary_comprehension":
-                bytecode.append((OpCode.BUILD_MAP, 0))
+                bytecode.append(emit(OpCode.BUILD_MAP, 0))
             elif node_type == "set_comprehension":
-                bytecode.append((OpCode.BUILD_SET, 0))
+                bytecode.append(emit(OpCode.BUILD_SET, 0))
 
             # Process for clauses (nested loops)
             for var_node, iterable_node in for_clauses:
@@ -1627,15 +1726,15 @@ class ASTCompiler:
                             iterable_node, source_code_bytes, file_path
                         )
                     )
-                    bytecode.append((OpCode.GET_ITER, None))
+                    bytecode.append(emit(OpCode.GET_ITER, None))
 
                     # Loop start
                     loop_start = len(bytecode)
-                    bytecode.append((OpCode.FOR_ITER, -1))  # Will be patched
+                    bytecode.append(emit(OpCode.FOR_ITER, -1))  # Will be patched
 
                     if var_node:
                         var_name = self._get_node_text(var_node, source_code_bytes)
-                        bytecode.append((OpCode.STORE_NAME, var_name))
+                        bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
                     # Process if clauses (filters)
                     for condition_node in if_clauses:
@@ -1644,7 +1743,7 @@ class ASTCompiler:
                                 condition_node, source_code_bytes, file_path
                             )
                         )
-                        bytecode.append((OpCode.POP_JUMP_IF_FALSE, loop_start))
+                        bytecode.append(emit(OpCode.POP_JUMP_IF_FALSE, loop_start))
 
                     # Generate element expression
                     if element_expr:
@@ -1654,13 +1753,13 @@ class ASTCompiler:
                             )
                         )
                         # Add to collection (simplified)
-                        bytecode.append((OpCode.BINARY_OPERATION, None))
+                        bytecode.append(emit(OpCode.BINARY_OPERATION, None))
 
                     # Jump back to loop start
-                    bytecode.append((OpCode.JUMP_FORWARD, loop_start))
+                    bytecode.append(emit(OpCode.JUMP_FORWARD, loop_start))
 
                     # Patch FOR_ITER to jump here when done
-                    bytecode[loop_start] = (OpCode.FOR_ITER, len(bytecode))
+                    bytecode[loop_start] = emit(OpCode.FOR_ITER, len(bytecode))
 
         elif node_type in ["await", "await_expression"]:
             # Process await expressions: await expression
@@ -1681,7 +1780,7 @@ class ASTCompiler:
                             self._generate_bytecode(child, source_code_bytes, file_path)
                         )
                         break
-            bytecode.append((OpCode.AWAIT_EXPRESSION, None))
+            bytecode.append(emit(OpCode.AWAIT_EXPRESSION, None))
 
         elif node_type == "decorator":
             # Process decorators
@@ -1715,7 +1814,7 @@ class ASTCompiler:
                             )
                         )
                         bytecode.append(
-                            (OpCode.BINARY_OPERATION, None)
+                            emit(OpCode.BINARY_OPERATION, None)
                         )  # Compare with subject
 
                     # Process case body
