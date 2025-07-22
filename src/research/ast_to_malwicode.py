@@ -35,7 +35,7 @@ class CSVWriter:
         self.writer = csv.writer(self.file_handle)
 
         if is_empty:
-            self.writer.writerow(["bytecode", "hash", "language", "filepath"])
+            self.writer.writerow(["tokens", "hash", "language", "filepath"])
 
     def write_code_objects(self, code_objects: List["CodeObject"]) -> None:
         """Write CodeObject data to CSV."""
