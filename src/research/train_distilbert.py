@@ -141,8 +141,6 @@ def create_or_load_tokenizer(
 
         bpe_trainer_obj = ByteLevelBPETokenizer()
 
-        bytecode_op_names = [key.lower() for key in dis.opmap.keys()]
-
         bpe_default_special_tokens = [
             "[PAD]",
             "[UNK]",
@@ -150,8 +148,6 @@ def create_or_load_tokenizer(
             "[SEP]",
             "[MASK]",
         ]
-
-        bpe_default_special_tokens.extend(bytecode_op_names)
 
         combined_special_tokens = list(
             set(bpe_default_special_tokens + list(global_special_tokens))

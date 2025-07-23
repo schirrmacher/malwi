@@ -181,13 +181,16 @@ class Instruction:
 
         argval = reduce_whitespace(remove_newlines(arg))
 
-        if argval in function_mapping:
-            return f"{op_code.name} {function_mapping.get(argval)}"
+        if (
+            op_code in [OpCode.MAKE_CLASS, OpCode.MAKE_FUNCTION]
+            and argval in function_mapping
+        ):
+            return f"{op_code.name} {argval}"
         elif (
             op_code in [OpCode.IMPORT_FROM, OpCode.IMPORT_NAME]
             and argval in import_mapping
         ):
-            return f"{op_code.name} {import_mapping.get(argval)}"
+            return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
             return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
         elif is_valid_ip(argval):
@@ -720,8 +723,46 @@ class ASTCompiler:
                 # Fallback: treat as string if conversion fails
                 bytecode.append(emit(OpCode.LOAD_CONST, text))
         elif node_type == "string":
-            str_content = self._get_node_text(node, source_code_bytes)
-            bytecode.append(emit(OpCode.LOAD_CONST, str_content))
+            # Check if this string has interpolation children (f-string)
+            has_interpolation = any(
+                child.type == "interpolation" for child in node.children
+            )
+
+            if has_interpolation:
+                # Handle f-string with interpolation
+                string_parts = 0
+                for child in node.children:
+                    if child.type == "interpolation":
+                        # Handle {expression} in f-string
+                        for expr_child in child.children:
+                            if expr_child.type not in ["{", "}"]:
+                                bytecode.extend(
+                                    self._generate_bytecode(
+                                        expr_child, source_code_bytes, file_path
+                                    )
+                                )
+                                string_parts += 1
+                                break
+                    elif child.type == "string_content":
+                        # Handle regular string parts
+                        text_content = self._get_node_text(child, source_code_bytes)
+                        if text_content.strip():  # Only add non-empty content
+                            bytecode.append(emit(OpCode.LOAD_CONST, text_content))
+                            string_parts += 1
+
+                # Build the formatted string if we have multiple parts
+                if string_parts > 1:
+                    bytecode.append(
+                        emit(OpCode.BINARY_OPERATION, None)
+                    )  # String format/join
+                elif string_parts == 0:
+                    # Fallback if no parts were processed
+                    str_content = self._get_node_text(node, source_code_bytes)
+                    bytecode.append(emit(OpCode.LOAD_CONST, str_content))
+            else:
+                # Regular string without interpolation
+                str_content = self._get_node_text(node, source_code_bytes)
+                bytecode.append(emit(OpCode.LOAD_CONST, str_content))
         elif node_type == "identifier":
             identifier_name = self._get_node_text(node, source_code_bytes)
             # Use LOAD_PARAM if this identifier is a function parameter
