@@ -5,14 +5,105 @@ import hashlib
 from enum import Enum, auto
 from pathlib import Path
 from tree_sitter import Node
-from typing import Optional, Any, List, Tuple, Dict, TextIO
+from typing import Optional, Any, List, Tuple, Dict
 
 from tree_sitter import Parser, Language
-from research.mapping import map_argument
+from research.mapping import (
+    FUNCTION_MAPPING,
+    IMPORT_MAPPING,
+    COMMON_TARGET_FILES,
+    reduce_whitespace,
+    remove_newlines,
+    SpecialCases,
+    map_entropy_to_token,
+    map_string_length_to_token,
+    calculate_shannon_entropy,
+    is_valid_ip,
+    is_base64,
+    is_hex,
+    is_valid_url,
+    is_escaped_hex,
+    is_file_path,
+    STRING_MAX_LENGTH,
+    SENSITIVE_PATHS,
+)
 
 # Import both language bindings
 import tree_sitter_python as tspython
 import tree_sitter_javascript as tsjavascript
+
+
+class OpCode(Enum):
+    """
+    Defines the set of all possible bytecode operations for Malwicode.
+    """
+
+    LOAD_CONST = auto()
+    LOAD_NAME = auto()
+    LOAD_PARAM = auto()
+    STORE_NAME = auto()
+    BINARY_ADD = auto()
+    BINARY_SUBTRACT = auto()
+    BINARY_MULTIPLY = auto()
+    BINARY_DIVIDE = auto()
+    BINARY_MODULO = auto()
+    BINARY_POWER = auto()
+    BINARY_FLOOR_DIVIDE = auto()
+    BINARY_AND = auto()
+    BINARY_OR = auto()
+    BINARY_XOR = auto()
+    BINARY_LSHIFT = auto()
+    BINARY_RSHIFT = auto()
+    BINARY_UNSIGNED_RSHIFT = auto()  # JavaScript >>> operator
+    BINARY_MATMUL = auto()  # Python @ operator
+    BINARY_NULLISH_COALESCING = auto()  # JavaScript ?? operator
+    COMPARE_OP = auto()
+    COMPARE_LESS = auto()
+    COMPARE_GREATER = auto()
+    COMPARE_EQUAL = auto()
+    COMPARE_NOT_EQUAL = auto()
+    COMPARE_LESS_EQUAL = auto()
+    COMPARE_GREATER_EQUAL = auto()
+    COMPARE_IN = auto()
+    COMPARE_NOT_IN = auto()
+    COMPARE_IS = auto()
+    COMPARE_IS_NOT = auto()
+    COMPARE_INSTANCEOF = auto()
+    LOGICAL_AND = auto()
+    LOGICAL_OR = auto()
+    LOGICAL_NOT = auto()
+    BINARY_OPERATION = auto()
+    CALL_FUNCTION = auto()
+    MAKE_FUNCTION = auto()
+    MAKE_CLASS = auto()
+    RETURN_VALUE = auto()
+    POP_JUMP_IF_FALSE = auto()
+    POP_JUMP_IF_TRUE = auto()
+    JUMP_FORWARD = auto()
+    GET_ITER = auto()
+    FOR_ITER = auto()
+    BUILD_LIST = auto()
+    BUILD_TUPLE = auto()
+    BUILD_SET = auto()
+    BUILD_MAP = auto()
+    BINARY_SUBSCR = auto()
+    LOAD_ATTR = auto()
+    UNARY_NEGATIVE = auto()
+    UNARY_NOT = auto()
+    UNARY_INVERT = auto()
+    IMPORT_NAME = auto()
+    IMPORT_FROM = auto()
+    EXPORT_DEFAULT = auto()
+    EXPORT_NAMED = auto()
+    AWAIT_EXPRESSION = auto()
+    ASYNC_FUNCTION = auto()
+    GENERATOR_FUNCTION = auto()
+    WITH_CONTEXT = auto()
+    ENTER_CONTEXT = auto()
+    EXIT_CONTEXT = auto()
+    TYPEOF_OPERATOR = auto()
+    VOID_OPERATOR = auto()
+    DELETE_OPERATOR = auto()
 
 
 class CSVWriter:
@@ -69,43 +160,66 @@ class Instruction:
     def __repr__(self) -> str:
         return f"Instruction({self.opcode.name}, {self.arg})"
 
-    def to_string(
-        self, format_mode: str = "default", mapping: Optional[Dict[str, Any]] = None
-    ) -> str:
-        """
-        Format the instruction as a string with various formatting options.
+    @classmethod
+    def map_argument(cls, op_code: OpCode, arg: Any, language: str) -> str:
+        prefix = "STRING"
+        function_mapping = FUNCTION_MAPPING.get(language, {})
+        import_mapping = IMPORT_MAPPING.get(language, {})
 
-        Args:
-            format_mode: How to format the output ("default", "compact", "detailed", "mapped")
-            mapping: Optional mapping for arguments in "mapped" mode (overrides auto-mapping)
+        if not arg:
+            return op_code.name
 
-        In "mapped" mode, arguments are automatically mapped to type names:
-        - str -> STRING, int -> INTEGER, float -> FLOAT, bool -> BOOLEAN
-        - list/tuple -> LIST, dict -> DICT, objects -> CLASS_NAME
-        """
-        if format_mode == "compact":
-            return (
-                f"{self.opcode.name}: {self.arg}"
-                if self.arg is not None
-                else self.opcode.name
-            )
-        elif format_mode == "detailed":
-            arg_info = (
-                f" (type: {type(self.arg).__name__})" if self.arg is not None else ""
-            )
-            return f"{self.opcode.name:<20} {self.arg}{arg_info}"
-        elif format_mode == "mapped":
-            if self.arg is None:
-                mapped_arg = None
-            elif mapping and str(self.arg) in mapping:
-                # Use external mapping if provided
-                mapped_arg = mapping[str(self.arg)]
-            else:
-                # Use sophisticated mapping
-                mapped_arg = map_argument(self.arg, self.language)
+        if isinstance(arg, bool):
+            return f"{op_code.name} BOOLEAN"
+        elif isinstance(arg, int):
+            return f"{op_code.name} INTEGER"
+        elif isinstance(arg, float):
+            return f"{op_code.name} FLOAT"
 
-            return (
-                f"{self.opcode.name:<20} {mapped_arg if mapped_arg is not None else ''}"
+        if not isinstance(arg, str):
+            arg = str(arg)
+
+        argval = reduce_whitespace(remove_newlines(arg))
+
+        if argval in function_mapping:
+            return f"{op_code.name} {function_mapping.get(argval)}"
+        elif (
+            op_code in [OpCode.IMPORT_FROM, OpCode.IMPORT_NAME]
+            and argval in import_mapping
+        ):
+            return f"{op_code.name} {import_mapping.get(argval)}"
+        elif argval in SENSITIVE_PATHS:
+            return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
+        elif is_valid_ip(argval):
+            return f"{op_code.name} {SpecialCases.STRING_IP.value}"
+        elif is_valid_url(argval):
+            return f"{op_code.name} {SpecialCases.STRING_URL.value}"
+        elif is_file_path(argval):
+            return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
+        else:
+            if len(argval) <= STRING_MAX_LENGTH:
+                return f"{op_code.name} {argval}"
+            if is_escaped_hex(argval):
+                prefix = SpecialCases.STRING_ESCAPED_HEX.value
+            elif is_hex(argval):
+                prefix = SpecialCases.STRING_HEX.value
+            elif is_base64(argval):
+                prefix = SpecialCases.STRING_BASE64.value
+
+            length_suffix = map_string_length_to_token(len(argval))
+            try:
+                entropy = calculate_shannon_entropy(
+                    argval.encode("utf-8", errors="ignore")
+                )
+            except Exception:
+                entropy = 0.0
+            entropy_suffix = map_entropy_to_token(entropy)
+            return f"{op_code.name}  {prefix}_{length_suffix}_{entropy_suffix}"
+
+    def to_string(self, format_mode: str = "default") -> str:
+        if format_mode == "mapped":
+            return Instruction.map_argument(
+                op_code=self.opcode, arg=self.arg, language=self.language
             )
         else:  # default format
             # Handle special cases for consistent output
@@ -161,7 +275,6 @@ class CodeObject:
         format_mode: str = "default",
         separator: str = " ",
         indent_level: int = 0,
-        mapping: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Formats the bytecode of this CodeObject with various formatting options.
@@ -176,63 +289,22 @@ class CodeObject:
             Formatted string representation of the bytecode
         """
         if format_mode in ["oneline", "oneline_mapped"]:
-            return self._format_oneline(separator, format_mode, mapping)
+            return self._format_oneline(separator)
         else:
-            return self._format_multiline(format_mode, indent_level, mapping)
+            return self._format_multiline(format_mode, indent_level)
 
     def _format_oneline(
         self,
         separator: str = " ",
-        format_mode: str = "oneline",
-        mapping: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Format instructions as a single line with opcodes and values."""
         instruction_parts = []
 
+        if Path(self.path).name in COMMON_TARGET_FILES.get(self.language, []):
+            instruction_parts += [SpecialCases.TARGETED_FILE.value]
+
         for instruction in self.byte_code:
-            # Check for legacy tuple format and convert if needed
-            if isinstance(instruction, tuple):
-                opcode, arg = instruction
-                instruction = Instruction(opcode, arg, self.language)
-
-            # Handle nested CodeObjects - show reference name
-            if isinstance(instruction.arg, CodeObject):
-                instruction_parts.append(
-                    f"{instruction.opcode.name} <{instruction.arg.name}>"
-                )
-                continue
-
-            # Add opcode and argument if it exists
-            if instruction.arg is not None:
-                # Use mapping for oneline_mapped format mode
-                if format_mode == "oneline_mapped":
-                    # Use the same logic as the Instruction.to_string mapped mode
-                    if mapping and str(instruction.arg) in mapping:
-                        arg_str = mapping[str(instruction.arg)]
-                    else:
-                        # Use sophisticated mapping
-                        arg_str = map_argument(instruction.arg, instruction.language)
-                else:
-                    # Handle special cases for consistent output in regular oneline mode
-                    if instruction.opcode.name in (
-                        "POP_JUMP_IF_FALSE",
-                        "POP_JUMP_IF_TRUE",
-                        "JUMP_FORWARD",
-                    ):
-                        arg_str = "<JUMP_TARGET>"
-                    elif instruction.opcode.name in (
-                        "MAKE_FUNCTION",
-                        "ASYNC_FUNCTION",
-                        "GENERATOR_FUNCTION",
-                        "MAKE_CLASS",
-                    ) and isinstance(instruction.arg, str):
-                        arg_str = f"<{instruction.arg}>"
-                    else:
-                        arg_str = str(instruction.arg)
-
-                instruction_parts.append(f"{instruction.opcode.name} {arg_str}")
-            else:
-                instruction_parts.append(instruction.opcode.name)
+            instruction_parts.append(instruction.to_string(format_mode="mapped"))
 
         return separator.join(instruction_parts)
 
@@ -240,7 +312,6 @@ class CodeObject:
         self,
         format_mode: str = "default",
         indent_level: int = 0,
-        mapping: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Format instructions as multiple indented lines."""
         result_lines = []
@@ -258,14 +329,12 @@ class CodeObject:
                     f"{indent}{instruction.opcode.name:<20} <{instruction.arg.name}>"
                 )
                 result_lines.append(
-                    instruction.arg.to_string(
-                        format_mode, " ", indent_level + 1, mapping
-                    )
+                    instruction.arg.to_string(format_mode, " ", indent_level + 1)
                 )
                 continue
 
             # Format the instruction with the specified mode
-            formatted_line = instruction.to_string(format_mode, mapping)
+            formatted_line = instruction.to_string(format_mode)
             result_lines.append(f"{indent}{formatted_line}")
 
         return "\n".join(result_lines)
@@ -313,79 +382,6 @@ def collect_files_by_extension(
     for ext in accepted_extensions:
         files.extend(path.rglob(f"*{ext}"))
     return files, len(files)
-
-
-class OpCode(Enum):
-    """
-    Defines the set of all possible bytecode operations for Malwicode.
-    """
-
-    LOAD_CONST = auto()
-    LOAD_NAME = auto()
-    LOAD_PARAM = auto()
-    STORE_NAME = auto()
-    BINARY_ADD = auto()
-    BINARY_SUBTRACT = auto()
-    BINARY_MULTIPLY = auto()
-    BINARY_DIVIDE = auto()
-    BINARY_MODULO = auto()
-    BINARY_POWER = auto()
-    BINARY_FLOOR_DIVIDE = auto()
-    BINARY_AND = auto()
-    BINARY_OR = auto()
-    BINARY_XOR = auto()
-    BINARY_LSHIFT = auto()
-    BINARY_RSHIFT = auto()
-    BINARY_UNSIGNED_RSHIFT = auto()  # JavaScript >>> operator
-    BINARY_MATMUL = auto()  # Python @ operator
-    BINARY_NULLISH_COALESCING = auto()  # JavaScript ?? operator
-    COMPARE_OP = auto()
-    COMPARE_LESS = auto()
-    COMPARE_GREATER = auto()
-    COMPARE_EQUAL = auto()
-    COMPARE_NOT_EQUAL = auto()
-    COMPARE_LESS_EQUAL = auto()
-    COMPARE_GREATER_EQUAL = auto()
-    COMPARE_IN = auto()
-    COMPARE_NOT_IN = auto()
-    COMPARE_IS = auto()
-    COMPARE_IS_NOT = auto()
-    COMPARE_INSTANCEOF = auto()
-    LOGICAL_AND = auto()
-    LOGICAL_OR = auto()
-    LOGICAL_NOT = auto()
-    BINARY_OPERATION = auto()  # Fallback for unhandled operators
-    CALL_FUNCTION = auto()
-    MAKE_FUNCTION = auto()
-    MAKE_CLASS = auto()
-    RETURN_VALUE = auto()
-    POP_JUMP_IF_FALSE = auto()
-    POP_JUMP_IF_TRUE = auto()
-    JUMP_FORWARD = auto()
-    GET_ITER = auto()
-    FOR_ITER = auto()
-    BUILD_LIST = auto()
-    BUILD_TUPLE = auto()
-    BUILD_SET = auto()
-    BUILD_MAP = auto()
-    BINARY_SUBSCR = auto()
-    LOAD_ATTR = auto()
-    UNARY_NEGATIVE = auto()
-    UNARY_NOT = auto()
-    UNARY_INVERT = auto()
-    IMPORT_NAME = auto()
-    IMPORT_FROM = auto()
-    EXPORT_DEFAULT = auto()
-    EXPORT_NAMED = auto()
-    AWAIT_EXPRESSION = auto()
-    ASYNC_FUNCTION = auto()
-    GENERATOR_FUNCTION = auto()
-    WITH_CONTEXT = auto()
-    ENTER_CONTEXT = auto()
-    EXIT_CONTEXT = auto()
-    TYPEOF_OPERATOR = auto()
-    VOID_OPERATOR = auto()
-    DELETE_OPERATOR = auto()
 
 
 class ASTCompiler:
