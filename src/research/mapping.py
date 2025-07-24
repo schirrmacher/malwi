@@ -18,6 +18,8 @@ STRING_MAX_LENGTH = 15
 class SpecialCases(Enum):
     STRING_SENSITIVE_FILE_PATH = "STRING_SENSITIVE_FILE_PATH"
     STRING_URL = "STRING_URL"
+    CONTAINS_URL = "CONTAINS_URL"
+    STRING_LOCALHOST = "STRING_LOCALHOST"
     STRING_FILE_PATH = "STRING_FILE_PATH"
     STRING_IP = "STRING_IP"
     STRING_BASE64 = "STRING_BASE64"
@@ -98,10 +100,85 @@ def is_hex(s: str) -> bool:
     return bool(hex_char_pattern_strict.match(s))
 
 
+def contains_url(text: str) -> bool:
+    """Check if a string contains a URL pattern."""
+    if not text or len(text) < 8:  # Minimum URL length
+        return False
+
+    # Simple pattern to detect URLs within text
+    url_patterns = [
+        "http://",
+        "https://",
+        "ftp://",
+        "ftps://",
+        "ssh://",
+        "telnet://",
+        "file://",
+        "data:",
+        "javascript:",
+        "vbscript:",
+    ]
+
+    for pattern in url_patterns:
+        if pattern in text.lower():
+            return True
+
+    return False
+
+
+def is_localhost(text: str) -> bool:
+    """Check if a string represents localhost or local network addresses."""
+    if not text:
+        return False
+
+    text_lower = text.lower().strip()
+
+    # Direct localhost patterns
+    localhost_patterns = [
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "0.0.0.0",
+        "local",
+        "loopback",
+    ]
+
+    # Check if text is exactly one of these patterns
+    if text_lower in localhost_patterns:
+        return True
+
+    # Check for localhost with port
+    if text_lower.startswith("localhost:") or text_lower.startswith("127.0.0.1:"):
+        return True
+
+    # Check for localhost in URLs
+    if ("localhost" in text_lower or "127.0.0.1" in text_lower) and (
+        "http" in text_lower or "ftp" in text_lower
+    ):
+        return True
+
+    # Check for private network ranges (RFC 1918)
+    import re
+
+    # Match 192.168.x.x, 10.x.x.x, 172.16-31.x.x
+    private_ip_patterns = [
+        r"^192\.168\.\d{1,3}\.\d{1,3}",
+        r"^10\.\d{1,3}\.\d{1,3}\.\d{1,3}",
+        r"^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}",
+    ]
+
+    for pattern in private_ip_patterns:
+        if re.match(pattern, text_lower):
+            return True
+
+    return False
+
+
 def is_file_path(text: str) -> bool:
     if not text or len(text) < 2:
         return False
-    has_separator = "/" in text or "\\" in text
+
+    # Exclude URLs and other non-file patterns first
     is_common_non_file_url = text.startswith(
         (
             "http://",
@@ -115,6 +192,53 @@ def is_file_path(text: str) -> bool:
             "data:",
         )
     )
+    if is_common_non_file_url:
+        return False
+
+    # Check for common file extensions
+    common_extensions = (
+        ".py",
+        ".js",
+        ".txt",
+        ".json",
+        ".xml",
+        ".html",
+        ".css",
+        ".java",
+        ".cpp",
+        ".c",
+        ".h",
+        ".hpp",
+        ".sh",
+        ".bat",
+        ".exe",
+        ".dll",
+        ".so",
+        ".dylib",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".csv",
+        ".log",
+        ".conf",
+        ".cfg",
+        ".ini",
+        ".yaml",
+        ".yml",
+        ".md",
+        ".rst",
+        ".tex",
+        ".tmp",
+        ".bak",
+    )
+    has_file_extension = any(text.lower().endswith(ext) for ext in common_extensions)
+
+    # Specific file path patterns
     is_unix_like_start = text.startswith(("/", "~", "./", "../"))
     is_win_drive_start = (
         len(text) > 2
@@ -123,9 +247,54 @@ def is_file_path(text: str) -> bool:
         and text[2] in ("\\", "/")
     )
     is_win_unc_start = text.startswith("\\\\")
-    return (
-        has_separator or is_unix_like_start or is_win_drive_start or is_win_unc_start
-    ) and not is_common_non_file_url
+
+    # Must either:
+    # 1. Start with a clear path pattern (absolute or relative)
+    # 2. Have a file extension
+    # 3. Match specific path patterns (but not generic strings with slashes)
+    if is_unix_like_start or is_win_drive_start or is_win_unc_start:
+        return True
+
+    # For other cases, require both a separator and a file extension
+    # or a very specific path pattern
+    has_separator = "/" in text or "\\" in text
+    if has_separator and has_file_extension:
+        return True
+
+    # Simple filename with extension (no path separators)
+    if not has_separator and has_file_extension and "." in text:
+        # Make sure it's not something like "example.com"
+        # by checking it doesn't look like a domain
+        if not (
+            text.count(".") == 1
+            and text.split(".")[1]
+            in ("com", "org", "net", "edu", "gov", "io", "co", "uk")
+        ):
+            return True
+
+    # Check for specific path patterns without extensions
+    # (like bin paths or specific directories)
+    specific_patterns = (
+        "/bin/",
+        "/usr/",
+        "/etc/",
+        "/var/",
+        "/tmp/",
+        "/home/",
+        "/opt/",
+        "/dev/",
+        "/proc/",
+        "/sys/",
+        "C:\\Windows",
+        "C:\\Program",
+        "/Applications/",
+        "/Library/",
+        "/System/",
+    )
+    if any(pattern in text for pattern in specific_patterns):
+        return True
+
+    return False
 
 
 def remove_newlines(text: str) -> str:
@@ -197,10 +366,14 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
         return python_import_mapping.get(argval)
     elif argval in SENSITIVE_PATHS:
         return f"{SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
+    elif is_localhost(argval):
+        return f"{SpecialCases.STRING_LOCALHOST.value}"
     elif is_valid_ip(argval):
         return f"{SpecialCases.STRING_IP.value}"
     elif is_valid_url(argval):
         return f"{SpecialCases.STRING_URL.value}"
+    elif contains_url(argval):
+        return f"{SpecialCases.CONTAINS_URL.value}"
     elif is_file_path(argval):
         return f"{SpecialCases.STRING_FILE_PATH.value}"
     else:
@@ -327,10 +500,14 @@ def map_string_argument(argval: str, language: str = "python") -> str:
         return lang_import_mapping.get(argval)
     elif argval in SENSITIVE_PATHS:
         return "STRING_SENSITIVE_FILE_PATH"
+    elif is_localhost(argval):
+        return "STRING_LOCALHOST"
     elif is_valid_ip(argval):
         return "STRING_IP"
     elif is_valid_url(argval):
         return "STRING_URL"
+    elif contains_url(argval):
+        return "CONTAINS_URL"
     elif is_file_path(argval):
         return "STRING_FILE_PATH"
     else:

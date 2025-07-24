@@ -24,6 +24,8 @@ from research.mapping import (
     is_valid_url,
     is_escaped_hex,
     is_file_path,
+    contains_url,
+    is_localhost,
     STRING_MAX_LENGTH,
     SENSITIVE_PATHS,
 )
@@ -162,6 +164,16 @@ class Instruction:
 
     @classmethod
     def map_argument(cls, op_code: OpCode, arg: Any, language: str) -> str:
+        """
+        ATTENTION!
+        This is the most critical function for training!
+        This mapping was modified a couple of time to improve the overall F1
+        score of the model.
+
+        Learnings:
+        - The raw string length exposed to the model has huge impact on performance
+        """
+
         prefix = "STRING"
         function_mapping = FUNCTION_MAPPING.get(language, {})
         import_mapping = IMPORT_MAPPING.get(language, {})
@@ -193,10 +205,15 @@ class Instruction:
             return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
             return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
+        elif is_localhost(argval):
+            return f"{op_code.name} {SpecialCases.STRING_LOCALHOST.value}"
         elif is_valid_ip(argval):
             return f"{op_code.name} {SpecialCases.STRING_IP.value}"
         elif is_valid_url(argval):
             return f"{op_code.name} {SpecialCases.STRING_URL.value}"
+        elif contains_url(argval):
+            # String contains a URL but isn't a URL itself
+            return f"{op_code.name} {SpecialCases.CONTAINS_URL.value}"
         elif is_file_path(argval):
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
         else:
