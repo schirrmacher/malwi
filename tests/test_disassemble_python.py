@@ -139,9 +139,9 @@ class TestCoreDisassembly:
         assert MalwiObject.all_tokens() == sorted(
             [
                 "ARCHIVE_COMPRESSION",
+                "BOOLEAN",
                 "BUILD_MANIPULATION",
                 "CODE_EXECUTION_INTEROP",
-                "CONTAINS_URL",
                 "CRYPTOGRAPHY",
                 "CRYPTO_HASHING",
                 "CRYPTO_MISC",
@@ -199,6 +199,8 @@ class TestCoreDisassembly:
                 "RUNTIME_MANIPULATION",
                 "SENSITIVE_DATA_ACCESS",
                 "STRING_BASE64",
+                "STRING_CONTAINS_URL",
+                "STRING_ENCODING",
                 "STRING_ESCAPED_HEX",
                 "STRING_FILE_PATH",
                 "STRING_HEX",
@@ -206,6 +208,7 @@ class TestCoreDisassembly:
                 "STRING_LOCALHOST",
                 "STRING_SENSITIVE_FILE_PATH",
                 "STRING_URL",
+                "STRING_VERSION",
                 "SYSINFO_FILESYSTEM",
                 "SYSINFO_HARDWARE",
                 "SYSINFO_NETWORK",

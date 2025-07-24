@@ -4,10 +4,12 @@ import math
 import types
 import socket
 import urllib
+import codecs
 import pathlib
 import collections
 
 from enum import Enum
+from packaging.version import Version, InvalidVersion
 from typing import List, Tuple, Optional, Any, Dict, Set
 
 from common.files import read_json_from_file
@@ -18,7 +20,9 @@ STRING_MAX_LENGTH = 15
 class SpecialCases(Enum):
     STRING_SENSITIVE_FILE_PATH = "STRING_SENSITIVE_FILE_PATH"
     STRING_URL = "STRING_URL"
-    CONTAINS_URL = "CONTAINS_URL"
+    STRING_CONTAINS_URL = "STRING_CONTAINS_URL"
+    STRING_VERSION = "STRING_VERSION"
+    STRING_ENCODING = "STRING_ENCODING"
     STRING_LOCALHOST = "STRING_LOCALHOST"
     STRING_FILE_PATH = "STRING_FILE_PATH"
     STRING_IP = "STRING_IP"
@@ -29,6 +33,7 @@ class SpecialCases(Enum):
     MALFORMED_SYNTAX = "MALFORMED_SYNTAX"
     FILE_READING_ISSUES = "FILE_READING_ISSUES"
     TARGETED_FILE = "TARGETED_FILE"
+    BOOLEAN = "BOOLEAN"
     INTEGER = "INTEGER"
     FLOAT = "FLOAT"
 
@@ -61,6 +66,44 @@ def is_valid_ip(content: str) -> bool:
         except (socket.error, OSError):
             return False
     except Exception:
+        return False
+
+
+def is_version(version_string):
+    """
+    Checks if a given string is a valid version string according to PEP 440.
+
+    Args:
+        version_string (str): The string to check.
+
+    Returns:
+        bool: True if the string is a valid version, False otherwise.
+    """
+    try:
+        # Attempt to parse the string as a Version object.
+        # If it's not a valid version, InvalidVersion will be raised.
+        Version(version_string)
+        return True
+    except InvalidVersion:
+        return False
+
+
+def is_valid_encoding_name(encoding_name):
+    """
+    Checks if a given string is a recognized Python encoding name.
+
+    Args:
+        encoding_name (str): The string to check (e.g., 'utf-8', 'latin-1').
+
+    Returns:
+        bool: True if the encoding name is recognized, False otherwise.
+    """
+    try:
+        # Attempt to get an encoder for the given name.
+        # If the name is not recognized, a LookupError will be raised.
+        codecs.lookup(encoding_name)
+        return True
+    except LookupError:
         return False
 
 
@@ -305,6 +348,52 @@ def reduce_whitespace(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def clean_string_literal(url_string):
+    """
+    Cleans a URL string by removing various forms of quotation marks and
+    the 'f' prefix from f-string literals, ensuring matching quotes.
+
+    Args:
+        url_string (str): The input string potentially containing a URL.
+
+    Returns:
+        str: The cleaned URL string.
+    """
+
+    # --- Handle f-string literal representations ---
+    # Case: f"..."
+    if url_string.startswith('f"') and url_string.endswith('"'):
+        # Remove 'f' and the outer double quotes
+        return url_string[2:-1]  # Slice off 'f"' and '"'
+    # Case: f'...'
+    elif url_string.startswith("f'") and url_string.endswith("'"):
+        # Remove 'f' and the outer single quotes
+        return url_string[2:-1]  # Slice off "f'" and "'"
+    # Case: f"""...""" (less common but possible)
+    elif url_string.startswith('f"""') and url_string.endswith('"""'):
+        return url_string[4:-3]  # Slice off 'f"""' and '"""'
+    # Case: f'''...''' (less common but possible)
+    elif url_string.startswith("f'''") and url_string.endswith("'''"):
+        return url_string[4:-3]  # Slice off "f'''" and "'''"
+
+    # --- Handle standard string literal representations (after f-string checks) ---
+    # Case: "..."
+    if url_string.startswith('"') and url_string.endswith('"'):
+        return url_string[1:-1]
+    # Case: '...'
+    elif url_string.startswith("'") and url_string.endswith("'"):
+        return url_string[1:-1]
+    # Case: """..."""
+    elif url_string.startswith('"""') and url_string.endswith('"""'):
+        return url_string[3:-3]
+    # Case: '''...'''
+    elif url_string.startswith("'''") and url_string.endswith("'''"):
+        return url_string[3:-3]
+
+    # If no matching quotes or f-string patterns are found, return the original string
+    return url_string
+
+
 def map_entropy_to_token(entropy: float):
     if entropy <= 1.0:
         return "ENT_LOW"
@@ -373,7 +462,7 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     elif is_valid_url(argval):
         return f"{SpecialCases.STRING_URL.value}"
     elif contains_url(argval):
-        return f"{SpecialCases.CONTAINS_URL.value}"
+        return f"{SpecialCases.STRING_CONTAINS_URL.value}"
     elif is_file_path(argval):
         return f"{SpecialCases.STRING_FILE_PATH.value}"
     else:
@@ -507,7 +596,7 @@ def map_string_argument(argval: str, language: str = "python") -> str:
     elif is_valid_url(argval):
         return "STRING_URL"
     elif contains_url(argval):
-        return "CONTAINS_URL"
+        return "STRING_CONTAINS_URL"
     elif is_file_path(argval):
         return "STRING_FILE_PATH"
     else:

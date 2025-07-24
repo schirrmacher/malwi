@@ -1909,4 +1909,4 @@ STORE_NAME           inner
 LOAD_NAME            inner
 CALL_FUNCTION        0
 LOAD_NAME            nonlocal_var
-RETURN_VALUE         
+RETURN_VALUE

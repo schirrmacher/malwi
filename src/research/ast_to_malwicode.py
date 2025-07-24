@@ -17,11 +17,14 @@ from research.mapping import (
     SpecialCases,
     map_entropy_to_token,
     map_string_length_to_token,
+    clean_string_literal,
     calculate_shannon_entropy,
+    is_valid_encoding_name,
     is_valid_ip,
     is_base64,
     is_hex,
     is_valid_url,
+    is_version,
     is_escaped_hex,
     is_file_path,
     contains_url,
@@ -172,6 +175,7 @@ class Instruction:
 
         Learnings:
         - The raw string length exposed to the model has huge impact on performance
+        - The
         """
 
         prefix = "STRING"
@@ -181,30 +185,26 @@ class Instruction:
         if not arg:
             return op_code.name
 
-        if isinstance(arg, bool):
-            return f"{op_code.name} BOOLEAN"
-        elif isinstance(arg, int):
-            return f"{op_code.name} INTEGER"
-        elif isinstance(arg, float):
-            return f"{op_code.name} FLOAT"
+        argval = clean_string_literal(reduce_whitespace(remove_newlines(str(arg))))
 
-        if not isinstance(arg, str):
-            arg = str(arg)
-
-        argval = reduce_whitespace(remove_newlines(arg))
-
-        if (
-            op_code in [OpCode.MAKE_CLASS, OpCode.MAKE_FUNCTION]
-            and argval in function_mapping
+        if op_code == OpCode.LOAD_CONST and isinstance(arg, bool):
+            return f"{op_code.name} {SpecialCases.BOOLEAN.value}"
+        elif op_code == OpCode.LOAD_CONST and isinstance(arg, int):
+            return f"{op_code.name} {SpecialCases.INTEGER.value}"
+        elif op_code == OpCode.LOAD_CONST and isinstance(arg, float):
+            return f"{op_code.name} {SpecialCases.FLOAT.value}"
+        elif op_code in (
+            OpCode.POP_JUMP_IF_FALSE,
+            OpCode.POP_JUMP_IF_TRUE,
+            OpCode.JUMP_FORWARD,
         ):
-            return f"{op_code.name} {argval}"
-        elif (
-            op_code in [OpCode.IMPORT_FROM, OpCode.IMPORT_NAME]
-            and argval in import_mapping
-        ):
+            return f"{op_code.name}"
+        if op_code in [OpCode.MAKE_CLASS, OpCode.MAKE_FUNCTION]:
+            return f"{op_code.name}"
+        elif op_code in [OpCode.IMPORT_FROM, OpCode.IMPORT_NAME]:
             return f"{op_code.name} {argval}"
         elif op_code in [OpCode.CALL_FUNCTION]:
-            return op_code.name
+            return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
             return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
         elif is_localhost(argval):
@@ -215,28 +215,33 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_URL.value}"
         elif contains_url(argval):
             # String contains a URL but isn't a URL itself
-            return f"{op_code.name} {SpecialCases.CONTAINS_URL.value}"
+            return f"{op_code.name} {SpecialCases.STRING_CONTAINS_URL.value}"
+        elif is_version(argval):
+            return f"{op_code.name} {SpecialCases.STRING_VERSION.value}"
+        elif is_valid_encoding_name(argval):
+            return f"{op_code.name} {SpecialCases.STRING_ENCODING.value}"
         elif is_file_path(argval):
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
-        else:
-            if len(argval) <= STRING_MAX_LENGTH:
-                return f"{op_code.name} {argval}"
-            if is_escaped_hex(argval):
-                prefix = SpecialCases.STRING_ESCAPED_HEX.value
-            elif is_hex(argval):
-                prefix = SpecialCases.STRING_HEX.value
-            elif is_base64(argval):
-                prefix = SpecialCases.STRING_BASE64.value
+        elif len(argval) <= STRING_MAX_LENGTH:
+            return f"{op_code.name} {argval}"
 
-            length_suffix = map_string_length_to_token(len(argval))
-            try:
-                entropy = calculate_shannon_entropy(
-                    argval.encode("utf-8", errors="ignore")
-                )
-            except Exception:
-                entropy = 0.0
-            entropy_suffix = map_entropy_to_token(entropy)
-            return f"{op_code.name}  {prefix}_{length_suffix}_{entropy_suffix}"
+        if is_escaped_hex(argval):
+            prefix = SpecialCases.STRING_ESCAPED_HEX.value
+        elif is_hex(argval):
+            prefix = SpecialCases.STRING_HEX.value
+        elif is_base64(argval):
+            prefix = SpecialCases.STRING_BASE64.value
+        
+        # Generate length and entropy suffix for all the above cases
+        length_suffix = map_string_length_to_token(len(argval))
+        try:
+            entropy = calculate_shannon_entropy(
+                argval.encode("utf-8", errors="ignore")
+            )
+        except Exception:
+            entropy = 0.0
+        entropy_suffix = map_entropy_to_token(entropy)
+        return f"{op_code.name} {prefix}_{length_suffix}_{entropy_suffix}"
 
     def to_string(self, format_mode: str = "default") -> str:
         if format_mode == "mapped":
@@ -2262,8 +2267,6 @@ def main() -> None:
             csv_writer_instance = CSVWriter(save_path)
             print(f"CSV output will be saved to: {save_path.resolve()}")
 
-        print(f"Found {sources_count} file(s) to process...")
-
         for source in source_files:
             lang = None
             if source.suffix == ".py":
@@ -2273,11 +2276,6 @@ def main() -> None:
 
             compiler_instance = compilers.get(lang)
             if compiler_instance:
-                if args.format == "console":
-                    print(
-                        f"--- Processing {compiler_instance.language_name.capitalize()} File: {source.name} ---"
-                    )
-
                 code_objects = compiler_instance.process_file(source)
 
                 if args.format == "csv":

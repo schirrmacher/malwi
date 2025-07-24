@@ -129,7 +129,7 @@ class TestArgumentMapping:
             ("http://example.com", SpecialCases.STRING_URL.value),
             (
                 "Check out https://example.com for more",
-                SpecialCases.CONTAINS_URL.value,
+                SpecialCases.STRING_CONTAINS_URL.value,
             ),  # Contains URL
             (
                 "surveymonkey.com",
