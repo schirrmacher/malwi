@@ -203,6 +203,8 @@ class Instruction:
             and argval in import_mapping
         ):
             return f"{op_code.name} {argval}"
+        elif op_code in [OpCode.CALL_FUNCTION]:
+            return op_code.name
         elif argval in SENSITIVE_PATHS:
             return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
         elif is_localhost(argval):
