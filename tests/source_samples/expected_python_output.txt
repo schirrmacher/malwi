@@ -1,5 +1,3 @@
-Root CodeObject (<module>):
---- CodeObject '<module>' from python.py (lines 1-961) ---
 IMPORT_NAME          sys
 IMPORT_NAME          math
 IMPORT_NAME          cmath
@@ -211,7 +209,9 @@ World
 STORE_NAME           multi_line_string
 LOAD_CONST           r"C:\new\path"
 STORE_NAME           raw_string
-LOAD_CONST           f"Formatted string with {integer_literal}"
+LOAD_CONST           Formatted string with
+LOAD_NAME            integer_literal
+BINARY_OPERATION     
 STORE_NAME           f_string
 LOAD_CONST           b"this is a byte string"
 STORE_NAME           byte_string
@@ -1622,10 +1622,6 @@ CALL_FUNCTION        1
 LOAD_NAME            print
 LOAD_CONST           "--- All tests completed. Check output for any FAILED messages. ---"
 CALL_FUNCTION        1
-----------------------------------------------------------
-
-dynamic_import_test_ref_0:
---- CodeObject 'dynamic_import_test_ref_0' from python.py (lines 121-126) ---
 LOAD_CONST           "os"
 STORE_NAME           module_name
 LOAD_NAME            __import__
@@ -1648,66 +1644,37 @@ LOAD_CONST           "eval"
 CALL_FUNCTION        2
 STORE_NAME           eval_func
 RETURN_VALUE         
------------------------------------------------------------------------------
-
-__enter___ref_1:
---- CodeObject '__enter___ref_1' from python.py (lines 328-329) ---
 LOAD_NAME            print
 LOAD_CONST           "Entering context"
 CALL_FUNCTION        1
 LOAD_CONST           "Hello from with"
 RETURN_VALUE         
--------------------------------------------------------------------
-
-__exit___ref_2:
---- CodeObject '__exit___ref_2' from python.py (lines 332-332) ---
 LOAD_NAME            print
 LOAD_CONST           "Exiting context"
 CALL_FUNCTION        1
 RETURN_VALUE         
-------------------------------------------------------------------
-
-MyContext_ref_3:
---- CodeObject 'MyContext_ref_3' from python.py (lines 327-332) ---
 MAKE_FUNCTION        <__enter___ref_1>
 STORE_NAME           __enter__
 MAKE_FUNCTION        <__exit___ref_2>
 STORE_NAME           __exit__
--------------------------------------------------------------------
-
-greet_ref_4:
---- CodeObject 'greet_ref_4' from python.py (lines 349-349) ---
-LOAD_CONST           f"Hello, {name}!"
+LOAD_CONST           Hello,
+LOAD_PARAM           name
+LOAD_CONST           !
+BINARY_OPERATION     
 RETURN_VALUE         
----------------------------------------------------------------
-
-func_with_args_ref_5:
---- CodeObject 'func_with_args_ref_5' from python.py (lines 357-357) ---
 LOAD_PARAM           a
 LOAD_PARAM           b
 BINARY_ADD           
 LOAD_PARAM           c
 BINARY_ADD           
 RETURN_VALUE         
-------------------------------------------------------------------------
-
-func_with_arbitrary_args_ref_6:
---- CodeObject 'func_with_arbitrary_args_ref_6' from python.py (lines 368-368) ---
 LOAD_PARAM           args
 LOAD_PARAM           kwargs
 RETURN_VALUE         
-----------------------------------------------------------------------------------
-
-lambda_ref_7:
---- CodeObject 'lambda_ref_7' from python.py (lines 374-374) ---
 LOAD_PARAM           x
 LOAD_PARAM           y
 BINARY_MULTIPLY      
 RETURN_VALUE         
-----------------------------------------------------------------
-
-inner_func_ref_8:
---- CodeObject 'inner_func_ref_8' from python.py (lines 383-385) ---
 LOAD_NAME            x
 LOAD_NAME            x
 LOAD_CONST           1.0
@@ -1715,55 +1682,27 @@ BINARY_OPERATION
 STORE_NAME           x
 LOAD_NAME            x
 RETURN_VALUE         
---------------------------------------------------------------------
-
-outer_func_ref_9:
---- CodeObject 'outer_func_ref_9' from python.py (lines 380-387) ---
 LOAD_CONST           10.0
 STORE_NAME           x
 MAKE_FUNCTION        <inner_func_ref_8>
 STORE_NAME           inner_func
 LOAD_NAME            inner_func
 RETURN_VALUE         
---------------------------------------------------------------------
-
-modify_global_ref_10:
---- CodeObject 'modify_global_ref_10' from python.py (lines 399-400) ---
 LOAD_NAME            global_var
 LOAD_CONST           200.0
 STORE_NAME           global_var
 RETURN_VALUE         
-------------------------------------------------------------------------
-
-__init___ref_11:
---- CodeObject '__init___ref_11' from python.py (lines 418-418) ---
 LOAD_PARAM           instance_variable
 STORE_NAME           self.instance_variable
 RETURN_VALUE         
--------------------------------------------------------------------
-
-instance_method_ref_12:
---- CodeObject 'instance_method_ref_12' from python.py (lines 421-421) ---
 LOAD_PARAM           self
 LOAD_ATTR            instance_variable
 RETURN_VALUE         
---------------------------------------------------------------------------
-
-class_method_ref_13:
---- CodeObject 'class_method_ref_13' from python.py (lines 425-425) ---
 LOAD_PARAM           cls
 LOAD_ATTR            class_variable
 RETURN_VALUE         
------------------------------------------------------------------------
-
-static_method_ref_14:
---- CodeObject 'static_method_ref_14' from python.py (lines 429-429) ---
 LOAD_CONST           "static"
 RETURN_VALUE         
-------------------------------------------------------------------------
-
-MyClass_ref_15:
---- CodeObject 'MyClass_ref_15' from python.py (lines 415-429) ---
 LOAD_CONST           10.0
 STORE_NAME           class_variable
 MAKE_FUNCTION        <__init___ref_11>
@@ -1774,55 +1713,23 @@ MAKE_FUNCTION        <class_method_ref_13>
 STORE_NAME           class_method
 MAKE_FUNCTION        <static_method_ref_14>
 STORE_NAME           static_method
-------------------------------------------------------------------
-
-method_a_ref_16:
---- CodeObject 'method_a_ref_16' from python.py (lines 444-444) ---
 LOAD_CONST           "A"
 RETURN_VALUE         
--------------------------------------------------------------------
-
-ParentA_ref_17:
---- CodeObject 'ParentA_ref_17' from python.py (lines 443-444) ---
 MAKE_FUNCTION        <method_a_ref_16>
 STORE_NAME           method_a
-------------------------------------------------------------------
-
-method_b_ref_18:
---- CodeObject 'method_b_ref_18' from python.py (lines 449-449) ---
 LOAD_CONST           "B"
 RETURN_VALUE         
--------------------------------------------------------------------
-
-ParentB_ref_19:
---- CodeObject 'ParentB_ref_19' from python.py (lines 448-449) ---
 MAKE_FUNCTION        <method_b_ref_18>
 STORE_NAME           method_b
-------------------------------------------------------------------
-
-method_c_ref_20:
---- CodeObject 'method_c_ref_20' from python.py (lines 454-454) ---
 LOAD_CONST           "C"
 RETURN_VALUE         
--------------------------------------------------------------------
-
-Child_ref_21:
---- CodeObject 'Child_ref_21' from python.py (lines 453-454) ---
 MAKE_FUNCTION        <method_c_ref_20>
 STORE_NAME           method_c
-----------------------------------------------------------------
-
-__init___ref_22:
---- CodeObject '__init___ref_22' from python.py (lines 467-468) ---
 LOAD_PARAM           x
 STORE_NAME           self.x
 LOAD_PARAM           y
 STORE_NAME           self.y
 RETURN_VALUE         
--------------------------------------------------------------------
-
-__add___ref_23:
---- CodeObject '__add___ref_23' from python.py (lines 471-471) ---
 LOAD_NAME            Vector
 LOAD_PARAM           self
 LOAD_ATTR            x
@@ -1836,22 +1743,17 @@ LOAD_ATTR            y
 BINARY_ADD           
 CALL_FUNCTION        2
 RETURN_VALUE         
-------------------------------------------------------------------
-
-__repr___ref_24:
---- CodeObject '__repr___ref_24' from python.py (lines 474-474) ---
-LOAD_CONST           f"Vector({self.x}, {self.y})"
+LOAD_CONST           Vector(
+LOAD_PARAM           self
+LOAD_ATTR            x
+LOAD_CONST           ,
+LOAD_PARAM           self
+LOAD_ATTR            y
+LOAD_CONST           )
+BINARY_OPERATION     
 RETURN_VALUE         
--------------------------------------------------------------------
-
-__len___ref_25:
---- CodeObject '__len___ref_25' from python.py (lines 477-477) ---
 LOAD_CONST           2.0
 RETURN_VALUE         
-------------------------------------------------------------------
-
-__getitem___ref_26:
---- CodeObject '__getitem___ref_26' from python.py (lines 480-484) ---
 LOAD_PARAM           index
 LOAD_CONST           0.0
 COMPARE_OP           
@@ -1869,10 +1771,6 @@ RETURN_VALUE
 LOAD_NAME            IndexError
 BINARY_OPERATION     
 RETURN_VALUE         
-----------------------------------------------------------------------
-
-Vector_ref_27:
---- CodeObject 'Vector_ref_27' from python.py (lines 466-484) ---
 MAKE_FUNCTION        <__init___ref_22>
 STORE_NAME           __init__
 MAKE_FUNCTION        <__add___ref_23>
@@ -1883,24 +1781,12 @@ MAKE_FUNCTION        <__len___ref_25>
 STORE_NAME           __len__
 MAKE_FUNCTION        <__getitem___ref_26>
 STORE_NAME           __getitem__
------------------------------------------------------------------
-
-__init___ref_28:
---- CodeObject '__init___ref_28' from python.py (lines 499-499) ---
 LOAD_PARAM           radius
 STORE_NAME           self._radius
 RETURN_VALUE         
--------------------------------------------------------------------
-
-radius_ref_29:
---- CodeObject 'radius_ref_29' from python.py (lines 503-503) ---
 LOAD_PARAM           self
 LOAD_ATTR            _radius
 RETURN_VALUE         
------------------------------------------------------------------
-
-radius_ref_30:
---- CodeObject 'radius_ref_30' from python.py (lines 507-509) ---
 LOAD_PARAM           value
 LOAD_CONST           0.0
 COMPARE_OP           
@@ -1912,10 +1798,6 @@ BINARY_OPERATION
 LOAD_PARAM           value
 STORE_NAME           self._radius
 RETURN_VALUE         
------------------------------------------------------------------
-
-area_ref_31:
---- CodeObject 'area_ref_31' from python.py (lines 513-513) ---
 LOAD_CONST           3.14
 LOAD_PARAM           self
 LOAD_ATTR            _radius
@@ -1923,10 +1805,6 @@ LOAD_CONST           2.0
 BINARY_POWER         
 BINARY_MULTIPLY      
 RETURN_VALUE         
----------------------------------------------------------------
-
-Circle_ref_32:
---- CodeObject 'Circle_ref_32' from python.py (lines 498-513) ---
 MAKE_FUNCTION        <__init___ref_28>
 STORE_NAME           __init__
 MAKE_FUNCTION        <radius_ref_29>
@@ -1935,10 +1813,6 @@ MAKE_FUNCTION        <radius_ref_30>
 STORE_NAME           radius
 MAKE_FUNCTION        <area_ref_31>
 STORE_NAME           area
------------------------------------------------------------------
-
-wrapper_ref_33:
---- CodeObject 'wrapper_ref_33' from python.py (lines 537-540) ---
 LOAD_NAME            print
 LOAD_CONST           "Something is happening before the function is called."
 CALL_FUNCTION        1
@@ -1952,34 +1826,18 @@ LOAD_CONST           "Something is happening after the function is called."
 CALL_FUNCTION        1
 LOAD_NAME            result
 RETURN_VALUE         
-------------------------------------------------------------------
-
-my_decorator_ref_34:
---- CodeObject 'my_decorator_ref_34' from python.py (lines 535-542) ---
 MAKE_FUNCTION        <wrapper_ref_33>
 STORE_NAME           wrapper
 LOAD_NAME            wrapper
 RETURN_VALUE         
------------------------------------------------------------------------
-
-say_whee_ref_35:
---- CodeObject 'say_whee_ref_35' from python.py (lines 547-547) ---
 LOAD_CONST           "Whee!"
 RETURN_VALUE         
--------------------------------------------------------------------
-
-my_generator_ref_36:
---- CodeObject 'my_generator_ref_36' from python.py (lines 556-557) ---
 LOAD_NAME            range
 LOAD_PARAM           n
 CALL_FUNCTION        1
 LOAD_CONST           
 BINARY_OPERATION     
 RETURN_VALUE         
------------------------------------------------------------------------
-
-my_coroutine_ref_37:
---- CodeObject 'my_coroutine_ref_37' from python.py (lines 572-573) ---
 LOAD_NAME            asyncio
 LOAD_ATTR            sleep
 LOAD_CONST           0.01
@@ -1987,10 +1845,6 @@ CALL_FUNCTION        1
 AWAIT_EXPRESSION     
 LOAD_CONST           "Coroutine finished"
 RETURN_VALUE         
------------------------------------------------------------------------
-
-main_async_ref_38:
---- CodeObject 'main_async_ref_38' from python.py (lines 577-578) ---
 LOAD_NAME            my_coroutine
 CALL_FUNCTION        0
 AWAIT_EXPRESSION     
@@ -1999,10 +1853,6 @@ LOAD_NAME            print
 LOAD_CONST           "6.3. Coroutines (async/await): PASSED"
 CALL_FUNCTION        1
 RETURN_VALUE         
----------------------------------------------------------------------
-
-__new___ref_39:
---- CodeObject '__new___ref_39' from python.py (lines 587-588) ---
 LOAD_CONST           "Hello from metaclass"
 STORE_NAME           dct["new_attribute"]
 LOAD_NAME            super
@@ -2014,96 +1864,44 @@ LOAD_PARAM           bases
 LOAD_PARAM           dct
 CALL_FUNCTION        4
 RETURN_VALUE         
-------------------------------------------------------------------
-
-MyMeta_ref_40:
---- CodeObject 'MyMeta_ref_40' from python.py (lines 586-588) ---
 MAKE_FUNCTION        <__new___ref_39>
 STORE_NAME           __new__
------------------------------------------------------------------
 
-MyClassWithMeta_ref_41:
---- CodeObject 'MyClassWithMeta_ref_41' from python.py (lines 592-592) ---
-
---------------------------------------------------------------------------
-
-hinted_function_ref_42:
---- CodeObject 'hinted_function_ref_42' from python.py (lines 602-602) ---
-LOAD_CONST           f"{name} is {age} years old."
+LOAD_PARAM           name
+LOAD_CONST           is
+LOAD_PARAM           age
+LOAD_CONST           years old.
+BINARY_OPERATION     
 RETURN_VALUE         
---------------------------------------------------------------------------
 
-DynamicClass_ref_43:
---- CodeObject 'DynamicClass_ref_43' from python.py (lines 661-661) ---
-
------------------------------------------------------------------------
-
-function_with_ellipsis_ref_44:
---- CodeObject 'function_with_ellipsis_ref_44' from python.py (lines 702-702) ---
 LOAD_CONST           ...
 RETURN_VALUE         
----------------------------------------------------------------------------------
-
-lambda_ref_45:
---- CodeObject 'lambda_ref_45' from python.py (lines 730-730) ---
 LOAD_PARAM           x
 LOAD_CONST           2.0
 BINARY_MULTIPLY      
 RETURN_VALUE         
------------------------------------------------------------------
-
-__enter___ref_46:
---- CodeObject '__enter___ref_46' from python.py (lines 769-769) ---
 LOAD_CONST           "context_value"
 RETURN_VALUE         
---------------------------------------------------------------------
-
-__exit___ref_47:
---- CodeObject '__exit___ref_47' from python.py (lines 772-772) ---
 LOAD_CONST           False
 RETURN_VALUE         
--------------------------------------------------------------------
-
-SimpleContext_ref_48:
---- CodeObject 'SimpleContext_ref_48' from python.py (lines 768-772) ---
 MAKE_FUNCTION        <__enter___ref_46>
 STORE_NAME           __enter__
 MAKE_FUNCTION        <__exit___ref_47>
 STORE_NAME           __exit__
-------------------------------------------------------------------------
-
-empty_func_ref_49:
---- CodeObject 'empty_func_ref_49' from python.py (lines 788-788) ---
 RETURN_VALUE         
----------------------------------------------------------------------
-
-test_raise_ref_50:
---- CodeObject 'test_raise_ref_50' from python.py (lines 800-800) ---
 LOAD_NAME            ValueError
 LOAD_CONST           "Test error"
 CALL_FUNCTION        1
 BINARY_OPERATION     
 RETURN_VALUE         
----------------------------------------------------------------------
-
-test_global_ref_51:
---- CodeObject 'test_global_ref_51' from python.py (lines 812-813) ---
 LOAD_NAME            global_var
 LOAD_CONST           "modified"
 STORE_NAME           global_var
 RETURN_VALUE         
-----------------------------------------------------------------------
-
-inner_ref_52:
---- CodeObject 'inner_ref_52' from python.py (lines 820-821) ---
 LOAD_NAME            nonlocal_var
 LOAD_CONST           "inner"
 STORE_NAME           nonlocal_var
 RETURN_VALUE         
-----------------------------------------------------------------
-
-outer_ref_53:
---- CodeObject 'outer_ref_53' from python.py (lines 817-824) ---
 LOAD_CONST           "outer"
 STORE_NAME           nonlocal_var
 MAKE_FUNCTION        <inner_ref_52>
@@ -2112,4 +1910,3 @@ LOAD_NAME            inner
 CALL_FUNCTION        0
 LOAD_NAME            nonlocal_var
 RETURN_VALUE         
-----------------------------------------------------------------

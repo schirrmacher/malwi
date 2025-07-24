@@ -1,1999 +1,2015 @@
 Root CodeObject (<module>) - Mapping:
-IMPORT_NAME          SYSTEM_INTERACTION
-IMPORT_NAME          math
-IMPORT_NAME          cmath
-IMPORT_NAME          collections
-IMPORT_NAME          itertools
-IMPORT_NAME          DATA_HANDLING
-IMPORT_NAME          re
-IMPORT_NAME          PROCESS_CONCURRENCY
-IMPORT_FROM          functools
-IMPORT_FROM          wraps
-IMPORT_FROM          TYPING
-IMPORT_FROM          Any
-IMPORT_FROM          List
-IMPORT_FROM          Dict
-IMPORT_FROM          Tuple
-IMPORT_FROM          Set
-IMPORT_FROM          Optional
-IMPORT_NAME          SYSTEM_INTERACTION
-IMPORT_NAME          PROCESS_CONCURRENCY
-IMPORT_NAME          NETWORKING
-IMPORT_NAME          NETWORKING
-IMPORT_NAME          DATA_HANDLING
-IMPORT_NAME          DATA_HANDLING
-IMPORT_NAME          DATA_HANDLING
-IMPORT_NAME          types
-IMPORT_NAME          importlib
-IMPORT_NAME          FILESYSTEM
-IMPORT_NAME          FILESYSTEM
-IMPORT_NAME          FILESYSTEM
-IMPORT_FROM          SYSTEM_INTERACTION
-IMPORT_FROM          environ
-IMPORT_FROM          path
-IMPORT_FROM          listdir
-IMPORT_FROM          SYSTEM_INTERACTION
-IMPORT_FROM          argv
-IMPORT_FROM          PROCESS_TERMINATION
-IMPORT_FROM          modules
-IMPORT_FROM          path
-IMPORT_FROM          sys_path
-IMPORT_FROM          PROCESS_CONCURRENCY
-IMPORT_FROM          PROCESS_MANAGEMENT
-IMPORT_FROM          PROCESS_MANAGEMENT
-IMPORT_FROM          PIPE
-IMPORT_FROM          call
-IMPORT_FROM          NETWORKING
-IMPORT_FROM          NETWORKING
-IMPORT_FROM          AF_INET
-IMPORT_FROM          SOCK_STREAM
-IMPORT_FROM          urllib.parse
-IMPORT_FROM          urlparse
-IMPORT_FROM          urljoin
-IMPORT_FROM          NETWORKING
-IMPORT_FROM          NETWORK_HTTP_REQUEST
-IMPORT_FROM          NETWORK_HTTP_REQUEST
-IMPORT_FROM          DATA_HANDLING
-IMPORT_FROM          ENCODING_DECODING
-IMPORT_FROM          ENCODING_DECODING
-IMPORT_FROM          decodebytes
-IMPORT_FROM          DATA_HANDLING
-IMPORT_FROM          loads
-IMPORT_FROM          dumps
-IMPORT_FROM          load
-IMPORT_FROM          dump
-IMPORT_FROM          DATA_HANDLING
-IMPORT_FROM          loads
-IMPORT_FROM          marshal_loads
-IMPORT_FROM          dumps
-IMPORT_FROM          marshal_dumps
-IMPORT_FROM          types
-IMPORT_FROM          CodeType
-IMPORT_FROM          ModuleType
-IMPORT_FROM          importlib
-IMPORT_FROM          DYNAMIC_IMPORT
-IMPORT_FROM          util
-IMPORT_FROM          FILESYSTEM
-IMPORT_FROM          TEMP_FILE_CREATION
-IMPORT_FROM          TEMP_FILE_CREATION
-IMPORT_FROM          TEMP_FILE_CREATION
-IMPORT_FROM          FILESYSTEM
-IMPORT_FROM          FILESYSTEM_DELETION
-IMPORT_FROM          FS_COPY
-IMPORT_FROM          move
-IMPORT_FROM          FILESYSTEM
-IMPORT_FROM          Path
-IMPORT_FROM          PurePath
-IMPORT_NAME          SYSTEM_INTERACTION
-IMPORT_NAME          STRING_LEN_S_ENT_HIGH
-IMPORT_NAME          PROCESS_CONCURRENCY
-IMPORT_NAME          subproc
-IMPORT_NAME          NETWORKING
-IMPORT_NAME          sock
-IMPORT_NAME          NETWORKING
-IMPORT_NAME          web_request
-IMPORT_NAME          DATA_HANDLING
-IMPORT_NAME          b64
-IMPORT_NAME          DATA_HANDLING
-IMPORT_NAME          pkl
-IMPORT_NAME          DATA_HANDLING
-IMPORT_NAME          marsh
-IMPORT_NAME          types
-IMPORT_NAME          tp
-IMPORT_NAME          importlib
-IMPORT_NAME          imp_lib
-IMPORT_FROM          FILESYSTEM
-IMPORT_FROM          join
-IMPORT_FROM          SYSINFO_FILESYSTEM
-IMPORT_FROM          SYSINFO_FILESYSTEM
-IMPORT_FROM          SYSINFO_FILESYSTEM
-IMPORT_FROM          SYSINFO_FILESYSTEM
-IMPORT_FROM          SYSINFO_FILESYSTEM
-IMPORT_FROM          FILESYSTEM
-IMPORT_FROM          join
-IMPORT_FROM          path_join
-IMPORT_FROM          SYSINFO_FILESYSTEM
-IMPORT_FROM          path_exists
-IMPORT_FROM          NETWORKING
-IMPORT_FROM          NETWORK_HTTP_REQUEST
-IMPORT_FROM          open_url
-IMPORT_FROM          NETWORK_HTTP_REQUEST
-IMPORT_FROM          web_request_obj
-IMPORT_FROM          DATA_HANDLING
-IMPORT_FROM          ENCODING_DECODING
-IMPORT_FROM          encode_b64
-IMPORT_FROM          ENCODING_DECODING
-IMPORT_FROM          decode_b64
-IMPORT_NAME          CODE_EXECUTION_INTEROP
-IMPORT_FROM          CODE_EXECUTION_INTEROP
-IMPORT_FROM          windll
-IMPORT_FROM          wintypes
-LOAD_CONST           BOOLEAN
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-IMPORT_NAME          SYSTEM_INTERACTION
-IMPORT_FROM          SYSTEM_INTERACTION
-IMPORT_FROM          STRING_BASE64_LEN_S_ENT_HIGH
-LOAD_CONST           BOOLEAN
-STORE_NAME           win32_available
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-IMPORT_NAME          NETWORKING
-IMPORT_FROM          NETWORKING
-IMPORT_FROM          get
-IMPORT_FROM          post
-IMPORT_FROM          Session
-LOAD_CONST           BOOLEAN
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-IMPORT_NAME          SENSITIVE_DATA_ACCESS
-IMPORT_FROM          SENSITIVE_DATA_ACCESS
-IMPORT_FROM          get_password
-IMPORT_FROM          set_password
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-IMPORT_NAME          DATABASE_ACCESS
-IMPORT_FROM          DATABASE_ACCESS
-IMPORT_FROM          connect
-IMPORT_FROM          Row
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-IMPORT_NAME          SYSTEM_INTERACTION
-IMPORT_FROM          SYSTEM_INTERACTION
-IMPORT_FROM          OpenKey
-IMPORT_FROM          QueryValueEx
-IMPORT_FROM          STRING_LEN_S_ENT_HIGH
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-LOAD_CONST           FLOAT
-STORE_NAME           integer_literal
-LOAD_CONST           FLOAT
-STORE_NAME           float_literal
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BINARY_ADD           
-STORE_NAME           complex_literal
-LOAD_CONST           0b1010
-STORE_NAME           binary_literal
-LOAD_CONST           0o777
-STORE_NAME           octal_literal
-LOAD_CONST           0xABC
-STORE_NAME           hex_literal
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           "hello"
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_CONST           "world"
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_CONST           STRING_FILE_PATH
-STORE_NAME           raw_string
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-STORE_NAME           f_string
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-STORE_NAME           byte_string
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           BOOLEAN
-STORE_NAME           true_literal
-LOAD_CONST           BOOLEAN
-STORE_NAME           false_literal
-LOAD_CONST           
-STORE_NAME           none_literal
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-STORE_NAME           a, b
-LOAD_NAME            a
-LOAD_NAME            b
-BINARY_ADD           
-LOAD_NAME            a
-LOAD_NAME            b
-BINARY_SUBTRACT      
-LOAD_NAME            a
-LOAD_NAME            b
-BINARY_MULTIPLY      
-LOAD_NAME            a
-LOAD_NAME            b
-BINARY_DIVIDE        
-LOAD_NAME            a
-LOAD_NAME            b
-BINARY_FLOOR_DIVIDE  
-LOAD_NAME            a
-LOAD_NAME            b
-BINARY_MODULO        
-LOAD_NAME            a
-LOAD_NAME            b
-BINARY_POWER         
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-STORE_NAME           c
-LOAD_NAME            c
-BINARY_OPERATION     +
-LOAD_NAME            c
-UNARY_NEGATIVE       
-LOAD_NAME            abs
-LOAD_NAME            c
-CALL_FUNCTION        INTEGER
-LOAD_NAME            divmod
-LOAD_NAME            a
-LOAD_NAME            b
-CALL_FUNCTION        INTEGER
-LOAD_NAME            pow
-LOAD_NAME            a
-LOAD_NAME            b
-CALL_FUNCTION        INTEGER
-LOAD_NAME            round
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           "hello"
-STORE_NAME           s1
-LOAD_CONST           "world"
-STORE_NAME           s2
-LOAD_NAME            s1
-LOAD_CONST           " "
-BINARY_ADD           
-LOAD_NAME            s2
-BINARY_ADD           
-LOAD_NAME            s1
-LOAD_CONST           FLOAT
-BINARY_MULTIPLY      
-LOAD_CONST           "e"
-LOAD_NAME            s1
-COMPARE_OP           
-LOAD_CONST           "x"
-LOAD_NAME            s1
-COMPARE_OP           
-LOAD_NAME            s1
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-LOAD_NAME            s1
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-BINARY_SUBSCR        
-LOAD_NAME            s1
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-LOAD_NAME            len
-LOAD_NAME            s1
-CALL_FUNCTION        INTEGER
-LOAD_CONST           "Hello"
-LOAD_ATTR            lower
-CALL_FUNCTION        INTEGER
-LOAD_CONST           "world"
-LOAD_ATTR            upper
-CALL_FUNCTION        INTEGER
-LOAD_CONST           " spaced "
-LOAD_ATTR            strip
-CALL_FUNCTION        INTEGER
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-LOAD_ATTR            split
-LOAD_CONST           ","
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-LOAD_CONST           "two"
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-STORE_NAME           my_list
-LOAD_NAME            len
-LOAD_NAME            my_list
-CALL_FUNCTION        INTEGER
-LOAD_NAME            my_list
-LOAD_ATTR            append
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            my_list
-LOAD_ATTR            pop
-CALL_FUNCTION        INTEGER
-LOAD_CONST           "one"
-STORE_NAME           my_list[0]
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-STORE_NAME           nested_list
-LOAD_NAME            nested_list
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-BUILD_LIST           INTEGER
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-GET_ITER             
-FOR_ITER             INTEGER
-STORE_NAME           x
-LOAD_NAME            x
-LOAD_NAME            x
-BINARY_MULTIPLY      
-BINARY_OPERATION     
-JUMP_FORWARD         INTEGER
-STORE_NAME           list_comp
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-LOAD_CONST           "two"
-LOAD_CONST           FLOAT
-BUILD_TUPLE          INTEGER
-STORE_NAME           my_tuple
-LOAD_NAME            len
-LOAD_NAME            my_tuple
-CALL_FUNCTION        INTEGER
-LOAD_NAME            my_tuple
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-LOAD_CONST           "new"
-STORE_NAME           my_tuple[1]
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-LOAD_NAME            my_tuple
-STORE_NAME           a, b, c
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           "one"
-LOAD_CONST           FLOAT
-LOAD_CONST           "two"
-LOAD_CONST           FLOAT
-BUILD_MAP            INTEGER
-STORE_NAME           my_dict
-LOAD_NAME            my_dict
-LOAD_CONST           "one"
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_CONST           "three"
-LOAD_NAME            my_dict
-COMPARE_OP           
-LOAD_NAME            list
-LOAD_NAME            my_dict
-LOAD_ATTR            keys
-CALL_FUNCTION        INTEGER
-CALL_FUNCTION        INTEGER
-LOAD_NAME            list
-LOAD_NAME            my_dict
-LOAD_ATTR            values
-CALL_FUNCTION        INTEGER
-CALL_FUNCTION        INTEGER
-LOAD_NAME            my_dict
-LOAD_CONST           "two"
-BINARY_SUBSCR        
-BINARY_OPERATION     
-LOAD_CONST           "two"
-LOAD_NAME            my_dict
-COMPARE_OP           
-BUILD_MAP            INTEGER
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-GET_ITER             
-FOR_ITER             INTEGER
-STORE_NAME           x
-LOAD_NAME            x
-LOAD_NAME            x
-LOAD_NAME            x
-BINARY_MULTIPLY      
-BINARY_OPERATION     
-JUMP_FORWARD         INTEGER
-STORE_NAME           dict_comp
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_SET            INTEGER
-STORE_NAME           my_set
-LOAD_NAME            my_set
-LOAD_ATTR            add
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-LOAD_NAME            my_set
-COMPARE_OP           
-LOAD_NAME            my_set
-LOAD_ATTR            remove
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-LOAD_NAME            my_set
-COMPARE_OP           
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_SET            INTEGER
-STORE_NAME           set1
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_SET            INTEGER
-STORE_NAME           set2
-LOAD_NAME            set1
-LOAD_NAME            set2
-BINARY_OR            
-LOAD_NAME            set1
-LOAD_NAME            set2
-BINARY_AND           
-LOAD_NAME            set1
-LOAD_NAME            set2
-BINARY_SUBTRACT      
-LOAD_NAME            set1
-LOAD_NAME            set2
-BINARY_XOR           
-BUILD_SET            INTEGER
-LOAD_CONST           "abracadabra"
-GET_ITER             
-FOR_ITER             INTEGER
-STORE_NAME           x
-LOAD_NAME            x
-LOAD_CONST           "abc"
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_NAME            x
-BINARY_OPERATION     
-JUMP_FORWARD         INTEGER
-STORE_NAME           set_comp
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-STORE_NAME           x
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_CONST           "greater"
-STORE_NAME           result
-JUMP_FORWARD         INTEGER
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-COMPARE_OP           
-LOAD_CONST           "equal"
-STORE_NAME           result
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-STORE_NAME           total
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            total
-LOAD_NAME            i
-BINARY_OPERATION     
-STORE_NAME           total
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-LOAD_NAME            i
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-BINARY_OPERATION     
-LOAD_CONST           FLOAT
-STORE_NAME           count
-LOAD_NAME            count
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_NAME            count
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           count
-LOAD_CONST           FLOAT
-STORE_NAME           count
-LOAD_NAME            count
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_NAME            count
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           count
-LOAD_NAME            count
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-BINARY_OPERATION     
-LOAD_CONST           BOOLEAN
-STORE_NAME           found_even
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            i
-LOAD_CONST           FLOAT
-BINARY_MODULO        
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-BINARY_OPERATION     
-LOAD_NAME            i
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-BINARY_OPERATION     
-LOAD_NAME            i
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_CONST           BOOLEAN
-STORE_NAME           found_even
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BINARY_DIVIDE        
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-MAKE_CLASS           MyContext_ref_3
-STORE_NAME           MyContext
-LOAD_NAME            cm
-ENTER_CONTEXT        
-EXIT_CONTEXT         
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-MAKE_FUNCTION        greet_ref_4
-STORE_NAME           greet
-LOAD_NAME            greet
-LOAD_CONST           "World"
-CALL_FUNCTION        INTEGER
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           func_with_args
-LOAD_NAME            func_with_args
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            func_with_args
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            func_with_args
-LOAD_CONST           a
-LOAD_CONST           FLOAT
-LOAD_CONST           b
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-LOAD_NAME            func_with_args
-LOAD_CONST           c
-LOAD_CONST           FLOAT
-LOAD_CONST           b
-LOAD_CONST           FLOAT
-LOAD_CONST           a
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           name
-LOAD_CONST           "test"
-LOAD_CONST           value
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-MAKE_FUNCTION        lambda_ref_7
-STORE_NAME           multiply
-LOAD_NAME            multiply
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           outer_func
-LOAD_NAME            outer_func
-CALL_FUNCTION        INTEGER
-STORE_NAME           closure
-LOAD_NAME            closure
-CALL_FUNCTION        INTEGER
-LOAD_NAME            closure
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-STORE_NAME           global_var
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           modify_global
-LOAD_NAME            modify_global
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-MAKE_CLASS           MyClass_ref_15
-STORE_NAME           MyClass
-LOAD_NAME            MyClass
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-STORE_NAME           obj
-LOAD_NAME            obj
-LOAD_ATTR            STRING_LEN_S_ENT_HIGH
-LOAD_NAME            obj
-LOAD_ATTR            instance_method
-CALL_FUNCTION        INTEGER
-LOAD_NAME            MyClass
-LOAD_ATTR            class_variable
-LOAD_NAME            MyClass
-LOAD_ATTR            class_method
-CALL_FUNCTION        INTEGER
-LOAD_NAME            MyClass
-LOAD_ATTR            static_method
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-MAKE_CLASS           ParentA_ref_17
-STORE_NAME           ParentA
-MAKE_CLASS           ParentB_ref_19
-STORE_NAME           ParentB
-MAKE_CLASS           Child_ref_21
-STORE_NAME           Child
-LOAD_NAME            Child
-CALL_FUNCTION        INTEGER
-STORE_NAME           child_obj
-LOAD_NAME            child_obj
-LOAD_ATTR            method_a
-CALL_FUNCTION        INTEGER
-LOAD_NAME            child_obj
-LOAD_ATTR            method_b
-CALL_FUNCTION        INTEGER
-LOAD_NAME            child_obj
-LOAD_ATTR            method_c
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-MAKE_CLASS           Vector_ref_27
-STORE_NAME           Vector
-LOAD_NAME            Vector
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-STORE_NAME           v1
-LOAD_NAME            Vector
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-STORE_NAME           v2
-LOAD_NAME            v1
-LOAD_NAME            v2
-BINARY_ADD           
-STORE_NAME           v3
-LOAD_NAME            repr
-LOAD_NAME            v3
-CALL_FUNCTION        INTEGER
-LOAD_NAME            len
-LOAD_NAME            v3
-CALL_FUNCTION        INTEGER
-LOAD_NAME            v3
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-MAKE_CLASS           Circle_ref_32
-STORE_NAME           Circle
-LOAD_NAME            Circle
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-STORE_NAME           c
-LOAD_NAME            c
-LOAD_ATTR            radius
-LOAD_NAME            c
-LOAD_ATTR            area
-LOAD_CONST           FLOAT
-STORE_NAME           c.radius
-LOAD_NAME            c
-LOAD_ATTR            radius
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-STORE_NAME           c.radius
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           my_decorator
-MAKE_FUNCTION        say_whee_ref_35
-STORE_NAME           say_whee
-LOAD_NAME            say_whee
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-GENERATOR_FUNCTION   STRING_LEN_S_ENT_HIGH
-STORE_NAME           my_generator
-LOAD_NAME            my_generator
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-STORE_NAME           gen
-LOAD_NAME            next
-LOAD_NAME            gen
-CALL_FUNCTION        INTEGER
-LOAD_NAME            next
-LOAD_NAME            gen
-CALL_FUNCTION        INTEGER
-LOAD_NAME            next
-LOAD_NAME            gen
-CALL_FUNCTION        INTEGER
-LOAD_NAME            next
-LOAD_NAME            gen
-CALL_FUNCTION        INTEGER
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-ASYNC_FUNCTION       STRING_LEN_S_ENT_HIGH
-STORE_NAME           my_coroutine
-ASYNC_FUNCTION       STRING_LEN_S_ENT_HIGH
-STORE_NAME           main_async
-LOAD_NAME            PROCESS_CONCURRENCY
-LOAD_ATTR            PROCESS_MANAGEMENT
-LOAD_NAME            main_async
-CALL_FUNCTION        INTEGER
-CALL_FUNCTION        INTEGER
-MAKE_CLASS           MyMeta_ref_40
-STORE_NAME           MyMeta
-MAKE_CLASS           STRING_LEN_S_ENT_HIGH
-STORE_NAME           MyClassWithMeta
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_NAME            MyClassWithMeta
-LOAD_CONST           "new_attribute"
-CALL_FUNCTION        INTEGER
-LOAD_NAME            MyClassWithMeta
-LOAD_ATTR            new_attribute
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           hinted_function
-LOAD_NAME            hinted_function
-LOAD_CONST           "Alice"
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            math
-LOAD_ATTR            sqrt
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            math
-LOAD_ATTR            isclose
-LOAD_NAME            math
-LOAD_ATTR            pi
-LOAD_CONST           FLOAT
-LOAD_CONST           rel_tol
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-LOAD_NAME            cmath
-LOAD_ATTR            sqrt
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            collections
-LOAD_ATTR            deque
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-CALL_FUNCTION        INTEGER
-STORE_NAME           d
-LOAD_NAME            d
-LOAD_ATTR            appendleft
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            collections
-LOAD_ATTR            namedtuple
-LOAD_CONST           "Point"
-LOAD_CONST           "x"
-LOAD_CONST           "y"
-BUILD_LIST           INTEGER
-CALL_FUNCTION        INTEGER
-STORE_NAME           Point
-LOAD_NAME            Point
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-STORE_NAME           p
-LOAD_NAME            p
-LOAD_ATTR            x
-LOAD_NAME            p
-LOAD_ATTR            y
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            itertools
-LOAD_ATTR            count
-LOAD_CONST           start
-LOAD_CONST           FLOAT
-LOAD_CONST           step
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           counter
-LOAD_NAME            next
-LOAD_NAME            counter
-CALL_FUNCTION        INTEGER
-LOAD_NAME            next
-LOAD_NAME            counter
-CALL_FUNCTION        INTEGER
-LOAD_NAME            list
-LOAD_NAME            itertools
-LOAD_ATTR            permutations
-LOAD_CONST           "AB"
-CALL_FUNCTION        INTEGER
-CALL_FUNCTION        INTEGER
-STORE_NAME           permutations
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-STORE_NAME           json_string
-LOAD_NAME            DATA_HANDLING
-LOAD_ATTR            loads
-LOAD_NAME            json_string
-CALL_FUNCTION        INTEGER
-STORE_NAME           data
-LOAD_NAME            data
-LOAD_CONST           "name"
-BINARY_SUBSCR        
-LOAD_NAME            DATA_HANDLING
-LOAD_ATTR            dumps
-LOAD_NAME            data
-CALL_FUNCTION        INTEGER
-STORE_NAME           new_json_string
-LOAD_NAME            DATA_HANDLING
-LOAD_ATTR            loads
-LOAD_NAME            new_json_string
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-STORE_NAME           text
-LOAD_NAME            re
-LOAD_ATTR            search
-LOAD_CONST           r"^The.*Spain$"
-LOAD_NAME            text
-CALL_FUNCTION        INTEGER
-STORE_NAME           match
-LOAD_NAME            re
-LOAD_ATTR            findall
-LOAD_CONST           r"ai"
-LOAD_NAME            text
-CALL_FUNCTION        INTEGER
-STORE_NAME           found
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-MAKE_CLASS           STRING_LEN_S_ENT_HIGH
-STORE_NAME           DynamicClass
-LOAD_NAME            DynamicClass
-CALL_FUNCTION        INTEGER
-STORE_NAME           dyn_obj
-LOAD_NAME            REFLECTION_DYNAMIC_WRITE
-LOAD_NAME            dyn_obj
-LOAD_CONST           "dynamic_attr"
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_NAME            dyn_obj
-LOAD_CONST           "dynamic_attr"
-CALL_FUNCTION        INTEGER
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_NAME            dyn_obj
-LOAD_CONST           "dynamic_attr"
-CALL_FUNCTION        INTEGER
-LOAD_NAME            REFLECTION_DYNAMIC_DELETE
-LOAD_NAME            dyn_obj
-LOAD_CONST           "dynamic_attr"
-CALL_FUNCTION        INTEGER
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_NAME            dyn_obj
-LOAD_CONST           "dynamic_attr"
-CALL_FUNCTION        INTEGER
-LOGICAL_NOT          
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            DYNAMIC_CODE_EXECUTION
-LOAD_CONST           "2 + 3 * 4"
-CALL_FUNCTION        INTEGER
-STORE_NAME           eval_result
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-STORE_NAME           exec_code
-LOAD_NAME            DYNAMIC_CODE_EXECUTION
-LOAD_NAME            exec_code
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_CONST           FLOAT
-LOAD_NAME            int
-CALL_FUNCTION        INTEGER
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_CONST           "hello"
-LOAD_NAME            int
-CALL_FUNCTION        INTEGER
-LOGICAL_NOT          
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_NAME            bool
-LOAD_NAME            int
-CALL_FUNCTION        INTEGER
-LOAD_NAME            type
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            int
-COMPARE_OP           
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           BOOLEAN
-STORE_NAME           bool_true
-LOAD_CONST           BOOLEAN
-STORE_NAME           bool_false
-LOAD_CONST           
-STORE_NAME           none_val
-LOAD_CONST           ...
-STORE_NAME           ellipsis_val
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-STORE_NAME           negative_num
-LOAD_CONST           FLOAT
-BINARY_OPERATION     +
-STORE_NAME           positive_num
-LOAD_CONST           FLOAT
-UNARY_INVERT         
-STORE_NAME           bitwise_not
-LOAD_CONST           BOOLEAN
-LOGICAL_NOT          
-STORE_NAME           logical_not
-LOAD_CONST           FLOAT
-STORE_NAME           aug_val
-LOAD_NAME            aug_val
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           aug_val
-LOAD_NAME            aug_val
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           aug_val
-LOAD_NAME            aug_val
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           aug_val
-LOAD_NAME            aug_val
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           aug_val
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-COMPARE_OP           
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-COMPARE_OP           
-LOGICAL_AND          
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-COMPARE_OP           
-LOGICAL_OR           
-STORE_NAME           comp_result
-LOAD_NAME            bool_true
-LOAD_CONST           BOOLEAN
-COMPARE_OP           
-STORE_NAME           is_result
-LOAD_CONST           "a"
-LOAD_CONST           "abc"
-COMPARE_OP           
-STORE_NAME           in_result
-LOAD_CONST           "z"
-LOAD_CONST           "abc"
-COMPARE_OP           
-STORE_NAME           not_in_result
-MAKE_FUNCTION        lambda_ref_45
-STORE_NAME           lambda_func
-LOAD_NAME            lambda_func
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-STORE_NAME           lambda_result
-POP_JUMP_IF_FALSE    INTEGER
-JUMP_FORWARD         INTEGER
-STORE_NAME           ternary_result
-BUILD_LIST           INTEGER
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-GET_ITER             
-FOR_ITER             INTEGER
-STORE_NAME           x
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-BINARY_MULTIPLY      
-BINARY_OPERATION     
-JUMP_FORWARD         INTEGER
-STORE_NAME           list_comp
-BUILD_MAP            INTEGER
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-GET_ITER             
-FOR_ITER             INTEGER
-STORE_NAME           x
-LOAD_NAME            x
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-BINARY_MULTIPLY      
-BINARY_OPERATION     
-JUMP_FORWARD         INTEGER
-STORE_NAME           dict_comp
-BUILD_SET            INTEGER
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-GET_ITER             
-FOR_ITER             INTEGER
-STORE_NAME           x
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-BINARY_MULTIPLY      
-BINARY_OPERATION     
-JUMP_FORWARD         INTEGER
-STORE_NAME           set_comp
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-GET_ITER             
-FOR_ITER             INTEGER
-STORE_NAME           x
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-BINARY_MULTIPLY      
-BINARY_OPERATION     
-JUMP_FORWARD         INTEGER
-STORE_NAME           gen_expr
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BINARY_DIVIDE        
-STORE_NAME           risky_operation
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-JUMP_FORWARD         INTEGER
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            i
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-BINARY_OPERATION     
-LOAD_CONST           FLOAT
-STORE_NAME           count
-LOAD_NAME            count
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_NAME            count
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           count
-MAKE_CLASS           STRING_LEN_S_ENT_HIGH
-STORE_NAME           SimpleContext
-LOAD_NAME            ctx_val
-ENTER_CONTEXT        
-LOAD_NAME            ctx_val
-STORE_NAME           context_result
-EXIT_CONTEXT         
-LOAD_NAME            ctx1
-ENTER_CONTEXT        
-LOAD_NAME            ctx2
-ENTER_CONTEXT        
-LOAD_NAME            ctx1
-LOAD_NAME            ctx2
-BINARY_ADD           
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-EXIT_CONTEXT         
-EXIT_CONTEXT         
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-COMPARE_OP           
-BINARY_OPERATION     
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           empty_func
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-LOAD_NAME            i
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-BINARY_OPERATION     
-LOAD_NAME            i
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-BINARY_OPERATION     
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           test_raise
-IMPORT_FROM          math
-IMPORT_FROM          sqrt
-IMPORT_FROM          square_root
-IMPORT_NAME          SYSTEM_INTERACTION
-IMPORT_NAME          SYSINFO_OS
-LOAD_CONST           "global"
-STORE_NAME           global_var
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           test_global
-MAKE_FUNCTION        outer_ref_53
-STORE_NAME           outer
-LOAD_CONST           FLOAT
-STORE_NAME           temp_var
-LOAD_NAME            temp_var
-BINARY_OPERATION     
-LOAD_CONST           0xFF
-LOAD_CONST           0x0F
-BINARY_AND           
-STORE_NAME           bitwise_and
-LOAD_CONST           0x10
-LOAD_CONST           0x01
-BINARY_OR            
-STORE_NAME           bitwise_or
-LOAD_CONST           0xAA
-LOAD_CONST           0x55
-BINARY_XOR           
-STORE_NAME           bitwise_xor
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BINARY_LSHIFT        
-STORE_NAME           left_shift
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BINARY_RSHIFT        
-STORE_NAME           right_shift
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BINARY_FLOOR_DIVIDE  
-STORE_NAME           floor_div
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-STORE_NAME           x, y
-LOAD_CONST           FLOAT
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-COMPARE_OP           
-LOAD_CONST           FLOAT
-LOAD_NAME            y
-LOAD_CONST           FLOAT
-COMPARE_OP           
-LOGICAL_AND          
-STORE_NAME           chained_comp
-LOAD_CONST           FLOAT
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-COMPARE_OP           
-STORE_NAME           is_between
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-COMPARE_OP           
-STORE_NAME           greater_equal
-LOAD_NAME            y
-LOAD_CONST           FLOAT
-COMPARE_OP           
-STORE_NAME           less_equal
-LOAD_NAME            x
-LOAD_NAME            y
-COMPARE_OP           
-STORE_NAME           not_equal
-LOAD_NAME            len
-LOAD_CONST           "test"
-CALL_FUNCTION        INTEGER
-STORE_NAME           n
-LOAD_NAME            n
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_NAME            n
-STORE_NAME           walrus_result
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-STORE_NAME           test_list
-LOAD_NAME            test_list
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           first_element
-LOAD_NAME            test_list
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-BINARY_SUBSCR        
-STORE_NAME           last_element
-LOAD_NAME            test_list
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-STORE_NAME           slice_access
-LOAD_NAME            test_list
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-STORE_NAME           step_slice
-LOAD_CONST           "api_key"
-LOAD_CONST           "secret123"
-LOAD_CONST           "endpoint"
-LOAD_CONST           STRING_FILE_PATH
-LOAD_CONST           "payload"
-LOAD_CONST           "data"
-LOAD_CONST           "encoded"
-BUILD_MAP            INTEGER
-BUILD_MAP            INTEGER
-STORE_NAME           config_dict
-LOAD_NAME            config_dict
-LOAD_CONST           "api_key"
-BINARY_SUBSCR        
-STORE_NAME           api_key
-LOAD_NAME            config_dict
-LOAD_CONST           "endpoint"
-BINARY_SUBSCR        
-STORE_NAME           endpoint
-LOAD_NAME            config_dict
-LOAD_CONST           "pay"
-LOAD_CONST           "load"
-BINARY_ADD           
-BINARY_SUBSCR        
-STORE_NAME           dynamic_key
-LOAD_CONST           "users"
-LOAD_CONST           "name"
-LOAD_CONST           "admin"
-LOAD_CONST           "permissions"
-LOAD_CONST           "read"
-LOAD_CONST           "write"
-LOAD_CONST           "execute"
-BUILD_LIST           INTEGER
-BUILD_MAP            INTEGER
-LOAD_CONST           "name"
-LOAD_CONST           "guest"
-LOAD_CONST           "permissions"
-LOAD_CONST           "read"
-BUILD_LIST           INTEGER
-BUILD_MAP            INTEGER
-BUILD_LIST           INTEGER
-LOAD_CONST           "config"
-LOAD_CONST           "servers"
-LOAD_CONST           "192.168.1.1"
-LOAD_CONST           "10.0.0.1"
-BUILD_LIST           INTEGER
-LOAD_CONST           "ports"
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-BUILD_MAP            INTEGER
-BUILD_MAP            INTEGER
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_CONST           "users"
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-LOAD_CONST           "name"
-BINARY_SUBSCR        
-STORE_NAME           admin_name
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_CONST           "users"
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-LOAD_CONST           "permissions"
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_CONST           "config"
-BINARY_SUBSCR        
-LOAD_CONST           "servers"
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           first_server
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_CONST           "config"
-BINARY_SUBSCR        
-LOAD_CONST           "ports"
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           https_port
-LOAD_CONST           "endpoint"
-STORE_NAME           prop_name
-LOAD_CONST           "api_key"
-STORE_NAME           key_name
-LOAD_NAME            config_dict
-LOAD_NAME            prop_name
-BINARY_SUBSCR        
-STORE_NAME           dynamic_access1
-LOAD_NAME            config_dict
-LOAD_NAME            key_name
-BINARY_SUBSCR        
-STORE_NAME           dynamic_access2
-LOAD_CONST           "api"
-LOAD_CONST           "_key"
-BINARY_ADD           
-STORE_NAME           computed_key
-IMPORT_NAME          DATA_HANDLING
-LOAD_NAME            DATA_HANDLING
-LOAD_ATTR            ENCODING_DECODING
-LOAD_CONST           b"endpoint"
-CALL_FUNCTION        INTEGER
-LOAD_ATTR            decode
-CALL_FUNCTION        INTEGER
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-STORE_NAME           encoded_key
-LOAD_NAME            config_dict
-LOAD_NAME            computed_key
-BINARY_SUBSCR        
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            list
-LOAD_NAME            range
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-CALL_FUNCTION        INTEGER
-STORE_NAME           payload_list
-LOAD_NAME            payload_list
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BINARY_ADD           
-BINARY_SUBSCR        
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            payload_list
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BINARY_POWER         
-BINARY_SUBSCR        
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            payload_list
-LOAD_CONST           FLOAT
-LOAD_NAME            len
-LOAD_NAME            payload_list
-CALL_FUNCTION        INTEGER
-BINARY_MODULO        
-BINARY_SUBSCR        
-STORE_NAME           modulo_index
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           protocol_char
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_ATTR            find
-LOAD_CONST           "("
-CALL_FUNCTION        INTEGER
-BINARY_SUBSCR        
-STORE_NAME           paren_char
-LOAD_NAME            STRING_LEN_S_ENT_HIGH
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-STORE_NAME           decode_part
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-LOAD_CONST           FLOAT
-BUILD_LIST           INTEGER
-BUILD_LIST           INTEGER
-STORE_NAME           matrix
-LOAD_NAME            matrix
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           center_element
-LOAD_NAME            matrix
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           corner_element
-LOAD_NAME            matrix
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-BINARY_SUBSCR        
-LOAD_CONST           FLOAT
-UNARY_NEGATIVE       
-BINARY_SUBSCR        
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_CONST           "python"
-LOAD_CONST           "-c"
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-BUILD_TUPLE          INTEGER
-STORE_NAME           command_tuple
-LOAD_NAME            command_tuple
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           interpreter
-LOAD_NAME            command_tuple
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           flag
-LOAD_NAME            command_tuple
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           command_payload
-LOAD_CONST           STRING_FILE_PATH
-STORE_NAME           byte_data
-LOAD_NAME            byte_data
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           first_byte
-LOAD_NAME            byte_data
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           second_byte
-LOAD_NAME            byte_data
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-STORE_NAME           byte_slice
-IMPORT_NAME          random
-LOAD_CONST           FLOAT
-STORE_NAME           global_index
-LOAD_NAME            test_list
-LOAD_NAME            global_index
-BINARY_SUBSCR        
-STORE_NAME           scoped_access
-LOAD_NAME            test_list
-LOAD_NAME            random
-LOAD_ATTR            randint
-LOAD_CONST           FLOAT
-LOAD_NAME            len
-LOAD_NAME            test_list
-CALL_FUNCTION        INTEGER
-LOAD_CONST           FLOAT
-BINARY_SUBTRACT      
-CALL_FUNCTION        INTEGER
-BINARY_SUBSCR        
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            test_list
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-STORE_NAME           complex_slice1
-LOAD_NAME            test_list
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-STORE_NAME           complex_slice2
-LOAD_NAME            test_list
-LOAD_CONST           
-LOAD_CONST           
-LOAD_CONST           
-BINARY_OPERATION     
-BINARY_SUBSCR        
-STORE_NAME           complex_slice3
-LOAD_NAME            list
-LOAD_NAME            config_dict
-LOAD_ATTR            keys
-CALL_FUNCTION        INTEGER
-CALL_FUNCTION        INTEGER
-STORE_NAME           dict_keys
-LOAD_NAME            list
-LOAD_NAME            config_dict
-LOAD_ATTR            values
-CALL_FUNCTION        INTEGER
-CALL_FUNCTION        INTEGER
-STORE_NAME           dict_values
-LOAD_NAME            dict_keys
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           first_key
-LOAD_NAME            dict_values
-LOAD_CONST           FLOAT
-BINARY_SUBSCR        
-STORE_NAME           first_value
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
+IMPORT_NAME sys
+IMPORT_NAME math
+IMPORT_NAME cmath
+IMPORT_NAME collections
+IMPORT_NAME itertools
+IMPORT_NAME json
+IMPORT_NAME re
+IMPORT_NAME asyncio
+IMPORT_FROM functools
+IMPORT_FROM wraps
+IMPORT_FROM typing
+IMPORT_FROM Any
+IMPORT_FROM List
+IMPORT_FROM Dict
+IMPORT_FROM Tuple
+IMPORT_FROM Set
+IMPORT_FROM Optional
+IMPORT_NAME os
+IMPORT_NAME subprocess
+IMPORT_NAME socket
+IMPORT_NAME urllib.request
+IMPORT_NAME base64
+IMPORT_NAME pickle
+IMPORT_NAME marshal
+IMPORT_NAME types
+IMPORT_NAME importlib
+IMPORT_NAME tempfile
+IMPORT_NAME shutil
+IMPORT_NAME pathlib
+IMPORT_FROM os
+IMPORT_FROM environ
+IMPORT_FROM path
+IMPORT_FROM listdir
+IMPORT_FROM sys
+IMPORT_FROM argv
+IMPORT_FROM exit
+IMPORT_FROM modules
+IMPORT_FROM path
+IMPORT_FROM sys_path
+IMPORT_FROM subprocess
+IMPORT_FROM run
+IMPORT_FROM Popen
+IMPORT_FROM PIPE
+IMPORT_FROM call
+IMPORT_FROM socket
+IMPORT_FROM socket
+IMPORT_FROM AF_INET
+IMPORT_FROM SOCK_STREAM
+IMPORT_FROM urllib.parse
+IMPORT_FROM urlparse
+IMPORT_FROM urljoin
+IMPORT_FROM urllib.request
+IMPORT_FROM urlopen
+IMPORT_FROM Request
+IMPORT_FROM base64
+IMPORT_FROM b64encode
+IMPORT_FROM b64decode
+IMPORT_FROM decodebytes
+IMPORT_FROM pickle
+IMPORT_FROM loads
+IMPORT_FROM dumps
+IMPORT_FROM load
+IMPORT_FROM dump
+IMPORT_FROM marshal
+IMPORT_FROM loads
+IMPORT_FROM marshal_loads
+IMPORT_FROM dumps
+IMPORT_FROM marshal_dumps
+IMPORT_FROM types
+IMPORT_FROM CodeType
+IMPORT_FROM ModuleType
+IMPORT_FROM importlib
+IMPORT_FROM import_module
+IMPORT_FROM util
+IMPORT_FROM tempfile
+IMPORT_FROM mkstemp
+IMPORT_FROM mkdtemp
+IMPORT_FROM  STRING_LEN_S_ENT_HIGH
+IMPORT_FROM shutil
+IMPORT_FROM rmtree
+IMPORT_FROM copytree
+IMPORT_FROM move
+IMPORT_FROM pathlib
+IMPORT_FROM Path
+IMPORT_FROM PurePath
+IMPORT_NAME os
+IMPORT_NAME  STRING_LEN_S_ENT_HIGH
+IMPORT_NAME subprocess
+IMPORT_NAME subproc
+IMPORT_NAME socket
+IMPORT_NAME sock
+IMPORT_NAME urllib.request
+IMPORT_NAME web_request
+IMPORT_NAME base64
+IMPORT_NAME b64
+IMPORT_NAME pickle
+IMPORT_NAME pkl
+IMPORT_NAME marshal
+IMPORT_NAME marsh
+IMPORT_NAME types
+IMPORT_NAME tp
+IMPORT_NAME importlib
+IMPORT_NAME imp_lib
+IMPORT_FROM os.path
+IMPORT_FROM join
+IMPORT_FROM exists
+IMPORT_FROM isfile
+IMPORT_FROM isdir
+IMPORT_FROM basename
+IMPORT_FROM dirname
+IMPORT_FROM os.path
+IMPORT_FROM join
+IMPORT_FROM path_join
+IMPORT_FROM exists
+IMPORT_FROM path_exists
+IMPORT_FROM urllib.request
+IMPORT_FROM urlopen
+IMPORT_FROM open_url
+IMPORT_FROM Request
+IMPORT_FROM web_request_obj
+IMPORT_FROM base64
+IMPORT_FROM b64encode
+IMPORT_FROM encode_b64
+IMPORT_FROM b64decode
+IMPORT_FROM decode_b64
+IMPORT_NAME ctypes
+IMPORT_FROM ctypes
+IMPORT_FROM windll
+IMPORT_FROM wintypes
+LOAD_CONST BOOLEAN
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+IMPORT_NAME win32api
+IMPORT_FROM win32api
+IMPORT_FROM  STRING_BASE64_LEN_S_ENT_HIGH
+LOAD_CONST BOOLEAN
+STORE_NAME win32_available
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+IMPORT_NAME requests
+IMPORT_FROM requests
+IMPORT_FROM get
+IMPORT_FROM post
+IMPORT_FROM Session
+LOAD_CONST BOOLEAN
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+IMPORT_NAME keyring
+IMPORT_FROM keyring
+IMPORT_FROM get_password
+IMPORT_FROM set_password
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+IMPORT_NAME sqlite3
+IMPORT_FROM sqlite3
+IMPORT_FROM connect
+IMPORT_FROM Row
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+IMPORT_NAME winreg
+IMPORT_FROM winreg
+IMPORT_FROM OpenKey
+IMPORT_FROM QueryValueEx
+IMPORT_FROM  STRING_LEN_S_ENT_HIGH
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+LOAD_CONST FLOAT
+STORE_NAME integer_literal
+LOAD_CONST FLOAT
+STORE_NAME float_literal
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BINARY_ADD
+STORE_NAME complex_literal
+LOAD_CONST 0b1010
+STORE_NAME binary_literal
+LOAD_CONST 0o777
+STORE_NAME octal_literal
+LOAD_CONST 0xABC
+STORE_NAME hex_literal
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST "hello"
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST "world"
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST STRING_FILE_PATH
+STORE_NAME raw_string
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+LOAD_NAME integer_literal
+BINARY_OPERATION
+STORE_NAME f_string
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+STORE_NAME byte_string
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST BOOLEAN
+STORE_NAME true_literal
+LOAD_CONST
+STORE_NAME false_literal
+LOAD_CONST
+STORE_NAME none_literal
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+STORE_NAME a, b
+LOAD_NAME a
+LOAD_NAME b
+BINARY_ADD
+LOAD_NAME a
+LOAD_NAME b
+BINARY_SUBTRACT
+LOAD_NAME a
+LOAD_NAME b
+BINARY_MULTIPLY
+LOAD_NAME a
+LOAD_NAME b
+BINARY_DIVIDE
+LOAD_NAME a
+LOAD_NAME b
+BINARY_FLOOR_DIVIDE
+LOAD_NAME a
+LOAD_NAME b
+BINARY_MODULO
+LOAD_NAME a
+LOAD_NAME b
+BINARY_POWER
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+STORE_NAME c
+LOAD_NAME c
+BINARY_OPERATION +
+LOAD_NAME c
+UNARY_NEGATIVE
+LOAD_NAME abs
+LOAD_NAME c
+CALL_FUNCTION INTEGER
+LOAD_NAME divmod
+LOAD_NAME a
+LOAD_NAME b
+CALL_FUNCTION INTEGER
+LOAD_NAME pow
+LOAD_NAME a
+LOAD_NAME b
+CALL_FUNCTION INTEGER
+LOAD_NAME round
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST "hello"
+STORE_NAME s1
+LOAD_CONST "world"
+STORE_NAME s2
+LOAD_NAME s1
+LOAD_CONST " "
+BINARY_ADD
+LOAD_NAME s2
+BINARY_ADD
+LOAD_NAME s1
+LOAD_CONST FLOAT
+BINARY_MULTIPLY
+LOAD_CONST "e"
+LOAD_NAME s1
+COMPARE_OP
+LOAD_CONST "x"
+LOAD_NAME s1
+COMPARE_OP
+LOAD_NAME s1
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+LOAD_NAME s1
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+BINARY_SUBSCR
+LOAD_NAME s1
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+LOAD_NAME len
+LOAD_NAME s1
+CALL_FUNCTION INTEGER
+LOAD_CONST "Hello"
+LOAD_ATTR lower
+CALL_FUNCTION
+LOAD_CONST "world"
+LOAD_ATTR upper
+CALL_FUNCTION
+LOAD_CONST " spaced "
+LOAD_ATTR strip
+CALL_FUNCTION
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+LOAD_ATTR split
+LOAD_CONST ","
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+LOAD_CONST "two"
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+STORE_NAME my_list
+LOAD_NAME len
+LOAD_NAME my_list
+CALL_FUNCTION INTEGER
+LOAD_NAME my_list
+LOAD_ATTR append
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME my_list
+LOAD_ATTR pop
+CALL_FUNCTION
+LOAD_CONST "one"
+STORE_NAME my_list[0]
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+STORE_NAME nested_list
+LOAD_NAME nested_list
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+BUILD_LIST
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+GET_ITER
+FOR_ITER INTEGER
+STORE_NAME x
+LOAD_NAME x
+LOAD_NAME x
+BINARY_MULTIPLY
+BINARY_OPERATION
+JUMP_FORWARD INTEGER
+STORE_NAME list_comp
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+LOAD_CONST "two"
+LOAD_CONST FLOAT
+BUILD_TUPLE INTEGER
+STORE_NAME my_tuple
+LOAD_NAME len
+LOAD_NAME my_tuple
+CALL_FUNCTION INTEGER
+LOAD_NAME my_tuple
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+LOAD_CONST "new"
+STORE_NAME my_tuple[1]
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+LOAD_NAME my_tuple
+STORE_NAME a, b, c
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST "one"
+LOAD_CONST FLOAT
+LOAD_CONST "two"
+LOAD_CONST FLOAT
+BUILD_MAP INTEGER
+STORE_NAME my_dict
+LOAD_NAME my_dict
+LOAD_CONST "one"
+BINARY_SUBSCR
+LOAD_CONST FLOAT
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST "three"
+LOAD_NAME my_dict
+COMPARE_OP
+LOAD_NAME list
+LOAD_NAME my_dict
+LOAD_ATTR keys
+CALL_FUNCTION
+CALL_FUNCTION INTEGER
+LOAD_NAME list
+LOAD_NAME my_dict
+LOAD_ATTR values
+CALL_FUNCTION
+CALL_FUNCTION INTEGER
+LOAD_NAME my_dict
+LOAD_CONST "two"
+BINARY_SUBSCR
+BINARY_OPERATION
+LOAD_CONST "two"
+LOAD_NAME my_dict
+COMPARE_OP
+BUILD_MAP
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+GET_ITER
+FOR_ITER INTEGER
+STORE_NAME x
+LOAD_NAME x
+LOAD_NAME x
+LOAD_NAME x
+BINARY_MULTIPLY
+BINARY_OPERATION
+JUMP_FORWARD INTEGER
+STORE_NAME dict_comp
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_SET INTEGER
+STORE_NAME my_set
+LOAD_NAME my_set
+LOAD_ATTR add
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+LOAD_NAME my_set
+COMPARE_OP
+LOAD_NAME my_set
+LOAD_ATTR remove
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+LOAD_NAME my_set
+COMPARE_OP
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_SET INTEGER
+STORE_NAME set1
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_SET INTEGER
+STORE_NAME set2
+LOAD_NAME set1
+LOAD_NAME set2
+BINARY_OR
+LOAD_NAME set1
+LOAD_NAME set2
+BINARY_AND
+LOAD_NAME set1
+LOAD_NAME set2
+BINARY_SUBTRACT
+LOAD_NAME set1
+LOAD_NAME set2
+BINARY_XOR
+BUILD_SET
+LOAD_CONST "abracadabra"
+GET_ITER
+FOR_ITER INTEGER
+STORE_NAME x
+LOAD_NAME x
+LOAD_CONST "abc"
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_NAME x
+BINARY_OPERATION
+JUMP_FORWARD INTEGER
+STORE_NAME set_comp
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+STORE_NAME x
+LOAD_NAME x
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_CONST "greater"
+STORE_NAME result
+JUMP_FORWARD INTEGER
+LOAD_NAME x
+LOAD_CONST FLOAT
+COMPARE_OP
+LOAD_CONST "equal"
+STORE_NAME result
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+LOAD_CONST
+STORE_NAME total
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME total
+LOAD_NAME i
+BINARY_OPERATION
+STORE_NAME total
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+LOAD_NAME i
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+BINARY_OPERATION
+LOAD_CONST FLOAT
+STORE_NAME count
+LOAD_NAME count
+LOAD_CONST
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_NAME count
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME count
+LOAD_CONST FLOAT
+STORE_NAME count
+LOAD_NAME count
+LOAD_CONST
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_NAME count
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME count
+LOAD_NAME count
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+BINARY_OPERATION
+LOAD_CONST
+STORE_NAME found_even
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME i
+LOAD_CONST FLOAT
+BINARY_MODULO
+LOAD_CONST
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+BINARY_OPERATION
+LOAD_NAME i
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+BINARY_OPERATION
+LOAD_NAME i
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_CONST BOOLEAN
+STORE_NAME found_even
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+LOAD_CONST
+BINARY_DIVIDE
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+MAKE_CLASS MyContext_ref_3
+STORE_NAME MyContext
+LOAD_NAME cm
+ENTER_CONTEXT
+EXIT_CONTEXT
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+MAKE_FUNCTION greet_ref_4
+STORE_NAME greet
+LOAD_NAME greet
+LOAD_CONST "World"
+CALL_FUNCTION INTEGER
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME func_with_args
+LOAD_NAME func_with_args
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME func_with_args
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME func_with_args
+LOAD_CONST a
+LOAD_CONST FLOAT
+LOAD_CONST b
+LOAD_CONST FLOAT
+BINARY_OPERATION
+LOAD_NAME func_with_args
+LOAD_CONST c
+LOAD_CONST FLOAT
+LOAD_CONST b
+LOAD_CONST FLOAT
+LOAD_CONST a
+LOAD_CONST FLOAT
+BINARY_OPERATION
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST name
+LOAD_CONST "test"
+LOAD_CONST value
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+MAKE_FUNCTION lambda_ref_7
+STORE_NAME multiply
+LOAD_NAME multiply
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME outer_func
+LOAD_NAME outer_func
+CALL_FUNCTION
+STORE_NAME closure
+LOAD_NAME closure
+CALL_FUNCTION
+LOAD_NAME closure
+CALL_FUNCTION
+LOAD_CONST FLOAT
+STORE_NAME global_var
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME modify_global
+LOAD_NAME modify_global
+CALL_FUNCTION
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+MAKE_CLASS MyClass_ref_15
+STORE_NAME MyClass
+LOAD_NAME MyClass
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+STORE_NAME obj
+LOAD_NAME obj
+LOAD_ATTR  STRING_LEN_S_ENT_HIGH
+LOAD_NAME obj
+LOAD_ATTR instance_method
+CALL_FUNCTION
+LOAD_NAME MyClass
+LOAD_ATTR class_variable
+LOAD_NAME MyClass
+LOAD_ATTR class_method
+CALL_FUNCTION
+LOAD_NAME MyClass
+LOAD_ATTR static_method
+CALL_FUNCTION
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+MAKE_CLASS ParentA_ref_17
+STORE_NAME ParentA
+MAKE_CLASS ParentB_ref_19
+STORE_NAME ParentB
+MAKE_CLASS Child_ref_21
+STORE_NAME Child
+LOAD_NAME Child
+CALL_FUNCTION
+STORE_NAME child_obj
+LOAD_NAME child_obj
+LOAD_ATTR method_a
+CALL_FUNCTION
+LOAD_NAME child_obj
+LOAD_ATTR method_b
+CALL_FUNCTION
+LOAD_NAME child_obj
+LOAD_ATTR method_c
+CALL_FUNCTION
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+MAKE_CLASS Vector_ref_27
+STORE_NAME Vector
+LOAD_NAME Vector
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+STORE_NAME v1
+LOAD_NAME Vector
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+STORE_NAME v2
+LOAD_NAME v1
+LOAD_NAME v2
+BINARY_ADD
+STORE_NAME v3
+LOAD_NAME repr
+LOAD_NAME v3
+CALL_FUNCTION INTEGER
+LOAD_NAME len
+LOAD_NAME v3
+CALL_FUNCTION INTEGER
+LOAD_NAME v3
+LOAD_CONST
+BINARY_SUBSCR
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+MAKE_CLASS Circle_ref_32
+STORE_NAME Circle
+LOAD_NAME Circle
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+STORE_NAME c
+LOAD_NAME c
+LOAD_ATTR radius
+LOAD_NAME c
+LOAD_ATTR area
+LOAD_CONST FLOAT
+STORE_NAME c.radius
+LOAD_NAME c
+LOAD_ATTR radius
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+STORE_NAME c.radius
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME my_decorator
+MAKE_FUNCTION say_whee_ref_35
+STORE_NAME say_whee
+LOAD_NAME say_whee
+CALL_FUNCTION
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+GENERATOR_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME my_generator
+LOAD_NAME my_generator
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+STORE_NAME gen
+LOAD_NAME next
+LOAD_NAME gen
+CALL_FUNCTION INTEGER
+LOAD_NAME next
+LOAD_NAME gen
+CALL_FUNCTION INTEGER
+LOAD_NAME next
+LOAD_NAME gen
+CALL_FUNCTION INTEGER
+LOAD_NAME next
+LOAD_NAME gen
+CALL_FUNCTION INTEGER
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+ASYNC_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME my_coroutine
+ASYNC_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME main_async
+LOAD_NAME asyncio
+LOAD_ATTR run
+LOAD_NAME main_async
+CALL_FUNCTION
+CALL_FUNCTION INTEGER
+MAKE_CLASS MyMeta_ref_40
+STORE_NAME MyMeta
+MAKE_CLASS  STRING_LEN_S_ENT_HIGH
+STORE_NAME MyClassWithMeta
+LOAD_NAME hasattr
+LOAD_NAME MyClassWithMeta
+LOAD_CONST "new_attribute"
+CALL_FUNCTION INTEGER
+LOAD_NAME MyClassWithMeta
+LOAD_ATTR new_attribute
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME hinted_function
+LOAD_NAME hinted_function
+LOAD_CONST "Alice"
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+LOAD_NAME math
+LOAD_ATTR sqrt
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME math
+LOAD_ATTR isclose
+LOAD_NAME math
+LOAD_ATTR pi
+LOAD_CONST FLOAT
+LOAD_CONST rel_tol
+LOAD_CONST FLOAT
+BINARY_OPERATION
+LOAD_NAME cmath
+LOAD_ATTR sqrt
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME collections
+LOAD_ATTR deque
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+CALL_FUNCTION INTEGER
+STORE_NAME d
+LOAD_NAME d
+LOAD_ATTR appendleft
+LOAD_CONST
+CALL_FUNCTION INTEGER
+LOAD_NAME collections
+LOAD_ATTR namedtuple
+LOAD_CONST "Point"
+LOAD_CONST "x"
+LOAD_CONST "y"
+BUILD_LIST INTEGER
+CALL_FUNCTION INTEGER
+STORE_NAME Point
+LOAD_NAME Point
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+STORE_NAME p
+LOAD_NAME p
+LOAD_ATTR x
+LOAD_NAME p
+LOAD_ATTR y
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME itertools
+LOAD_ATTR count
+LOAD_CONST start
+LOAD_CONST FLOAT
+LOAD_CONST step
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME counter
+LOAD_NAME next
+LOAD_NAME counter
+CALL_FUNCTION INTEGER
+LOAD_NAME next
+LOAD_NAME counter
+CALL_FUNCTION INTEGER
+LOAD_NAME list
+LOAD_NAME itertools
+LOAD_ATTR permutations
+LOAD_CONST "AB"
+CALL_FUNCTION INTEGER
+CALL_FUNCTION INTEGER
+STORE_NAME permutations
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+STORE_NAME json_string
+LOAD_NAME json
+LOAD_ATTR loads
+LOAD_NAME json_string
+CALL_FUNCTION INTEGER
+STORE_NAME data
+LOAD_NAME data
+LOAD_CONST "name"
+BINARY_SUBSCR
+LOAD_NAME json
+LOAD_ATTR dumps
+LOAD_NAME data
+CALL_FUNCTION INTEGER
+STORE_NAME new_json_string
+LOAD_NAME json
+LOAD_ATTR loads
+LOAD_NAME new_json_string
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+STORE_NAME text
+LOAD_NAME re
+LOAD_ATTR search
+LOAD_CONST r"^The.*Spain$"
+LOAD_NAME text
+CALL_FUNCTION INTEGER
+STORE_NAME match
+LOAD_NAME re
+LOAD_ATTR findall
+LOAD_CONST r"ai"
+LOAD_NAME text
+CALL_FUNCTION INTEGER
+STORE_NAME found
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+MAKE_CLASS  STRING_LEN_S_ENT_HIGH
+STORE_NAME DynamicClass
+LOAD_NAME DynamicClass
+CALL_FUNCTION
+STORE_NAME dyn_obj
+LOAD_NAME setattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME hasattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+CALL_FUNCTION INTEGER
+LOAD_NAME getattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+CALL_FUNCTION INTEGER
+LOAD_NAME delattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+CALL_FUNCTION INTEGER
+LOAD_NAME hasattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+CALL_FUNCTION INTEGER
+LOGICAL_NOT
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME eval
+LOAD_CONST "2 + 3 * 4"
+CALL_FUNCTION INTEGER
+STORE_NAME eval_result
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+STORE_NAME exec_code
+LOAD_NAME exec
+LOAD_NAME exec_code
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME isinstance
+LOAD_CONST FLOAT
+LOAD_NAME int
+CALL_FUNCTION INTEGER
+LOAD_NAME isinstance
+LOAD_CONST "hello"
+LOAD_NAME int
+CALL_FUNCTION INTEGER
+LOGICAL_NOT
+LOAD_NAME issubclass
+LOAD_NAME bool
+LOAD_NAME int
+CALL_FUNCTION INTEGER
+LOAD_NAME type
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME int
+COMPARE_OP
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+LOAD_CONST BOOLEAN
+STORE_NAME bool_true
+LOAD_CONST
+STORE_NAME bool_false
+LOAD_CONST
+STORE_NAME none_val
+LOAD_CONST ...
+STORE_NAME ellipsis_val
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+STORE_NAME negative_num
+LOAD_CONST FLOAT
+BINARY_OPERATION +
+STORE_NAME positive_num
+LOAD_CONST FLOAT
+UNARY_INVERT
+STORE_NAME bitwise_not
+LOAD_CONST BOOLEAN
+LOGICAL_NOT
+STORE_NAME logical_not
+LOAD_CONST FLOAT
+STORE_NAME aug_val
+LOAD_NAME aug_val
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME aug_val
+LOAD_NAME aug_val
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME aug_val
+LOAD_NAME aug_val
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME aug_val
+LOAD_NAME aug_val
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME aug_val
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+COMPARE_OP
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+COMPARE_OP
+LOGICAL_AND
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+COMPARE_OP
+LOGICAL_OR
+STORE_NAME comp_result
+LOAD_NAME bool_true
+LOAD_CONST BOOLEAN
+COMPARE_OP
+STORE_NAME is_result
+LOAD_CONST "a"
+LOAD_CONST "abc"
+COMPARE_OP
+STORE_NAME in_result
+LOAD_CONST "z"
+LOAD_CONST "abc"
+COMPARE_OP
+STORE_NAME not_in_result
+MAKE_FUNCTION lambda_ref_45
+STORE_NAME lambda_func
+LOAD_NAME lambda_func
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+STORE_NAME lambda_result
+POP_JUMP_IF_FALSE INTEGER
+JUMP_FORWARD INTEGER
+STORE_NAME ternary_result
+BUILD_LIST
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+GET_ITER
+FOR_ITER INTEGER
+STORE_NAME x
+LOAD_NAME x
+LOAD_CONST FLOAT
+BINARY_MULTIPLY
+BINARY_OPERATION
+JUMP_FORWARD INTEGER
+STORE_NAME list_comp
+BUILD_MAP
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+GET_ITER
+FOR_ITER INTEGER
+STORE_NAME x
+LOAD_NAME x
+LOAD_NAME x
+LOAD_CONST FLOAT
+BINARY_MULTIPLY
+BINARY_OPERATION
+JUMP_FORWARD INTEGER
+STORE_NAME dict_comp
+BUILD_SET
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+GET_ITER
+FOR_ITER INTEGER
+STORE_NAME x
+LOAD_NAME x
+LOAD_CONST FLOAT
+BINARY_MULTIPLY
+BINARY_OPERATION
+JUMP_FORWARD INTEGER
+STORE_NAME set_comp
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+GET_ITER
+FOR_ITER INTEGER
+STORE_NAME x
+LOAD_NAME x
+LOAD_CONST FLOAT
+BINARY_MULTIPLY
+BINARY_OPERATION
+JUMP_FORWARD INTEGER
+STORE_NAME gen_expr
+LOAD_CONST FLOAT
+LOAD_CONST
+BINARY_DIVIDE
+STORE_NAME risky_operation
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+JUMP_FORWARD INTEGER
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME i
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+BINARY_OPERATION
+LOAD_CONST
+STORE_NAME count
+LOAD_NAME count
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_NAME count
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME count
+MAKE_CLASS  STRING_LEN_S_ENT_HIGH
+STORE_NAME SimpleContext
+LOAD_NAME ctx_val
+ENTER_CONTEXT
+LOAD_NAME ctx_val
+STORE_NAME context_result
+EXIT_CONTEXT
+LOAD_NAME ctx1
+ENTER_CONTEXT
+LOAD_NAME ctx2
+ENTER_CONTEXT
+LOAD_NAME ctx1
+LOAD_NAME ctx2
+BINARY_ADD
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+EXIT_CONTEXT
+EXIT_CONTEXT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+COMPARE_OP
+BINARY_OPERATION
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME empty_func
+LOAD_NAME range
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+LOAD_NAME i
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+BINARY_OPERATION
+LOAD_NAME i
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+BINARY_OPERATION
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME test_raise
+IMPORT_FROM math
+IMPORT_FROM sqrt
+IMPORT_FROM square_root
+IMPORT_NAME sys
+IMPORT_NAME system
+LOAD_CONST "global"
+STORE_NAME global_var
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME test_global
+MAKE_FUNCTION outer_ref_53
+STORE_NAME outer
+LOAD_CONST FLOAT
+STORE_NAME temp_var
+LOAD_NAME temp_var
+BINARY_OPERATION
+LOAD_CONST 0xFF
+LOAD_CONST 0x0F
+BINARY_AND
+STORE_NAME bitwise_and
+LOAD_CONST 0x10
+LOAD_CONST 0x01
+BINARY_OR
+STORE_NAME bitwise_or
+LOAD_CONST 0xAA
+LOAD_CONST 0x55
+BINARY_XOR
+STORE_NAME bitwise_xor
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BINARY_LSHIFT
+STORE_NAME left_shift
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BINARY_RSHIFT
+STORE_NAME right_shift
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BINARY_FLOOR_DIVIDE
+STORE_NAME floor_div
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+STORE_NAME x, y
+LOAD_CONST FLOAT
+LOAD_NAME x
+LOAD_CONST FLOAT
+COMPARE_OP
+LOAD_CONST
+LOAD_NAME y
+LOAD_CONST FLOAT
+COMPARE_OP
+LOGICAL_AND
+STORE_NAME chained_comp
+LOAD_CONST
+LOAD_NAME x
+LOAD_CONST FLOAT
+COMPARE_OP
+STORE_NAME is_between
+LOAD_NAME x
+LOAD_CONST FLOAT
+COMPARE_OP
+STORE_NAME greater_equal
+LOAD_NAME y
+LOAD_CONST FLOAT
+COMPARE_OP
+STORE_NAME less_equal
+LOAD_NAME x
+LOAD_NAME y
+COMPARE_OP
+STORE_NAME not_equal
+LOAD_NAME len
+LOAD_CONST "test"
+CALL_FUNCTION INTEGER
+STORE_NAME n
+LOAD_NAME n
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_NAME n
+STORE_NAME walrus_result
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+STORE_NAME test_list
+LOAD_NAME test_list
+LOAD_CONST
+BINARY_SUBSCR
+STORE_NAME first_element
+LOAD_NAME test_list
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+BINARY_SUBSCR
+STORE_NAME last_element
+LOAD_NAME test_list
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+STORE_NAME slice_access
+LOAD_NAME test_list
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+STORE_NAME step_slice
+LOAD_CONST "api_key"
+LOAD_CONST "secret123"
+LOAD_CONST "endpoint"
+LOAD_CONST STRING_FILE_PATH
+LOAD_CONST "payload"
+LOAD_CONST "data"
+LOAD_CONST "encoded"
+BUILD_MAP INTEGER
+BUILD_MAP INTEGER
+STORE_NAME config_dict
+LOAD_NAME config_dict
+LOAD_CONST "api_key"
+BINARY_SUBSCR
+STORE_NAME api_key
+LOAD_NAME config_dict
+LOAD_CONST "endpoint"
+BINARY_SUBSCR
+STORE_NAME endpoint
+LOAD_NAME config_dict
+LOAD_CONST "pay"
+LOAD_CONST "load"
+BINARY_ADD
+BINARY_SUBSCR
+STORE_NAME dynamic_key
+LOAD_CONST "users"
+LOAD_CONST "name"
+LOAD_CONST "admin"
+LOAD_CONST "permissions"
+LOAD_CONST "read"
+LOAD_CONST "write"
+LOAD_CONST "execute"
+BUILD_LIST INTEGER
+BUILD_MAP INTEGER
+LOAD_CONST "name"
+LOAD_CONST "guest"
+LOAD_CONST "permissions"
+LOAD_CONST "read"
+BUILD_LIST INTEGER
+BUILD_MAP INTEGER
+BUILD_LIST INTEGER
+LOAD_CONST "config"
+LOAD_CONST "servers"
+LOAD_CONST "192.168.1.1"
+LOAD_CONST "10.0.0.1"
+BUILD_LIST INTEGER
+LOAD_CONST "ports"
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+BUILD_MAP INTEGER
+BUILD_MAP INTEGER
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST "users"
+BINARY_SUBSCR
+LOAD_CONST
+BINARY_SUBSCR
+LOAD_CONST "name"
+BINARY_SUBSCR
+STORE_NAME admin_name
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST "users"
+BINARY_SUBSCR
+LOAD_CONST
+BINARY_SUBSCR
+LOAD_CONST "permissions"
+BINARY_SUBSCR
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST "config"
+BINARY_SUBSCR
+LOAD_CONST "servers"
+BINARY_SUBSCR
+LOAD_CONST
+BINARY_SUBSCR
+STORE_NAME first_server
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST "config"
+BINARY_SUBSCR
+LOAD_CONST "ports"
+BINARY_SUBSCR
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+STORE_NAME https_port
+LOAD_CONST "endpoint"
+STORE_NAME prop_name
+LOAD_CONST "api_key"
+STORE_NAME key_name
+LOAD_NAME config_dict
+LOAD_NAME prop_name
+BINARY_SUBSCR
+STORE_NAME dynamic_access1
+LOAD_NAME config_dict
+LOAD_NAME key_name
+BINARY_SUBSCR
+STORE_NAME dynamic_access2
+LOAD_CONST "api"
+LOAD_CONST "_key"
+BINARY_ADD
+STORE_NAME computed_key
+IMPORT_NAME base64
+LOAD_NAME base64
+LOAD_ATTR b64encode
+LOAD_CONST b"endpoint"
+CALL_FUNCTION INTEGER
+LOAD_ATTR decode
+CALL_FUNCTION
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+STORE_NAME encoded_key
+LOAD_NAME config_dict
+LOAD_NAME computed_key
+BINARY_SUBSCR
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME list
+LOAD_NAME range
+LOAD_CONST
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+CALL_FUNCTION INTEGER
+STORE_NAME payload_list
+LOAD_NAME payload_list
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BINARY_ADD
+BINARY_SUBSCR
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME payload_list
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BINARY_POWER
+BINARY_SUBSCR
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME payload_list
+LOAD_CONST FLOAT
+LOAD_NAME len
+LOAD_NAME payload_list
+CALL_FUNCTION INTEGER
+BINARY_MODULO
+BINARY_SUBSCR
+STORE_NAME modulo_index
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST
+BINARY_SUBSCR
+STORE_NAME protocol_char
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_ATTR find
+LOAD_CONST "("
+CALL_FUNCTION INTEGER
+BINARY_SUBSCR
+STORE_NAME paren_char
+LOAD_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+STORE_NAME decode_part
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+LOAD_CONST FLOAT
+BUILD_LIST INTEGER
+BUILD_LIST INTEGER
+STORE_NAME matrix
+LOAD_NAME matrix
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+STORE_NAME center_element
+LOAD_NAME matrix
+LOAD_CONST
+BINARY_SUBSCR
+LOAD_CONST
+BINARY_SUBSCR
+STORE_NAME corner_element
+LOAD_NAME matrix
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+BINARY_SUBSCR
+LOAD_CONST FLOAT
+UNARY_NEGATIVE
+BINARY_SUBSCR
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_CONST "python"
+LOAD_CONST "-c"
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+BUILD_TUPLE INTEGER
+STORE_NAME command_tuple
+LOAD_NAME command_tuple
+LOAD_CONST
+BINARY_SUBSCR
+STORE_NAME interpreter
+LOAD_NAME command_tuple
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+STORE_NAME flag
+LOAD_NAME command_tuple
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+STORE_NAME command_payload
+LOAD_CONST STRING_FILE_PATH
+STORE_NAME byte_data
+LOAD_NAME byte_data
+LOAD_CONST
+BINARY_SUBSCR
+STORE_NAME first_byte
+LOAD_NAME byte_data
+LOAD_CONST FLOAT
+BINARY_SUBSCR
+STORE_NAME second_byte
+LOAD_NAME byte_data
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+STORE_NAME byte_slice
+IMPORT_NAME random
+LOAD_CONST FLOAT
+STORE_NAME global_index
+LOAD_NAME test_list
+LOAD_NAME global_index
+BINARY_SUBSCR
+STORE_NAME scoped_access
+LOAD_NAME test_list
+LOAD_NAME random
+LOAD_ATTR randint
+LOAD_CONST
+LOAD_NAME len
+LOAD_NAME test_list
+CALL_FUNCTION INTEGER
+LOAD_CONST FLOAT
+BINARY_SUBTRACT
+CALL_FUNCTION INTEGER
+BINARY_SUBSCR
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME test_list
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+STORE_NAME complex_slice1
+LOAD_NAME test_list
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+STORE_NAME complex_slice2
+LOAD_NAME test_list
+LOAD_CONST
+LOAD_CONST
+LOAD_CONST
+BINARY_OPERATION
+BINARY_SUBSCR
+STORE_NAME complex_slice3
+LOAD_NAME list
+LOAD_NAME config_dict
+LOAD_ATTR keys
+CALL_FUNCTION
+CALL_FUNCTION INTEGER
+STORE_NAME dict_keys
+LOAD_NAME list
+LOAD_NAME config_dict
+LOAD_ATTR values
+CALL_FUNCTION
+CALL_FUNCTION INTEGER
+STORE_NAME dict_values
+LOAD_NAME dict_keys
+LOAD_CONST
+BINARY_SUBSCR
+STORE_NAME first_key
+LOAD_NAME dict_values
+LOAD_CONST
+BINARY_SUBSCR
+STORE_NAME first_value
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
 
 dynamic_import_test_ref_0 - Mapping:
-LOAD_CONST           "os"
-STORE_NAME           module_name
-LOAD_NAME            DYNAMIC_IMPORT
-LOAD_NAME            module_name
-CALL_FUNCTION        INTEGER
-STORE_NAME           imported_os
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_NAME            imported_os
-LOAD_CONST           "system"
-CALL_FUNCTION        INTEGER
-STORE_NAME           getattr_call
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_NAME            __builtins__
-LOAD_CONST           "exec"
-CALL_FUNCTION        INTEGER
-STORE_NAME           exec_func
-LOAD_NAME            REFLECTION_DYNAMIC_READ
-LOAD_NAME            __builtins__
-LOAD_CONST           "eval"
-CALL_FUNCTION        INTEGER
-STORE_NAME           eval_func
-RETURN_VALUE         
+LOAD_CONST "os"
+STORE_NAME module_name
+LOAD_NAME __import__
+LOAD_NAME module_name
+CALL_FUNCTION INTEGER
+STORE_NAME imported_os
+LOAD_NAME getattr
+LOAD_NAME imported_os
+LOAD_CONST "system"
+CALL_FUNCTION INTEGER
+STORE_NAME getattr_call
+LOAD_NAME getattr
+LOAD_NAME __builtins__
+LOAD_CONST "exec"
+CALL_FUNCTION INTEGER
+STORE_NAME exec_func
+LOAD_NAME getattr
+LOAD_NAME __builtins__
+LOAD_CONST "eval"
+CALL_FUNCTION INTEGER
+STORE_NAME eval_func
+RETURN_VALUE
 
 __enter___ref_1 - Mapping:
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-RETURN_VALUE         
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+RETURN_VALUE
 
 __exit___ref_2 - Mapping:
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-RETURN_VALUE         
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+RETURN_VALUE
 
 MyContext_ref_3 - Mapping:
-MAKE_FUNCTION        __enter___ref_1
-STORE_NAME           __enter__
-MAKE_FUNCTION        __exit___ref_2
-STORE_NAME           __exit__
+MAKE_FUNCTION __enter___ref_1
+STORE_NAME __enter__
+MAKE_FUNCTION __exit___ref_2
+STORE_NAME __exit__
 
 greet_ref_4 - Mapping:
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-RETURN_VALUE         
+LOAD_CONST Hello,
+LOAD_PARAM name
+LOAD_CONST !
+BINARY_OPERATION
+RETURN_VALUE
 
 func_with_args_ref_5 - Mapping:
-LOAD_PARAM           a
-LOAD_PARAM           b
-BINARY_ADD           
-LOAD_PARAM           c
-BINARY_ADD           
-RETURN_VALUE         
+LOAD_PARAM a
+LOAD_PARAM b
+BINARY_ADD
+LOAD_PARAM c
+BINARY_ADD
+RETURN_VALUE
 
 func_with_arbitrary_args_ref_6 - Mapping:
-LOAD_PARAM           args
-LOAD_PARAM           kwargs
-RETURN_VALUE         
+LOAD_PARAM args
+LOAD_PARAM kwargs
+RETURN_VALUE
 
 lambda_ref_7 - Mapping:
-LOAD_PARAM           x
-LOAD_PARAM           y
-BINARY_MULTIPLY      
-RETURN_VALUE         
+LOAD_PARAM x
+LOAD_PARAM y
+BINARY_MULTIPLY
+RETURN_VALUE
 
 inner_func_ref_8 - Mapping:
-LOAD_NAME            x
-LOAD_NAME            x
-LOAD_CONST           FLOAT
-BINARY_OPERATION     
-STORE_NAME           x
-LOAD_NAME            x
-RETURN_VALUE         
+LOAD_NAME x
+LOAD_NAME x
+LOAD_CONST FLOAT
+BINARY_OPERATION
+STORE_NAME x
+LOAD_NAME x
+RETURN_VALUE
 
 outer_func_ref_9 - Mapping:
-LOAD_CONST           FLOAT
-STORE_NAME           x
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           inner_func
-LOAD_NAME            inner_func
-RETURN_VALUE         
+LOAD_CONST FLOAT
+STORE_NAME x
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME inner_func
+LOAD_NAME inner_func
+RETURN_VALUE
 
 modify_global_ref_10 - Mapping:
-LOAD_NAME            global_var
-LOAD_CONST           FLOAT
-STORE_NAME           global_var
-RETURN_VALUE         
+LOAD_NAME global_var
+LOAD_CONST FLOAT
+STORE_NAME global_var
+RETURN_VALUE
 
 __init___ref_11 - Mapping:
-LOAD_PARAM           STRING_LEN_S_ENT_HIGH
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-RETURN_VALUE         
+LOAD_PARAM  STRING_LEN_S_ENT_HIGH
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+RETURN_VALUE
 
 instance_method_ref_12 - Mapping:
-LOAD_PARAM           self
-LOAD_ATTR            STRING_LEN_S_ENT_HIGH
-RETURN_VALUE         
+LOAD_PARAM self
+LOAD_ATTR  STRING_LEN_S_ENT_HIGH
+RETURN_VALUE
 
 class_method_ref_13 - Mapping:
-LOAD_PARAM           cls
-LOAD_ATTR            class_variable
-RETURN_VALUE         
+LOAD_PARAM cls
+LOAD_ATTR class_variable
+RETURN_VALUE
 
 static_method_ref_14 - Mapping:
-LOAD_CONST           "static"
-RETURN_VALUE         
+LOAD_CONST "static"
+RETURN_VALUE
 
 MyClass_ref_15 - Mapping:
-LOAD_CONST           FLOAT
-STORE_NAME           class_variable
-MAKE_FUNCTION        __init___ref_11
-STORE_NAME           __init__
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           instance_method
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           class_method
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           static_method
+LOAD_CONST FLOAT
+STORE_NAME class_variable
+MAKE_FUNCTION __init___ref_11
+STORE_NAME __init__
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME instance_method
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME class_method
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME static_method
 
 method_a_ref_16 - Mapping:
-LOAD_CONST           "A"
-RETURN_VALUE         
+LOAD_CONST "A"
+RETURN_VALUE
 
 ParentA_ref_17 - Mapping:
-MAKE_FUNCTION        method_a_ref_16
-STORE_NAME           method_a
+MAKE_FUNCTION method_a_ref_16
+STORE_NAME method_a
 
 method_b_ref_18 - Mapping:
-LOAD_CONST           "B"
-RETURN_VALUE         
+LOAD_CONST "B"
+RETURN_VALUE
 
 ParentB_ref_19 - Mapping:
-MAKE_FUNCTION        method_b_ref_18
-STORE_NAME           method_b
+MAKE_FUNCTION method_b_ref_18
+STORE_NAME method_b
 
 method_c_ref_20 - Mapping:
-LOAD_CONST           "C"
-RETURN_VALUE         
+LOAD_CONST "C"
+RETURN_VALUE
 
 Child_ref_21 - Mapping:
-MAKE_FUNCTION        method_c_ref_20
-STORE_NAME           method_c
+MAKE_FUNCTION method_c_ref_20
+STORE_NAME method_c
 
 __init___ref_22 - Mapping:
-LOAD_PARAM           x
-STORE_NAME           self.x
-LOAD_PARAM           y
-STORE_NAME           self.y
-RETURN_VALUE         
+LOAD_PARAM x
+STORE_NAME self.x
+LOAD_PARAM y
+STORE_NAME self.y
+RETURN_VALUE
 
 __add___ref_23 - Mapping:
-LOAD_NAME            Vector
-LOAD_PARAM           self
-LOAD_ATTR            x
-LOAD_PARAM           other
-LOAD_ATTR            x
-BINARY_ADD           
-LOAD_PARAM           self
-LOAD_ATTR            y
-LOAD_PARAM           other
-LOAD_ATTR            y
-BINARY_ADD           
-CALL_FUNCTION        INTEGER
-RETURN_VALUE         
+LOAD_NAME Vector
+LOAD_PARAM self
+LOAD_ATTR x
+LOAD_PARAM other
+LOAD_ATTR x
+BINARY_ADD
+LOAD_PARAM self
+LOAD_ATTR y
+LOAD_PARAM other
+LOAD_ATTR y
+BINARY_ADD
+CALL_FUNCTION INTEGER
+RETURN_VALUE
 
 __repr___ref_24 - Mapping:
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-RETURN_VALUE         
+LOAD_CONST Vector(
+LOAD_PARAM self
+LOAD_ATTR x
+LOAD_CONST ,
+LOAD_PARAM self
+LOAD_ATTR y
+LOAD_CONST )
+BINARY_OPERATION
+RETURN_VALUE
 
 __len___ref_25 - Mapping:
-LOAD_CONST           FLOAT
-RETURN_VALUE         
+LOAD_CONST FLOAT
+RETURN_VALUE
 
 __getitem___ref_26 - Mapping:
-LOAD_PARAM           index
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_PARAM           self
-LOAD_ATTR            x
-RETURN_VALUE         
-LOAD_PARAM           index
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_PARAM           self
-LOAD_ATTR            y
-RETURN_VALUE         
-LOAD_NAME            IndexError
-BINARY_OPERATION     
-RETURN_VALUE         
+LOAD_PARAM index
+LOAD_CONST
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_PARAM self
+LOAD_ATTR x
+RETURN_VALUE
+LOAD_PARAM index
+LOAD_CONST FLOAT
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_PARAM self
+LOAD_ATTR y
+RETURN_VALUE
+LOAD_NAME IndexError
+BINARY_OPERATION
+RETURN_VALUE
 
 Vector_ref_27 - Mapping:
-MAKE_FUNCTION        __init___ref_22
-STORE_NAME           __init__
-MAKE_FUNCTION        __add___ref_23
-STORE_NAME           __add__
-MAKE_FUNCTION        __repr___ref_24
-STORE_NAME           __repr__
-MAKE_FUNCTION        __len___ref_25
-STORE_NAME           __len__
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           __getitem__
+MAKE_FUNCTION __init___ref_22
+STORE_NAME __init__
+MAKE_FUNCTION __add___ref_23
+STORE_NAME __add__
+MAKE_FUNCTION __repr___ref_24
+STORE_NAME __repr__
+MAKE_FUNCTION __len___ref_25
+STORE_NAME __len__
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME __getitem__
 
 __init___ref_28 - Mapping:
-LOAD_PARAM           radius
-STORE_NAME           self._radius
-RETURN_VALUE         
+LOAD_PARAM radius
+STORE_NAME self._radius
+RETURN_VALUE
 
 radius_ref_29 - Mapping:
-LOAD_PARAM           self
-LOAD_ATTR            _radius
-RETURN_VALUE         
+LOAD_PARAM self
+LOAD_ATTR _radius
+RETURN_VALUE
 
 radius_ref_30 - Mapping:
-LOAD_PARAM           value
-LOAD_CONST           FLOAT
-COMPARE_OP           
-POP_JUMP_IF_FALSE    INTEGER
-LOAD_NAME            ValueError
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-BINARY_OPERATION     
-LOAD_PARAM           value
-STORE_NAME           self._radius
-RETURN_VALUE         
+LOAD_PARAM value
+LOAD_CONST
+COMPARE_OP
+POP_JUMP_IF_FALSE INTEGER
+LOAD_NAME ValueError
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+BINARY_OPERATION
+LOAD_PARAM value
+STORE_NAME self._radius
+RETURN_VALUE
 
 area_ref_31 - Mapping:
-LOAD_CONST           FLOAT
-LOAD_PARAM           self
-LOAD_ATTR            _radius
-LOAD_CONST           FLOAT
-BINARY_POWER         
-BINARY_MULTIPLY      
-RETURN_VALUE         
+LOAD_CONST FLOAT
+LOAD_PARAM self
+LOAD_ATTR _radius
+LOAD_CONST FLOAT
+BINARY_POWER
+BINARY_MULTIPLY
+RETURN_VALUE
 
 Circle_ref_32 - Mapping:
-MAKE_FUNCTION        __init___ref_28
-STORE_NAME           __init__
-MAKE_FUNCTION        radius_ref_29
-STORE_NAME           radius
-MAKE_FUNCTION        radius_ref_30
-STORE_NAME           radius
-MAKE_FUNCTION        area_ref_31
-STORE_NAME           area
+MAKE_FUNCTION __init___ref_28
+STORE_NAME __init__
+MAKE_FUNCTION radius_ref_29
+STORE_NAME radius
+MAKE_FUNCTION radius_ref_30
+STORE_NAME radius
+MAKE_FUNCTION area_ref_31
+STORE_NAME area
 
 wrapper_ref_33 - Mapping:
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            func
-LOAD_PARAM           args
-LOAD_PARAM           kwargs
-BINARY_OPERATION     
-STORE_NAME           result
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-CALL_FUNCTION        INTEGER
-LOAD_NAME            result
-RETURN_VALUE         
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME func
+LOAD_PARAM args
+LOAD_PARAM kwargs
+BINARY_OPERATION
+STORE_NAME result
+LOAD_NAME print
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+CALL_FUNCTION INTEGER
+LOAD_NAME result
+RETURN_VALUE
 
 my_decorator_ref_34 - Mapping:
-MAKE_FUNCTION        wrapper_ref_33
-STORE_NAME           wrapper
-LOAD_NAME            wrapper
-RETURN_VALUE         
+MAKE_FUNCTION wrapper_ref_33
+STORE_NAME wrapper
+LOAD_NAME wrapper
+RETURN_VALUE
 
 say_whee_ref_35 - Mapping:
-LOAD_CONST           "Whee!"
-RETURN_VALUE         
+LOAD_CONST "Whee!"
+RETURN_VALUE
 
 my_generator_ref_36 - Mapping:
-LOAD_NAME            range
-LOAD_PARAM           n
-CALL_FUNCTION        INTEGER
-LOAD_CONST           
-BINARY_OPERATION     
-RETURN_VALUE         
+LOAD_NAME range
+LOAD_PARAM n
+CALL_FUNCTION INTEGER
+LOAD_CONST
+BINARY_OPERATION
+RETURN_VALUE
 
 my_coroutine_ref_37 - Mapping:
-LOAD_NAME            PROCESS_CONCURRENCY
-LOAD_ATTR            sleep
-LOAD_CONST           FLOAT
-CALL_FUNCTION        INTEGER
-AWAIT_EXPRESSION     
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-RETURN_VALUE         
+LOAD_NAME asyncio
+LOAD_ATTR sleep
+LOAD_CONST FLOAT
+CALL_FUNCTION INTEGER
+AWAIT_EXPRESSION
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+RETURN_VALUE
 
 main_async_ref_38 - Mapping:
-LOAD_NAME            my_coroutine
-CALL_FUNCTION        INTEGER
-AWAIT_EXPRESSION     
-STORE_NAME           result
-LOAD_NAME            USER_IO
-LOAD_CONST           STRING_FILE_PATH
-CALL_FUNCTION        INTEGER
-RETURN_VALUE         
+LOAD_NAME my_coroutine
+CALL_FUNCTION
+AWAIT_EXPRESSION
+STORE_NAME result
+LOAD_NAME print
+LOAD_CONST STRING_FILE_PATH
+CALL_FUNCTION INTEGER
+RETURN_VALUE
 
 __new___ref_39 - Mapping:
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-STORE_NAME           STRING_LEN_S_ENT_HIGH
-LOAD_NAME            super
-CALL_FUNCTION        INTEGER
-LOAD_ATTR            __new__
-LOAD_PARAM           cls
-LOAD_PARAM           name
-LOAD_PARAM           bases
-LOAD_PARAM           dct
-CALL_FUNCTION        INTEGER
-RETURN_VALUE         
+LOAD_CONST  STRING_LEN_S_ENT_HIGH
+STORE_NAME  STRING_LEN_S_ENT_HIGH
+LOAD_NAME super
+CALL_FUNCTION
+LOAD_ATTR __new__
+LOAD_PARAM cls
+LOAD_PARAM name
+LOAD_PARAM bases
+LOAD_PARAM dct
+CALL_FUNCTION INTEGER
+RETURN_VALUE
 
 MyMeta_ref_40 - Mapping:
-MAKE_FUNCTION        __new___ref_39
-STORE_NAME           __new__
+MAKE_FUNCTION __new___ref_39
+STORE_NAME __new__
 
 MyClassWithMeta_ref_41 - Mapping:
 
 
 hinted_function_ref_42 - Mapping:
-LOAD_CONST           STRING_LEN_S_ENT_HIGH
-RETURN_VALUE         
+LOAD_PARAM name
+LOAD_CONST is
+LOAD_PARAM age
+LOAD_CONST years old.
+BINARY_OPERATION
+RETURN_VALUE
 
 DynamicClass_ref_43 - Mapping:
 
 
 function_with_ellipsis_ref_44 - Mapping:
-LOAD_CONST           ...
-RETURN_VALUE         
+LOAD_CONST ...
+RETURN_VALUE
 
 lambda_ref_45 - Mapping:
-LOAD_PARAM           x
-LOAD_CONST           FLOAT
-BINARY_MULTIPLY      
-RETURN_VALUE         
+LOAD_PARAM x
+LOAD_CONST FLOAT
+BINARY_MULTIPLY
+RETURN_VALUE
 
 __enter___ref_46 - Mapping:
-LOAD_CONST           "context_value"
-RETURN_VALUE         
+LOAD_CONST "context_value"
+RETURN_VALUE
 
 __exit___ref_47 - Mapping:
-LOAD_CONST           BOOLEAN
-RETURN_VALUE         
+LOAD_CONST
+RETURN_VALUE
 
 SimpleContext_ref_48 - Mapping:
-MAKE_FUNCTION        STRING_LEN_S_ENT_HIGH
-STORE_NAME           __enter__
-MAKE_FUNCTION        __exit___ref_47
-STORE_NAME           __exit__
+MAKE_FUNCTION  STRING_LEN_S_ENT_HIGH
+STORE_NAME __enter__
+MAKE_FUNCTION __exit___ref_47
+STORE_NAME __exit__
 
 empty_func_ref_49 - Mapping:
-RETURN_VALUE         
+RETURN_VALUE
 
 test_raise_ref_50 - Mapping:
-LOAD_NAME            ValueError
-LOAD_CONST           "Test error"
-CALL_FUNCTION        INTEGER
-BINARY_OPERATION     
-RETURN_VALUE         
+LOAD_NAME ValueError
+LOAD_CONST "Test error"
+CALL_FUNCTION INTEGER
+BINARY_OPERATION
+RETURN_VALUE
 
 test_global_ref_51 - Mapping:
-LOAD_NAME            global_var
-LOAD_CONST           "modified"
-STORE_NAME           global_var
-RETURN_VALUE         
+LOAD_NAME global_var
+LOAD_CONST "modified"
+STORE_NAME global_var
+RETURN_VALUE
 
 inner_ref_52 - Mapping:
-LOAD_NAME            nonlocal_var
-LOAD_CONST           "inner"
-STORE_NAME           nonlocal_var
-RETURN_VALUE         
+LOAD_NAME nonlocal_var
+LOAD_CONST "inner"
+STORE_NAME nonlocal_var
+RETURN_VALUE
 
 outer_ref_53 - Mapping:
-LOAD_CONST           "outer"
-STORE_NAME           nonlocal_var
-MAKE_FUNCTION        inner_ref_52
-STORE_NAME           inner
-LOAD_NAME            inner
-CALL_FUNCTION        INTEGER
-LOAD_NAME            nonlocal_var
-RETURN_VALUE         
+LOAD_CONST "outer"
+STORE_NAME nonlocal_var
+MAKE_FUNCTION inner_ref_52
+STORE_NAME inner
+LOAD_NAME inner
+CALL_FUNCTION
+LOAD_NAME nonlocal_var
+RETURN_VALUE

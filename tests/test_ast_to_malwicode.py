@@ -43,19 +43,7 @@ def test_python_compilation(python_compiler: ASTCompiler, source_path: Path):
     # Generate output to match the exact expected format with headers and separators
     output_parts = []
     for i, code_obj in enumerate(code_objects):
-        if i == 0:
-            output_parts.append(f"Root CodeObject ({code_obj.name}):")
-        else:
-            output_parts.append(f"\n{code_obj.name}:")
-
-        # Add header like print_code_object does
-        header = f"--- CodeObject '{code_obj.name}' from {code_obj.path.name} (lines {code_obj.location[0]}-{code_obj.location[1]}) ---"
-        output_parts.append(header)
         output_parts.append(code_obj.to_string())
-
-        # Add separator
-        separator = "-" * len(header)
-        output_parts.append(separator)
 
     generated_string = "\n".join(output_parts).strip()
     assert generated_string == expected_string
@@ -163,7 +151,7 @@ def test_python_mapping_feature(python_compiler: ASTCompiler, source_path: Path)
 
     generated_mapping_string = "\n".join(mapping_output_parts).strip()
     # Note: This assertion will be updated once the mapping feature is implemented
-    # assert generated_mapping_string == expected_mapping_string
+    assert generated_mapping_string == expected_mapping_string
 
 
 def test_javascript_mapping_feature(js_compiler: ASTCompiler, source_path: Path):
@@ -232,4 +220,4 @@ def test_javascript_mapping_feature(js_compiler: ASTCompiler, source_path: Path)
 
     generated_mapping_string = "\n".join(mapping_output_parts).strip()
     # Note: This assertion will be updated once the mapping feature is implemented
-    # assert generated_mapping_string == expected_mapping_string
+    assert generated_mapping_string == expected_mapping_string
