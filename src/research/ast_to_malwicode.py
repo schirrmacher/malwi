@@ -219,7 +219,6 @@ class Instruction:
         elif is_file_path(argval):
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
         else:
-            return f"{op_code.name}  {argval}"
             if len(argval) <= STRING_MAX_LENGTH:
                 return f"{op_code.name} {argval}"
             if is_escaped_hex(argval):
