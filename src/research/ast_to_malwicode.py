@@ -8,6 +8,7 @@ from tree_sitter import Node
 from typing import Optional, Any, List, Tuple, Dict
 
 from tree_sitter import Parser, Language
+from tqdm import tqdm
 from research.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
@@ -2337,7 +2338,7 @@ def main() -> None:
             csv_writer_instance = CSVWriter(save_path)
             print(f"CSV output will be saved to: {save_path.resolve()}")
 
-        for source in source_files:
+        for source in tqdm(source_files, desc="Processing files", unit="file"):
             lang = None
             if source.suffix == ".py":
                 lang = "python"
@@ -2352,7 +2353,6 @@ def main() -> None:
                     # Write to CSV
                     csv_writer_instance.write_code_objects(code_objects)
                 else:
-                    # Print to console
                     for i, code_obj in enumerate(code_objects):
                         print(f"{code_obj.to_string(format_mode='mapped')}")
             else:
