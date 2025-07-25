@@ -199,10 +199,15 @@ class Instruction:
             OpCode.JUMP_FORWARD,
         ):
             return f"{op_code.name}"
-        if op_code in [OpCode.MAKE_CLASS, OpCode.MAKE_FUNCTION]:
+        elif op_code in [OpCode.MAKE_CLASS, OpCode.MAKE_FUNCTION]:
             return f"{op_code.name}"
-        elif op_code in [OpCode.IMPORT_FROM, OpCode.IMPORT_NAME]:
-            return f"{op_code.name} {argval}"
+        elif (
+            op_code in [OpCode.IMPORT_FROM, OpCode.IMPORT_NAME]
+            and argval in import_mapping
+        ):
+            return f"{op_code.name} {import_mapping.get(argval)}"
+        elif op_code in [OpCode.LOAD_NAME] and argval in function_mapping:
+            return f"{op_code.name} {function_mapping.get(argval)}"
         elif op_code in [OpCode.CALL_FUNCTION]:
             return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
@@ -224,20 +229,17 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
         elif len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
-
         if is_escaped_hex(argval):
             prefix = SpecialCases.STRING_ESCAPED_HEX.value
         elif is_hex(argval):
             prefix = SpecialCases.STRING_HEX.value
         elif is_base64(argval):
             prefix = SpecialCases.STRING_BASE64.value
-        
+
         # Generate length and entropy suffix for all the above cases
         length_suffix = map_string_length_to_token(len(argval))
         try:
-            entropy = calculate_shannon_entropy(
-                argval.encode("utf-8", errors="ignore")
-            )
+            entropy = calculate_shannon_entropy(argval.encode("utf-8", errors="ignore"))
         except Exception:
             entropy = 0.0
         entropy_suffix = map_entropy_to_token(entropy)
