@@ -170,12 +170,15 @@ class Instruction:
         """
         ATTENTION!
         This is the most critical function for training!
-        This mapping was modified a couple of time to improve the overall F1
+        This mapping was modified hundreds of times to improve the overall F1
         score of the model.
 
         Learnings:
-        - The raw string length exposed to the model has huge impact on performance
-        - The
+        - The string length (STRING_MAX_LENGTH) exposed to the model has huge impact on performance
+            - We started with very short strings, leading to much worse performance
+        - Import mapping has a huge impact on performance (~20% on the F1 score)
+            - Maybe this is because more functions create the same hash (less name variations)
+            - Creating more unique training samples, allowing the model to generalize better
         """
 
         prefix = "STRING"
