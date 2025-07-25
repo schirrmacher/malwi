@@ -218,9 +218,6 @@ class Instruction:
             return f"{op_code.name} {function_mapping.get(argval)}"
         elif op_code in [OpCode.CALL_FUNCTION]:
             return f"{op_code.name} {argval}"
-        elif op_code == OpCode.LOAD_ATTR_CHAIN:
-            # For chained attribute access, return the full path as-is
-            return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
             return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
         elif is_localhost(argval):
@@ -238,8 +235,10 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_ENCODING.value}"
         elif is_file_path(argval):
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
-        elif len(argval) <= STRING_MAX_LENGTH:
+
+        if len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
+
         if is_escaped_hex(argval):
             prefix = SpecialCases.STRING_ESCAPED_HEX.value
         elif is_hex(argval):
