@@ -93,6 +93,7 @@ class OpCode(Enum):
     BUILD_MAP = auto()
     BINARY_SUBSCR = auto()
     LOAD_ATTR = auto()
+    LOAD_ATTR_CHAIN = auto()  # For chained attribute access like obj.prop1.func1
     UNARY_NEGATIVE = auto()
     UNARY_NOT = auto()
     UNARY_INVERT = auto()
@@ -209,9 +210,15 @@ class Instruction:
             and argval in import_mapping
         ):
             return f"{op_code.name} {import_mapping.get(argval)}"
-        elif op_code in [OpCode.LOAD_NAME] and argval in function_mapping:
+        elif (
+            op_code in [OpCode.LOAD_NAME, OpCode.LOAD_ATTR_CHAIN]
+            and argval in function_mapping
+        ):
             return f"{op_code.name} {function_mapping.get(argval)}"
         elif op_code in [OpCode.CALL_FUNCTION]:
+            return f"{op_code.name} {argval}"
+        elif op_code == OpCode.LOAD_ATTR_CHAIN:
+            # For chained attribute access, return the full path as-is
             return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
             return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
@@ -498,6 +505,51 @@ class ASTCompiler:
                 return True
 
         return False
+
+    def _is_chained_attribute_access(self, node: Node) -> bool:
+        """Check if this is part of a chained attribute access (e.g., obj.prop1.func1)."""
+        if node.type not in ["attribute", "member_expression"]:
+            return False
+
+        # Check if the object part is also an attribute/member expression
+        object_node = node.child_by_field_name("object") or node.child_by_field_name(
+            "value"
+        )
+        if object_node and object_node.type in ["attribute", "member_expression"]:
+            return True
+
+        return False
+
+    def _extract_chained_attribute_path(
+        self, node: Node, source_code_bytes: bytes
+    ) -> str:
+        """Extract the full path of a chained attribute access (e.g., 'obj.prop1.func1')."""
+        if node.type not in ["attribute", "member_expression"]:
+            return self._get_node_text(node, source_code_bytes)
+
+        parts = []
+        current = node
+
+        # Walk up the chain collecting attribute names
+        while current and current.type in ["attribute", "member_expression"]:
+            attribute_node = current.child_by_field_name(
+                "attribute"
+            ) or current.child_by_field_name("property")
+            if attribute_node:
+                attr_name = self._get_node_text(attribute_node, source_code_bytes)
+                parts.insert(0, attr_name)  # Insert at beginning to maintain order
+
+            # Move to the object part
+            current = current.child_by_field_name(
+                "object"
+            ) or current.child_by_field_name("value")
+
+        # Add the base object name
+        if current:
+            base_name = self._get_node_text(current, source_code_bytes)
+            parts.insert(0, base_name)
+
+        return ".".join(parts)
 
     def _extract_function_parameters(self, node: Node, source_code_bytes: bytes) -> set:
         """Extract parameter names from function definition node."""
@@ -1786,21 +1838,34 @@ class ASTCompiler:
 
         elif node_type in ["attribute", "member_expression"]:
             # Handle attribute access: obj.attr (Python) or obj.prop (JavaScript)
-            object_node = node.child_by_field_name(
-                "object"
-            ) or node.child_by_field_name("value")
-            attribute_node = node.child_by_field_name(
-                "attribute"
-            ) or node.child_by_field_name("property")
-
-            if object_node:
-                bytecode.extend(
-                    self._generate_bytecode(object_node, source_code_bytes, file_path)
+            # Check if this is part of a chained access
+            if self._is_chained_attribute_access(node):
+                # Extract the full chained path (e.g., "obj.prop1.func1")
+                full_path = self._extract_chained_attribute_path(
+                    node, source_code_bytes
                 )
+                # Emit as a single LOAD_ATTR_CHAIN with the full path
+                bytecode.append(emit(OpCode.LOAD_ATTR_CHAIN, full_path))
+            else:
+                # Handle simple attribute access (e.g., "obj.attr")
+                object_node = node.child_by_field_name(
+                    "object"
+                ) or node.child_by_field_name("value")
+                attribute_node = node.child_by_field_name(
+                    "attribute"
+                ) or node.child_by_field_name("property")
 
-            if attribute_node:
-                attr_name = self._get_node_text(attribute_node, source_code_bytes)
-                bytecode.append(emit(OpCode.LOAD_ATTR, attr_name))
+                if object_node:
+                    # For non-chained access, we still need to load the object first
+                    bytecode.extend(
+                        self._generate_bytecode(
+                            object_node, source_code_bytes, file_path
+                        )
+                    )
+
+                if attribute_node:
+                    attr_name = self._get_node_text(attribute_node, source_code_bytes)
+                    bytecode.append(emit(OpCode.LOAD_ATTR, attr_name))
 
         elif node_type in ["f_string", "formatted_string_literal"]:
             # Handle f-string with interpolation: f"Hello {name}!"

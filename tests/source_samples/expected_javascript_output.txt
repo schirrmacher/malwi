@@ -814,9 +814,7 @@ CALL_FUNCTION        2
 STORE_NAME           childInstance
 ASYNC_FUNCTION       <asyncFunc_ref_24>
 STORE_NAME           asyncFunc
-LOAD_NAME            obj
-LOAD_ATTR            deep
-LOAD_ATTR            property
+LOAD_ATTR_CHAIN      obj.deep.property
 STORE_NAME           optional
 LOAD_NAME            nullVal
 LOAD_CONST           "default"
@@ -971,9 +969,7 @@ BINARY_SUBSCR
 LOAD_CONST           0.0
 BINARY_SUBSCR        
 STORE_NAME           firstServer
-LOAD_NAME            nestedStructure
-LOAD_ATTR            config
-LOAD_ATTR            ports
+LOAD_ATTR_CHAIN      nestedStructure.config.ports
 LOAD_CONST           1.0
 BINARY_SUBSCR        
 STORE_NAME           httpsPort
