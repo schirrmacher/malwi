@@ -307,6 +307,7 @@
     "getwindowsversion": "SYSINFO_OS",
     "sys.getwindowsversion": "SYSINFO_OS",
     "run": "PROCESS_MANAGEMENT",
+    "subprocess": "PROCESS_MANAGEMENT",
     "subprocess.run": "PROCESS_MANAGEMENT",
     "subprocess.call": "PROCESS_MANAGEMENT",
     "Popen": "PROCESS_MANAGEMENT",
