@@ -42,6 +42,9 @@ SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 SPECIAL_TOKENS: Set[str] = read_json_from_file(
     SCRIPT_DIR / "syntax_mapping" / "special_tokens.json"
 )
+FUNCTION_TOKENS: Set[str] = read_json_from_file(
+    SCRIPT_DIR / "syntax_mapping" / "function_mapping.json"
+)
 
 DEFAULT_MODEL_NAME = "distilbert-base-uncased"
 DEFAULT_TOKENIZER_CLI_PATH = Path("malwi_models")
@@ -154,7 +157,11 @@ def create_or_load_tokenizer(
         bpe_default_special_tokens.extend(bytecode_op_names)
 
         combined_special_tokens = list(
-            set(bpe_default_special_tokens + list(global_special_tokens))
+            set(
+                bpe_default_special_tokens
+                + list(global_special_tokens)
+                + list(FUNCTION_TOKENS.get("python"))
+            )
         )
 
         bpe_trainer_obj.train_from_iterator(
