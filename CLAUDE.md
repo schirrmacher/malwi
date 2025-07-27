@@ -40,6 +40,12 @@ uv run ruff format .
 ./cmds/preprocess_and_train_svm.sh
 ```
 
+**Regenerate Test Data:**
+```bash
+# When compiler changes affect output format
+uv run python util/regenerate_test_data.py
+```
+
 ## Release
 
 1. Run pytests

@@ -8,7 +8,10 @@
       "Bash(uv sync:*)",
       "Bash(git add:*)",
       "Bash(cat:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(chmod:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)"
     ]
   },
   "enableAllProjectMcpServers": false
