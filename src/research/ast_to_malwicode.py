@@ -30,7 +30,6 @@ from research.mapping import (
     is_file_path,
     contains_url,
     is_localhost,
-    STRING_MAX_LENGTH,
     SENSITIVE_PATHS,
 )
 
@@ -181,8 +180,11 @@ class Instruction:
         - Import mapping has a huge impact on performance (~20% on the F1 score)
             - Maybe this is because more functions create the same hash (less name variations)
             - Creating more unique training samples, allowing the model to generalize better
+        - Tokenization has huge impact on performance as well
+            - Splitting certain instructions might destroy the context understanding
         """
 
+        STRING_MAX_LENGTH = 20
         prefix = "STRING"
         function_mapping = FUNCTION_MAPPING.get(language, {})
         import_mapping = IMPORT_MAPPING.get(language, {})
@@ -192,12 +194,14 @@ class Instruction:
 
         argval = clean_string_literal(reduce_whitespace(remove_newlines(str(arg))))
 
+        # Map basic data types
         if op_code == OpCode.LOAD_CONST and isinstance(arg, bool):
             return f"{op_code.name} {SpecialCases.BOOLEAN.value}"
         elif op_code == OpCode.LOAD_CONST and isinstance(arg, int):
             return f"{op_code.name} {SpecialCases.INTEGER.value}"
         elif op_code == OpCode.LOAD_CONST and isinstance(arg, float):
             return f"{op_code.name} {SpecialCases.FLOAT.value}"
+        # Map jumps for conditional logic
         elif op_code in (
             OpCode.POP_JUMP_IF_FALSE,
             OpCode.POP_JUMP_IF_TRUE,
@@ -211,11 +215,29 @@ class Instruction:
             and argval in import_mapping
         ):
             return f"{op_code.name} {import_mapping.get(argval)}"
+        # The function can be fully replaced by a single token
         elif (
             op_code in [OpCode.LOAD_NAME, OpCode.LOAD_ATTR_CHAIN]
             and argval in function_mapping
         ):
-            return f"{op_code.name} {function_mapping.get(argval)}"
+            return f"{op_code.name} {argval}"
+        # We might want to maintain the function name since it cannot be mapped,
+        # but contains interesting trigger words
+        elif op_code in [OpCode.LOAD_NAME, OpCode.LOAD_ATTR_CHAIN] and any(
+            key in argval for key in function_mapping
+        ):
+            if len(argval) > STRING_MAX_LENGTH:
+                longest_match_length = 0
+                longest_match = ""
+                for key in function_mapping:
+                    if key in argval:
+                        match_length = len(key)
+                        if match_length > longest_match_length:
+                            longest_match_length = len(key)
+                            longest_match = key
+                return f"{op_code.name} {longest_match}"
+            else:
+                return f"{op_code.name} {argval}"
         elif op_code in [OpCode.CALL_FUNCTION]:
             return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
@@ -236,6 +258,7 @@ class Instruction:
         elif is_file_path(argval):
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
 
+        # Cut strings when too long
         if len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
 
