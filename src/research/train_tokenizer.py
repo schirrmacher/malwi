@@ -1,5 +1,6 @@
 import os
 import dis
+import json
 import shutil
 import pathlib
 import argparse
@@ -23,6 +24,45 @@ from common.messaging import (
 DEFAULT_TOKENIZER_OUTPUT_PATH = Path("malwi_models")
 DEFAULT_MAX_LENGTH = 512
 DEFAULT_VOCAB_SIZE = 30522
+DEFAULT_FUNCTION_MAPPING_PATH = Path(
+    "src/research/syntax_mapping/function_mapping.json"
+)
+
+
+def load_base_tokens_from_function_mapping(
+    function_mapping_path: Path = DEFAULT_FUNCTION_MAPPING_PATH,
+) -> Set[str]:
+    """
+    Load base tokens from the function mapping JSON file.
+
+    Args:
+        function_mapping_path: Path to the function_mapping.json file
+
+    Returns:
+        Set of function names that should be included as base tokens
+    """
+    try:
+        with open(function_mapping_path, "r") as f:
+            function_mapping = json.load(f)
+
+        # Extract all function keys from the "python" section
+        if "python" in function_mapping:
+            base_tokens = set(function_mapping["python"].keys())
+            info(f"Loaded {len(base_tokens)} base tokens from {function_mapping_path}")
+            return base_tokens
+        else:
+            warning(f"No 'python' section found in {function_mapping_path}")
+            return set()
+
+    except FileNotFoundError:
+        warning(f"Function mapping file not found at {function_mapping_path}")
+        return set()
+    except json.JSONDecodeError as e:
+        error(f"Error parsing JSON from {function_mapping_path}: {e}")
+        return set()
+    except Exception as e:
+        error(f"Error loading base tokens from {function_mapping_path}: {e}")
+        return set()
 
 
 def load_asts_from_csv(
@@ -83,22 +123,31 @@ def compute_tokens_from_texts(texts: list[str]) -> Set[str]:
 
 
 def create_special_tokens_from_data(
-    all_texts: list[str], top_n_tokens: int = 5000
+    all_texts: list[str], top_n_tokens: int = 5000, base_tokens: Set[str] = None
 ) -> Set[str]:
     """
     Create special tokens from the most frequent tokens in the input data.
-    Takes the top N most common tokens regardless of frequency.
+    First includes all base tokens, then adds the most frequent tokens from data
+    until reaching the top_n_tokens limit.
 
     Args:
         all_texts: List of all training texts
-        top_n_tokens: Number of most frequent tokens to use as special tokens
+        top_n_tokens: Maximum number of tokens to include as special tokens
+        base_tokens: Set of base tokens to always include (from function mapping)
 
     Returns:
-        Set of special tokens derived from the data
+        Set of special tokens derived from base tokens + frequent data tokens
     """
     info("Computing token frequencies from input data...")
 
-    # Count token frequencies
+    # Start with base tokens (always included)
+    if base_tokens is None:
+        base_tokens = set()
+
+    special_tokens = base_tokens.copy()
+    info(f"Starting with {len(base_tokens)} base tokens from function mapping")
+
+    # Count token frequencies from input data
     token_counts = {}
     total_texts = len(all_texts)
 
@@ -115,20 +164,32 @@ def create_special_tokens_from_data(
             if token:
                 token_counts[token] = token_counts.get(token, 0) + 1
 
-    # Sort all tokens by frequency (descending) and take top N
+    # Sort all tokens by frequency (descending)
     sorted_tokens = sorted(token_counts.items(), key=lambda x: x[1], reverse=True)
 
-    # Take the top N most frequent tokens
-    top_tokens = sorted_tokens[:top_n_tokens]
-    special_tokens = set()
-    for token, count in top_tokens:
-        special_tokens.add(token)
+    # Add most frequent tokens until we reach top_n_tokens limit
+    # Skip tokens that are already in base_tokens
+    tokens_added_from_data = 0
+    remaining_slots = top_n_tokens - len(base_tokens)
 
-    info(
-        f"Created {len(special_tokens)} special tokens from {len(token_counts)} unique tokens"
-    )
-    if top_tokens:
-        info(f"Frequency range: {top_tokens[0][1]} to {top_tokens[-1][1]}")
+    for token, count in sorted_tokens:
+        if len(special_tokens) >= top_n_tokens:
+            break
+        if token not in special_tokens:
+            special_tokens.add(token)
+            tokens_added_from_data += 1
+            if tokens_added_from_data >= remaining_slots:
+                break
+
+    info(f"Final token composition:")
+    info(f"  - Base tokens from function mapping: {len(base_tokens)}")
+    info(f"  - Frequent tokens from data: {tokens_added_from_data}")
+    info(f"  - Total special tokens: {len(special_tokens)}")
+
+    if sorted_tokens:
+        info(
+            f"Data token frequency range: {sorted_tokens[0][1]} to {sorted_tokens[-1][1]}"
+        )
 
     return special_tokens
 
@@ -256,15 +317,21 @@ def train_tokenizer(args):
 
     info(f"Total training texts: {len(all_texts_for_training)}")
 
-    # Compute special tokens from the input data
+    # Load base tokens from function mapping
+    info("Loading base tokens from function mapping...")
+    base_tokens = load_base_tokens_from_function_mapping(args.function_mapping_path)
+
+    # Compute special tokens from the input data (including base tokens)
     info("Computing special tokens from input data...")
     computed_special_tokens = create_special_tokens_from_data(
         all_texts_for_training,
         top_n_tokens=args.top_n_tokens,
+        base_tokens=base_tokens,
     )
 
     # Optional: Save computed tokens for inspection
     if args.save_computed_tokens:
+        # Save all computed special tokens
         tokens_file = Path(args.output_path) / "computed_special_tokens.txt"
         tokens_file.parent.mkdir(parents=True, exist_ok=True)
         with open(tokens_file, "w") as f:
@@ -274,6 +341,16 @@ def train_tokenizer(args):
         info(
             f"Saved {len(computed_special_tokens)} computed special tokens to {tokens_file}"
         )
+
+        # Save base tokens separately for inspection
+        base_tokens_file = (
+            Path(args.output_path) / "base_tokens_from_function_mapping.txt"
+        )
+        with open(base_tokens_file, "w") as f:
+            sorted_base_tokens = sorted(base_tokens)
+            for token in sorted_base_tokens:
+                f.write(f"{token}\n")
+        info(f"Saved {len(base_tokens)} base tokens to {base_tokens_file}")
 
     try:
         tokenizer = create_or_load_tokenizer(
@@ -355,6 +432,12 @@ if __name__ == "__main__":
         "--save-computed-tokens",
         action="store_true",
         help="Save computed special tokens to a text file for inspection",
+    )
+    parser.add_argument(
+        "--function-mapping-path",
+        type=Path,
+        default=DEFAULT_FUNCTION_MAPPING_PATH,
+        help=f"Path to function mapping JSON file (default: {DEFAULT_FUNCTION_MAPPING_PATH})",
     )
 
     args = parser.parse_args()
