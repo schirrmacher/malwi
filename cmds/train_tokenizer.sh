@@ -20,8 +20,9 @@ echo
 
 # Train custom tokenizer
 echo "🚀 Training custom tokenizer..."
-echo "   • Using top 5000 most frequent tokens from data"
+echo "   • Using 438 base tokens from function mapping + top frequent tokens from data"
 echo "   • Training on: benign_processed.csv, malicious_processed.csv"
+echo "   • Total tokens: 5000 (438 base + 4562 data-derived)"
 echo "   • Output directory: malwi_models/"
 echo "   • Saving computed tokens for inspection"
 echo
@@ -42,7 +43,8 @@ echo "   • tokenizer.json - Main tokenizer configuration"
 echo "   • tokenizer_config.json - Tokenizer metadata"
 echo "   • vocab.json - Vocabulary mapping"
 echo "   • merges.txt - BPE merge rules"
-echo "   • computed_special_tokens.txt - List of computed tokens"
+echo "   • computed_special_tokens.txt - All special tokens (base + data)"
+echo "   • base_tokens_from_function_mapping.txt - Base tokens only"
 echo
 echo "📖 Next steps:"
 echo "   • Review computed_special_tokens.txt if needed"
