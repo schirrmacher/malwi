@@ -1,1408 +1,1408 @@
-IMPORT_NAME          React
-LOAD_CONST           'react'
-IMPORT_NAME          fs
-LOAD_CONST           'fs'
-IMPORT_NAME          path
-LOAD_CONST           'path'
-IMPORT_NAME          crypto
-LOAD_CONST           'crypto'
-IMPORT_NAME          os
-LOAD_CONST           'os'
-IMPORT_NAME          child_process
-LOAD_CONST           'child_process'
-IMPORT_FROM          readFile
-IMPORT_FROM          writeFile
-IMPORT_FROM          existsSync
-LOAD_CONST           'fs'
-IMPORT_FROM          join
-IMPORT_FROM          resolve
-IMPORT_FROM          dirname
-IMPORT_FROM          basename
-LOAD_CONST           'path'
-IMPORT_FROM          createHash
-IMPORT_FROM          randomBytes
-IMPORT_FROM          pbkdf2Sync
-LOAD_CONST           'crypto'
-IMPORT_FROM          platform
-IMPORT_FROM          arch
-IMPORT_FROM          tmpdir
-IMPORT_FROM          homedir
-LOAD_CONST           'os'
-IMPORT_FROM          exec
-IMPORT_FROM          spawn
-IMPORT_FROM          fork
-LOAD_CONST           'child_process'
-IMPORT_NAME          express
-IMPORT_FROM          Router
-IMPORT_FROM          static
-IMPORT_FROM          staticFiles
-LOAD_CONST           'express'
-IMPORT_NAME          axios
-IMPORT_FROM          get
-IMPORT_FROM          post
-IMPORT_FROM          put
-IMPORT_FROM          delete
-IMPORT_FROM          del
-LOAD_CONST           'axios'
-IMPORT_FROM          readFile
-IMPORT_FROM          read
-IMPORT_FROM          writeFile
-IMPORT_FROM          write
-LOAD_CONST           'fs'
-IMPORT_FROM          join
-IMPORT_FROM          pathJoin
-IMPORT_FROM          resolve
-IMPORT_FROM          pathResolve
-LOAD_CONST           'path'
-IMPORT_FROM          createHash
-IMPORT_FROM          hash
-IMPORT_FROM          randomBytes
-IMPORT_FROM          random
-LOAD_CONST           'crypto'
-IMPORT_NAME          fsModule
-LOAD_CONST           'fs'
-IMPORT_NAME          pathModule
-LOAD_CONST           'path'
-IMPORT_NAME          cryptoModule
-LOAD_CONST           'crypto'
-IMPORT_NAME          osModule
-LOAD_CONST           'os'
-LOAD_CONST           'core-js/stable'
-LOAD_CONST           './malicious-polyfill.js'
-LOAD_CONST           '../../../config/secret-keys.json'
-IMPORT_NAME          keytar
-LOAD_CONST           'keytar'
-IMPORT_NAME          node_pty
-LOAD_CONST           'node-pty'
-IMPORT_NAME          screenshot_desktop
-LOAD_CONST           'screenshot-desktop'
-IMPORT_NAME          robotjs
-LOAD_CONST           'robotjs'
-IMPORT_NAME          mic
-LOAD_CONST           'mic'
-IMPORT_NAME          systeminformation
-LOAD_CONST           'systeminformation'
-LOAD_CONST           'test-export'
-STORE_NAME           exportedConst
-EXPORT_NAMED         exportedFunction
-MAKE_FUNCTION        <exportedFunction_ref_0>
-STORE_NAME           exportedFunction
-LOAD_CONST           True
-BUILD_MAP            1
-LOAD_NAME            require
-LOAD_CONST           'fs'
-CALL_FUNCTION        1
-STORE_NAME           fs
-LOAD_NAME            require
-LOAD_CONST           'path'
-CALL_FUNCTION        1
-STORE_NAME           path
-LOAD_NAME            require
-LOAD_CONST           'crypto'
-CALL_FUNCTION        1
-STORE_NAME           crypto
-LOAD_NAME            require
-LOAD_CONST           'os'
-CALL_FUNCTION        1
-STORE_NAME           os
-LOAD_NAME            require
-LOAD_CONST           'child_process'
-CALL_FUNCTION        1
-STORE_NAME           childProcess
-LOAD_NAME            require
-LOAD_CONST           'util'
-CALL_FUNCTION        1
-STORE_NAME           util
-LOAD_NAME            require
-LOAD_CONST           'stream'
-CALL_FUNCTION        1
-STORE_NAME           stream
-LOAD_NAME            require
-LOAD_CONST           'events'
-CALL_FUNCTION        1
-STORE_NAME           events
-LOAD_NAME            require
-LOAD_CONST           'fs'
-CALL_FUNCTION        1
-STORE_NAME           readFile
-STORE_NAME           writeFile
-STORE_NAME           existsSync
-LOAD_NAME            require
-LOAD_CONST           'path'
-CALL_FUNCTION        1
-STORE_NAME           join
-STORE_NAME           resolve
-STORE_NAME           dirname
-LOAD_NAME            require
-LOAD_CONST           'crypto'
-CALL_FUNCTION        1
-STORE_NAME           createHash
-STORE_NAME           randomBytes
-LOAD_NAME            require
-LOAD_CONST           'child_process'
-CALL_FUNCTION        1
-STORE_NAME           exec
-STORE_NAME           spawn
-LOAD_NAME            require
-LOAD_CONST           'child_process'
-CALL_FUNCTION        1
-STORE_NAME           cp
-LOAD_NAME            require
-LOAD_CONST           'fs'
-CALL_FUNCTION        1
-LOAD_ATTR            promises
-STORE_NAME           fsPromises
-LOAD_NAME            require
-LOAD_CONST           'path'
-CALL_FUNCTION        1
-STORE_NAME           pathUtils
-LOAD_NAME            require
-LOAD_CONST           'os'
-CALL_FUNCTION        1
-STORE_NAME           platform_module
-LOAD_NAME            platform_module
-LOAD_ATTR            platform
-CALL_FUNCTION        0
-STORE_NAME           platform
-JUMP_FORWARD         <JUMP_TARGET>
-JUMP_FORWARD         <JUMP_TARGET>
-LOAD_CONST           'fs'
-STORE_NAME           moduleName
-LOAD_NAME            require
-LOAD_NAME            moduleName
-CALL_FUNCTION        1
-STORE_NAME           dynamicModule
-LOAD_NAME            require
-LOAD_NAME            Buffer
-LOAD_ATTR            from
-LOAD_CONST           'ZnM='
-LOAD_CONST           'base64'
-CALL_FUNCTION        2
-LOAD_ATTR            toString
-CALL_FUNCTION        0
-CALL_FUNCTION        1
-STORE_NAME           encodedModule
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "--- Extended Import Test Cases: COMPLETED ---"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "--- JavaScript Compiler Test Suite: Starting ---"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 1. Basic Syntax and Literals ---"
-CALL_FUNCTION        1
-LOAD_CONST           1.0
-STORE_NAME           a
-LOAD_CONST           2.0
-STORE_NAME           b
-LOAD_CONST           3.0
-STORE_NAME           c
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "1.2. Variable Declarations: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           "hello"
-STORE_NAME           stringLiteral
-BINARY_OPERATION     
-STORE_NAME           templateLiteral
-LOAD_CONST           123.45
-STORE_NAME           numberLiteral
-LOAD_CONST           9007199254740991.0
-STORE_NAME           bigIntLiteral
-LOAD_CONST           True
-STORE_NAME           booleanLiteral
-LOAD_CONST           
-STORE_NAME           nullLiteral
-STORE_NAME           undefinedLiteral
-LOAD_CONST           "value"
-BUILD_MAP            1
-STORE_NAME           objectLiteral
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-LOAD_CONST           3.0
-BUILD_LIST           3
-STORE_NAME           arrayLiteral
-LOAD_CONST           /ab+c/i
-STORE_NAME           regexLiteral
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "1.3. Literals: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 2. Data Types and Operations ---"
-CALL_FUNCTION        1
-LOAD_CONST           10.0
-STORE_NAME           n1
-LOAD_CONST           4.0
-STORE_NAME           n2
-LOAD_NAME            n1
-LOAD_NAME            n2
-BINARY_ADD           
-LOAD_NAME            n1
-LOAD_NAME            n2
-BINARY_SUBTRACT      
-LOAD_NAME            n1
-LOAD_NAME            n2
-BINARY_MULTIPLY      
-LOAD_NAME            n1
-LOAD_NAME            n2
-BINARY_DIVIDE        
-LOAD_NAME            n1
-LOAD_NAME            n2
-BINARY_MODULO        
-LOAD_NAME            n1
-LOAD_CONST           2.0
-BINARY_POWER         
-LOAD_NAME            Math
-LOAD_ATTR            sqrt
-LOAD_CONST           144.0
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "2.1. Number and Math: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           "hello"
-STORE_NAME           str1
-LOAD_CONST           "world"
-STORE_NAME           str2
-LOAD_NAME            str1
-LOAD_CONST           " "
-BINARY_ADD           
-LOAD_NAME            str2
-BINARY_ADD           
-LOAD_NAME            str1
-LOAD_ATTR            length
-LOAD_NAME            str1
-LOAD_CONST           1.0
-BINARY_SUBSCR        
-LOAD_NAME            str1
-LOAD_ATTR            substring
-LOAD_CONST           1.0
-LOAD_CONST           4.0
-CALL_FUNCTION        2
-LOAD_NAME            str1
-LOAD_ATTR            toUpperCase
-CALL_FUNCTION        0
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "2.2. String: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           1.0
-LOAD_CONST           "two"
-LOAD_CONST           3.0
-BUILD_LIST           3
-STORE_NAME           arr
-LOAD_NAME            arr
-LOAD_ATTR            length
-LOAD_NAME            arr
-LOAD_ATTR            push
-LOAD_CONST           4.0
-CALL_FUNCTION        1
-LOAD_NAME            arr
-LOAD_ATTR            pop
-CALL_FUNCTION        0
-LOAD_CONST           "one"
-LOAD_NAME            arr
-LOAD_CONST           0.0
-STORE_SUBSCR         
-LOAD_NAME            arr
-LOAD_ATTR            map
-MAKE_FUNCTION        <lambda_ref_1>
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "2.3. Array: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           "John"
-LOAD_CONST           30.0
-BUILD_MAP            2
-STORE_NAME           obj
-LOAD_NAME            obj
-LOAD_ATTR            name
-LOAD_NAME            obj
-LOAD_CONST           'age'
-BINARY_SUBSCR        
-LOAD_CONST           "New York"
-STORE_NAME           obj.city
-LOAD_NAME            obj
-LOAD_ATTR            age
-DELETE_OPERATOR      
-LOAD_NAME            Object
-LOAD_ATTR            keys
-LOAD_NAME            obj
-CALL_FUNCTION        1
-LOAD_NAME            Object
-LOAD_ATTR            values
-LOAD_NAME            obj
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "2.4. Object: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           1.0
-LOAD_CONST           '1'
-COMPARE_EQUAL        
-LOAD_CONST           1.0
-LOAD_CONST           '1'
-COMPARE_EQUAL        
-LOAD_CONST           '5'
-LOAD_CONST           3.0
-BINARY_SUBTRACT      
-LOAD_CONST           '5'
-LOAD_CONST           3.0
-BINARY_ADD           
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "2.5. Type Coercion: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 3. Control Flow ---"
-CALL_FUNCTION        1
-LOAD_CONST           0.0
-STORE_NAME           num
-LOAD_NAME            num
-LOAD_CONST           0.0
-COMPARE_GREATER      
-POP_JUMP_IF_FALSE    <JUMP_TARGET>
-JUMP_FORWARD         <JUMP_TARGET>
-LOAD_NAME            num
-LOAD_CONST           0.0
-COMPARE_LESS         
-POP_JUMP_IF_FALSE    <JUMP_TARGET>
-JUMP_FORWARD         <JUMP_TARGET>
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "3.1. if/else: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           'Monday'
-STORE_NAME           day
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "3.2. switch: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-BUILD_MAP            2
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-LOAD_CONST           3.0
-BUILD_LIST           3
-LOAD_CONST           3.0
-STORE_NAME           k
-LOAD_NAME            k
-LOAD_CONST           0.0
-COMPARE_GREATER      
-POP_JUMP_IF_FALSE    <JUMP_TARGET>
-LOAD_NAME            k
-LOAD_CONST           1.0
-BINARY_SUBTRACT      
-STORE_NAME           k
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "3.3. Loops: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            Error
-LOAD_CONST           "Intentional error"
-CALL_FUNCTION        1
-BINARY_OPERATION     
-JUMP_FORWARD         <JUMP_TARGET>
-JUMP_FORWARD         <JUMP_TARGET>
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "3.4. try/catch/finally: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 4. Functions and Scopes ---"
-CALL_FUNCTION        1
-MAKE_FUNCTION        <greet_ref_2>
-STORE_NAME           greet
-LOAD_NAME            greet
-LOAD_CONST           "World"
-CALL_FUNCTION        1
-LOAD_NAME            name
-BINARY_OPERATION     
-RETURN_VALUE         
-STORE_NAME           farewell
-LOAD_NAME            farewell
-LOAD_CONST           "World"
-CALL_FUNCTION        1
-MAKE_FUNCTION        <lambda_ref_3>
-STORE_NAME           square
-LOAD_NAME            square
-LOAD_CONST           4.0
-CALL_FUNCTION        1
-MAKE_FUNCTION        <paramsTest_ref_4>
-STORE_NAME           paramsTest
-LOAD_NAME            paramsTest
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-LOAD_CONST           3.0
-LOAD_CONST           4.0
-LOAD_CONST           5.0
-CALL_FUNCTION        5
-MAKE_FUNCTION        <makeCounter_ref_5>
-STORE_NAME           makeCounter
-LOAD_NAME            makeCounter
-CALL_FUNCTION        0
-STORE_NAME           counter
-LOAD_NAME            counter
-CALL_FUNCTION        0
-LOAD_NAME            counter
-CALL_FUNCTION        0
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "4.1-4.5. Functions and Scopes: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 5. Object-Oriented Programming ---"
-CALL_FUNCTION        1
-MAKE_FUNCTION        <Car_ref_6>
-STORE_NAME           Car
-BINARY_OPERATION     
-RETURN_VALUE         
-STORE_NAME           Car.prototype.getInfo
-LOAD_NAME            Car
-LOAD_CONST           'Ford'
-LOAD_CONST           'Focus'
-CALL_FUNCTION        2
-STORE_NAME           myCarOld
-LOAD_NAME            myCarOld
-LOAD_ATTR            getInfo
-CALL_FUNCTION        0
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "5.1. Constructor Functions: PASSED"
-CALL_FUNCTION        1
-MAKE_CLASS           <Vehicle_ref_7>
-STORE_NAME           Vehicle
-MAKE_CLASS           <Motorcycle_ref_8>
-STORE_NAME           Motorcycle
-LOAD_NAME            Motorcycle
-LOAD_CONST           'Ninja'
-LOAD_CONST           'Kawasaki'
-CALL_FUNCTION        2
-STORE_NAME           bike
-LOAD_NAME            bike
-LOAD_ATTR            move
-CALL_FUNCTION        0
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "5.2. ES6 Classes: PASSED"
-CALL_FUNCTION        1
-MAKE_CLASS           <Rectangle_ref_9>
-STORE_NAME           Rectangle
-LOAD_NAME            Rectangle
-LOAD_CONST           10.0
-LOAD_CONST           5.0
-CALL_FUNCTION        2
-STORE_NAME           rect
-LOAD_NAME            rect
-LOAD_ATTR            area
-LOAD_CONST           20.0
-STORE_NAME           rect.width
-LOAD_NAME            Rectangle
-LOAD_ATTR            createSquare
-LOAD_CONST           8.0
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "5.3. Getters, Setters, Static: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 6. Advanced Features (ES6+) ---"
-CALL_FUNCTION        1
-MAKE_FUNCTION        <delay_ref_11>
-STORE_NAME           delay
-ASYNC_FUNCTION       <myAsyncFunction_ref_12>
-STORE_NAME           myAsyncFunction
-LOAD_NAME            myAsyncFunction
-CALL_FUNCTION        0
-LOAD_ATTR            then
-MAKE_FUNCTION        <lambda_ref_13>
-CALL_FUNCTION        1
-GENERATOR_FUNCTION   <idGenerator_ref_14>
-STORE_NAME           idGenerator
-LOAD_NAME            idGenerator
-CALL_FUNCTION        0
-STORE_NAME           gen
-LOAD_NAME            gen
-LOAD_ATTR            next
-CALL_FUNCTION        0
-LOAD_ATTR            value
-LOAD_NAME            gen
-LOAD_ATTR            next
-CALL_FUNCTION        0
-LOAD_ATTR            value
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "6.2. Generators: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "6.3. Modules: Syntax parsed (requires module runner)"
-CALL_FUNCTION        1
-LOAD_CONST           "a"
-LOAD_CONST           "b"
-LOAD_CONST           "c"
-BUILD_LIST           3
-STORE_NAME           first
-STORE_NAME           third
-LOAD_CONST           "Jane"
-LOAD_CONST           25.0
-BUILD_MAP            2
-STORE_NAME           personName
-STORE_NAME           age
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-BUILD_LIST           2
-STORE_NAME           arr1
-LOAD_CONST           3.0
-LOAD_CONST           4.0
-BUILD_LIST           2
-STORE_NAME           arr2
-BUILD_LIST           2
-STORE_NAME           combined
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-LOAD_CONST           3.0
-BUILD_MAP            3
-STORE_NAME           x
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "6.4. Destructuring and Spread/Rest: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 7. Built-in Objects ---"
-CALL_FUNCTION        1
-LOAD_CONST           '{"fruit":"apple","size":"large"}'
-STORE_NAME           jsonString
-LOAD_NAME            JSON
-LOAD_ATTR            parse
-LOAD_NAME            jsonString
-CALL_FUNCTION        1
-STORE_NAME           jsonObj
-LOAD_NAME            JSON
-LOAD_ATTR            stringify
-LOAD_NAME            jsonObj
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "7.1. JSON: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            Date
-CALL_FUNCTION        0
-STORE_NAME           now
-LOAD_NAME            now
-LOAD_ATTR            getFullYear
-CALL_FUNCTION        0
-LOAD_NAME            now
-LOAD_ATTR            toISOString
-CALL_FUNCTION        0
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "7.2. Date: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           /\S+@\S+\.\S+/
-STORE_NAME           emailRegex
-LOAD_NAME            emailRegex
-LOAD_ATTR            test
-LOAD_CONST           "test@example.com"
-CALL_FUNCTION        1
-LOAD_CONST           "The rain in Spain"
-LOAD_ATTR            match
-LOAD_CONST           /ain/g
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "7.3. Regular Expressions: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 8. Dynamic Features ---"
-CALL_FUNCTION        1
-LOAD_NAME            eval
-LOAD_CONST           "2 + 2"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "8.1. eval(): PASSED"
-CALL_FUNCTION        1
-BUILD_MAP            0
-STORE_NAME           dynamicObj
-LOAD_CONST           "dynamicProperty"
-STORE_NAME           propName
-LOAD_CONST           "success"
-LOAD_NAME            dynamicObj
-LOAD_NAME            propName
-STORE_SUBSCR         
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "8.2. Dynamic properties: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- 9. Missing Node Types Coverage ---"
-CALL_FUNCTION        1
-LOAD_CONST           True
-STORE_NAME           trueVal
-LOAD_CONST           False
-STORE_NAME           falseVal
-LOAD_CONST           
-STORE_NAME           nullVal
-STORE_NAME           undefinedVal
-LOAD_CONST           42.0
-UNARY_NEGATIVE       
-STORE_NAME           negativeNum
-LOAD_CONST           42.0
-BINARY_OPERATION     +
-STORE_NAME           positiveNum
-LOAD_CONST           42.0
-UNARY_INVERT         
-STORE_NAME           bitwiseNot
-LOAD_CONST           True
-LOGICAL_NOT          
-STORE_NAME           logicalNot
-LOAD_CONST           42.0
-TYPEOF_OPERATOR      
-STORE_NAME           typeofOp
-LOAD_CONST           10.0
-STORE_NAME           augVal
-LOAD_NAME            augVal
-LOAD_CONST           5.0
-LOAD_NAME            augVal
-LOAD_CONST           2.0
-LOAD_NAME            augVal
-LOAD_CONST           3.0
-LOAD_NAME            augVal
-LOAD_CONST           2.0
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-COMPARE_LESS         
-LOAD_CONST           2.0
-LOAD_CONST           1.0
-COMPARE_GREATER      
-LOGICAL_AND          
-LOAD_CONST           3.0
-LOAD_CONST           3.0
-COMPARE_EQUAL        
-LOGICAL_OR           
-STORE_NAME           compResult
-LOAD_CONST           5.0
-LOAD_CONST           5.0
-COMPARE_EQUAL        
-STORE_NAME           strictEqual
-LOAD_CONST           5.0
-LOAD_CONST           "5"
-COMPARE_NOT_EQUAL    
-STORE_NAME           notStrictEqual
-LOAD_NAME            Date
-CALL_FUNCTION        0
-LOAD_NAME            Date
-COMPARE_INSTANCEOF   
-STORE_NAME           instanceOf
-MAKE_FUNCTION        <lambda_ref_15>
-STORE_NAME           arrowFunc
-MAKE_FUNCTION        <lambda_ref_16>
-STORE_NAME           arrowFunc2
-LOAD_NAME            arrowFunc
-LOAD_CONST           5.0
-CALL_FUNCTION        1
-STORE_NAME           arrowResult
-LOAD_CONST           "World"
-STORE_NAME           name
-BINARY_OPERATION     
-STORE_NAME           templateStr
-BINARY_OPERATION     
-STORE_NAME           multilineTemplate
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-LOAD_CONST           3.0
-BUILD_LIST           3
-STORE_NAME           arr
-LOAD_NAME            arr
-STORE_NAME           first
-STORE_NAME           second
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-BUILD_MAP            2
-STORE_NAME           obj
-LOAD_NAME            obj
-STORE_NAME           a
-STORE_NAME           b
-LOAD_CONST           4.0
-LOAD_CONST           5.0
-BUILD_LIST           3
-STORE_NAME           newArr
-LOAD_CONST           3.0
-BUILD_MAP            1
-STORE_NAME           newObj
-LOAD_NAME            JSON
-LOAD_ATTR            parse
-LOAD_CONST           "invalid json"
-CALL_FUNCTION        1
-STORE_NAME           riskyOp
-JUMP_FORWARD         <JUMP_TARGET>
-LOAD_CONST           True
-STORE_NAME           errorHandled
-JUMP_FORWARD         <JUMP_TARGET>
-LOAD_CONST           True
-STORE_NAME           cleanupDone
-LOAD_NAME            i
-LOAD_CONST           1.0
-COMPARE_EQUAL        
-POP_JUMP_IF_FALSE    <JUMP_TARGET>
-BINARY_OPERATION     
-LOAD_NAME            i
-LOAD_CONST           2.0
-COMPARE_EQUAL        
-POP_JUMP_IF_FALSE    <JUMP_TARGET>
-BINARY_OPERATION     
-LOAD_NAME            arr
-LOAD_NAME            item
-STORE_NAME           processed
-LOAD_NAME            obj
-LOAD_NAME            obj
-LOAD_NAME            key
-BINARY_SUBSCR        
-STORE_NAME           value
-LOAD_CONST           2.0
-STORE_NAME           switchVal
-LOAD_CONST           5.0
-LOAD_CONST           0.0
-COMPARE_GREATER      
-LOAD_CONST           "positive"
-LOAD_CONST           "negative"
-STORE_NAME           ternaryResult
-LOAD_NAME            arr
-LOAD_ATTR            map
-MAKE_FUNCTION        <lambda_ref_17>
-CALL_FUNCTION        1
-STORE_NAME           mappedArr
-LOAD_NAME            arr
-LOAD_ATTR            filter
-MAKE_FUNCTION        <lambda_ref_18>
-CALL_FUNCTION        1
-STORE_NAME           filteredArr
-LOAD_NAME            arr
-LOAD_ATTR            reduce
-MAKE_FUNCTION        <lambda_ref_19>
-LOAD_CONST           0.0
-CALL_FUNCTION        2
-STORE_NAME           reducedVal
-LOAD_CONST           /test/gi
-STORE_NAME           regex
-LOAD_NAME            regex
-LOAD_ATTR            test
-LOAD_CONST           "Test string"
-CALL_FUNCTION        1
-STORE_NAME           regexTest
-MAKE_CLASS           <Parent_ref_20>
-STORE_NAME           Parent
-MAKE_CLASS           <Child_ref_21>
-STORE_NAME           Child
-LOAD_NAME            Child
-LOAD_CONST           "Test"
-LOAD_CONST           25.0
-CALL_FUNCTION        2
-STORE_NAME           childInstance
-ASYNC_FUNCTION       <asyncFunc_ref_24>
-STORE_NAME           asyncFunc
-LOAD_ATTR_CHAIN      obj.deep.property
-STORE_NAME           optional
-LOAD_NAME            nullVal
-LOAD_CONST           "default"
-BINARY_NULLISH_COALESCING 
-STORE_NAME           nullish
-MAKE_FUNCTION        <testThrow_ref_25>
-STORE_NAME           testThrow
-LOAD_CONST           0xFF
-LOAD_CONST           0x0F
-BINARY_AND           
-STORE_NAME           bitwiseAnd
-LOAD_CONST           0x10
-LOAD_CONST           0x01
-BINARY_OR            
-STORE_NAME           bitwiseOr
-LOAD_CONST           0xAA
-LOAD_CONST           0x55
-BINARY_XOR           
-STORE_NAME           bitwiseXor
-LOAD_CONST           8.0
-LOAD_CONST           2.0
-BINARY_LSHIFT        
-STORE_NAME           leftShift
-LOAD_CONST           32.0
-LOAD_CONST           3.0
-BINARY_RSHIFT        
-STORE_NAME           rightShift
-LOAD_CONST           32.0
-LOAD_CONST           2.0
-BINARY_UNSIGNED_RSHIFT 
-STORE_NAME           unsignedRightShift
-LOAD_CONST           5.0
-LOAD_CONST           5.0
-COMPARE_EQUAL        
-STORE_NAME           strictEqualTest
-LOAD_CONST           5.0
-LOAD_CONST           "5"
-COMPARE_NOT_EQUAL    
-STORE_NAME           strictNotEqualTest
-LOAD_CONST           
-LOAD_CONST           "default"
-BINARY_NULLISH_COALESCING 
-STORE_NAME           nullishCoalescing
-LOAD_CONST           "fallback"
-BINARY_NULLISH_COALESCING 
-STORE_NAME           undefinedCoalescing
-LOAD_CONST           "value"
-BUILD_MAP            1
-STORE_NAME           testObj
-LOAD_NAME            testObj
-LOAD_ATTR            prop
-DELETE_OPERATOR      
-LOAD_CONST           0.0
-VOID_OPERATOR        
-STORE_NAME           voidResult
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "9. Missing Node Types Coverage: PASSED"
-CALL_FUNCTION        1
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-LOAD_CONST           3.0
-LOAD_CONST           4.0
-LOAD_CONST           5.0
-BUILD_LIST           5
-STORE_NAME           testArray
-LOAD_NAME            testArray
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-STORE_NAME           firstElement
-LOAD_NAME            testArray
-LOAD_NAME            testArray
-LOAD_ATTR            length
-LOAD_CONST           1.0
-BINARY_SUBTRACT      
-BINARY_SUBSCR        
-STORE_NAME           lastElement
-LOAD_NAME            testArray
-LOAD_NAME            Math
-LOAD_ATTR            floor
-LOAD_NAME            Math
-LOAD_ATTR            random
-CALL_FUNCTION        0
-LOAD_NAME            testArray
-LOAD_ATTR            length
-BINARY_MULTIPLY      
-CALL_FUNCTION        1
-BINARY_SUBSCR        
-STORE_NAME           dynamicIndex
-LOAD_CONST           "secret123"
-LOAD_CONST           "https://malicious.com/api"
-LOAD_CONST           "encoded"
-BUILD_MAP            1
-BUILD_MAP            3
-STORE_NAME           configObject
-LOAD_NAME            configObject
-LOAD_CONST           "apiKey"
-BINARY_SUBSCR        
-STORE_NAME           apiKey
-LOAD_NAME            configObject
-LOAD_CONST           "endpoint"
-BINARY_SUBSCR        
-STORE_NAME           endpoint
-LOAD_NAME            configObject
-LOAD_CONST           "pay"
-LOAD_CONST           "load"
-BINARY_ADD           
-BINARY_SUBSCR        
-STORE_NAME           dynamicProperty
-LOAD_CONST           "admin"
-LOAD_CONST           "read"
-LOAD_CONST           "write"
-LOAD_CONST           "execute"
-BUILD_LIST           3
-BUILD_MAP            2
-LOAD_CONST           "guest"
-LOAD_CONST           "read"
-BUILD_LIST           1
-BUILD_MAP            2
-BUILD_LIST           2
-LOAD_CONST           "192.168.1.1"
-LOAD_CONST           "10.0.0.1"
-BUILD_LIST           2
-LOAD_CONST           80.0
-LOAD_CONST           443.0
-LOAD_CONST           8080.0
-BUILD_LIST           3
-BUILD_MAP            2
-BUILD_MAP            2
-STORE_NAME           nestedStructure
-LOAD_NAME            nestedStructure
-LOAD_CONST           "users"
-BINARY_SUBSCR        
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-LOAD_CONST           "name"
-BINARY_SUBSCR        
-STORE_NAME           adminName
-LOAD_NAME            nestedStructure
-LOAD_ATTR            users
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-LOAD_ATTR            permissions
-LOAD_CONST           2.0
-BINARY_SUBSCR        
-STORE_NAME           adminPermissions
-LOAD_NAME            nestedStructure
-LOAD_CONST           "config"
-BINARY_SUBSCR        
-LOAD_CONST           "servers"
-BINARY_SUBSCR        
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-STORE_NAME           firstServer
-LOAD_ATTR_CHAIN      nestedStructure.config.ports
-LOAD_CONST           1.0
-BINARY_SUBSCR        
-STORE_NAME           httpsPort
-LOAD_CONST           "endpoint"
-STORE_NAME           propName
-LOAD_CONST           "apiKey"
-STORE_NAME           keyName
-LOAD_NAME            configObject
-LOAD_NAME            propName
-BINARY_SUBSCR        
-STORE_NAME           dynamicAccess1
-LOAD_NAME            configObject
-LOAD_NAME            keyName
-BINARY_SUBSCR        
-STORE_NAME           dynamicAccess2
-LOAD_CONST           "api"
-LOAD_CONST           "Key"
-BINARY_ADD           
-STORE_NAME           computedKey
-LOAD_NAME            btoa
-LOAD_CONST           "endpoint"
-CALL_FUNCTION        1
-LOAD_ATTR            substring
-LOAD_CONST           0.0
-LOAD_CONST           8.0
-CALL_FUNCTION        2
-STORE_NAME           encodedKey
-LOAD_NAME            configObject
-LOAD_NAME            computedKey
-BINARY_SUBSCR        
-STORE_NAME           obfuscatedAccess
-LOAD_NAME            Array
-LOAD_CONST           10.0
-CALL_FUNCTION        1
-LOAD_ATTR            fill
-LOAD_CONST           0.0
-CALL_FUNCTION        1
-LOAD_ATTR            map
-MAKE_FUNCTION        <lambda_ref_26>
-CALL_FUNCTION        1
-STORE_NAME           payloadArray
-LOAD_NAME            payloadArray
-LOAD_CONST           5.0
-LOAD_CONST           2.0
-BINARY_ADD           
-BINARY_SUBSCR        
-STORE_NAME           calculatedIndex
-LOAD_NAME            payloadArray
-LOAD_NAME            Math
-LOAD_ATTR            pow
-LOAD_CONST           2.0
-LOAD_CONST           2.0
-CALL_FUNCTION        2
-BINARY_SUBSCR        
-STORE_NAME           expressionIndex
-LOAD_NAME            payloadArray
-LOAD_CONST           15.0
-LOAD_NAME            payloadArray
-LOAD_ATTR            length
-BINARY_MODULO        
-BINARY_SUBSCR        
-STORE_NAME           moduloIndex
-LOAD_CONST           "javascript:void(0)"
-STORE_NAME           maliciousString
-LOAD_NAME            maliciousString
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-STORE_NAME           protocolChar
-LOAD_NAME            maliciousString
-LOAD_NAME            maliciousString
-LOAD_ATTR            indexOf
-LOAD_CONST           ":"
-CALL_FUNCTION        1
-BINARY_SUBSCR        
-STORE_NAME           colonChar
-LOAD_NAME            maliciousString
-LOAD_CONST           11.0
-BINARY_SUBSCR        
-STORE_NAME           voidPart
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-LOAD_CONST           3.0
-BUILD_LIST           3
-LOAD_CONST           4.0
-LOAD_CONST           5.0
-LOAD_CONST           6.0
-BUILD_LIST           3
-LOAD_CONST           7.0
-LOAD_CONST           8.0
-LOAD_CONST           9.0
-BUILD_LIST           3
-BUILD_LIST           3
-STORE_NAME           matrix
-LOAD_NAME            matrix
-LOAD_CONST           1.0
-BINARY_SUBSCR        
-LOAD_CONST           1.0
-BINARY_SUBSCR        
-STORE_NAME           centerElement
-LOAD_NAME            matrix
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-STORE_NAME           cornerElement
-LOAD_NAME            matrix
-LOAD_NAME            matrix
-LOAD_ATTR            length
-LOAD_CONST           1.0
-BINARY_SUBTRACT      
-BINARY_SUBSCR        
-LOAD_NAME            matrix
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-LOAD_ATTR            length
-LOAD_CONST           1.0
-BINARY_SUBTRACT      
-BINARY_SUBSCR        
-STORE_NAME           lastRowLastCol
-LOAD_CONST           "exec"
-LOAD_CONST           "cmd.exe"
-LOAD_CONST           "/c"
-BUILD_LIST           2
-LOAD_CONST           "shell"
-LOAD_CONST           "powershell.exe"
-LOAD_CONST           "-c"
-BUILD_LIST           2
-LOAD_CONST           "bash"
-LOAD_CONST           "/bin/bash"
-LOAD_CONST           "-c"
-BUILD_LIST           2
-BUILD_MAP            3
-STORE_NAME           commandMap
-LOAD_NAME            commandMap
-LOAD_CONST           "exec"
-BINARY_SUBSCR        
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-STORE_NAME           windowsCmd
-LOAD_NAME            commandMap
-LOAD_CONST           "shell"
-BINARY_SUBSCR        
-LOAD_CONST           1.0
-BINARY_SUBSCR        
-STORE_NAME           powershellFlag
-LOAD_NAME            Uint8Array
-LOAD_CONST           0x48
-LOAD_CONST           0x65
-LOAD_CONST           0x6c
-LOAD_CONST           0x6c
-LOAD_CONST           0x6f
-BUILD_LIST           5
-CALL_FUNCTION        1
-STORE_NAME           buffer
-LOAD_NAME            buffer
-LOAD_CONST           0.0
-BINARY_SUBSCR        
-STORE_NAME           firstByte
-LOAD_NAME            buffer
-LOAD_CONST           1.0
-BINARY_SUBSCR        
-STORE_NAME           secondByte
-LOAD_CONST           2.0
-STORE_NAME           globalIndex
-LOAD_NAME            testArray
-LOAD_NAME            globalIndex
-BINARY_SUBSCR        
-STORE_NAME           scopedAccess
-LOAD_NAME            testArray
-LOAD_NAME            Math
-LOAD_ATTR            floor
-LOAD_NAME            Math
-LOAD_ATTR            random
-CALL_FUNCTION        0
-LOAD_CONST           3.0
-BINARY_MULTIPLY      
-CALL_FUNCTION        1
-BINARY_SUBSCR        
-STORE_NAME           functionBasedIndex
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "9.21. BINARY_SUBSCR Test Cases: PASSED"
-CALL_FUNCTION        1
-BUILD_MAP            0
-STORE_NAME           storeObj
-BUILD_LIST           0
-STORE_NAME           storeArr
-BUILD_MAP            0
-BUILD_MAP            1
-STORE_NAME           storeNested
-LOAD_CONST           "value1"
-LOAD_NAME            storeObj
-LOAD_CONST           "key1"
-STORE_SUBSCR         
-LOAD_CONST           'value2'
-LOAD_NAME            storeObj
-LOAD_CONST           'key2'
-STORE_SUBSCR         
-BINARY_OPERATION     
-LOAD_NAME            storeObj
-BINARY_OPERATION     
-STORE_SUBSCR         
-LOAD_CONST           "dynamicKey"
-STORE_NAME           storeKey
-LOAD_CONST           "dynamicValue"
-LOAD_NAME            storeObj
-LOAD_NAME            storeKey
-STORE_SUBSCR         
-LOAD_CONST           "first"
-LOAD_NAME            storeArr
-LOAD_CONST           0.0
-STORE_SUBSCR         
-LOAD_CONST           "second"
-LOAD_NAME            storeArr
-LOAD_CONST           1.0
-STORE_SUBSCR         
-LOAD_CONST           "sparse"
-LOAD_NAME            storeArr
-LOAD_CONST           10.0
-STORE_SUBSCR         
-LOAD_CONST           "computed"
-STORE_NAME           storePrefix
-LOAD_CONST           "computed value"
-LOAD_NAME            storeObj
-LOAD_NAME            storePrefix
-LOAD_CONST           "_key"
-BINARY_ADD           
-STORE_SUBSCR         
-LOAD_CONST           "template value"
-LOAD_NAME            storeObj
-BINARY_OPERATION     
-STORE_SUBSCR         
-LOAD_CONST           "deeply nested"
-LOAD_NAME            storeNested
-LOAD_CONST           "inner"
-BINARY_SUBSCR        
-LOAD_CONST           "deep"
-STORE_SUBSCR         
-LOAD_CONST           "mixed access"
-LOAD_NAME            storeNested
-LOAD_ATTR            inner
-LOAD_CONST           "mixed"
-STORE_SUBSCR         
-MAKE_FUNCTION        <getStoreKey_ref_27>
-STORE_NAME           getStoreKey
-LOAD_CONST           "from function"
-LOAD_NAME            storeObj
-LOAD_NAME            getStoreKey
-CALL_FUNCTION        0
-STORE_SUBSCR         
-LOAD_CONST           "numeric expression"
-LOAD_NAME            storeObj
-LOAD_CONST           1.0
-LOAD_CONST           2.0
-BINARY_ADD           
-STORE_SUBSCR         
-LOAD_CONST           "method call key"
-LOAD_NAME            storeObj
-LOAD_NAME            storeKey
-LOAD_ATTR            toUpperCase
-CALL_FUNCTION        0
-STORE_SUBSCR         
-LOAD_CONST           0.0
-STORE_NAME           storeCounter
-LOAD_CONST           "with side effect"
-LOAD_NAME            storeObj
-LOAD_NAME            storeCounter
-LOAD_CONST           1.0
-BINARY_ADD           
-STORE_NAME           storeCounter
-STORE_SUBSCR         
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "9.22. STORE_SUBSCR Test Cases: PASSED"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "\n--- JavaScript Compiler Test Suite: Finished ---"
-CALL_FUNCTION        1
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "--- All tests completed. Check output for any errors. ---"
-CALL_FUNCTION        1
-LOAD_CONST           'exported'
-RETURN_VALUE         
-LOAD_PARAM           x
-TYPEOF_OPERATOR      
-RETURN_VALUE         
-BINARY_OPERATION     
-RETURN_VALUE         
-LOAD_PARAM           x
-LOAD_PARAM           x
-BINARY_MULTIPLY      
-RETURN_VALUE         
-LOAD_PARAM           a
-LOAD_NAME            b
-LOAD_NAME            rest
-BUILD_LIST           3
-RETURN_VALUE         
-LOAD_CONST           0.0
-STORE_NAME           count
-LOAD_NAME            count
-LOAD_CONST           1.0
-BINARY_ADD           
-STORE_NAME           count
-LOAD_NAME            count
-RETURN_VALUE         
-RETURN_VALUE         
-LOAD_PARAM           make
-STORE_NAME           this.make
-LOAD_PARAM           model
-STORE_NAME           this.model
-RETURN_VALUE         
-LOAD_NAME            name
-LOAD_NAME            name
-STORE_NAME           this.name
-BINARY_OPERATION     
-RETURN_VALUE         
-LOAD_NAME            name
-LOAD_NAME            brand
-LOAD_NAME            name
-CALL_FUNCTION        1
-LOAD_NAME            brand
-STORE_NAME           this.brand
-BINARY_OPERATION     
-RETURN_VALUE         
-LOAD_NAME            width
-LOAD_NAME            height
-LOAD_NAME            width
-STORE_NAME           this._width
-LOAD_NAME            height
-STORE_NAME           this._height
-LOAD_ATTR            _width
-LOAD_ATTR            _height
-BINARY_MULTIPLY      
-RETURN_VALUE         
-LOAD_NAME            value
-LOAD_NAME            value
-STORE_NAME           this._width
-LOAD_NAME            size
-LOAD_NAME            Rectangle
-LOAD_NAME            size
-LOAD_NAME            size
-CALL_FUNCTION        2
-RETURN_VALUE         
-LOAD_NAME            setTimeout
-LOAD_PARAM           resolve
-LOAD_NAME            ms
-CALL_FUNCTION        2
-RETURN_VALUE         
-LOAD_NAME            Promise
-MAKE_FUNCTION        <lambda_ref_10>
-CALL_FUNCTION        1
-RETURN_VALUE         
-LOAD_NAME            delay
-LOAD_CONST           50.0
-CALL_FUNCTION        1
-AWAIT_EXPRESSION     
-LOAD_CONST           "Async work done"
-RETURN_VALUE         
-LOAD_NAME            console
-LOAD_ATTR            log
-LOAD_CONST           "6.1. Promises and async/await: PASSED"
-CALL_FUNCTION        1
-RETURN_VALUE         
-LOAD_CONST           1.0
-STORE_NAME           id
-LOAD_CONST           True
-POP_JUMP_IF_FALSE    <JUMP_TARGET>
-LOAD_CONST           
-BINARY_OPERATION     
-RETURN_VALUE         
-LOAD_PARAM           x
-LOAD_CONST           2.0
-BINARY_MULTIPLY      
-RETURN_VALUE         
-LOAD_PARAM           a
-LOAD_PARAM           b
-BINARY_ADD           
-RETURN_VALUE         
-LOAD_PARAM           x
-LOAD_CONST           2.0
-BINARY_MULTIPLY      
-RETURN_VALUE         
-LOAD_PARAM           x
-LOAD_CONST           1.0
-COMPARE_GREATER      
-RETURN_VALUE         
-LOAD_PARAM           acc
-LOAD_PARAM           x
-BINARY_ADD           
-RETURN_VALUE         
-LOAD_NAME            name
-LOAD_NAME            name
-STORE_NAME           this.name
-BINARY_OPERATION     
-RETURN_VALUE         
-LOAD_NAME            name
-LOAD_NAME            age
-LOAD_NAME            name
-CALL_FUNCTION        1
-LOAD_NAME            age
-STORE_NAME           this.age
-BINARY_OPERATION     
-RETURN_VALUE         
-LOAD_NAME            resolve
-LOAD_CONST           "done"
-CALL_FUNCTION        1
-RETURN_VALUE         
-LOAD_NAME            setTimeout
-MAKE_FUNCTION        <lambda_ref_22>
-LOAD_CONST           1.0
-CALL_FUNCTION        2
-RETURN_VALUE         
-LOAD_NAME            Promise
-MAKE_FUNCTION        <lambda_ref_23>
-CALL_FUNCTION        1
-STORE_NAME           promise
-LOAD_NAME            promise
-AWAIT_EXPRESSION     
-STORE_NAME           result
-LOAD_NAME            result
-RETURN_VALUE         
-LOAD_NAME            Error
-LOAD_CONST           "Test error"
-CALL_FUNCTION        1
-BINARY_OPERATION     
-RETURN_VALUE         
-LOAD_PARAM           i
-LOAD_CONST           2.0
-BINARY_MULTIPLY      
-RETURN_VALUE         
-LOAD_CONST           "funcKey"
-RETURN_VALUE
+IMPORT_NAME React
+LOAD_CONST 'react'
+IMPORT_NAME fs
+LOAD_CONST 'fs'
+IMPORT_NAME path
+LOAD_CONST 'path'
+IMPORT_NAME crypto
+LOAD_CONST 'crypto'
+IMPORT_NAME os
+LOAD_CONST 'os'
+IMPORT_NAME child_process
+LOAD_CONST 'child_process'
+IMPORT_FROM readFile
+IMPORT_FROM writeFile
+IMPORT_FROM existsSync
+LOAD_CONST 'fs'
+IMPORT_FROM join
+IMPORT_FROM resolve
+IMPORT_FROM dirname
+IMPORT_FROM basename
+LOAD_CONST 'path'
+IMPORT_FROM createHash
+IMPORT_FROM randomBytes
+IMPORT_FROM pbkdf2Sync
+LOAD_CONST 'crypto'
+IMPORT_FROM platform
+IMPORT_FROM arch
+IMPORT_FROM tmpdir
+IMPORT_FROM homedir
+LOAD_CONST 'os'
+IMPORT_FROM exec
+IMPORT_FROM spawn
+IMPORT_FROM fork
+LOAD_CONST 'child_process'
+IMPORT_NAME express
+IMPORT_FROM Router
+IMPORT_FROM static
+IMPORT_FROM staticFiles
+LOAD_CONST 'express'
+IMPORT_NAME axios
+IMPORT_FROM get
+IMPORT_FROM post
+IMPORT_FROM put
+IMPORT_FROM delete
+IMPORT_FROM del
+LOAD_CONST 'axios'
+IMPORT_FROM readFile
+IMPORT_FROM read
+IMPORT_FROM writeFile
+IMPORT_FROM write
+LOAD_CONST 'fs'
+IMPORT_FROM join
+IMPORT_FROM pathJoin
+IMPORT_FROM resolve
+IMPORT_FROM pathResolve
+LOAD_CONST 'path'
+IMPORT_FROM createHash
+IMPORT_FROM hash
+IMPORT_FROM randomBytes
+IMPORT_FROM random
+LOAD_CONST 'crypto'
+IMPORT_NAME fsModule
+LOAD_CONST 'fs'
+IMPORT_NAME pathModule
+LOAD_CONST 'path'
+IMPORT_NAME cryptoModule
+LOAD_CONST 'crypto'
+IMPORT_NAME osModule
+LOAD_CONST 'os'
+LOAD_CONST 'core-js/stable'
+LOAD_CONST './malicious-polyfill.js'
+LOAD_CONST '../../../config/secret-keys.json'
+IMPORT_NAME keytar
+LOAD_CONST 'keytar'
+IMPORT_NAME node_pty
+LOAD_CONST 'node-pty'
+IMPORT_NAME screenshot_desktop
+LOAD_CONST 'screenshot-desktop'
+IMPORT_NAME robotjs
+LOAD_CONST 'robotjs'
+IMPORT_NAME mic
+LOAD_CONST 'mic'
+IMPORT_NAME systeminformation
+LOAD_CONST 'systeminformation'
+LOAD_CONST 'test-export'
+STORE_NAME exportedConst
+EXPORT_NAMED exportedFunction
+MAKE_FUNCTION exportedFunction_ref_0
+STORE_NAME exportedFunction
+LOAD_CONST True
+BUILD_MAP 1
+LOAD_NAME require
+LOAD_CONST 'fs'
+CALL_FUNCTION 1
+STORE_NAME fs
+LOAD_NAME require
+LOAD_CONST 'path'
+CALL_FUNCTION 1
+STORE_NAME path
+LOAD_NAME require
+LOAD_CONST 'crypto'
+CALL_FUNCTION 1
+STORE_NAME crypto
+LOAD_NAME require
+LOAD_CONST 'os'
+CALL_FUNCTION 1
+STORE_NAME os
+LOAD_NAME require
+LOAD_CONST 'child_process'
+CALL_FUNCTION 1
+STORE_NAME childProcess
+LOAD_NAME require
+LOAD_CONST 'util'
+CALL_FUNCTION 1
+STORE_NAME util
+LOAD_NAME require
+LOAD_CONST 'stream'
+CALL_FUNCTION 1
+STORE_NAME stream
+LOAD_NAME require
+LOAD_CONST 'events'
+CALL_FUNCTION 1
+STORE_NAME events
+LOAD_NAME require
+LOAD_CONST 'fs'
+CALL_FUNCTION 1
+STORE_NAME readFile
+STORE_NAME writeFile
+STORE_NAME existsSync
+LOAD_NAME require
+LOAD_CONST 'path'
+CALL_FUNCTION 1
+STORE_NAME join
+STORE_NAME resolve
+STORE_NAME dirname
+LOAD_NAME require
+LOAD_CONST 'crypto'
+CALL_FUNCTION 1
+STORE_NAME createHash
+STORE_NAME randomBytes
+LOAD_NAME require
+LOAD_CONST 'child_process'
+CALL_FUNCTION 1
+STORE_NAME exec
+STORE_NAME spawn
+LOAD_NAME require
+LOAD_CONST 'child_process'
+CALL_FUNCTION 1
+STORE_NAME cp
+LOAD_NAME require
+LOAD_CONST 'fs'
+CALL_FUNCTION 1
+LOAD_ATTR promises
+STORE_NAME fsPromises
+LOAD_NAME require
+LOAD_CONST 'path'
+CALL_FUNCTION 1
+STORE_NAME pathUtils
+LOAD_NAME require
+LOAD_CONST 'os'
+CALL_FUNCTION 1
+STORE_NAME platform_module
+LOAD_NAME platform_module
+LOAD_ATTR platform
+CALL_FUNCTION 0
+STORE_NAME platform
+JUMP_FORWARD 10
+JUMP_FORWARD 8
+LOAD_CONST 'fs'
+STORE_NAME moduleName
+LOAD_NAME require
+LOAD_NAME moduleName
+CALL_FUNCTION 1
+STORE_NAME dynamicModule
+LOAD_NAME require
+LOAD_NAME Buffer
+LOAD_ATTR from
+LOAD_CONST 'ZnM='
+LOAD_CONST 'base64'
+CALL_FUNCTION 2
+LOAD_ATTR toString
+CALL_FUNCTION 0
+CALL_FUNCTION 1
+STORE_NAME encodedModule
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "--- Extended Import Test Cases: COMPLETED ---"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "--- JavaScript Compiler Test Suite: Starting ---"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 1. Basic Syntax and Literals ---"
+CALL_FUNCTION 1
+LOAD_CONST 1.0
+STORE_NAME a
+LOAD_CONST 2.0
+STORE_NAME b
+LOAD_CONST 3.0
+STORE_NAME c
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "1.2. Variable Declarations: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST "hello"
+STORE_NAME stringLiteral
+BINARY_OPERATION None
+STORE_NAME templateLiteral
+LOAD_CONST 123.45
+STORE_NAME numberLiteral
+LOAD_CONST 9007199254740991.0
+STORE_NAME bigIntLiteral
+LOAD_CONST True
+STORE_NAME booleanLiteral
+LOAD_CONST None
+STORE_NAME nullLiteral
+STORE_NAME undefinedLiteral
+LOAD_CONST "value"
+BUILD_MAP 1
+STORE_NAME objectLiteral
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+BUILD_LIST 3
+STORE_NAME arrayLiteral
+LOAD_CONST /ab+c/i
+STORE_NAME regexLiteral
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "1.3. Literals: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 2. Data Types and Operations ---"
+CALL_FUNCTION 1
+LOAD_CONST 10.0
+STORE_NAME n1
+LOAD_CONST 4.0
+STORE_NAME n2
+LOAD_NAME n1
+LOAD_NAME n2
+BINARY_ADD None
+LOAD_NAME n1
+LOAD_NAME n2
+BINARY_SUBTRACT None
+LOAD_NAME n1
+LOAD_NAME n2
+BINARY_MULTIPLY None
+LOAD_NAME n1
+LOAD_NAME n2
+BINARY_DIVIDE None
+LOAD_NAME n1
+LOAD_NAME n2
+BINARY_MODULO None
+LOAD_NAME n1
+LOAD_CONST 2.0
+BINARY_POWER None
+LOAD_NAME Math
+LOAD_ATTR sqrt
+LOAD_CONST 144.0
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "2.1. Number and Math: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST "hello"
+STORE_NAME str1
+LOAD_CONST "world"
+STORE_NAME str2
+LOAD_NAME str1
+LOAD_CONST " "
+BINARY_ADD None
+LOAD_NAME str2
+BINARY_ADD None
+LOAD_NAME str1
+LOAD_ATTR length
+LOAD_NAME str1
+LOAD_CONST 1.0
+BINARY_SUBSCR None
+LOAD_NAME str1
+LOAD_ATTR substring
+LOAD_CONST 1.0
+LOAD_CONST 4.0
+CALL_FUNCTION 2
+LOAD_NAME str1
+LOAD_ATTR toUpperCase
+CALL_FUNCTION 0
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "2.2. String: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST 1.0
+LOAD_CONST "two"
+LOAD_CONST 3.0
+BUILD_LIST 3
+STORE_NAME arr
+LOAD_NAME arr
+LOAD_ATTR length
+LOAD_NAME arr
+LOAD_ATTR push
+LOAD_CONST 4.0
+CALL_FUNCTION 1
+LOAD_NAME arr
+LOAD_ATTR pop
+CALL_FUNCTION 0
+LOAD_CONST "one"
+LOAD_NAME arr
+LOAD_CONST 0.0
+STORE_SUBSCR None
+LOAD_NAME arr
+LOAD_ATTR map
+MAKE_FUNCTION lambda_ref_1
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "2.3. Array: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST "John"
+LOAD_CONST 30.0
+BUILD_MAP 2
+STORE_NAME obj
+LOAD_NAME obj
+LOAD_ATTR name
+LOAD_NAME obj
+LOAD_CONST 'age'
+BINARY_SUBSCR None
+LOAD_CONST "New York"
+STORE_NAME obj.city
+LOAD_NAME obj
+LOAD_ATTR age
+DELETE_OPERATOR None
+LOAD_NAME Object
+LOAD_ATTR keys
+LOAD_NAME obj
+CALL_FUNCTION 1
+LOAD_NAME Object
+LOAD_ATTR values
+LOAD_NAME obj
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "2.4. Object: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST 1.0
+LOAD_CONST '1'
+COMPARE_EQUAL None
+LOAD_CONST 1.0
+LOAD_CONST '1'
+COMPARE_EQUAL None
+LOAD_CONST '5'
+LOAD_CONST 3.0
+BINARY_SUBTRACT None
+LOAD_CONST '5'
+LOAD_CONST 3.0
+BINARY_ADD None
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "2.5. Type Coercion: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 3. Control Flow ---"
+CALL_FUNCTION 1
+LOAD_CONST 0.0
+STORE_NAME num
+LOAD_NAME num
+LOAD_CONST 0.0
+COMPARE_GREATER None
+POP_JUMP_IF_FALSE 5
+JUMP_FORWARD 10
+LOAD_NAME num
+LOAD_CONST 0.0
+COMPARE_LESS None
+POP_JUMP_IF_FALSE 5
+JUMP_FORWARD 5
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "3.1. if/else: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST 'Monday'
+STORE_NAME day
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "3.2. switch: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+BUILD_MAP 2
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+BUILD_LIST 3
+LOAD_CONST 3.0
+STORE_NAME k
+LOAD_NAME k
+LOAD_CONST 0.0
+COMPARE_GREATER None
+POP_JUMP_IF_FALSE 5
+LOAD_NAME k
+LOAD_CONST 1.0
+BINARY_SUBTRACT None
+STORE_NAME k
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "3.3. Loops: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME Error
+LOAD_CONST "Intentional error"
+CALL_FUNCTION 1
+BINARY_OPERATION None
+JUMP_FORWARD 6
+JUMP_FORWARD 4
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "3.4. try/catch/finally: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 4. Functions and Scopes ---"
+CALL_FUNCTION 1
+MAKE_FUNCTION greet_ref_2
+STORE_NAME greet
+LOAD_NAME greet
+LOAD_CONST "World"
+CALL_FUNCTION 1
+LOAD_NAME name
+BINARY_OPERATION None
+RETURN_VALUE None
+STORE_NAME farewell
+LOAD_NAME farewell
+LOAD_CONST "World"
+CALL_FUNCTION 1
+MAKE_FUNCTION lambda_ref_3
+STORE_NAME square
+LOAD_NAME square
+LOAD_CONST 4.0
+CALL_FUNCTION 1
+MAKE_FUNCTION paramsTest_ref_4
+STORE_NAME paramsTest
+LOAD_NAME paramsTest
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+LOAD_CONST 4.0
+LOAD_CONST 5.0
+CALL_FUNCTION 5
+MAKE_FUNCTION makeCounter_ref_5
+STORE_NAME makeCounter
+LOAD_NAME makeCounter
+CALL_FUNCTION 0
+STORE_NAME counter
+LOAD_NAME counter
+CALL_FUNCTION 0
+LOAD_NAME counter
+CALL_FUNCTION 0
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "4.1-4.5. Functions and Scopes: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 5. Object-Oriented Programming ---"
+CALL_FUNCTION 1
+MAKE_FUNCTION Car_ref_6
+STORE_NAME Car
+BINARY_OPERATION None
+RETURN_VALUE None
+STORE_NAME Car.prototype.getInfo
+LOAD_NAME Car
+LOAD_CONST 'Ford'
+LOAD_CONST 'Focus'
+CALL_FUNCTION 2
+STORE_NAME myCarOld
+LOAD_NAME myCarOld
+LOAD_ATTR getInfo
+CALL_FUNCTION 0
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "5.1. Constructor Functions: PASSED"
+CALL_FUNCTION 1
+MAKE_CLASS Vehicle_ref_7
+STORE_NAME Vehicle
+MAKE_CLASS Motorcycle_ref_8
+STORE_NAME Motorcycle
+LOAD_NAME Motorcycle
+LOAD_CONST 'Ninja'
+LOAD_CONST 'Kawasaki'
+CALL_FUNCTION 2
+STORE_NAME bike
+LOAD_NAME bike
+LOAD_ATTR move
+CALL_FUNCTION 0
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "5.2. ES6 Classes: PASSED"
+CALL_FUNCTION 1
+MAKE_CLASS Rectangle_ref_9
+STORE_NAME Rectangle
+LOAD_NAME Rectangle
+LOAD_CONST 10.0
+LOAD_CONST 5.0
+CALL_FUNCTION 2
+STORE_NAME rect
+LOAD_NAME rect
+LOAD_ATTR area
+LOAD_CONST 20.0
+STORE_NAME rect.width
+LOAD_NAME Rectangle
+LOAD_ATTR createSquare
+LOAD_CONST 8.0
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "5.3. Getters, Setters, Static: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 6. Advanced Features (ES6+) ---"
+CALL_FUNCTION 1
+MAKE_FUNCTION delay_ref_11
+STORE_NAME delay
+ASYNC_FUNCTION myAsyncFunction_ref_12
+STORE_NAME myAsyncFunction
+LOAD_NAME myAsyncFunction
+CALL_FUNCTION 0
+LOAD_ATTR then
+MAKE_FUNCTION lambda_ref_13
+CALL_FUNCTION 1
+GENERATOR_FUNCTION idGenerator_ref_14
+STORE_NAME idGenerator
+LOAD_NAME idGenerator
+CALL_FUNCTION 0
+STORE_NAME gen
+LOAD_NAME gen
+LOAD_ATTR next
+CALL_FUNCTION 0
+LOAD_ATTR value
+LOAD_NAME gen
+LOAD_ATTR next
+CALL_FUNCTION 0
+LOAD_ATTR value
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "6.2. Generators: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "6.3. Modules: Syntax parsed (requires module runner)"
+CALL_FUNCTION 1
+LOAD_CONST "a"
+LOAD_CONST "b"
+LOAD_CONST "c"
+BUILD_LIST 3
+STORE_NAME first
+STORE_NAME third
+LOAD_CONST "Jane"
+LOAD_CONST 25.0
+BUILD_MAP 2
+STORE_NAME personName
+STORE_NAME age
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+BUILD_LIST 2
+STORE_NAME arr1
+LOAD_CONST 3.0
+LOAD_CONST 4.0
+BUILD_LIST 2
+STORE_NAME arr2
+BUILD_LIST 2
+STORE_NAME combined
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+BUILD_MAP 3
+STORE_NAME x
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "6.4. Destructuring and Spread/Rest: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 7. Built-in Objects ---"
+CALL_FUNCTION 1
+LOAD_CONST '{"fruit":"apple","size":"large"}'
+STORE_NAME jsonString
+LOAD_NAME JSON
+LOAD_ATTR parse
+LOAD_NAME jsonString
+CALL_FUNCTION 1
+STORE_NAME jsonObj
+LOAD_NAME JSON
+LOAD_ATTR stringify
+LOAD_NAME jsonObj
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "7.1. JSON: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME Date
+CALL_FUNCTION 0
+STORE_NAME now
+LOAD_NAME now
+LOAD_ATTR getFullYear
+CALL_FUNCTION 0
+LOAD_NAME now
+LOAD_ATTR toISOString
+CALL_FUNCTION 0
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "7.2. Date: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST /\S+@\S+\.\S+/
+STORE_NAME emailRegex
+LOAD_NAME emailRegex
+LOAD_ATTR test
+LOAD_CONST "test@example.com"
+CALL_FUNCTION 1
+LOAD_CONST "The rain in Spain"
+LOAD_ATTR match
+LOAD_CONST /ain/g
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "7.3. Regular Expressions: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 8. Dynamic Features ---"
+CALL_FUNCTION 1
+LOAD_NAME eval
+LOAD_CONST "2 + 2"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "8.1. eval(): PASSED"
+CALL_FUNCTION 1
+BUILD_MAP 0
+STORE_NAME dynamicObj
+LOAD_CONST "dynamicProperty"
+STORE_NAME propName
+LOAD_CONST "success"
+LOAD_NAME dynamicObj
+LOAD_NAME propName
+STORE_SUBSCR None
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "8.2. Dynamic properties: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- 9. Missing Node Types Coverage ---"
+CALL_FUNCTION 1
+LOAD_CONST True
+STORE_NAME trueVal
+LOAD_CONST False
+STORE_NAME falseVal
+LOAD_CONST None
+STORE_NAME nullVal
+STORE_NAME undefinedVal
+LOAD_CONST 42.0
+UNARY_NEGATIVE None
+STORE_NAME negativeNum
+LOAD_CONST 42.0
+BINARY_OPERATION +
+STORE_NAME positiveNum
+LOAD_CONST 42.0
+UNARY_INVERT None
+STORE_NAME bitwiseNot
+LOAD_CONST True
+LOGICAL_NOT None
+STORE_NAME logicalNot
+LOAD_CONST 42.0
+TYPEOF_OPERATOR None
+STORE_NAME typeofOp
+LOAD_CONST 10.0
+STORE_NAME augVal
+LOAD_NAME augVal
+LOAD_CONST 5.0
+LOAD_NAME augVal
+LOAD_CONST 2.0
+LOAD_NAME augVal
+LOAD_CONST 3.0
+LOAD_NAME augVal
+LOAD_CONST 2.0
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+COMPARE_LESS None
+LOAD_CONST 2.0
+LOAD_CONST 1.0
+COMPARE_GREATER None
+LOGICAL_AND None
+LOAD_CONST 3.0
+LOAD_CONST 3.0
+COMPARE_EQUAL None
+LOGICAL_OR None
+STORE_NAME compResult
+LOAD_CONST 5.0
+LOAD_CONST 5.0
+COMPARE_EQUAL None
+STORE_NAME strictEqual
+LOAD_CONST 5.0
+LOAD_CONST "5"
+COMPARE_NOT_EQUAL None
+STORE_NAME notStrictEqual
+LOAD_NAME Date
+CALL_FUNCTION 0
+LOAD_NAME Date
+COMPARE_INSTANCEOF None
+STORE_NAME instanceOf
+MAKE_FUNCTION lambda_ref_15
+STORE_NAME arrowFunc
+MAKE_FUNCTION lambda_ref_16
+STORE_NAME arrowFunc2
+LOAD_NAME arrowFunc
+LOAD_CONST 5.0
+CALL_FUNCTION 1
+STORE_NAME arrowResult
+LOAD_CONST "World"
+STORE_NAME name
+BINARY_OPERATION None
+STORE_NAME templateStr
+BINARY_OPERATION None
+STORE_NAME multilineTemplate
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+BUILD_LIST 3
+STORE_NAME arr
+LOAD_NAME arr
+STORE_NAME first
+STORE_NAME second
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+BUILD_MAP 2
+STORE_NAME obj
+LOAD_NAME obj
+STORE_NAME a
+STORE_NAME b
+LOAD_CONST 4.0
+LOAD_CONST 5.0
+BUILD_LIST 3
+STORE_NAME newArr
+LOAD_CONST 3.0
+BUILD_MAP 1
+STORE_NAME newObj
+LOAD_NAME JSON
+LOAD_ATTR parse
+LOAD_CONST "invalid json"
+CALL_FUNCTION 1
+STORE_NAME riskyOp
+JUMP_FORWARD 9
+LOAD_CONST True
+STORE_NAME errorHandled
+JUMP_FORWARD 5
+LOAD_CONST True
+STORE_NAME cleanupDone
+LOAD_NAME i
+LOAD_CONST 1.0
+COMPARE_EQUAL None
+POP_JUMP_IF_FALSE 5
+BINARY_OPERATION None
+LOAD_NAME i
+LOAD_CONST 2.0
+COMPARE_EQUAL None
+POP_JUMP_IF_FALSE 5
+BINARY_OPERATION None
+LOAD_NAME arr
+LOAD_NAME item
+STORE_NAME processed
+LOAD_NAME obj
+LOAD_NAME obj
+LOAD_NAME key
+BINARY_SUBSCR None
+STORE_NAME value
+LOAD_CONST 2.0
+STORE_NAME switchVal
+LOAD_CONST 5.0
+LOAD_CONST 0.0
+COMPARE_GREATER None
+LOAD_CONST "positive"
+LOAD_CONST "negative"
+STORE_NAME ternaryResult
+LOAD_NAME arr
+LOAD_ATTR map
+MAKE_FUNCTION lambda_ref_17
+CALL_FUNCTION 1
+STORE_NAME mappedArr
+LOAD_NAME arr
+LOAD_ATTR filter
+MAKE_FUNCTION lambda_ref_18
+CALL_FUNCTION 1
+STORE_NAME filteredArr
+LOAD_NAME arr
+LOAD_ATTR reduce
+MAKE_FUNCTION lambda_ref_19
+LOAD_CONST 0.0
+CALL_FUNCTION 2
+STORE_NAME reducedVal
+LOAD_CONST /test/gi
+STORE_NAME regex
+LOAD_NAME regex
+LOAD_ATTR test
+LOAD_CONST "Test string"
+CALL_FUNCTION 1
+STORE_NAME regexTest
+MAKE_CLASS Parent_ref_20
+STORE_NAME Parent
+MAKE_CLASS Child_ref_21
+STORE_NAME Child
+LOAD_NAME Child
+LOAD_CONST "Test"
+LOAD_CONST 25.0
+CALL_FUNCTION 2
+STORE_NAME childInstance
+ASYNC_FUNCTION asyncFunc_ref_24
+STORE_NAME asyncFunc
+LOAD_ATTR_CHAIN obj.deep.property
+STORE_NAME optional
+LOAD_NAME nullVal
+LOAD_CONST "default"
+BINARY_NULLISH_COALESCING None
+STORE_NAME nullish
+MAKE_FUNCTION testThrow_ref_25
+STORE_NAME testThrow
+LOAD_CONST 0xFF
+LOAD_CONST 0x0F
+BINARY_AND None
+STORE_NAME bitwiseAnd
+LOAD_CONST 0x10
+LOAD_CONST 0x01
+BINARY_OR None
+STORE_NAME bitwiseOr
+LOAD_CONST 0xAA
+LOAD_CONST 0x55
+BINARY_XOR None
+STORE_NAME bitwiseXor
+LOAD_CONST 8.0
+LOAD_CONST 2.0
+BINARY_LSHIFT None
+STORE_NAME leftShift
+LOAD_CONST 32.0
+LOAD_CONST 3.0
+BINARY_RSHIFT None
+STORE_NAME rightShift
+LOAD_CONST 32.0
+LOAD_CONST 2.0
+BINARY_UNSIGNED_RSHIFT None
+STORE_NAME unsignedRightShift
+LOAD_CONST 5.0
+LOAD_CONST 5.0
+COMPARE_EQUAL None
+STORE_NAME strictEqualTest
+LOAD_CONST 5.0
+LOAD_CONST "5"
+COMPARE_NOT_EQUAL None
+STORE_NAME strictNotEqualTest
+LOAD_CONST None
+LOAD_CONST "default"
+BINARY_NULLISH_COALESCING None
+STORE_NAME nullishCoalescing
+LOAD_CONST "fallback"
+BINARY_NULLISH_COALESCING None
+STORE_NAME undefinedCoalescing
+LOAD_CONST "value"
+BUILD_MAP 1
+STORE_NAME testObj
+LOAD_NAME testObj
+LOAD_ATTR prop
+DELETE_OPERATOR None
+LOAD_CONST 0.0
+VOID_OPERATOR None
+STORE_NAME voidResult
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "9. Missing Node Types Coverage: PASSED"
+CALL_FUNCTION 1
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+LOAD_CONST 4.0
+LOAD_CONST 5.0
+BUILD_LIST 5
+STORE_NAME testArray
+LOAD_NAME testArray
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+STORE_NAME firstElement
+LOAD_NAME testArray
+LOAD_NAME testArray
+LOAD_ATTR length
+LOAD_CONST 1.0
+BINARY_SUBTRACT None
+BINARY_SUBSCR None
+STORE_NAME lastElement
+LOAD_NAME testArray
+LOAD_NAME Math
+LOAD_ATTR floor
+LOAD_NAME Math
+LOAD_ATTR random
+CALL_FUNCTION 0
+LOAD_NAME testArray
+LOAD_ATTR length
+BINARY_MULTIPLY None
+CALL_FUNCTION 1
+BINARY_SUBSCR None
+STORE_NAME dynamicIndex
+LOAD_CONST "secret123"
+LOAD_CONST "https://malicious.com/api"
+LOAD_CONST "encoded"
+BUILD_MAP 1
+BUILD_MAP 3
+STORE_NAME configObject
+LOAD_NAME configObject
+LOAD_CONST "apiKey"
+BINARY_SUBSCR None
+STORE_NAME apiKey
+LOAD_NAME configObject
+LOAD_CONST "endpoint"
+BINARY_SUBSCR None
+STORE_NAME endpoint
+LOAD_NAME configObject
+LOAD_CONST "pay"
+LOAD_CONST "load"
+BINARY_ADD None
+BINARY_SUBSCR None
+STORE_NAME dynamicProperty
+LOAD_CONST "admin"
+LOAD_CONST "read"
+LOAD_CONST "write"
+LOAD_CONST "execute"
+BUILD_LIST 3
+BUILD_MAP 2
+LOAD_CONST "guest"
+LOAD_CONST "read"
+BUILD_LIST 1
+BUILD_MAP 2
+BUILD_LIST 2
+LOAD_CONST "192.168.1.1"
+LOAD_CONST "10.0.0.1"
+BUILD_LIST 2
+LOAD_CONST 80.0
+LOAD_CONST 443.0
+LOAD_CONST 8080.0
+BUILD_LIST 3
+BUILD_MAP 2
+BUILD_MAP 2
+STORE_NAME nestedStructure
+LOAD_NAME nestedStructure
+LOAD_CONST "users"
+BINARY_SUBSCR None
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+LOAD_CONST "name"
+BINARY_SUBSCR None
+STORE_NAME adminName
+LOAD_NAME nestedStructure
+LOAD_ATTR users
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+LOAD_ATTR permissions
+LOAD_CONST 2.0
+BINARY_SUBSCR None
+STORE_NAME adminPermissions
+LOAD_NAME nestedStructure
+LOAD_CONST "config"
+BINARY_SUBSCR None
+LOAD_CONST "servers"
+BINARY_SUBSCR None
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+STORE_NAME firstServer
+LOAD_ATTR_CHAIN nestedStructure.config.ports
+LOAD_CONST 1.0
+BINARY_SUBSCR None
+STORE_NAME httpsPort
+LOAD_CONST "endpoint"
+STORE_NAME propName
+LOAD_CONST "apiKey"
+STORE_NAME keyName
+LOAD_NAME configObject
+LOAD_NAME propName
+BINARY_SUBSCR None
+STORE_NAME dynamicAccess1
+LOAD_NAME configObject
+LOAD_NAME keyName
+BINARY_SUBSCR None
+STORE_NAME dynamicAccess2
+LOAD_CONST "api"
+LOAD_CONST "Key"
+BINARY_ADD None
+STORE_NAME computedKey
+LOAD_NAME btoa
+LOAD_CONST "endpoint"
+CALL_FUNCTION 1
+LOAD_ATTR substring
+LOAD_CONST 0.0
+LOAD_CONST 8.0
+CALL_FUNCTION 2
+STORE_NAME encodedKey
+LOAD_NAME configObject
+LOAD_NAME computedKey
+BINARY_SUBSCR None
+STORE_NAME obfuscatedAccess
+LOAD_NAME Array
+LOAD_CONST 10.0
+CALL_FUNCTION 1
+LOAD_ATTR fill
+LOAD_CONST 0.0
+CALL_FUNCTION 1
+LOAD_ATTR map
+MAKE_FUNCTION lambda_ref_26
+CALL_FUNCTION 1
+STORE_NAME payloadArray
+LOAD_NAME payloadArray
+LOAD_CONST 5.0
+LOAD_CONST 2.0
+BINARY_ADD None
+BINARY_SUBSCR None
+STORE_NAME calculatedIndex
+LOAD_NAME payloadArray
+LOAD_NAME Math
+LOAD_ATTR pow
+LOAD_CONST 2.0
+LOAD_CONST 2.0
+CALL_FUNCTION 2
+BINARY_SUBSCR None
+STORE_NAME expressionIndex
+LOAD_NAME payloadArray
+LOAD_CONST 15.0
+LOAD_NAME payloadArray
+LOAD_ATTR length
+BINARY_MODULO None
+BINARY_SUBSCR None
+STORE_NAME moduloIndex
+LOAD_CONST "javascript:void(0)"
+STORE_NAME maliciousString
+LOAD_NAME maliciousString
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+STORE_NAME protocolChar
+LOAD_NAME maliciousString
+LOAD_NAME maliciousString
+LOAD_ATTR indexOf
+LOAD_CONST ":"
+CALL_FUNCTION 1
+BINARY_SUBSCR None
+STORE_NAME colonChar
+LOAD_NAME maliciousString
+LOAD_CONST 11.0
+BINARY_SUBSCR None
+STORE_NAME voidPart
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+BUILD_LIST 3
+LOAD_CONST 4.0
+LOAD_CONST 5.0
+LOAD_CONST 6.0
+BUILD_LIST 3
+LOAD_CONST 7.0
+LOAD_CONST 8.0
+LOAD_CONST 9.0
+BUILD_LIST 3
+BUILD_LIST 3
+STORE_NAME matrix
+LOAD_NAME matrix
+LOAD_CONST 1.0
+BINARY_SUBSCR None
+LOAD_CONST 1.0
+BINARY_SUBSCR None
+STORE_NAME centerElement
+LOAD_NAME matrix
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+STORE_NAME cornerElement
+LOAD_NAME matrix
+LOAD_NAME matrix
+LOAD_ATTR length
+LOAD_CONST 1.0
+BINARY_SUBTRACT None
+BINARY_SUBSCR None
+LOAD_NAME matrix
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+LOAD_ATTR length
+LOAD_CONST 1.0
+BINARY_SUBTRACT None
+BINARY_SUBSCR None
+STORE_NAME lastRowLastCol
+LOAD_CONST "exec"
+LOAD_CONST "cmd.exe"
+LOAD_CONST "/c"
+BUILD_LIST 2
+LOAD_CONST "shell"
+LOAD_CONST "powershell.exe"
+LOAD_CONST "-c"
+BUILD_LIST 2
+LOAD_CONST "bash"
+LOAD_CONST "/bin/bash"
+LOAD_CONST "-c"
+BUILD_LIST 2
+BUILD_MAP 3
+STORE_NAME commandMap
+LOAD_NAME commandMap
+LOAD_CONST "exec"
+BINARY_SUBSCR None
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+STORE_NAME windowsCmd
+LOAD_NAME commandMap
+LOAD_CONST "shell"
+BINARY_SUBSCR None
+LOAD_CONST 1.0
+BINARY_SUBSCR None
+STORE_NAME powershellFlag
+LOAD_NAME Uint8Array
+LOAD_CONST 0x48
+LOAD_CONST 0x65
+LOAD_CONST 0x6c
+LOAD_CONST 0x6c
+LOAD_CONST 0x6f
+BUILD_LIST 5
+CALL_FUNCTION 1
+STORE_NAME buffer
+LOAD_NAME buffer
+LOAD_CONST 0.0
+BINARY_SUBSCR None
+STORE_NAME firstByte
+LOAD_NAME buffer
+LOAD_CONST 1.0
+BINARY_SUBSCR None
+STORE_NAME secondByte
+LOAD_CONST 2.0
+STORE_NAME globalIndex
+LOAD_NAME testArray
+LOAD_NAME globalIndex
+BINARY_SUBSCR None
+STORE_NAME scopedAccess
+LOAD_NAME testArray
+LOAD_NAME Math
+LOAD_ATTR floor
+LOAD_NAME Math
+LOAD_ATTR random
+CALL_FUNCTION 0
+LOAD_CONST 3.0
+BINARY_MULTIPLY None
+CALL_FUNCTION 1
+BINARY_SUBSCR None
+STORE_NAME functionBasedIndex
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "9.21. BINARY_SUBSCR Test Cases: PASSED"
+CALL_FUNCTION 1
+BUILD_MAP 0
+STORE_NAME storeObj
+BUILD_LIST 0
+STORE_NAME storeArr
+BUILD_MAP 0
+BUILD_MAP 1
+STORE_NAME storeNested
+LOAD_CONST "value1"
+LOAD_NAME storeObj
+LOAD_CONST "key1"
+STORE_SUBSCR None
+LOAD_CONST 'value2'
+LOAD_NAME storeObj
+LOAD_CONST 'key2'
+STORE_SUBSCR None
+BINARY_OPERATION None
+LOAD_NAME storeObj
+BINARY_OPERATION None
+STORE_SUBSCR None
+LOAD_CONST "dynamicKey"
+STORE_NAME storeKey
+LOAD_CONST "dynamicValue"
+LOAD_NAME storeObj
+LOAD_NAME storeKey
+STORE_SUBSCR None
+LOAD_CONST "first"
+LOAD_NAME storeArr
+LOAD_CONST 0.0
+STORE_SUBSCR None
+LOAD_CONST "second"
+LOAD_NAME storeArr
+LOAD_CONST 1.0
+STORE_SUBSCR None
+LOAD_CONST "sparse"
+LOAD_NAME storeArr
+LOAD_CONST 10.0
+STORE_SUBSCR None
+LOAD_CONST "computed"
+STORE_NAME storePrefix
+LOAD_CONST "computed value"
+LOAD_NAME storeObj
+LOAD_NAME storePrefix
+LOAD_CONST "_key"
+BINARY_ADD None
+STORE_SUBSCR None
+LOAD_CONST "template value"
+LOAD_NAME storeObj
+BINARY_OPERATION None
+STORE_SUBSCR None
+LOAD_CONST "deeply nested"
+LOAD_NAME storeNested
+LOAD_CONST "inner"
+BINARY_SUBSCR None
+LOAD_CONST "deep"
+STORE_SUBSCR None
+LOAD_CONST "mixed access"
+LOAD_NAME storeNested
+LOAD_ATTR inner
+LOAD_CONST "mixed"
+STORE_SUBSCR None
+MAKE_FUNCTION getStoreKey_ref_27
+STORE_NAME getStoreKey
+LOAD_CONST "from function"
+LOAD_NAME storeObj
+LOAD_NAME getStoreKey
+CALL_FUNCTION 0
+STORE_SUBSCR None
+LOAD_CONST "numeric expression"
+LOAD_NAME storeObj
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+BINARY_ADD None
+STORE_SUBSCR None
+LOAD_CONST "method call key"
+LOAD_NAME storeObj
+LOAD_NAME storeKey
+LOAD_ATTR toUpperCase
+CALL_FUNCTION 0
+STORE_SUBSCR None
+LOAD_CONST 0.0
+STORE_NAME storeCounter
+LOAD_CONST "with side effect"
+LOAD_NAME storeObj
+LOAD_NAME storeCounter
+LOAD_CONST 1.0
+BINARY_ADD None
+STORE_NAME storeCounter
+STORE_SUBSCR None
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "9.22. STORE_SUBSCR Test Cases: PASSED"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "\n--- JavaScript Compiler Test Suite: Finished ---"
+CALL_FUNCTION 1
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "--- All tests completed. Check output for any errors. ---"
+CALL_FUNCTION 1
+LOAD_CONST 'exported'
+RETURN_VALUE None
+LOAD_PARAM x
+TYPEOF_OPERATOR None
+RETURN_VALUE None
+BINARY_OPERATION None
+RETURN_VALUE None
+LOAD_PARAM x
+LOAD_PARAM x
+BINARY_MULTIPLY None
+RETURN_VALUE None
+LOAD_PARAM a
+LOAD_NAME b
+LOAD_NAME rest
+BUILD_LIST 3
+RETURN_VALUE None
+LOAD_CONST 0.0
+STORE_NAME count
+LOAD_NAME count
+LOAD_CONST 1.0
+BINARY_ADD None
+STORE_NAME count
+LOAD_NAME count
+RETURN_VALUE None
+RETURN_VALUE None
+LOAD_PARAM make
+STORE_NAME this.make
+LOAD_PARAM model
+STORE_NAME this.model
+RETURN_VALUE None
+LOAD_NAME name
+LOAD_NAME name
+STORE_NAME this.name
+BINARY_OPERATION None
+RETURN_VALUE None
+LOAD_NAME name
+LOAD_NAME brand
+LOAD_NAME name
+CALL_FUNCTION 1
+LOAD_NAME brand
+STORE_NAME this.brand
+BINARY_OPERATION None
+RETURN_VALUE None
+LOAD_NAME width
+LOAD_NAME height
+LOAD_NAME width
+STORE_NAME this._width
+LOAD_NAME height
+STORE_NAME this._height
+LOAD_ATTR _width
+LOAD_ATTR _height
+BINARY_MULTIPLY None
+RETURN_VALUE None
+LOAD_NAME value
+LOAD_NAME value
+STORE_NAME this._width
+LOAD_NAME size
+LOAD_NAME Rectangle
+LOAD_NAME size
+LOAD_NAME size
+CALL_FUNCTION 2
+RETURN_VALUE None
+LOAD_NAME setTimeout
+LOAD_PARAM resolve
+LOAD_NAME ms
+CALL_FUNCTION 2
+RETURN_VALUE None
+LOAD_NAME Promise
+MAKE_FUNCTION lambda_ref_10
+CALL_FUNCTION 1
+RETURN_VALUE None
+LOAD_NAME delay
+LOAD_CONST 50.0
+CALL_FUNCTION 1
+AWAIT_EXPRESSION None
+LOAD_CONST "Async work done"
+RETURN_VALUE None
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "6.1. Promises and async/await: PASSED"
+CALL_FUNCTION 1
+RETURN_VALUE None
+LOAD_CONST 1.0
+STORE_NAME id
+LOAD_CONST True
+POP_JUMP_IF_FALSE 3
+LOAD_CONST None
+BINARY_OPERATION None
+RETURN_VALUE None
+LOAD_PARAM x
+LOAD_CONST 2.0
+BINARY_MULTIPLY None
+RETURN_VALUE None
+LOAD_PARAM a
+LOAD_PARAM b
+BINARY_ADD None
+RETURN_VALUE None
+LOAD_PARAM x
+LOAD_CONST 2.0
+BINARY_MULTIPLY None
+RETURN_VALUE None
+LOAD_PARAM x
+LOAD_CONST 1.0
+COMPARE_GREATER None
+RETURN_VALUE None
+LOAD_PARAM acc
+LOAD_PARAM x
+BINARY_ADD None
+RETURN_VALUE None
+LOAD_NAME name
+LOAD_NAME name
+STORE_NAME this.name
+BINARY_OPERATION None
+RETURN_VALUE None
+LOAD_NAME name
+LOAD_NAME age
+LOAD_NAME name
+CALL_FUNCTION 1
+LOAD_NAME age
+STORE_NAME this.age
+BINARY_OPERATION None
+RETURN_VALUE None
+LOAD_NAME resolve
+LOAD_CONST "done"
+CALL_FUNCTION 1
+RETURN_VALUE None
+LOAD_NAME setTimeout
+MAKE_FUNCTION lambda_ref_22
+LOAD_CONST 1.0
+CALL_FUNCTION 2
+RETURN_VALUE None
+LOAD_NAME Promise
+MAKE_FUNCTION lambda_ref_23
+CALL_FUNCTION 1
+STORE_NAME promise
+LOAD_NAME promise
+AWAIT_EXPRESSION None
+STORE_NAME result
+LOAD_NAME result
+RETURN_VALUE None
+LOAD_NAME Error
+LOAD_CONST "Test error"
+CALL_FUNCTION 1
+BINARY_OPERATION None
+RETURN_VALUE None
+LOAD_PARAM i
+LOAD_CONST 2.0
+BINARY_MULTIPLY None
+RETURN_VALUE None
+LOAD_CONST "funcKey"
+RETURN_VALUE None

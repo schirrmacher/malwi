@@ -1,4 +1,3 @@
-Root CodeObject (<module>) - Mapping:
 IMPORT_NAME SYSTEM_INTERACTION
 IMPORT_NAME math
 IMPORT_NAME cmath
@@ -1027,7 +1026,7 @@ STORE_NAME none_val
 LOAD_CONST ...
 STORE_NAME ellipsis_val
 MAKE_FUNCTION
-STORE_NAME STRING_LEN_S_ENT_HIGH
+STORE_NAME io
 LOAD_CONST FLOAT
 UNARY_NEGATIVE
 STORE_NAME negative_num
@@ -1748,8 +1747,6 @@ CALL_FUNCTION 1
 LOAD_NAME print
 LOAD_CONST STRING_LEN_S_ENT_HIGH
 CALL_FUNCTION 1
-
-dynamic_import_test_ref_0 - Mapping:
 LOAD_CONST os
 STORE_NAME module_name
 LOAD_NAME __import__
@@ -1772,53 +1769,37 @@ LOAD_CONST eval
 CALL_FUNCTION 2
 STORE_NAME eval_func
 RETURN_VALUE
-
-__enter___ref_1 - Mapping:
 LOAD_NAME print
 LOAD_CONST Entering context
 CALL_FUNCTION 1
 LOAD_CONST Hello from with
 RETURN_VALUE
-
-__exit___ref_2 - Mapping:
 LOAD_NAME print
 LOAD_CONST Exiting context
 CALL_FUNCTION 1
 RETURN_VALUE
-
-MyContext_ref_3 - Mapping:
 MAKE_FUNCTION
 STORE_NAME __enter__
 MAKE_FUNCTION
 STORE_NAME __exit__
-
-greet_ref_4 - Mapping:
 LOAD_CONST Hello,
 LOAD_PARAM name
 LOAD_CONST !
 BINARY_OPERATION
 RETURN_VALUE
-
-func_with_args_ref_5 - Mapping:
 LOAD_PARAM a
 LOAD_PARAM b
 BINARY_ADD
 LOAD_PARAM c
 BINARY_ADD
 RETURN_VALUE
-
-func_with_arbitrary_args_ref_6 - Mapping:
 LOAD_PARAM args
 LOAD_PARAM kwargs
 RETURN_VALUE
-
-lambda_ref_7 - Mapping:
 LOAD_PARAM x
 LOAD_PARAM y
 BINARY_MULTIPLY
 RETURN_VALUE
-
-inner_func_ref_8 - Mapping:
 LOAD_NAME x
 LOAD_NAME x
 LOAD_CONST FLOAT
@@ -1826,41 +1807,27 @@ BINARY_OPERATION
 STORE_NAME x
 LOAD_NAME x
 RETURN_VALUE
-
-outer_func_ref_9 - Mapping:
 LOAD_CONST FLOAT
 STORE_NAME x
 MAKE_FUNCTION
 STORE_NAME inner_func
 LOAD_NAME inner_func
 RETURN_VALUE
-
-modify_global_ref_10 - Mapping:
 LOAD_NAME global_var
 LOAD_CONST FLOAT
 STORE_NAME global_var
 RETURN_VALUE
-
-__init___ref_11 - Mapping:
 LOAD_PARAM instance_variable
 STORE_NAME STRING_LEN_S_ENT_HIGH
 RETURN_VALUE
-
-instance_method_ref_12 - Mapping:
 LOAD_PARAM self
 LOAD_ATTR instance_variable
 RETURN_VALUE
-
-class_method_ref_13 - Mapping:
 LOAD_PARAM cls
 LOAD_ATTR class_variable
 RETURN_VALUE
-
-static_method_ref_14 - Mapping:
 LOAD_CONST static
 RETURN_VALUE
-
-MyClass_ref_15 - Mapping:
 LOAD_CONST FLOAT
 STORE_NAME class_variable
 MAKE_FUNCTION
@@ -1871,39 +1838,23 @@ MAKE_FUNCTION
 STORE_NAME class_method
 MAKE_FUNCTION
 STORE_NAME static_method
-
-method_a_ref_16 - Mapping:
 LOAD_CONST A
 RETURN_VALUE
-
-ParentA_ref_17 - Mapping:
 MAKE_FUNCTION
 STORE_NAME method_a
-
-method_b_ref_18 - Mapping:
 LOAD_CONST B
 RETURN_VALUE
-
-ParentB_ref_19 - Mapping:
 MAKE_FUNCTION
 STORE_NAME method_b
-
-method_c_ref_20 - Mapping:
 LOAD_CONST C
 RETURN_VALUE
-
-Child_ref_21 - Mapping:
 MAKE_FUNCTION
 STORE_NAME method_c
-
-__init___ref_22 - Mapping:
 LOAD_PARAM x
 STORE_NAME self.x
 LOAD_PARAM y
 STORE_NAME self.y
 RETURN_VALUE
-
-__add___ref_23 - Mapping:
 LOAD_NAME Vector
 LOAD_PARAM self
 LOAD_ATTR x
@@ -1917,8 +1868,6 @@ LOAD_ATTR y
 BINARY_ADD
 CALL_FUNCTION 2
 RETURN_VALUE
-
-__repr___ref_24 - Mapping:
 LOAD_CONST Vector(
 LOAD_PARAM self
 LOAD_ATTR x
@@ -1928,12 +1877,8 @@ LOAD_ATTR y
 LOAD_CONST )
 BINARY_OPERATION
 RETURN_VALUE
-
-__len___ref_25 - Mapping:
 LOAD_CONST FLOAT
 RETURN_VALUE
-
-__getitem___ref_26 - Mapping:
 LOAD_PARAM index
 LOAD_CONST
 COMPARE_OP
@@ -1951,8 +1896,6 @@ RETURN_VALUE
 LOAD_NAME IndexError
 BINARY_OPERATION
 RETURN_VALUE
-
-Vector_ref_27 - Mapping:
 MAKE_FUNCTION
 STORE_NAME __init__
 MAKE_FUNCTION
@@ -1963,18 +1906,12 @@ MAKE_FUNCTION
 STORE_NAME __len__
 MAKE_FUNCTION
 STORE_NAME __getitem__
-
-__init___ref_28 - Mapping:
 LOAD_PARAM radius
 STORE_NAME self._radius
 RETURN_VALUE
-
-radius_ref_29 - Mapping:
 LOAD_PARAM self
 LOAD_ATTR _radius
 RETURN_VALUE
-
-radius_ref_30 - Mapping:
 LOAD_PARAM value
 LOAD_CONST
 COMPARE_OP
@@ -1986,8 +1923,6 @@ BINARY_OPERATION
 LOAD_PARAM value
 STORE_NAME self._radius
 RETURN_VALUE
-
-area_ref_31 - Mapping:
 LOAD_CONST FLOAT
 LOAD_PARAM self
 LOAD_ATTR _radius
@@ -1995,8 +1930,6 @@ LOAD_CONST FLOAT
 BINARY_POWER
 BINARY_MULTIPLY
 RETURN_VALUE
-
-Circle_ref_32 - Mapping:
 MAKE_FUNCTION
 STORE_NAME __init__
 MAKE_FUNCTION
@@ -2005,8 +1938,6 @@ MAKE_FUNCTION
 STORE_NAME radius
 MAKE_FUNCTION
 STORE_NAME area
-
-wrapper_ref_33 - Mapping:
 LOAD_NAME print
 LOAD_CONST STRING_LEN_S_ENT_HIGH
 CALL_FUNCTION 1
@@ -2020,26 +1951,18 @@ LOAD_CONST STRING_LEN_S_ENT_HIGH
 CALL_FUNCTION 1
 LOAD_NAME result
 RETURN_VALUE
-
-my_decorator_ref_34 - Mapping:
 MAKE_FUNCTION
 STORE_NAME wrapper
 LOAD_NAME wrapper
 RETURN_VALUE
-
-say_whee_ref_35 - Mapping:
 LOAD_CONST Whee!
 RETURN_VALUE
-
-my_generator_ref_36 - Mapping:
 LOAD_NAME range
 LOAD_PARAM n
 CALL_FUNCTION 1
 LOAD_CONST
 BINARY_OPERATION
 RETURN_VALUE
-
-my_coroutine_ref_37 - Mapping:
 LOAD_NAME asyncio
 LOAD_ATTR sleep
 LOAD_CONST FLOAT
@@ -2047,8 +1970,6 @@ CALL_FUNCTION 1
 AWAIT_EXPRESSION
 LOAD_CONST Coroutine finished
 RETURN_VALUE
-
-main_async_ref_38 - Mapping:
 LOAD_NAME my_coroutine
 CALL_FUNCTION
 AWAIT_EXPRESSION
@@ -2057,8 +1978,6 @@ LOAD_NAME print
 LOAD_CONST STRING_LEN_S_ENT_HIGH
 CALL_FUNCTION 1
 RETURN_VALUE
-
-__new___ref_39 - Mapping:
 LOAD_CONST Hello from metaclass
 LOAD_PARAM dct
 LOAD_CONST new_attribute
@@ -2072,15 +1991,9 @@ LOAD_PARAM bases
 LOAD_PARAM dct
 CALL_FUNCTION 4
 RETURN_VALUE
-
-MyMeta_ref_40 - Mapping:
 MAKE_FUNCTION
 STORE_NAME __new__
 
-MyClassWithMeta_ref_41 - Mapping:
-
-
-hinted_function_ref_42 - Mapping:
 LOAD_PARAM name
 LOAD_CONST is
 LOAD_PARAM age
@@ -2088,56 +2001,34 @@ LOAD_CONST years old.
 BINARY_OPERATION
 RETURN_VALUE
 
-DynamicClass_ref_43 - Mapping:
-
-
-function_with_ellipsis_ref_44 - Mapping:
 LOAD_CONST ...
 RETURN_VALUE
-
-lambda_ref_45 - Mapping:
 LOAD_PARAM x
 LOAD_CONST FLOAT
 BINARY_MULTIPLY
 RETURN_VALUE
-
-__enter___ref_46 - Mapping:
 LOAD_CONST context_value
 RETURN_VALUE
-
-__exit___ref_47 - Mapping:
 LOAD_CONST
 RETURN_VALUE
-
-SimpleContext_ref_48 - Mapping:
 MAKE_FUNCTION
 STORE_NAME __enter__
 MAKE_FUNCTION
 STORE_NAME __exit__
-
-empty_func_ref_49 - Mapping:
 RETURN_VALUE
-
-test_raise_ref_50 - Mapping:
 LOAD_NAME ValueError
 LOAD_CONST Test error
 CALL_FUNCTION 1
 BINARY_OPERATION
 RETURN_VALUE
-
-test_global_ref_51 - Mapping:
 LOAD_NAME global_var
 LOAD_CONST modified
 STORE_NAME global_var
 RETURN_VALUE
-
-inner_ref_52 - Mapping:
 LOAD_NAME nonlocal_var
 LOAD_CONST inner
 STORE_NAME nonlocal_var
 RETURN_VALUE
-
-outer_ref_53 - Mapping:
 LOAD_CONST outer
 STORE_NAME nonlocal_var
 MAKE_FUNCTION
@@ -2146,7 +2037,5 @@ LOAD_NAME inner
 CALL_FUNCTION
 LOAD_NAME nonlocal_var
 RETURN_VALUE
-
-get_store_key_ref_54 - Mapping:
 LOAD_CONST funcKey
 RETURN_VALUE

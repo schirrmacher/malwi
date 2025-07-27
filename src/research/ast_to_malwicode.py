@@ -128,7 +128,9 @@ class Instruction:
         return f"Instruction({self.opcode.name}, {self.arg})"
 
     @classmethod
-    def map_argument(cls, op_code: OpCode, arg: Any, language: str) -> str:
+    def map_argument(
+        cls, op_code: OpCode, arg: Any, language: str, for_hashing: bool = False
+    ) -> str:
         """
         ATTENTION!
         This is the most critical function for training!
@@ -143,6 +145,11 @@ class Instruction:
             - Creating more unique training samples, allowing the model to generalize better
         - Tokenization has huge impact on performance as well
             - Splitting certain instructions might destroy the context understanding
+
+        Hashing:
+        - To create unique samples for training the mapping is adapted
+        - Similar functions should create the same hash
+        - This is why strings are removed and only the structure is compared
         """
 
         STRING_MAX_LENGTH = 20
@@ -178,15 +185,17 @@ class Instruction:
             return f"{op_code.name} {import_mapping.get(argval)}"
         # The function can be fully replaced by a single token
         elif (
-            op_code in [OpCode.LOAD_NAME, OpCode.LOAD_ATTR_CHAIN]
+            op_code in [OpCode.STORE_NAME, OpCode.LOAD_NAME, OpCode.LOAD_ATTR_CHAIN]
             and argval in function_mapping
         ):
             return f"{op_code.name} {argval}"
         # We might want to maintain the function name since it cannot be mapped,
         # but contains interesting trigger words
-        elif op_code in [OpCode.LOAD_NAME, OpCode.LOAD_ATTR_CHAIN] and any(
-            key in argval for key in function_mapping
-        ):
+        elif op_code in [
+            OpCode.STORE_NAME,
+            OpCode.LOAD_NAME,
+            OpCode.LOAD_ATTR_CHAIN,
+        ] and any(key in argval for key in function_mapping):
             if len(argval) > STRING_MAX_LENGTH:
                 longest_match_length = 0
                 longest_match = ""
@@ -197,7 +206,7 @@ class Instruction:
                             longest_match_length = len(key)
                             longest_match = key
                 return f"{op_code.name} {longest_match}"
-            else:
+            elif not for_hashing:
                 return f"{op_code.name} {argval}"
         elif op_code in [OpCode.CALL_FUNCTION]:
             return f"{op_code.name} {argval}"
@@ -220,7 +229,7 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
 
         # Cut strings when too long
-        if len(argval) <= STRING_MAX_LENGTH:
+        if len(argval) <= STRING_MAX_LENGTH and not for_hashing:
             return f"{op_code.name} {argval}"
 
         if is_escaped_hex(argval):
@@ -239,31 +248,23 @@ class Instruction:
         entropy_suffix = map_entropy_to_token(entropy)
         return f"{op_code.name} {prefix}_{length_suffix}_{entropy_suffix}"
 
-    def to_string(self, format_mode: str = "default") -> str:
-        if format_mode == "mapped":
+    def to_string(self, mapped: bool, for_hashing: bool = False) -> str:
+        if mapped and for_hashing:
             return Instruction.map_argument(
-                op_code=self.opcode, arg=self.arg, language=self.language
+                op_code=self.opcode,
+                arg=self.arg,
+                language=self.language,
+                for_hashing=True,
             )
-        else:  # default format
-            # Handle special cases for consistent output
-            if self.opcode in (
-                OpCode.POP_JUMP_IF_FALSE,
-                OpCode.POP_JUMP_IF_TRUE,
-                OpCode.JUMP_FORWARD,
-            ):
-                arg_str = "<JUMP_TARGET>"
-            elif self.opcode in (
-                OpCode.MAKE_FUNCTION,
-                OpCode.ASYNC_FUNCTION,
-                OpCode.GENERATOR_FUNCTION,
-                OpCode.MAKE_CLASS,
-            ) and isinstance(self.arg, str):
-                # Handle references to separate CodeObjects
-                arg_str = f"<{self.arg}>"
-            else:
-                arg_str = str(self.arg) if self.arg is not None else ""
-
-            return f"{self.opcode.name:<20} {arg_str.strip()}"
+        elif mapped:
+            return Instruction.map_argument(
+                op_code=self.opcode,
+                arg=self.arg,
+                language=self.language,
+                for_hashing=for_hashing,
+            )
+        else:
+            return f"{self.opcode.name} {self.arg}"
 
 
 class CodeObject:
@@ -293,74 +294,18 @@ class CodeObject:
             f"CodeObject(name={self.name}, path={self.path}, location={self.location})"
         )
 
-    def to_string(
-        self,
-        format_mode: str = "default",
-        separator: str = " ",
-        indent_level: int = 0,
-    ) -> str:
-        """
-        Formats the bytecode of this CodeObject with various formatting options.
-
-        Args:
-            format_mode: Format style ("default", "compact", "detailed", "mapped", "oneline", "oneline_mapped")
-            separator: String to separate instructions in oneline mode (default: " ")
-            indent_level: Number of indentation levels for multiline modes
-            mapping: Optional mapping for arguments in "mapped" mode
-
-        Returns:
-            Formatted string representation of the bytecode
-        """
-        if format_mode in ["oneline", "oneline_mapped"]:
-            return self._format_oneline(separator)
-        else:
-            return self._format_multiline(format_mode, indent_level)
-
-    def _format_oneline(
-        self,
-        separator: str = " ",
-    ) -> str:
-        """Format instructions as a single line with opcodes and values."""
-        instruction_parts = []
+    def to_string(self, mapped: bool = True, one_line=True, for_hashing=False) -> str:
+        instructions = []
 
         if Path(self.path).name in COMMON_TARGET_FILES.get(self.language, []):
-            instruction_parts += [SpecialCases.TARGETED_FILE.value]
+            instructions += [SpecialCases.TARGETED_FILE.value]
 
         for instruction in self.byte_code:
-            instruction_parts.append(instruction.to_string(format_mode="mapped"))
+            instructions.append(
+                instruction.to_string(mapped=mapped, for_hashing=for_hashing)
+            )
 
-        return separator.join(instruction_parts)
-
-    def _format_multiline(
-        self,
-        format_mode: str = "default",
-        indent_level: int = 0,
-    ) -> str:
-        """Format instructions as multiple indented lines."""
-        result_lines = []
-        indent = "    " * indent_level
-
-        for instruction in self.byte_code:
-            # Check for legacy tuple format and convert if needed
-            if isinstance(instruction, tuple):
-                opcode, arg = instruction
-                instruction = Instruction(opcode, arg, self.language)
-
-            # Handle nested CodeObjects (legacy support)
-            if isinstance(instruction.arg, CodeObject):
-                result_lines.append(
-                    f"{indent}{instruction.opcode.name:<20} <{instruction.arg.name}>"
-                )
-                result_lines.append(
-                    instruction.arg.to_string(format_mode, " ", indent_level + 1)
-                )
-                continue
-
-            # Format the instruction with the specified mode
-            formatted_line = instruction.to_string(format_mode)
-            result_lines.append(f"{indent}{formatted_line}")
-
-        return "\n".join(result_lines)
+        return (" " if one_line else "\n").join(instructions)
 
     def to_hash(self) -> str:
         """
@@ -369,18 +314,11 @@ class CodeObject:
         Returns:
             Hexadecimal SHA256 hash string
         """
-        oneline_mapped = self.to_string(format_mode="oneline_mapped")
-        encoded_string = oneline_mapped.encode("utf-8", errors="replace")
+        token_string = self.to_string(mapped=True, for_hashing=True, one_line=True)
+        encoded_string = token_string.encode("utf-8", errors="replace")
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
-
-    def to_oneline(self, separator: str = " ") -> str:
-        """
-        Legacy method for backward compatibility.
-        Use to_string(format_mode="oneline", separator=separator) instead.
-        """
-        return self.to_string(format_mode="oneline", separator=separator)
 
 
 def emit(opcode: "OpCode", arg: Any = None, language: str = "python") -> Instruction:
@@ -2265,15 +2203,6 @@ class ASTCompiler:
         return []
 
 
-def print_code_object(code_obj: CodeObject, indent_level: int = 0):
-    """Recursively prints a CodeObject and its nested functions/classes."""
-    header = f"--- CodeObject '{code_obj.name}' from {code_obj.path.name} (lines {code_obj.location[0]}-{code_obj.location[1]}) ---"
-    separator = "-" * len(header)
-    print(header)
-    print(code_obj.to_string())
-    print(separator)
-
-
 def main() -> None:
     """
     Main function to parse arguments, collect files, and compile them.
@@ -2365,17 +2294,19 @@ def main() -> None:
                         # Print CSV to console
                         for obj in code_objects:
                             row = [
-                                obj.to_string(format_mode="oneline_mapped"),
+                                obj.to_string(one_line=True),
                                 obj.to_hash(),
                                 obj.language,
                                 str(obj.path),
                             ]
                             # Escape quotes in tokens field if necessary
-                            tokens = row[0].replace('"', '""') if '"' in row[0] else row[0]
+                            tokens = (
+                                row[0].replace('"', '""') if '"' in row[0] else row[0]
+                            )
                             print(f'"{tokens}",{row[1]},{row[2]},{row[3]}')
                 else:
                     for i, code_obj in enumerate(code_objects):
-                        print(f"{code_obj.to_string(format_mode='mapped')}")
+                        print(f"{code_obj.to_string(one_line=False)}")
             else:
                 if args.format == "console":
                     print(f"Skipping unsupported file extension: {source.name}")
