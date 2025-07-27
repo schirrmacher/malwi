@@ -1,18 +1,11 @@
 import os
-import dis
-import shutil
 import pathlib
 import argparse
 import numpy as np
 import pandas as pd
 
-
 from typing import Set
 from pathlib import Path
-from tokenizers import ByteLevelBPETokenizer, Tokenizer
-from tokenizers.models import BPE
-from tokenizers.normalizers import NFKC, Sequence, Lowercase
-from tokenizers.pre_tokenizers import ByteLevel
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
@@ -27,7 +20,6 @@ from transformers import (
 from datasets import Dataset, DatasetDict
 from datasets.utils.logging import disable_progress_bar
 
-from common.files import read_json_from_file
 from common.messaging import (
     configure_messaging,
     info,
@@ -38,13 +30,6 @@ from common.messaging import (
 )
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
-
-SPECIAL_TOKENS: Set[str] = read_json_from_file(
-    SCRIPT_DIR / "syntax_mapping" / "special_tokens.json"
-)
-FUNCTION_TOKENS: Set[str] = read_json_from_file(
-    SCRIPT_DIR / "syntax_mapping" / "function_mapping.json"
-)
 
 DEFAULT_MODEL_NAME = "distilbert-base-uncased"
 DEFAULT_TOKENIZER_CLI_PATH = Path("malwi_models")
@@ -102,103 +87,29 @@ def compute_metrics(pred):
     return {"accuracy": acc, "f1": f1, "precision": precision, "recall": recall}
 
 
-def create_or_load_tokenizer(
-    tokenizer_output_path: Path,
-    texts_for_training: list[str],
-    vocab_size: int,
-    global_special_tokens: Set[str],
-    max_length: int,
-    force_retrain: bool,
-):
-    huggingface_tokenizer_config_file = tokenizer_output_path / "tokenizer.json"
+def load_pretrained_tokenizer(tokenizer_path: Path, max_length: int):
+    """
+    Load a pre-trained tokenizer from the specified path.
+    This tokenizer should have been created by train_tokenizer.py.
+    """
+    tokenizer_config_file = tokenizer_path / "tokenizer.json"
 
-    if not force_retrain and huggingface_tokenizer_config_file.exists():
-        info(
-            f"Loading existing PreTrainedTokenizerFast from {tokenizer_output_path} (found tokenizer.json)."
+    if not tokenizer_config_file.exists():
+        error(
+            f"No tokenizer found at {tokenizer_path}. Please run train_tokenizer.py first."
         )
+        raise FileNotFoundError(f"Tokenizer not found at {tokenizer_path}")
+
+    info(f"Loading pre-trained tokenizer from {tokenizer_path}")
+    try:
         tokenizer = PreTrainedTokenizerFast.from_pretrained(
-            str(tokenizer_output_path), model_max_length=max_length
+            str(tokenizer_path), model_max_length=max_length
         )
-    else:
-        info("Training or re-training custom BPE tokenizer...")
-        if force_retrain and tokenizer_output_path.exists():
-            warning(
-                f"Force retraining: Deleting existing tokenizer directory: {tokenizer_output_path}"
-            )
-            try:
-                shutil.rmtree(tokenizer_output_path)
-            except OSError as e:
-                error(
-                    f"Deleting directory {tokenizer_output_path}: {e}. Please delete manually and retry."
-                )
-                raise
-
-        tokenizer_output_path.mkdir(parents=True, exist_ok=True)
-
-        vocab_file_path = tokenizer_output_path / "vocab.json"
-        merges_file_path = tokenizer_output_path / "merges.txt"
-
-        if not texts_for_training:
-            error("No texts provided for training BPE tokenizer.")
-            raise ValueError("Cannot train tokenizer with no data.")
-
-        bpe_trainer_obj = ByteLevelBPETokenizer()
-
-        bytecode_op_names = [key.lower() for key in dis.opmap.keys()]
-
-        bpe_default_special_tokens = [
-            "[PAD]",
-            "[UNK]",
-            "[CLS]",
-            "[SEP]",
-            "[MASK]",
-        ]
-
-        bpe_default_special_tokens.extend(bytecode_op_names)
-
-        combined_special_tokens = list(
-            set(
-                bpe_default_special_tokens
-                + list(global_special_tokens)
-                + list(FUNCTION_TOKENS.get("python"))
-            )
-        )
-
-        bpe_trainer_obj.train_from_iterator(
-            texts_for_training,
-            vocab_size=vocab_size,
-            min_frequency=2,
-            special_tokens=combined_special_tokens,
-        )
-        bpe_trainer_obj.save_model(str(tokenizer_output_path))
-        success(
-            f"BPE components (vocab.json, merges.txt) saved to {tokenizer_output_path}"
-        )
-
-        bpe_model = BPE.from_file(
-            str(vocab_file_path), str(merges_file_path), unk_token="[UNK]"
-        )
-        tk = Tokenizer(bpe_model)
-        tk.normalizer = Sequence([NFKC(), Lowercase()])
-        tk.pre_tokenizer = ByteLevel()
-
-        tokenizer = PreTrainedTokenizerFast(
-            tokenizer_object=tk,
-            unk_token="[UNK]",
-            pad_token="[PAD]",
-            cls_token="[CLS]",
-            sep_token="[SEP]",
-            mask_token="[MASK]",
-            bos_token="[CLS]",
-            eos_token="[SEP]",
-            model_max_length=max_length,
-        )
-        tokenizer.save_pretrained(str(tokenizer_output_path))
-        success(
-            f"PreTrainedTokenizerFast fully saved to {tokenizer_output_path} (tokenizer.json created)."
-        )
-
-    return tokenizer
+        success(f"Successfully loaded tokenizer with vocab size: {len(tokenizer)}")
+        return tokenizer
+    except Exception as e:
+        error(f"Failed to load tokenizer from {tokenizer_path}: {e}")
+        raise
 
 
 def save_training_metrics(metrics_dict: dict, output_path: Path):
@@ -377,16 +288,15 @@ def run_training(args):
         return
 
     try:
-        tokenizer = create_or_load_tokenizer(
-            tokenizer_output_path=Path(args.tokenizer_path),
-            texts_for_training=distilbert_train_texts,
-            vocab_size=args.vocab_size,
-            global_special_tokens=SPECIAL_TOKENS,
+        tokenizer = load_pretrained_tokenizer(
+            tokenizer_path=Path(args.tokenizer_path),
             max_length=args.max_length,
-            force_retrain=args.force_retrain_tokenizer,
         )
     except Exception as e:
-        error(f"Failed to create or load tokenizer: {e}")
+        error(f"Failed to load tokenizer: {e}")
+        error(
+            "Please ensure you have run train_tokenizer.py first to create the tokenizer."
+        )
         return
 
     info("Converting data to Hugging Face Dataset format...")
@@ -552,7 +462,6 @@ if __name__ == "__main__":
     parser.add_argument("--vocab-size", type=int, default=DEFAULT_VOCAB_SIZE)
     parser.add_argument("--save-steps", type=int, default=DEFAULT_SAVE_STEPS)
     parser.add_argument("--num-proc", type=int, default=DEFAULT_NUM_PROC)
-    parser.add_argument("--force-retrain-tokenizer", action="store_true")
     parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
     parser.add_argument(
         "--token-column",

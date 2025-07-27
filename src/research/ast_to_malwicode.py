@@ -133,9 +133,9 @@ class Instruction:
     ) -> str:
         """
         Maps opcode arguments to normalized tokens for machine learning model training.
-        
-        This is the most critical function for training! The mapping was optimized 
-        through hundreds of iterations to maximize the F1 score of the malware 
+
+        This is the most critical function for training! The mapping was optimized
+        through hundreds of iterations to maximize the F1 score of the malware
         detection model.
 
         Args:
