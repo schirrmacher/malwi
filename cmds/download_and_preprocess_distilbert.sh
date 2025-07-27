@@ -6,7 +6,7 @@
 set -e  # Exit on any error
 
 echo "📥 Starting DistilBERT data download and preprocessing..."
-echo "   This includes: Data download → Processing → Tokenizer training"
+echo "   This includes: Data download → Processing"
 echo
 
 # Step 1: Download data
@@ -15,15 +15,16 @@ uv run python -m src.research.download_data
 echo "✅ Data download completed"
 echo
 
-# Step 2: Preprocess data and train tokenizer
-echo "📋 Step 2: Processing data and training tokenizer..."
-./cmds/preprocess_distilbert.sh
+# Step 2: Preprocess data
+echo "📋 Step 2: Processing data..."
+./cmds/preprocess_data.sh
 
 echo
 echo "🎉 DistilBERT data preparation completed successfully!"
 echo
 echo "📁 Ready for model training:"
 echo "   • Processed training data available"
-echo "   • Custom tokenizer trained on your data (top 5000 tokens)"
-echo "   • Run train_distilbert.sh or preprocess_and_train_distilbert.sh next"
+echo "   • Run train_tokenizer.sh first to create custom tokenizer"
+echo "   • Run train_distilbert.sh for DistilBERT model training"
+echo "   • Run preprocess_and_train_distilbert.sh for complete pipeline"
 echo

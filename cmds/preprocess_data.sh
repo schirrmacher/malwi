@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# DistilBERT Preprocessing Pipeline
-# This script prepares data and trains a tokenizer for DistilBERT model training
+# Data Preprocessing Pipeline
+# This script prepares and processes data for machine learning model training
 
 set -e  # Exit on any error
 
-echo "🚀 Starting DistilBERT preprocessing pipeline..."
+echo "🚀 Starting data preprocessing pipeline..."
 echo
 
 # Step 1: Clean up previous outputs
@@ -31,29 +31,16 @@ uv run python -m src.research.filter_data -b benign.csv -m malicious.csv --triag
 echo "✅ Data filtering completed"
 echo
 
-# Step 4: Train tokenizer on the processed data
-echo "🔤 Training tokenizer with top 5000 most frequent tokens..."
-uv run python -m src.research.train_tokenizer \
-    -b benign_processed.csv \
-    -m malicious_processed.csv \
-    -o malwi_models \
-    --top-n-tokens 5000 \
-    --save-computed-tokens \
-    --force-retrain
-echo "✅ Tokenizer training completed"
-echo
-
-# Step 5: Summary
-echo "🎉 DistilBERT preprocessing completed successfully!"
+# Step 4: Summary
+echo "🎉 Data preprocessing completed successfully!"
 echo
 echo "📋 Generated files:"
 echo "   • Raw data: benign.csv, malicious.csv"
 echo "   • Processed data: benign_processed.csv, malicious_processed.csv"
-echo "   • Tokenizer: malwi_models/"
-echo "   • Computed tokens: malwi_models/computed_special_tokens.txt"
 echo
 echo "📖 Next steps:"
-echo "   1. Review the computed special tokens file if needed"
-echo "   2. Run train_distilbert.py to train the model using this tokenizer"
-echo "   3. The tokenizer will automatically be loaded from malwi_models/"
+echo "   • Run train_tokenizer.sh to create custom tokenizer"
+echo "   • Run train_distilbert.sh for DistilBERT model training"
+echo "   • Run train_svm_layer.sh for SVM model training"
+echo "   • Or run preprocess_and_train_distilbert.sh for complete pipeline"
 echo

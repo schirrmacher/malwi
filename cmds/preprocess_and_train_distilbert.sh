@@ -9,12 +9,16 @@ echo "🔄 Starting complete DistilBERT pipeline..."
 echo "   This includes: Data processing → Tokenizer training → Model training"
 echo
 
-# Step 1: Data preprocessing and tokenizer training
-echo "📋 Step 1: Running data preprocessing and tokenizer training..."
-./cmds/preprocess_distilbert.sh
+# Step 1: Data preprocessing
+echo "📋 Step 1: Running data preprocessing..."
+./cmds/preprocess_data.sh
 
 echo
-echo "📋 Step 2: Running DistilBERT model training..."
+echo "📋 Step 2: Training custom tokenizer..."
+./cmds/train_tokenizer.sh
+
+echo
+echo "📋 Step 3: Running DistilBERT model training..."
 ./cmds/train_distilbert.sh
 
 echo
