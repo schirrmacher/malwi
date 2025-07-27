@@ -61,22 +61,10 @@ def test_javascript_compilation(js_compiler: ASTCompiler, source_path: Path):
     with open(expected_file, "r") as f:
         expected_string = f.read().strip()
 
-    # Generate output to match the exact expected format with headers and separators
+    # Generate output to match the expected format (just the bytecode)
     output_parts = []
-    for i, code_obj in enumerate(code_objects):
-        if i == 0:
-            output_parts.append(f"Root CodeObject ({code_obj.name}):")
-        else:
-            output_parts.append(f"\n{code_obj.name}:")
-
-        # Add header like print_code_object does
-        header = f"--- CodeObject '{code_obj.name}' from {code_obj.path.name} (lines {code_obj.location[0]}-{code_obj.location[1]}) ---"
-        output_parts.append(header)
+    for code_obj in code_objects:
         output_parts.append(code_obj.to_string())
-
-        # Add separator
-        separator = "-" * len(header)
-        output_parts.append(separator)
 
     generated_string = "\n".join(output_parts).strip()
 

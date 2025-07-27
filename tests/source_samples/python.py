@@ -955,6 +955,61 @@ first_value = dict_values[0]
 
 print("9.18. BINARY_SUBSCR Test Cases: PASSED")
 
+# 9.19. STORE_SUBSCR Test Cases (Subscript Assignment)
+store_obj = {}
+store_arr = []
+store_nested = {"inner": {}}
+
+# Basic subscript assignments
+store_obj["key1"] = "value1"
+store_obj["key2"] = "value2"
+store_obj["""key3"""] = """value3"""
+
+# Variable key assignment
+store_key = "dynamicKey"
+store_obj[store_key] = "dynamicValue"
+
+# Numeric index assignment
+store_arr.extend([None, None, None])  # Make space
+store_arr[0] = "first"
+store_arr[1] = "second"
+store_arr[2] = "third"
+
+# Computed key assignment
+store_prefix = "computed"
+store_obj[store_prefix + "_key"] = "computed value"
+store_obj[f"{store_prefix}_template"] = "template value"
+
+# Nested subscript assignment
+store_nested["inner"]["deep"] = "deeply nested"
+
+
+# Function call result as key
+def get_store_key():
+    return "funcKey"
+
+
+store_obj[get_store_key()] = "from function"
+
+# Complex expressions as keys
+store_obj[1 + 2] = "numeric expression"
+store_obj[store_key.upper()] = "method call key"
+
+# Assignment with side effects
+store_counter = 0
+store_obj[store_counter] = "with side effect"
+store_counter += 1
+
+# Multiple assignments
+store_obj["a"] = store_obj["b"] = "chained"
+
+# Slice assignment (Python-specific)
+store_list = [1, 2, 3, 4, 5]
+store_list[1:3] = [10, 20]  # Replace elements at indices 1 and 2
+store_list[::2] = [100, 200, 300]  # Replace every other element
+
+print("9.19. STORE_SUBSCR Test Cases: PASSED")
+
 
 print("\n--- Python Compiler Test Suite: Finished ---")
 print("--- All tests completed. Check output for any FAILED messages. ---")

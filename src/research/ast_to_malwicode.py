@@ -92,6 +92,7 @@ class OpCode(Enum):
     BUILD_SET = auto()
     BUILD_MAP = auto()
     BINARY_SUBSCR = auto()
+    STORE_SUBSCR = auto()  # For subscript assignment like obj[key] = value
     LOAD_ATTR = auto()
     LOAD_ATTR_CHAIN = auto()  # For chained attribute access like obj.prop1.func1
     UNARY_NEGATIVE = auto()
@@ -1218,6 +1219,31 @@ class ASTCompiler:
                                 child, source_code_bytes
                             )
                             bytecode.append(emit(OpCode.STORE_NAME, identifier_name))
+                elif name_node.type in ["subscript_expression", "subscript"]:
+                    # Handle subscript assignment: obj[key] = value
+                    # First load the object
+                    object_node = name_node.child_by_field_name(
+                        "object"
+                    ) or name_node.child_by_field_name("value")
+                    index_node = name_node.child_by_field_name(
+                        "index"
+                    ) or name_node.child_by_field_name("subscript")
+
+                    if object_node and index_node:
+                        # Load object
+                        bytecode.extend(
+                            self._generate_bytecode(
+                                object_node, source_code_bytes, file_path
+                            )
+                        )
+                        # Load index/key
+                        bytecode.extend(
+                            self._generate_bytecode(
+                                index_node, source_code_bytes, file_path
+                            )
+                        )
+                        # Store subscript
+                        bytecode.append(emit(OpCode.STORE_SUBSCR, None))
                 else:
                     # Regular single variable assignment
                     var_name = self._get_node_text(name_node, source_code_bytes)

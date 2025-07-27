@@ -345,7 +345,9 @@ LOAD_NAME            my_list
 LOAD_ATTR            pop
 CALL_FUNCTION        0
 LOAD_CONST           "one"
-STORE_NAME           my_list[0]
+LOAD_NAME            my_list
+LOAD_CONST           0.0
+STORE_SUBSCR         
 LOAD_CONST           1.0
 LOAD_CONST           2.0
 LOAD_CONST           3.0
@@ -386,7 +388,9 @@ LOAD_NAME            my_tuple
 LOAD_CONST           1.0
 BINARY_SUBSCR        
 LOAD_CONST           "new"
-STORE_NAME           my_tuple[1]
+LOAD_NAME            my_tuple
+LOAD_CONST           1.0
+STORE_SUBSCR         
 LOAD_NAME            print
 LOAD_CONST           "2.4. Tuple Immutability: FAILED"
 CALL_FUNCTION        1
@@ -407,7 +411,9 @@ LOAD_NAME            my_dict
 LOAD_CONST           "one"
 BINARY_SUBSCR        
 LOAD_CONST           3.0
-STORE_NAME           my_dict["three"]
+LOAD_NAME            my_dict
+LOAD_CONST           "three"
+STORE_SUBSCR         
 LOAD_CONST           "three"
 LOAD_NAME            my_dict
 COMPARE_OP           
@@ -1616,6 +1622,131 @@ STORE_NAME           first_value
 LOAD_NAME            print
 LOAD_CONST           "9.18. BINARY_SUBSCR Test Cases: PASSED"
 CALL_FUNCTION        1
+BUILD_MAP            0
+STORE_NAME           store_obj
+BUILD_LIST           0
+STORE_NAME           store_arr
+LOAD_CONST           "inner"
+BUILD_MAP            0
+BUILD_MAP            1
+STORE_NAME           store_nested
+LOAD_CONST           "value1"
+LOAD_NAME            store_obj
+LOAD_CONST           "key1"
+STORE_SUBSCR         
+LOAD_CONST           "value2"
+LOAD_NAME            store_obj
+LOAD_CONST           "key2"
+STORE_SUBSCR         
+LOAD_CONST           """value3"""
+LOAD_NAME            store_obj
+LOAD_CONST           """key3"""
+STORE_SUBSCR         
+LOAD_CONST           "dynamicKey"
+STORE_NAME           store_key
+LOAD_CONST           "dynamicValue"
+LOAD_NAME            store_obj
+LOAD_NAME            store_key
+STORE_SUBSCR         
+LOAD_NAME            store_arr
+LOAD_ATTR            extend
+LOAD_CONST           
+LOAD_CONST           
+LOAD_CONST           
+BUILD_LIST           3
+CALL_FUNCTION        1
+LOAD_CONST           "first"
+LOAD_NAME            store_arr
+LOAD_CONST           0.0
+STORE_SUBSCR         
+LOAD_CONST           "second"
+LOAD_NAME            store_arr
+LOAD_CONST           1.0
+STORE_SUBSCR         
+LOAD_CONST           "third"
+LOAD_NAME            store_arr
+LOAD_CONST           2.0
+STORE_SUBSCR         
+LOAD_CONST           "computed"
+STORE_NAME           store_prefix
+LOAD_CONST           "computed value"
+LOAD_NAME            store_obj
+LOAD_NAME            store_prefix
+LOAD_CONST           "_key"
+BINARY_ADD           
+STORE_SUBSCR         
+LOAD_CONST           "template value"
+LOAD_NAME            store_obj
+LOAD_NAME            store_prefix
+LOAD_CONST           _template
+BINARY_OPERATION     
+STORE_SUBSCR         
+LOAD_CONST           "deeply nested"
+LOAD_NAME            store_nested
+LOAD_CONST           "inner"
+BINARY_SUBSCR        
+LOAD_CONST           "deep"
+STORE_SUBSCR         
+MAKE_FUNCTION        <get_store_key_ref_54>
+STORE_NAME           get_store_key
+LOAD_CONST           "from function"
+LOAD_NAME            store_obj
+LOAD_NAME            get_store_key
+CALL_FUNCTION        0
+STORE_SUBSCR         
+LOAD_CONST           "numeric expression"
+LOAD_NAME            store_obj
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+BINARY_ADD           
+STORE_SUBSCR         
+LOAD_CONST           "method call key"
+LOAD_NAME            store_obj
+LOAD_NAME            store_key
+LOAD_ATTR            upper
+CALL_FUNCTION        0
+STORE_SUBSCR         
+LOAD_CONST           0.0
+STORE_NAME           store_counter
+LOAD_CONST           "with side effect"
+LOAD_NAME            store_obj
+LOAD_NAME            store_counter
+STORE_SUBSCR         
+LOAD_NAME            store_counter
+LOAD_CONST           1.0
+BINARY_OPERATION     
+STORE_NAME           store_counter
+LOAD_CONST           "chained"
+LOAD_NAME            store_obj
+LOAD_CONST           "b"
+STORE_SUBSCR         
+LOAD_NAME            store_obj
+LOAD_CONST           "a"
+STORE_SUBSCR         
+LOAD_CONST           1.0
+LOAD_CONST           2.0
+LOAD_CONST           3.0
+LOAD_CONST           4.0
+LOAD_CONST           5.0
+BUILD_LIST           5
+STORE_NAME           store_list
+LOAD_CONST           10.0
+LOAD_CONST           20.0
+BUILD_LIST           2
+LOAD_NAME            store_list
+LOAD_CONST           1.0
+LOAD_CONST           3.0
+STORE_SUBSCR         
+LOAD_CONST           100.0
+LOAD_CONST           200.0
+LOAD_CONST           300.0
+BUILD_LIST           3
+LOAD_NAME            store_list
+LOAD_CONST           2.0
+STORE_SUBSCR         
+LOAD_NAME            print
+LOAD_CONST           "9.19. STORE_SUBSCR Test Cases: PASSED"
+CALL_FUNCTION        1
 LOAD_NAME            print
 LOAD_CONST           "\n--- Python Compiler Test Suite: Finished ---"
 CALL_FUNCTION        1
@@ -1854,7 +1985,9 @@ LOAD_CONST           "6.3. Coroutines (async/await): PASSED"
 CALL_FUNCTION        1
 RETURN_VALUE         
 LOAD_CONST           "Hello from metaclass"
-STORE_NAME           dct["new_attribute"]
+LOAD_PARAM           dct
+LOAD_CONST           "new_attribute"
+STORE_SUBSCR         
 LOAD_NAME            super
 CALL_FUNCTION        0
 LOAD_ATTR            __new__
@@ -1909,4 +2042,6 @@ STORE_NAME           inner
 LOAD_NAME            inner
 CALL_FUNCTION        0
 LOAD_NAME            nonlocal_var
+RETURN_VALUE         
+LOAD_CONST           "funcKey"
 RETURN_VALUE

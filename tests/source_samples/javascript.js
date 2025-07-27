@@ -691,6 +691,48 @@ const functionBasedIndex = testArray[Math.floor(Math.random() * 3)];
 
 console.log("9.21. BINARY_SUBSCR Test Cases: PASSED");
 
+// 9.22. STORE_SUBSCR Test Cases (Subscript Assignment)
+const storeObj = {};
+const storeArr = [];
+const storeNested = { inner: {} };
+
+// Basic subscript assignments
+storeObj["key1"] = "value1";
+storeObj['key2'] = 'value2';
+storeObj[`key3`] = `value3`;
+
+// Variable key assignment
+const storeKey = "dynamicKey";
+storeObj[storeKey] = "dynamicValue";
+
+// Numeric index assignment
+storeArr[0] = "first";
+storeArr[1] = "second";
+storeArr[10] = "sparse";
+
+// Computed key assignment
+const storePrefix = "computed";
+storeObj[storePrefix + "_key"] = "computed value";
+storeObj[`${storePrefix}_template`] = "template value";
+
+// Nested subscript assignment
+storeNested["inner"]["deep"] = "deeply nested";
+storeNested.inner["mixed"] = "mixed access";
+
+// Function call result as key
+function getStoreKey() { return "funcKey"; }
+storeObj[getStoreKey()] = "from function";
+
+// Complex expressions as keys
+storeObj[1 + 2] = "numeric expression";
+storeObj[storeKey.toUpperCase()] = "method call key";
+
+// Assignment with side effects
+let storeCounter = 0;
+storeObj[storeCounter++] = "with side effect";
+
+console.log("9.22. STORE_SUBSCR Test Cases: PASSED");
+
 
 console.log("\n--- JavaScript Compiler Test Suite: Finished ---");
 console.log("--- All tests completed. Check output for any errors. ---");
