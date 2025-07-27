@@ -132,24 +132,48 @@ class Instruction:
         cls, op_code: OpCode, arg: Any, language: str, for_hashing: bool = False
     ) -> str:
         """
-        ATTENTION!
-        This is the most critical function for training!
-        This mapping was modified hundreds of times to improve the overall F1
-        score of the model.
+        Maps opcode arguments to normalized tokens for machine learning model training.
+        
+        This is the most critical function for training! The mapping was optimized 
+        through hundreds of iterations to maximize the F1 score of the malware 
+        detection model.
 
-        Learnings:
-        - The string length (STRING_MAX_LENGTH) exposed to the model has huge impact on performance
-            - We started with very short strings, leading to much worse performance
-        - Import mapping has a huge impact on performance (~20% on the F1 score)
-            - Maybe this is because more functions create the same hash (less name variations)
-            - Creating more unique training samples, allowing the model to generalize better
-        - Tokenization has huge impact on performance as well
-            - Splitting certain instructions might destroy the context understanding
+        Args:
+            op_code: The operation code (e.g., LOAD_CONST, STORE_NAME, CALL_FUNCTION)
+            arg: The argument value to be mapped (string, number, identifier, etc.)
+            language: Programming language context ("python" or "javascript")
+            for_hashing: If True, removes variable parts to create stable hashes
+                        for deduplication of similar code patterns
 
-        Hashing:
-        - To create unique samples for training the mapping is adapted
-        - Similar functions should create the same hash
-        - This is why strings are removed and only the structure is compared
+        Returns:
+            Normalized token string in format: "{opcode_name} {mapped_argument}"
+            Examples:
+            - "LOAD_CONST STRING_LEN_M_ENT_HIGH" (for long strings)
+            - "STORE_NAME requests" (for known function names)
+            - "LOAD_CONST BOOLEAN" (for boolean values)
+            - "CALL_FUNCTION 2" (for function calls with arg count)
+
+        Mapping Strategy:
+        1. **Data Type Normalization**: Converts literals (bool, int, float) to type tokens
+        2. **Function/Import Recognition**: Maps known functions/imports using predefined dictionaries
+        3. **Security Pattern Detection**: Identifies IPs, URLs, file paths, sensitive patterns
+        4. **String Analysis**: For long strings, analyzes length, entropy, and encoding type
+        5. **Chained Operations**: Handles complex expressions like obj.prop1.func1 as single tokens
+
+        Performance Learnings:
+        - String length (STRING_MAX_LENGTH=20) has huge impact on model performance
+          Shorter strings led to worse performance due to loss of context
+        - Import mapping provides ~20% improvement in F1 score by reducing name variations
+          and creating more unique training samples for better generalization
+        - Tokenization granularity is critical - splitting instructions can destroy
+          context understanding and hurt model performance
+
+        Hashing Mode:
+        When for_hashing=True, removes variable content (actual string values, numbers)
+        to create stable hashes for similar code structures. This enables:
+        - Deduplication of functionally identical code samples
+        - Better training data quality by focusing on behavioral patterns
+        - Consistent hash generation across different variable names/values
         """
 
         STRING_MAX_LENGTH = 20
