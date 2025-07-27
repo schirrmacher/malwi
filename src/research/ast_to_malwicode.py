@@ -167,6 +167,7 @@ class Instruction:
           and creating more unique training samples for better generalization
         - Tokenization granularity is critical - splitting instructions can destroy
           context understanding and hurt model performance
+        - Without function mapping the performance is around 85% (F1)
 
         Hashing Mode:
         When for_hashing=True, removes variable content (actual string values, numbers)
@@ -212,7 +213,7 @@ class Instruction:
             op_code in [OpCode.STORE_NAME, OpCode.LOAD_NAME, OpCode.LOAD_ATTR_CHAIN]
             and argval in function_mapping
         ):
-            return f"{op_code.name} {argval}"
+            return f"{op_code.name} {function_mapping.get(argval)}"
         # We might want to maintain the function name since it cannot be mapped,
         # but contains interesting trigger words
         elif op_code in [
