@@ -83,15 +83,15 @@ def compute_tokens_from_texts(texts: list[str]) -> Set[str]:
 
 
 def create_special_tokens_from_data(
-    all_texts: list[str], min_frequency: int = 2, max_special_tokens: int = 10000
+    all_texts: list[str], top_n_tokens: int = 5000
 ) -> Set[str]:
     """
     Create special tokens from the most frequent tokens in the input data.
+    Takes the top N most common tokens regardless of frequency.
 
     Args:
         all_texts: List of all training texts
-        min_frequency: Minimum frequency for a token to be considered special
-        max_special_tokens: Maximum number of special tokens to create
+        top_n_tokens: Number of most frequent tokens to use as special tokens
 
     Returns:
         Set of special tokens derived from the data
@@ -115,24 +115,20 @@ def create_special_tokens_from_data(
             if token:
                 token_counts[token] = token_counts.get(token, 0) + 1
 
-    # Filter tokens by minimum frequency and sort by frequency
-    frequent_tokens = {
-        token: count for token, count in token_counts.items() if count >= min_frequency
-    }
+    # Sort all tokens by frequency (descending) and take top N
+    sorted_tokens = sorted(token_counts.items(), key=lambda x: x[1], reverse=True)
 
-    # Sort by frequency (descending) and take top tokens
-    sorted_tokens = sorted(frequent_tokens.items(), key=lambda x: x[1], reverse=True)
-
+    # Take the top N most frequent tokens
+    top_tokens = sorted_tokens[:top_n_tokens]
     special_tokens = set()
-    for token, count in sorted_tokens[:max_special_tokens]:
+    for token, count in top_tokens:
         special_tokens.add(token)
 
     info(
         f"Created {len(special_tokens)} special tokens from {len(token_counts)} unique tokens"
     )
-    info(
-        f"Frequency range: {sorted_tokens[0][1]} to {sorted_tokens[min(len(sorted_tokens) - 1, max_special_tokens - 1)][1]}"
-    )
+    if top_tokens:
+        info(f"Frequency range: {top_tokens[0][1]} to {top_tokens[-1][1]}")
 
     return special_tokens
 
@@ -264,8 +260,7 @@ def train_tokenizer(args):
     info("Computing special tokens from input data...")
     computed_special_tokens = create_special_tokens_from_data(
         all_texts_for_training,
-        min_frequency=args.min_token_frequency,
-        max_special_tokens=args.max_special_tokens,
+        top_n_tokens=args.top_n_tokens,
     )
 
     # Optional: Save computed tokens for inspection
@@ -351,16 +346,10 @@ if __name__ == "__main__":
         help="Force retrain tokenizer even if it exists",
     )
     parser.add_argument(
-        "--min-token-frequency",
+        "--top-n-tokens",
         type=int,
-        default=2,
-        help="Minimum frequency for a token to be considered special (default: 2)",
-    )
-    parser.add_argument(
-        "--max-special-tokens",
-        type=int,
-        default=10000,
-        help="Maximum number of special tokens to compute from data (default: 10000)",
+        default=5000,
+        help="Number of most frequent tokens to use as special tokens (default: 5000)",
     )
     parser.add_argument(
         "--save-computed-tokens",
