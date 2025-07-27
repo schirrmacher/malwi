@@ -37,7 +37,7 @@ class CSVWriter:
         for obj in code_objects:
             self.writer.writerow(
                 [
-                    obj.to_string(format_mode="oneline_mapped"),
+                    obj.to_string(one_line=True, mapped=True),
                     obj.to_hash(),
                     obj.language,
                     obj.path,
