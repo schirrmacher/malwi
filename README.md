@@ -141,43 +141,6 @@ The first iteration focuses on **maliciousness of Python source code**.
 
 Future iterations will cover malware scanning for more languages (JavaScript, Rust, Go) and more formats (binaries, logs).
 
-## Python API
-
-You can use malwi programmatically as a Python library:
-
-```python
-from pathlib import Path
-from malwi import process_files, MalwiReport
-
-# Analyze a file or directory
-report = process_files(
-    input_path=Path("./my_project"),
-    accepted_extensions=["py"],  # Only analyze Python files
-    predict=True,               # Enable maliciousness prediction
-    retrieve_source_code=True,  # Include source code in results
-    malicious_threshold=0.7,    # Threshold for flagging as malicious
-)
-
-# Check results
-print(f"Malicious: {report.malicious}")
-print(f"Confidence: {report.confidence:.2f}")
-print(f"Objects found: {len(report.all_objects)}")
-print(f"Malicious objects: {len(report.malicious_objects)}")
-
-# Export results
-json_output = report.to_report_json()
-yaml_output = report.to_report_yaml()
-markdown_output = report.to_report_markdown()
-```
-
-### Available Classes
-
-- **`process_files()`**: Main analysis function
-- **`MalwiReport`**: Analysis results container with export methods
-- **`MalwiObject`**: Individual code object with maliciousness scoring
-
-For a complete example, see [`example_api_usage.py`](example_api_usage.py).
-
 ## Support
 
 Do you have access to malicious Rust, Go, whatever packages? **Contact me.**
@@ -192,23 +155,18 @@ Do you have access to malicious Rust, Go, whatever packages? **Contact me.**
 # Download and process data
 cmds/download_and_preprocess_distilbert.sh
 
-# Preprocess and train DistilBERT only
-cmds/preprocess_and_train_distilbert.sh
+# Complete pipelines
+cmds/preprocess_and_train_distilbert.sh  # Data → Tokenizer → DistilBERT
+cmds/preprocess_and_train_svm.sh         # Data → SVM training
 
-# Preprocess and train SVM Layer only
-cmds/preprocess_and_train_svm.sh
+# Individual data preprocessing
+cmds/preprocess_data.sh                  # Process data for ML training
+cmds/preprocess_svm.sh                   # Process data for SVM training
 
-# Only preprocess data for DistilBERT
-cmds/preprocess_distilbert.sh
-
-# Only preprocess data for SVM Layer
-cmds/preprocess_svm.sh
-
-# Start DistilBERT training
-cmds/train_distilbert.sh
-
-# Start SVM Layer training
-cmds/train_svm_layer.sh
+# Individual model training
+cmds/train_tokenizer.sh                  # Train custom tokenizer
+cmds/train_distilbert.sh                 # Train DistilBERT model
+cmds/train_svm_layer.sh                  # Train SVM classifier
 ```
 
 ### Triage
