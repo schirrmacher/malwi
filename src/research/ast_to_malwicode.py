@@ -2299,7 +2299,7 @@ def main() -> None:
         type=str,
         choices=["console", "csv"],
         default="console",
-        help="Output format (default: console). 'csv' saves to file with oneline_mapped format.",
+        help="Output format (default: console). 'csv' outputs oneline_mapped format to console or file if --save is provided.",
     )
     parser.add_argument(
         "-s",
@@ -2307,14 +2307,11 @@ def main() -> None:
         type=str,
         default=None,
         metavar="FILEPATH",
-        help="Path to save the output. Required when using --format csv.",
+        help="Path to save the output. When using --format csv, if not provided output goes to console.",
     )
     args = parser.parse_args()
 
-    # Validate arguments
-    if args.format == "csv" and not args.save:
-        print("Error: --save is required when using --format csv")
-        return
+    # CSV format no longer requires --save flag; will print to console if not specified
 
     # Create a dictionary of compilers, one for each language.
     compilers: Dict[str, ASTCompiler] = {}
@@ -2339,12 +2336,15 @@ def main() -> None:
     csv_writer_instance: Optional[CSVWriter] = None
 
     try:
-        if args.format == "csv":
+        if args.format == "csv" and args.save:
             print("Setting up CSV output...")
             save_path = Path(args.save)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             csv_writer_instance = CSVWriter(save_path)
             print(f"CSV output will be saved to: {save_path.resolve()}")
+        elif args.format == "csv" and not args.save:
+            # Print CSV header to console
+            print("tokens,hash,language,filepath")
 
         for source in tqdm(source_files, desc="Processing files", unit="file"):
             lang = None
@@ -2358,8 +2358,21 @@ def main() -> None:
                 code_objects = compiler_instance.process_file(source)
 
                 if args.format == "csv":
-                    # Write to CSV
-                    csv_writer_instance.write_code_objects(code_objects)
+                    if csv_writer_instance:
+                        # Write to CSV file
+                        csv_writer_instance.write_code_objects(code_objects)
+                    else:
+                        # Print CSV to console
+                        for obj in code_objects:
+                            row = [
+                                obj.to_string(format_mode="oneline_mapped"),
+                                obj.to_hash(),
+                                obj.language,
+                                str(obj.path),
+                            ]
+                            # Escape quotes in tokens field if necessary
+                            tokens = row[0].replace('"', '""') if '"' in row[0] else row[0]
+                            print(f'"{tokens}",{row[1]},{row[2]},{row[3]}')
                 else:
                     for i, code_obj in enumerate(code_objects):
                         print(f"{code_obj.to_string(format_mode='mapped')}")
@@ -2367,7 +2380,7 @@ def main() -> None:
                 if args.format == "console":
                     print(f"Skipping unsupported file extension: {source.name}")
 
-        if args.format == "csv":
+        if args.format == "csv" and csv_writer_instance:
             csv_writer_instance.close()
             print(
                 f"Successfully processed {sources_count} files to CSV: {save_path.resolve()}"
