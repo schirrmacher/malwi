@@ -45,8 +45,10 @@ class OpCode(Enum):
 
     LOAD_CONST = auto()
     LOAD_NAME = auto()
+    LOAD_GLOBAL = auto()  # Explicitly for global variables
     LOAD_PARAM = auto()
     STORE_NAME = auto()
+    STORE_GLOBAL = auto()  # Explicitly for global variables
     BINARY_ADD = auto()
     BINARY_SUBTRACT = auto()
     BINARY_MULTIPLY = auto()
@@ -95,9 +97,11 @@ class OpCode(Enum):
     STORE_SUBSCR = auto()  # For subscript assignment like obj[key] = value
     LOAD_ATTR = auto()
     LOAD_ATTR_CHAIN = auto()  # For chained attribute access like obj.prop1.func1
+    STORE_ATTR = auto()  # For attribute assignment like obj.attr = value
     UNARY_NEGATIVE = auto()
     UNARY_NOT = auto()
     UNARY_INVERT = auto()
+    UNARY_POSITIVE = auto()  # For unary plus operator
     IMPORT_NAME = auto()
     IMPORT_FROM = auto()
     EXPORT_DEFAULT = auto()
@@ -210,7 +214,14 @@ class Instruction:
             return f"{op_code.name} {import_mapping.get(argval)}"
         # The function can be fully replaced by a single token
         elif (
-            op_code in [OpCode.STORE_NAME, OpCode.LOAD_NAME, OpCode.LOAD_ATTR_CHAIN]
+            op_code
+            in [
+                OpCode.STORE_NAME,
+                OpCode.LOAD_NAME,
+                OpCode.LOAD_ATTR_CHAIN,
+                OpCode.STORE_GLOBAL,
+                OpCode.LOAD_GLOBAL,
+            ]
             and argval in function_mapping
         ):
             return f"{op_code.name} {function_mapping.get(argval)}"
@@ -220,6 +231,8 @@ class Instruction:
             OpCode.STORE_NAME,
             OpCode.LOAD_NAME,
             OpCode.LOAD_ATTR_CHAIN,
+            OpCode.STORE_GLOBAL,
+            OpCode.LOAD_GLOBAL,
         ] and any(key in argval for key in function_mapping):
             if len(argval) > STRING_MAX_LENGTH:
                 longest_match_length = 0
@@ -397,6 +410,10 @@ class ASTCompiler:
 
         # Track function parameters for LOAD_PARAM vs LOAD_NAME distinction
         self.current_function_params = set()
+        # Track global variables for LOAD_GLOBAL/STORE_GLOBAL distinction
+        self.global_variables = set()
+        # Track whether we're currently inside a function scope
+        self._in_function_scope = False
         # Collection to store all CodeObjects (root, functions, classes)
         self.code_objects = []
         # Counter for generating unique reference names
@@ -412,6 +429,11 @@ class ASTCompiler:
         # Reset collections for each compilation
         self.code_objects = []
         self._next_ref_id = 0
+
+        # First pass: Collect all variables that are declared global anywhere in the module
+        self.global_variables = self._collect_global_variables(
+            root_node, source_code_bytes
+        )
 
         source_code = source_code_bytes.decode("utf-8", errors="replace")
         location = (root_node.start_point[0] + 1, root_node.end_point[0] + 1)
@@ -662,6 +684,57 @@ class ASTCompiler:
         """Helper method to create Instruction objects with the compiler's language."""
         return emit(opcode, arg, self.language_name)
 
+    def _collect_global_variables(self, node: Node, source_code_bytes: bytes) -> set:
+        """
+        First pass: collect all variables that are declared global anywhere in the module.
+        This mimics Python's two-pass compilation where global declarations affect
+        the entire module scope.
+        """
+        global_vars = set()
+
+        def _traverse_for_globals(n: Node):
+            if n.type == "global_statement":
+                for child in n.named_children:
+                    if child.type == "identifier":
+                        var_name = self._get_node_text(child, source_code_bytes)
+                        global_vars.add(var_name)
+
+            # Recursively traverse all children
+            for child in n.children:
+                _traverse_for_globals(child)
+
+        _traverse_for_globals(node)
+        return global_vars
+
+    def _emit_store(self, var_name: str) -> Instruction:
+        """Helper method to emit appropriate store instruction based on variable scope."""
+        if hasattr(self, "_in_function_scope") and self._in_function_scope:
+            # Inside a function: all non-local variables use STORE_GLOBAL
+            # This provides consistent behavior across languages for malware analysis
+            return emit(OpCode.STORE_GLOBAL, var_name, self.language_name)
+        elif var_name in self.global_variables:
+            # Module level: explicitly global variables use STORE_GLOBAL (Python only)
+            return emit(OpCode.STORE_GLOBAL, var_name, self.language_name)
+        else:
+            # Module level: other variables use STORE_NAME
+            return emit(OpCode.STORE_NAME, var_name, self.language_name)
+
+    def _emit_load(self, var_name: str) -> Instruction:
+        """Helper method to emit appropriate load instruction based on variable scope."""
+        # Check if this identifier is a function parameter first
+        if var_name in self.current_function_params:
+            return emit(OpCode.LOAD_PARAM, var_name, self.language_name)
+        elif hasattr(self, "_in_function_scope") and self._in_function_scope:
+            # Inside a function: all non-local variables use LOAD_GLOBAL
+            # This provides consistent behavior across languages for malware analysis
+            return emit(OpCode.LOAD_GLOBAL, var_name, self.language_name)
+        elif var_name in self.global_variables:
+            # Module level: explicitly global variables use LOAD_GLOBAL
+            return emit(OpCode.LOAD_GLOBAL, var_name, self.language_name)
+        else:
+            # Module level: other variables use LOAD_NAME
+            return emit(OpCode.LOAD_NAME, var_name, self.language_name)
+
     def _generate_bytecode(
         self, node: Node, source_code_bytes: bytes, file_path: Path
     ) -> List[Instruction]:
@@ -715,7 +788,7 @@ class ASTCompiler:
         unary_operator_mapping = {
             # Arithmetic unary operators
             "-": OpCode.UNARY_NEGATIVE,
-            "+": OpCode.BINARY_OPERATION,  # Unary plus (no specific opcode needed)
+            "+": OpCode.UNARY_POSITIVE,  # Unary plus
             # Bitwise unary operators
             "~": OpCode.UNARY_INVERT,
             # Logical unary operators
@@ -793,11 +866,7 @@ class ASTCompiler:
                 bytecode.append(emit(OpCode.LOAD_CONST, str_content))
         elif node_type == "identifier":
             identifier_name = self._get_node_text(node, source_code_bytes)
-            # Use LOAD_PARAM if this identifier is a function parameter
-            if identifier_name in self.current_function_params:
-                bytecode.append(emit(OpCode.LOAD_PARAM, identifier_name))
-            else:
-                bytecode.append(emit(OpCode.LOAD_NAME, identifier_name))
+            bytecode.append(self._emit_load(identifier_name))
         # Boolean and None literals
         elif node_type in ["true", "false"]:
             bytecode.append(emit(OpCode.LOAD_CONST, node_type == "true"))
@@ -1034,7 +1103,7 @@ class ASTCompiler:
                     bytecode.append(emit(OpCode.BINARY_SUBTRACT, None))
                 # Store back
                 var_name = self._get_node_text(argument_node, source_code_bytes)
-                bytecode.append(emit(OpCode.STORE_NAME, var_name))
+                bytecode.append(self._emit_store(var_name))
 
         elif node_type in ["new_expression"]:
             # Handle `new Constructor()` calls
@@ -1207,10 +1276,32 @@ class ASTCompiler:
                         )
                         # Store subscript
                         bytecode.append(emit(OpCode.STORE_SUBSCR, None))
+                elif name_node.type in ["attribute", "member_expression"]:
+                    # Handle attribute assignment: obj.attr = value
+                    object_node = name_node.child_by_field_name(
+                        "object"
+                    ) or name_node.child_by_field_name("value")
+                    attribute_node = name_node.child_by_field_name(
+                        "attribute"
+                    ) or name_node.child_by_field_name("property")
+
+                    if object_node and attribute_node:
+                        # Load object
+                        bytecode.extend(
+                            self._generate_bytecode(
+                                object_node, source_code_bytes, file_path
+                            )
+                        )
+                        # Get attribute name
+                        attr_name = self._get_node_text(
+                            attribute_node, source_code_bytes
+                        )
+                        # Store attribute
+                        bytecode.append(emit(OpCode.STORE_ATTR, attr_name))
                 else:
                     # Regular single variable assignment
                     var_name = self._get_node_text(name_node, source_code_bytes)
-                    bytecode.append(emit(OpCode.STORE_NAME, var_name))
+                    bytecode.append(self._emit_store(var_name))
 
         elif node_type == "return_statement":
             if node.child_count > 1 and node.children[1].type not in [";"]:
@@ -1240,7 +1331,7 @@ class ASTCompiler:
                 bytecode.append(emit(OpCode.BINARY_OPERATION, None))
                 # Store result
                 var_name = self._get_node_text(target_node, source_code_bytes)
-                bytecode.append(emit(OpCode.STORE_NAME, var_name))
+                bytecode.append(self._emit_store(var_name))
 
         elif node_type == "pass_statement":
             # Pass is a no-op, but we'll add a placeholder
@@ -1396,10 +1487,14 @@ class ASTCompiler:
 
         elif node_type in ["global_statement", "nonlocal_statement"]:
             # Process global/nonlocal declarations
+            # These are just declarations and don't generate load/store instructions
             for child in node.named_children:
                 if child.type == "identifier":
                     name = self._get_node_text(child, source_code_bytes)
-                    bytecode.append(emit(OpCode.LOAD_NAME, name))
+                    if node_type == "global_statement":
+                        # Track this as a global variable for future references
+                        self.global_variables.add(name)
+                        # No bytecode generated - this is just a declaration
 
         elif node_type == "delete_statement":
             # Process delete targets
@@ -1661,7 +1756,9 @@ class ASTCompiler:
                 # Extract parameters and set context for this function
                 params = self._extract_function_parameters(node, source_code_bytes)
                 previous_params = self.current_function_params
+                previous_in_function = self._in_function_scope
                 self.current_function_params = params
+                self._in_function_scope = True
 
                 func_body_bytecode = self._generate_bytecode(
                     body_node, source_code_bytes, file_path
@@ -1674,6 +1771,7 @@ class ASTCompiler:
 
                 # Restore previous parameter context
                 self.current_function_params = previous_params
+                self._in_function_scope = previous_in_function
 
                 func_source = self._get_node_text(body_node, source_code_bytes)
                 location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
@@ -1915,7 +2013,9 @@ class ASTCompiler:
             # Extract parameters and set context for this function
             params = self._extract_function_parameters(node, source_code_bytes)
             previous_params = self.current_function_params
+            previous_in_function = self._in_function_scope
             self.current_function_params = params
+            self._in_function_scope = True
 
             func_body_bytecode = self._generate_bytecode(
                 body_node, source_code_bytes, file_path
@@ -1928,6 +2028,7 @@ class ASTCompiler:
 
             # Restore previous parameter context
             self.current_function_params = previous_params
+            self._in_function_scope = previous_in_function
 
             func_source = self._get_node_text(body_node, source_code_bytes)
             location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
@@ -1956,7 +2057,7 @@ class ASTCompiler:
                 bytecode.append(emit(OpCode.GENERATOR_FUNCTION, func_ref_name))
             else:
                 bytecode.append(emit(OpCode.MAKE_FUNCTION, func_ref_name))
-            bytecode.append(emit(OpCode.STORE_NAME, func_name))
+            bytecode.append(self._emit_store(func_name))
 
         elif node_type in ["class_definition", "class_declaration"]:
             class_name = self._get_node_text(
@@ -1984,7 +2085,7 @@ class ASTCompiler:
 
             # Use reference name in bytecode instead of nested CodeObject
             bytecode.append(emit(OpCode.MAKE_CLASS, class_ref_name))
-            bytecode.append(emit(OpCode.STORE_NAME, class_name))
+            bytecode.append(self._emit_store(class_name))
 
         # --- Comprehensions and Generators ---
         elif node_type in [

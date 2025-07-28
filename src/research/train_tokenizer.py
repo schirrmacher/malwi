@@ -1,8 +1,5 @@
-import os
-import dis
 import json
 import shutil
-import pathlib
 import argparse
 import pandas as pd
 from typing import Set
@@ -181,7 +178,7 @@ def create_special_tokens_from_data(
             if tokens_added_from_data >= remaining_slots:
                 break
 
-    info(f"Final token composition:")
+    info("Final token composition:")
     info(f"  - Base tokens from function mapping: {len(base_tokens)}")
     info(f"  - Frequent tokens from data: {tokens_added_from_data}")
     info(f"  - Total special tokens: {len(special_tokens)}")
@@ -361,7 +358,7 @@ def train_tokenizer(args):
             max_length=args.max_length,
             force_retrain=args.force_retrain,
         )
-        success(f"Tokenizer training completed successfully!")
+        success("Tokenizer training completed successfully!")
         success(f"Tokenizer saved to: {args.output_path}")
 
         # Print some basic stats

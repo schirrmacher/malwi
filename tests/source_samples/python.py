@@ -824,6 +824,197 @@ def outer():
     return nonlocal_var
 
 
+# 9.15.1. Comprehensive LOAD_GLOBAL/STORE_GLOBAL Test Cases
+# These test cases ensure proper distinction between LOAD_NAME/STORE_NAME and LOAD_GLOBAL/STORE_GLOBAL
+
+# Simple global variable declaration and usage
+simple_global = 42
+
+
+def read_simple_global():
+    # This should generate LOAD_NAME (not declared as global)
+    return simple_global
+
+
+def modify_simple_global():
+    global simple_global
+    # This should generate LOAD_GLOBAL and STORE_GLOBAL
+    simple_global = simple_global + 1
+    simple_global = 100
+
+
+# Multiple global declarations
+global_x = 10
+global_y = 20
+global_z = 30
+
+
+def multiple_globals():
+    global global_x, global_y, global_z
+    # All of these should generate LOAD_GLOBAL/STORE_GLOBAL
+    global_x = global_x * 2
+    global_y = global_y + global_x
+    global_z = global_x + global_y + global_z
+    return global_x, global_y, global_z
+
+
+# Mixed local and global variables
+mixed_var = "I am global"
+
+
+def mixed_scope():
+    local_var = "I am local"
+    global mixed_var
+
+    # This should generate LOAD_NAME for local_var
+    temp = local_var
+
+    # This should generate LOAD_GLOBAL for mixed_var
+    global_temp = mixed_var
+
+    # This should generate STORE_GLOBAL
+    mixed_var = "Modified by function"
+
+    # This should generate STORE_NAME
+    local_var = "Modified locally"
+
+    return local_var, mixed_var
+
+
+# Global variable used in different contexts
+context_global = {"key": "value"}
+
+
+def global_in_expressions():
+    global context_global
+
+    # LOAD_GLOBAL in subscript context
+    value = context_global["key"]
+
+    # LOAD_GLOBAL in method call
+    keys = context_global.keys()
+
+    # STORE_GLOBAL with complex value
+    context_global = {"new_key": "new_value", "count": 42}
+
+    # LOAD_GLOBAL in conditional
+    if context_global:
+        # LOAD_GLOBAL in augmented assignment
+        context_global["count"] = context_global["count"] + 1
+
+
+# Global functions and classes (should use LOAD_NAME/STORE_NAME, not GLOBAL variants)
+def global_function():
+    return "I am a global function"
+
+
+class GlobalClass:
+    pass
+
+
+def test_global_callables():
+    # These should generate LOAD_NAME, not LOAD_GLOBAL (no global declaration)
+    func_ref = global_function
+    class_ref = GlobalClass
+
+    # Calling them
+    result = global_function()
+    instance = GlobalClass()
+
+    return func_ref, class_ref, result, instance
+
+
+# Nested function with global
+outer_global = "outer"
+
+
+def outer_with_global():
+    inner_var = "inner"
+
+    def inner_with_global():
+        global outer_global
+        nonlocal inner_var
+
+        # LOAD_GLOBAL for outer_global
+        temp1 = outer_global
+
+        # LOAD_NAME for inner_var (nonlocal, not global)
+        temp2 = inner_var
+
+        # STORE_GLOBAL for outer_global
+        outer_global = "modified by inner"
+
+        # STORE_NAME for inner_var
+        inner_var = "modified by inner"
+
+    inner_with_global()
+    return inner_var, outer_global
+
+
+# Global used in comprehensions and generators
+comp_global = [1, 2, 3, 4, 5]
+
+
+def global_in_comprehensions():
+    global comp_global
+
+    # LOAD_GLOBAL in list comprehension
+    doubled = [x * 2 for x in comp_global]
+
+    # LOAD_GLOBAL in generator expression
+    gen = (x**2 for x in comp_global)
+
+    # STORE_GLOBAL
+    comp_global = list(range(10))
+
+    return doubled, list(gen)
+
+
+# Global variable shadowing
+shadow_var = "global shadow"
+
+
+def shadow_test():
+    # This creates a local variable, should use LOAD_NAME/STORE_NAME
+    shadow_var = "local shadow"
+
+    def inner_shadow():
+        # This accesses the local from outer function
+        nonlocal shadow_var
+        shadow_var = "modified local"
+
+    def inner_global_shadow():
+        # This accesses the global, should use LOAD_GLOBAL/STORE_GLOBAL
+        global shadow_var
+        shadow_var = "modified global"
+
+    inner_shadow()
+    local_result = shadow_var
+
+    inner_global_shadow()
+
+    return local_result
+
+
+# Global with same name as builtin
+type = "my custom type"  # Shadows builtin
+
+
+def global_shadowing_builtin():
+    global type
+
+    # LOAD_GLOBAL for our global 'type'
+    current = type
+
+    # STORE_GLOBAL
+    type = "modified type"
+
+    # Using the actual builtin (should be different)
+    actual_type = __builtins__.type
+
+    return current, actual_type
+
+
 # 9.16. Delete statement
 temp_var = 42
 del temp_var

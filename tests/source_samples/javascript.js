@@ -733,6 +733,160 @@ storeObj[storeCounter++] = "with side effect";
 
 console.log("9.22. STORE_SUBSCR Test Cases: PASSED");
 
+// 9.23. Global Variable Test Cases for JavaScript
+// JavaScript doesn't have explicit 'global' declarations like Python,
+// but variables can still be global in different ways
+
+// Top-level var/let/const declarations (module/script globals)
+var globalVar = "I am a global var";
+let globalLet = "I am a global let";
+const globalConst = "I am a global const";
+
+// Implicit global (no declaration keyword - bad practice but common in malware)
+implicitGlobal = "I am an implicit global";
+
+// Global object properties (explicit globals)
+global.explicitGlobal = "I am explicitly on global object"; // Node.js
+// window.explicitGlobal = "I am explicitly on window object"; // Browser
+
+// Function modifying globals
+function modifyGlobals() {
+    // Access top-level globals
+    globalVar = "modified var";
+    globalLet = "modified let";
+    // globalConst = "cannot modify"; // Would throw error
+    
+    // Modify implicit global
+    implicitGlobal = "modified implicit";
+    
+    // Create new implicit global from function
+    newImplicitGlobal = "created from function";
+    
+    // Access via global object
+    global.explicitGlobal = "modified explicit";
+}
+
+// Nested function accessing globals
+function outerFunction() {
+    let localVar = "local to outer";
+    
+    function innerFunction() {
+        // Access module global
+        console.log(globalVar);
+        
+        // Access outer function's local
+        console.log(localVar);
+        
+        // Modify implicit global
+        implicitGlobal = "modified by inner";
+        
+        // Create new global from nested function
+        deepGlobal = "created from nested function";
+    }
+    
+    innerFunction();
+}
+
+// Global functions and objects
+function globalFunction() {
+    return "I am a global function";
+}
+
+const globalObject = {
+    property: "I am a property of a global object",
+    method: function() {
+        return "I am a method of a global object";
+    }
+};
+
+// Arrow function at global scope
+const globalArrow = () => "I am a global arrow function";
+
+// Class at global scope
+class GlobalClass {
+    constructor() {
+        this.property = "I am a global class instance property";
+    }
+}
+
+// Testing different contexts
+function testGlobalContexts() {
+    // Access various global types
+    const var1 = globalVar;
+    const let1 = globalLet;
+    const const1 = globalConst;
+    const implicit1 = implicitGlobal;
+    
+    // Call global functions
+    const funcResult = globalFunction();
+    const arrowResult = globalArrow();
+    
+    // Use global objects
+    const objProp = globalObject.property;
+    const objMethod = globalObject.method();
+    
+    // Instantiate global class
+    const instance = new GlobalClass();
+    
+    // Modify globals
+    globalVar = "modified in test";
+    implicitGlobal = "also modified in test";
+    
+    return { var1, let1, const1, implicit1, funcResult, arrowResult, objProp, objMethod, instance };
+}
+
+// IIFE with global access
+(function() {
+    // Access globals from IIFE
+    const globalInIIFE = globalVar;
+    
+    // Modify global from IIFE
+    globalLet = "modified from IIFE";
+    
+    // Create global from IIFE
+    global.iiffeGlobal = "created from IIFE";
+})();
+
+// Global variable shadowing
+let shadowVar = "global shadow";
+
+function shadowTest() {
+    // This creates a local variable that shadows the global
+    let shadowVar = "local shadow";
+    
+    function accessGlobalShadow() {
+        // In JavaScript, we can't explicitly say "use the global one"
+        // like Python's 'global' keyword
+        // This will access the outer function's shadowVar
+        return shadowVar;
+    }
+    
+    function modifyGlobalDirectly() {
+        // Access global via global object (Node.js)
+        global.shadowVar = "modified via global object";
+    }
+    
+    return { local: shadowVar, fromInner: accessGlobalShadow() };
+}
+
+// Using globalThis (modern JavaScript)
+globalThis.modernGlobal = "I am on globalThis";
+
+function testGlobalThis() {
+    // Access via globalThis
+    const value = globalThis.modernGlobal;
+    
+    // Modify via globalThis  
+    globalThis.modernGlobal = "modified via globalThis";
+    
+    // Create new property on globalThis
+    globalThis.newModernGlobal = "created via globalThis";
+    
+    return value;
+}
+
+console.log("9.23. Global Variable Test Cases: PASSED");
+
 
 console.log("\n--- JavaScript Compiler Test Suite: Finished ---");
 console.log("--- All tests completed. Check output for any errors. ---");
