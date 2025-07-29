@@ -62,3 +62,11 @@ dev = [
     "pytest>=8.3.5",
     "ruff>=0.11.7",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# Exclude util directory from test discovery
+norecursedirs = ["util", "examples", ".git", ".tox", "dist", "build", "*.egg"]
