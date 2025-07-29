@@ -114,6 +114,16 @@ class OpCode(Enum):
     TYPEOF_OPERATOR = auto()
     VOID_OPERATOR = auto()
     DELETE_OPERATOR = auto()
+    # Critical missing opcodes for better Python bytecode representation
+    UNPACK_SEQUENCE = auto()  # For tuple/list unpacking: a, b = (1, 2)
+    BUILD_STRING = auto()  # For f-string building
+    FORMAT_VALUE = auto()  # For f-string value formatting
+    LIST_APPEND = auto()  # For list comprehension optimization
+    SET_ADD = auto()  # For set comprehension optimization
+    MAP_ADD = auto()  # For dict comprehension optimization
+    YIELD_VALUE = auto()  # For yield statements
+    DELETE_NAME = auto()  # For del variable (more specific than DELETE_OPERATOR)
+    DELETE_SUBSCR = auto()  # For del list[i] or del dict[key]
 
 
 class Instruction:
@@ -763,7 +773,44 @@ class ASTCompiler:
             )
 
             if has_interpolation:
-                # Handle f-string with interpolation
+                # Handle f-string with proper BUILD_STRING/FORMAT_VALUE
+                parts = []
+
+                # Check if it's an f-string by looking at string_start
+                if node.children and node.children[0].type == "string_start":
+                    string_start = self._get_node_text(
+                        node.children[0], source_code_bytes
+                    )
+                    if string_start.startswith("f"):
+                        # Process f-string children
+                        for child in node.children[
+                            1:-1
+                        ]:  # Skip string_start and string_end
+                            if child.type == "string_content":
+                                # Regular string part
+                                text = self._get_node_text(child, source_code_bytes)
+                                if text:  # Only add non-empty strings
+                                    bytecode.append(emit(OpCode.LOAD_CONST, text))
+                                    parts.append("str")
+                            elif child.type == "interpolation":
+                                # Expression to format
+                                for expr_child in child.children:
+                                    if expr_child.type not in ["{", "}"]:
+                                        bytecode.extend(
+                                            self._generate_bytecode(
+                                                expr_child, source_code_bytes, file_path
+                                            )
+                                        )
+                                        bytecode.append(emit(OpCode.FORMAT_VALUE, None))
+                                        parts.append("fmt")
+                                        break
+
+                        # Build the final string
+                        if len(parts) > 0:
+                            bytecode.append(emit(OpCode.BUILD_STRING, len(parts)))
+                        return bytecode
+
+                # Fallback for other interpolation patterns
                 string_parts = 0
                 for child in node.children:
                     if child.type == "interpolation":
@@ -1085,10 +1132,8 @@ class ASTCompiler:
                 # yield without value yields None
                 bytecode.append(emit(OpCode.LOAD_CONST, None))
 
-            if is_yield_from:
-                bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # YIELD_FROM
-            else:
-                bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # YIELD_VALUE
+            # Emit proper YIELD_VALUE opcode
+            bytecode.append(emit(OpCode.YIELD_VALUE, None))
 
         elif node_type in ["template_string"]:
             # Handle template literals with ${} substitutions
@@ -1153,9 +1198,36 @@ class ASTCompiler:
             )
 
             if value_node and name_node:
-                bytecode.extend(
-                    self._generate_bytecode(value_node, source_code_bytes, file_path)
-                )
+                # Check if this is tuple/list unpacking (Python)
+                if name_node.type == "pattern_list":
+                    # First evaluate the right side
+                    bytecode.extend(
+                        self._generate_bytecode(
+                            value_node, source_code_bytes, file_path
+                        )
+                    )
+                    # Count the number of targets
+                    target_count = len(
+                        [
+                            child
+                            for child in name_node.named_children
+                            if child.type == "identifier"
+                        ]
+                    )
+                    # Emit UNPACK_SEQUENCE
+                    bytecode.append(emit(OpCode.UNPACK_SEQUENCE, target_count))
+                    # Store each unpacked value
+                    for child in name_node.named_children:
+                        if child.type == "identifier":
+                            var_name = self._get_node_text(child, source_code_bytes)
+                            bytecode.append(self._emit_store(var_name))
+                else:
+                    # For other patterns, evaluate right side first
+                    bytecode.extend(
+                        self._generate_bytecode(
+                            value_node, source_code_bytes, file_path
+                        )
+                    )
 
                 # Handle destructuring patterns (e.g., const { exec, spawn } = ...)
                 if name_node.type == "object_pattern":
@@ -1430,14 +1502,62 @@ class ASTCompiler:
                         # No bytecode generated - this is just a declaration
 
         elif node_type == "delete_statement":
-            # Process delete targets
+            # Process delete targets with specific DELETE opcodes
             for child in node.named_children:
-                bytecode.extend(
-                    self._generate_bytecode(child, source_code_bytes, file_path)
-                )
-            bytecode.append(
-                emit(OpCode.BINARY_OPERATION, None)
-            )  # Placeholder for delete
+                if child.type == "identifier":
+                    # Simple variable deletion: del x
+                    var_name = self._get_node_text(child, source_code_bytes)
+                    bytecode.append(emit(OpCode.DELETE_NAME, var_name))
+                elif child.type in ["subscript", "subscript_expression"]:
+                    # Subscript deletion: del lst[i] or del dict[key]
+                    obj_node = child.child_by_field_name(
+                        "value"
+                    ) or child.child_by_field_name("object")
+                    index_node = child.child_by_field_name(
+                        "index"
+                    ) or child.child_by_field_name("subscript")
+
+                    if obj_node and index_node:
+                        # Load object
+                        bytecode.extend(
+                            self._generate_bytecode(
+                                obj_node, source_code_bytes, file_path
+                            )
+                        )
+                        # Load index/key
+                        bytecode.extend(
+                            self._generate_bytecode(
+                                index_node, source_code_bytes, file_path
+                            )
+                        )
+                        # Delete subscript
+                        bytecode.append(emit(OpCode.DELETE_SUBSCR, None))
+                elif child.type in ["attribute", "member_expression"]:
+                    # Attribute deletion: del obj.attr
+                    obj_node = child.child_by_field_name(
+                        "object"
+                    ) or child.child_by_field_name("value")
+                    attr_node = child.child_by_field_name(
+                        "attribute"
+                    ) or child.child_by_field_name("property")
+
+                    if obj_node and attr_node:
+                        # Load object
+                        bytecode.extend(
+                            self._generate_bytecode(
+                                obj_node, source_code_bytes, file_path
+                            )
+                        )
+                        # Get attribute name
+                        attr_name = self._get_node_text(attr_node, source_code_bytes)
+                        # Delete attribute (using generic DELETE_OPERATOR for now)
+                        bytecode.append(emit(OpCode.DELETE_OPERATOR, attr_name))
+                else:
+                    # For other delete targets, fall back to processing the expression
+                    bytecode.extend(
+                        self._generate_bytecode(child, source_code_bytes, file_path)
+                    )
+                    bytecode.append(emit(OpCode.DELETE_OPERATOR, None))
 
         # --- Control Flow ---
         elif node_type == "if_statement":
@@ -1861,6 +1981,48 @@ class ASTCompiler:
 
         elif node_type in ["f_string", "formatted_string_literal"]:
             # Handle f-string with interpolation: f"Hello {name}!"
+            # Collect string parts and format positions
+            parts = []
+            format_count = 0
+
+            # Handle f-strings more accurately
+            if node_type == "string" and len(node.children) > 0:
+                # Check if it's an f-string by looking at string_start
+                first_child = node.children[0]
+                if first_child.type == "string_start":
+                    string_start = self._get_node_text(first_child, source_code_bytes)
+                    if string_start.startswith("f"):
+                        # Process f-string children
+                        for child in node.children[
+                            1:-1
+                        ]:  # Skip string_start and string_end
+                            if child.type == "string_content":
+                                # Regular string part
+                                text = self._get_node_text(child, source_code_bytes)
+                                if text:  # Only add non-empty strings
+                                    bytecode.append(emit(OpCode.LOAD_CONST, text))
+                                    parts.append("str")
+                            elif child.type == "interpolation":
+                                # Expression to format
+                                expr_node = child.child_by_field_name("expression")
+                                if not expr_node and child.named_children:
+                                    expr_node = child.named_children[0]
+                                if expr_node:
+                                    bytecode.extend(
+                                        self._generate_bytecode(
+                                            expr_node, source_code_bytes, file_path
+                                        )
+                                    )
+                                    bytecode.append(emit(OpCode.FORMAT_VALUE, None))
+                                    parts.append("fmt")
+                                    format_count += 1
+
+                        # Build the final string
+                        if len(parts) > 0:
+                            bytecode.append(emit(OpCode.BUILD_STRING, len(parts)))
+                        return bytecode
+
+            # Fallback to old behavior for other string types
             string_parts = 0
             for child in node.named_children:
                 if child.type == "interpolation":
@@ -2080,13 +2242,37 @@ class ASTCompiler:
 
                     # Generate element expression
                     if element_expr:
-                        bytecode.extend(
-                            self._generate_bytecode(
-                                element_expr, source_code_bytes, file_path
+                        if node_type == "dictionary_comprehension":
+                            # For dict comprehensions, element_expr is a pair node
+                            key_node = element_expr.child_by_field_name("key")
+                            value_node = element_expr.child_by_field_name("value")
+                            if key_node and value_node:
+                                # Load key
+                                bytecode.extend(
+                                    self._generate_bytecode(
+                                        key_node, source_code_bytes, file_path
+                                    )
+                                )
+                                # Load value
+                                bytecode.extend(
+                                    self._generate_bytecode(
+                                        value_node, source_code_bytes, file_path
+                                    )
+                                )
+                                # Add to dict
+                                bytecode.append(emit(OpCode.MAP_ADD, 1))
+                        else:
+                            # For list/set comprehensions, generate the element
+                            bytecode.extend(
+                                self._generate_bytecode(
+                                    element_expr, source_code_bytes, file_path
+                                )
                             )
-                        )
-                        # Add to collection (simplified)
-                        bytecode.append(emit(OpCode.BINARY_OPERATION, None))
+                            # Add to collection
+                            if node_type == "list_comprehension":
+                                bytecode.append(emit(OpCode.LIST_APPEND, 1))
+                            elif node_type == "set_comprehension":
+                                bytecode.append(emit(OpCode.SET_ADD, 1))
 
                     # Jump back to loop start
                     bytecode.append(emit(OpCode.JUMP_FORWARD, loop_start))
