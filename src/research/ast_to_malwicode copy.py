@@ -1,5 +1,6 @@
 import logging
 import argparse
+import csv
 import hashlib
 from enum import Enum, auto
 from pathlib import Path
@@ -7,8 +8,6 @@ from tree_sitter import Node
 from typing import Optional, Any, List, Tuple, Dict
 
 from tree_sitter import Parser, Language
-from tqdm import tqdm
-from research.csv_writer import CSVWriter
 from research.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
@@ -30,6 +29,7 @@ from research.mapping import (
     is_file_path,
     contains_url,
     is_localhost,
+    STRING_MAX_LENGTH,
     SENSITIVE_PATHS,
 )
 
@@ -45,10 +45,8 @@ class OpCode(Enum):
 
     LOAD_CONST = auto()
     LOAD_NAME = auto()
-    LOAD_GLOBAL = auto()  # Explicitly for global variables
     LOAD_PARAM = auto()
     STORE_NAME = auto()
-    STORE_GLOBAL = auto()  # Explicitly for global variables
     BINARY_ADD = auto()
     BINARY_SUBTRACT = auto()
     BINARY_MULTIPLY = auto()
@@ -94,13 +92,10 @@ class OpCode(Enum):
     BUILD_SET = auto()
     BUILD_MAP = auto()
     BINARY_SUBSCR = auto()
-    STORE_SUBSCR = auto()  # For subscript assignment like obj[key] = value
     LOAD_ATTR = auto()
-    STORE_ATTR = auto()  # For attribute assignment like obj.attr = value
     UNARY_NEGATIVE = auto()
     UNARY_NOT = auto()
     UNARY_INVERT = auto()
-    UNARY_POSITIVE = auto()  # For unary plus operator
     IMPORT_NAME = auto()
     IMPORT_FROM = auto()
     EXPORT_DEFAULT = auto()
@@ -114,21 +109,46 @@ class OpCode(Enum):
     TYPEOF_OPERATOR = auto()
     VOID_OPERATOR = auto()
     DELETE_OPERATOR = auto()
-    # Critical missing opcodes for better Python bytecode representation
-    UNPACK_SEQUENCE = auto()  # For tuple/list unpacking: a, b = (1, 2)
-    BUILD_STRING = auto()  # For f-string building
-    FORMAT_VALUE = auto()  # For f-string value formatting
-    LIST_APPEND = auto()  # For list comprehension optimization
-    SET_ADD = auto()  # For set comprehension optimization
-    MAP_ADD = auto()  # For dict comprehension optimization
-    YIELD_VALUE = auto()  # For yield statements
-    DELETE_NAME = auto()  # For del variable (more specific than DELETE_OPERATOR)
-    DELETE_SUBSCR = auto()  # For del list[i] or del dict[key]
-    # Additional missing opcodes for better Python bytecode representation
-    COPY = auto()  # For internal stack copy operations
-    KW_NAMES = auto()  # For keyword argument names in function calls
-    POP_TOP = auto()  # For discarding top of stack value
-    PUSH_NULL = auto()  # For pushing NULL value to stack
+
+
+class CSVWriter:
+    """Handles CSV output operations for AST to Malwicode compilation."""
+
+    def __init__(self, file_path: Path):
+        self.file_path = file_path
+        self.file_handle = None
+        self.writer = None
+        self._initialize_file()
+
+    def _initialize_file(self):
+        """Initialize CSV file with headers if needed."""
+        file_exists_before_open = self.file_path.is_file()
+        is_empty = not file_exists_before_open or self.file_path.stat().st_size == 0
+
+        self.file_handle = open(
+            self.file_path, "a", newline="", encoding="utf-8", errors="replace"
+        )
+        self.writer = csv.writer(self.file_handle)
+
+        if is_empty:
+            self.writer.writerow(["tokens", "hash", "language", "filepath"])
+
+    def write_code_objects(self, code_objects: List["CodeObject"]) -> None:
+        """Write CodeObject data to CSV."""
+        for obj in code_objects:
+            self.writer.writerow(
+                [
+                    obj.to_string(format_mode="oneline_mapped"),
+                    obj.to_hash(),
+                    obj.language,
+                    obj.path,
+                ]
+            )
+
+    def close(self):
+        """Close the CSV file."""
+        if self.file_handle:
+            self.file_handle.close()
 
 
 class Instruction:
@@ -146,57 +166,21 @@ class Instruction:
         return f"Instruction({self.opcode.name}, {self.arg})"
 
     @classmethod
-    def map_argument(
-        cls, op_code: OpCode, arg: Any, language: str, for_hashing: bool = False
-    ) -> str:
+    def map_argument(cls, op_code: OpCode, arg: Any, language: str) -> str:
         """
-        Maps opcode arguments to normalized tokens for machine learning model training.
+        ATTENTION!
+        This is the most critical function for training!
+        This mapping was modified hundreds of times to improve the overall F1
+        score of the model.
 
-        This is the most critical function for training! The mapping was optimized
-        through hundreds of iterations to maximize the F1 score of the malware
-        detection model.
-
-        Args:
-            op_code: The operation code (e.g., LOAD_CONST, STORE_NAME, CALL_FUNCTION)
-            arg: The argument value to be mapped (string, number, identifier, etc.)
-            language: Programming language context ("python" or "javascript")
-            for_hashing: If True, removes variable parts to create stable hashes
-                        for deduplication of similar code patterns
-
-        Returns:
-            Normalized token string in format: "{opcode_name} {mapped_argument}"
-            Examples:
-            - "LOAD_CONST STRING_LEN_M_ENT_HIGH" (for long strings)
-            - "STORE_NAME requests" (for known function names)
-            - "LOAD_CONST BOOLEAN" (for boolean values)
-            - "CALL_FUNCTION 2" (for function calls with arg count)
-
-        Mapping Strategy:
-        1. **Data Type Normalization**: Converts literals (bool, int, float) to type tokens
-        2. **Function/Import Recognition**: Maps known functions/imports using predefined dictionaries
-        3. **Security Pattern Detection**: Identifies IPs, URLs, file paths, sensitive patterns
-        4. **String Analysis**: For long strings, analyzes length, entropy, and encoding type
-
-        Performance Learnings:
-        - String length (STRING_MAX_LENGTH=20) has huge impact on model performance
-          Shorter strings led to worse performance due to loss of context
-        - Import mapping provides ~20% improvement in F1 score by reducing name variations
-        - LOAD_ATTR_CHAIN was removed: chained attribute access like obj.prop1.func1
-          decreased model performance, now generates individual LOAD_ATTR operations
-          and creating more unique training samples for better generalization
-        - Tokenization granularity is critical - splitting instructions can destroy
-          context understanding and hurt model performance
-        - Without function mapping the performance is around 85% (F1)
-
-        Hashing Mode:
-        When for_hashing=True, removes variable content (actual string values, numbers)
-        to create stable hashes for similar code structures. This enables:
-        - Deduplication of functionally identical code samples
-        - Better training data quality by focusing on behavioral patterns
-        - Consistent hash generation across different variable names/values
+        Learnings:
+        - The string length (STRING_MAX_LENGTH) exposed to the model has huge impact on performance
+            - We started with very short strings, leading to much worse performance
+        - Import mapping has a huge impact on performance (~20% on the F1 score)
+            - Maybe this is because more functions create the same hash (less name variations)
+            - Creating more unique training samples, allowing the model to generalize better
         """
 
-        STRING_MAX_LENGTH = 15
         prefix = "STRING"
         function_mapping = FUNCTION_MAPPING.get(language, {})
         import_mapping = IMPORT_MAPPING.get(language, {})
@@ -206,14 +190,12 @@ class Instruction:
 
         argval = clean_string_literal(reduce_whitespace(remove_newlines(str(arg))))
 
-        # Map basic data types
         if op_code == OpCode.LOAD_CONST and isinstance(arg, bool):
             return f"{op_code.name} {SpecialCases.BOOLEAN.value}"
         elif op_code == OpCode.LOAD_CONST and isinstance(arg, int):
             return f"{op_code.name} {SpecialCases.INTEGER.value}"
         elif op_code == OpCode.LOAD_CONST and isinstance(arg, float):
             return f"{op_code.name} {SpecialCases.FLOAT.value}"
-        # Map jumps for conditional logic
         elif op_code in (
             OpCode.POP_JUMP_IF_FALSE,
             OpCode.POP_JUMP_IF_TRUE,
@@ -227,32 +209,10 @@ class Instruction:
             and argval in import_mapping
         ):
             return f"{op_code.name} {import_mapping.get(argval)}"
-        # The function can be fully replaced by a single token
-        elif (
-            op_code
-            in [
-                OpCode.STORE_NAME,
-                OpCode.LOAD_NAME,
-                OpCode.STORE_GLOBAL,
-                OpCode.LOAD_GLOBAL,
-            ]
-            and argval in function_mapping
-        ):
+        elif op_code in [OpCode.LOAD_NAME] and argval in function_mapping:
             return f"{op_code.name} {function_mapping.get(argval)}"
         elif op_code in [OpCode.CALL_FUNCTION]:
             return f"{op_code.name} {argval}"
-        elif op_code in [OpCode.KW_NAMES]:
-            # KW_NAMES contains keyword argument names tuple
-            return f"{op_code.name} {argval}"
-        elif op_code in [OpCode.POP_TOP]:
-            # POP_TOP discards top of stack, no argument needed
-            return f"{op_code.name}"
-        elif op_code in [OpCode.PUSH_NULL]:
-            # PUSH_NULL pushes NULL value to stack, no argument needed
-            return f"{op_code.name}"
-        elif op_code in [OpCode.COPY]:
-            # COPY duplicates stack values, argument indicates copy depth
-            return f"{op_code.name} {argval if argval is not None else '1'}"
         elif argval in SENSITIVE_PATHS:
             return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
         elif is_localhost(argval):
@@ -270,11 +230,8 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_ENCODING.value}"
         elif is_file_path(argval):
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
-
-        # Cut strings when too long
-        if len(argval) <= STRING_MAX_LENGTH:
+        elif len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
-
         if is_escaped_hex(argval):
             prefix = SpecialCases.STRING_ESCAPED_HEX.value
         elif is_hex(argval):
@@ -291,23 +248,31 @@ class Instruction:
         entropy_suffix = map_entropy_to_token(entropy)
         return f"{op_code.name} {prefix}_{length_suffix}_{entropy_suffix}"
 
-    def to_string(self, mapped: bool, for_hashing: bool = False) -> str:
-        if mapped and for_hashing:
+    def to_string(self, format_mode: str = "default") -> str:
+        if format_mode == "mapped":
             return Instruction.map_argument(
-                op_code=self.opcode,
-                arg=self.arg,
-                language=self.language,
-                for_hashing=True,
+                op_code=self.opcode, arg=self.arg, language=self.language
             )
-        elif mapped:
-            return Instruction.map_argument(
-                op_code=self.opcode,
-                arg=self.arg,
-                language=self.language,
-                for_hashing=for_hashing,
-            )
-        else:
-            return f"{self.opcode.name} {self.arg}"
+        else:  # default format
+            # Handle special cases for consistent output
+            if self.opcode in (
+                OpCode.POP_JUMP_IF_FALSE,
+                OpCode.POP_JUMP_IF_TRUE,
+                OpCode.JUMP_FORWARD,
+            ):
+                arg_str = "<JUMP_TARGET>"
+            elif self.opcode in (
+                OpCode.MAKE_FUNCTION,
+                OpCode.ASYNC_FUNCTION,
+                OpCode.GENERATOR_FUNCTION,
+                OpCode.MAKE_CLASS,
+            ) and isinstance(self.arg, str):
+                # Handle references to separate CodeObjects
+                arg_str = f"<{self.arg}>"
+            else:
+                arg_str = str(self.arg) if self.arg is not None else ""
+
+            return f"{self.opcode.name:<20} {arg_str.strip()}"
 
 
 class CodeObject:
@@ -337,18 +302,74 @@ class CodeObject:
             f"CodeObject(name={self.name}, path={self.path}, location={self.location})"
         )
 
-    def to_string(self, mapped: bool = True, one_line=True, for_hashing=False) -> str:
-        instructions = []
+    def to_string(
+        self,
+        format_mode: str = "default",
+        separator: str = " ",
+        indent_level: int = 0,
+    ) -> str:
+        """
+        Formats the bytecode of this CodeObject with various formatting options.
+
+        Args:
+            format_mode: Format style ("default", "compact", "detailed", "mapped", "oneline", "oneline_mapped")
+            separator: String to separate instructions in oneline mode (default: " ")
+            indent_level: Number of indentation levels for multiline modes
+            mapping: Optional mapping for arguments in "mapped" mode
+
+        Returns:
+            Formatted string representation of the bytecode
+        """
+        if format_mode in ["oneline", "oneline_mapped"]:
+            return self._format_oneline(separator)
+        else:
+            return self._format_multiline(format_mode, indent_level)
+
+    def _format_oneline(
+        self,
+        separator: str = " ",
+    ) -> str:
+        """Format instructions as a single line with opcodes and values."""
+        instruction_parts = []
 
         if Path(self.path).name in COMMON_TARGET_FILES.get(self.language, []):
-            instructions += [SpecialCases.TARGETED_FILE.value]
+            instruction_parts += [SpecialCases.TARGETED_FILE.value]
 
         for instruction in self.byte_code:
-            instructions.append(
-                instruction.to_string(mapped=mapped, for_hashing=for_hashing)
-            )
+            instruction_parts.append(instruction.to_string(format_mode="mapped"))
 
-        return (" " if one_line else "\n").join(instructions)
+        return separator.join(instruction_parts)
+
+    def _format_multiline(
+        self,
+        format_mode: str = "default",
+        indent_level: int = 0,
+    ) -> str:
+        """Format instructions as multiple indented lines."""
+        result_lines = []
+        indent = "    " * indent_level
+
+        for instruction in self.byte_code:
+            # Check for legacy tuple format and convert if needed
+            if isinstance(instruction, tuple):
+                opcode, arg = instruction
+                instruction = Instruction(opcode, arg, self.language)
+
+            # Handle nested CodeObjects (legacy support)
+            if isinstance(instruction.arg, CodeObject):
+                result_lines.append(
+                    f"{indent}{instruction.opcode.name:<20} <{instruction.arg.name}>"
+                )
+                result_lines.append(
+                    instruction.arg.to_string(format_mode, " ", indent_level + 1)
+                )
+                continue
+
+            # Format the instruction with the specified mode
+            formatted_line = instruction.to_string(format_mode)
+            result_lines.append(f"{indent}{formatted_line}")
+
+        return "\n".join(result_lines)
 
     def to_hash(self) -> str:
         """
@@ -357,11 +378,18 @@ class CodeObject:
         Returns:
             Hexadecimal SHA256 hash string
         """
-        token_string = self.to_string(mapped=True, for_hashing=True, one_line=True)
-        encoded_string = token_string.encode("utf-8", errors="replace")
+        oneline_mapped = self.to_string(format_mode="oneline_mapped")
+        encoded_string = oneline_mapped.encode("utf-8", errors="replace")
         sha256_hash = hashlib.sha256()
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
+
+    def to_oneline(self, separator: str = " ") -> str:
+        """
+        Legacy method for backward compatibility.
+        Use to_string(format_mode="oneline", separator=separator) instead.
+        """
+        return self.to_string(format_mode="oneline", separator=separator)
 
 
 def emit(opcode: "OpCode", arg: Any = None, language: str = "python") -> Instruction:
@@ -415,10 +443,6 @@ class ASTCompiler:
 
         # Track function parameters for LOAD_PARAM vs LOAD_NAME distinction
         self.current_function_params = set()
-        # Track global variables for LOAD_GLOBAL/STORE_GLOBAL distinction
-        self.global_variables = set()
-        # Track whether we're currently inside a function scope
-        self._in_function_scope = False
         # Collection to store all CodeObjects (root, functions, classes)
         self.code_objects = []
         # Counter for generating unique reference names
@@ -434,11 +458,6 @@ class ASTCompiler:
         # Reset collections for each compilation
         self.code_objects = []
         self._next_ref_id = 0
-
-        # First pass: Collect all variables that are declared global anywhere in the module
-        self.global_variables = self._collect_global_variables(
-            root_node, source_code_bytes
-        )
 
         source_code = source_code_bytes.decode("utf-8", errors="replace")
         location = (root_node.start_point[0] + 1, root_node.end_point[0] + 1)
@@ -644,57 +663,6 @@ class ASTCompiler:
         """Helper method to create Instruction objects with the compiler's language."""
         return emit(opcode, arg, self.language_name)
 
-    def _collect_global_variables(self, node: Node, source_code_bytes: bytes) -> set:
-        """
-        First pass: collect all variables that are declared global anywhere in the module.
-        This mimics Python's two-pass compilation where global declarations affect
-        the entire module scope.
-        """
-        global_vars = set()
-
-        def _traverse_for_globals(n: Node):
-            if n.type == "global_statement":
-                for child in n.named_children:
-                    if child.type == "identifier":
-                        var_name = self._get_node_text(child, source_code_bytes)
-                        global_vars.add(var_name)
-
-            # Recursively traverse all children
-            for child in n.children:
-                _traverse_for_globals(child)
-
-        _traverse_for_globals(node)
-        return global_vars
-
-    def _emit_store(self, var_name: str) -> Instruction:
-        """Helper method to emit appropriate store instruction based on variable scope."""
-        if hasattr(self, "_in_function_scope") and self._in_function_scope:
-            # Inside a function: all non-local variables use STORE_GLOBAL
-            # This provides consistent behavior across languages for malware analysis
-            return emit(OpCode.STORE_GLOBAL, var_name, self.language_name)
-        elif var_name in self.global_variables:
-            # Module level: explicitly global variables use STORE_GLOBAL (Python only)
-            return emit(OpCode.STORE_GLOBAL, var_name, self.language_name)
-        else:
-            # Module level: other variables use STORE_NAME
-            return emit(OpCode.STORE_NAME, var_name, self.language_name)
-
-    def _emit_load(self, var_name: str) -> Instruction:
-        """Helper method to emit appropriate load instruction based on variable scope."""
-        # Check if this identifier is a function parameter first
-        if var_name in self.current_function_params:
-            return emit(OpCode.LOAD_PARAM, var_name, self.language_name)
-        elif hasattr(self, "_in_function_scope") and self._in_function_scope:
-            # Inside a function: all non-local variables use LOAD_GLOBAL
-            # This provides consistent behavior across languages for malware analysis
-            return emit(OpCode.LOAD_GLOBAL, var_name, self.language_name)
-        elif var_name in self.global_variables:
-            # Module level: explicitly global variables use LOAD_GLOBAL
-            return emit(OpCode.LOAD_GLOBAL, var_name, self.language_name)
-        else:
-            # Module level: other variables use LOAD_NAME
-            return emit(OpCode.LOAD_NAME, var_name, self.language_name)
-
     def _generate_bytecode(
         self, node: Node, source_code_bytes: bytes, file_path: Path
     ) -> List[Instruction]:
@@ -748,7 +716,7 @@ class ASTCompiler:
         unary_operator_mapping = {
             # Arithmetic unary operators
             "-": OpCode.UNARY_NEGATIVE,
-            "+": OpCode.UNARY_POSITIVE,  # Unary plus
+            "+": OpCode.BINARY_OPERATION,  # Unary plus (no specific opcode needed)
             # Bitwise unary operators
             "~": OpCode.UNARY_INVERT,
             # Logical unary operators
@@ -790,44 +758,7 @@ class ASTCompiler:
             )
 
             if has_interpolation:
-                # Handle f-string with proper BUILD_STRING/FORMAT_VALUE
-                parts = []
-
-                # Check if it's an f-string by looking at string_start
-                if node.children and node.children[0].type == "string_start":
-                    string_start = self._get_node_text(
-                        node.children[0], source_code_bytes
-                    )
-                    if string_start.startswith("f"):
-                        # Process f-string children
-                        for child in node.children[
-                            1:-1
-                        ]:  # Skip string_start and string_end
-                            if child.type == "string_content":
-                                # Regular string part
-                                text = self._get_node_text(child, source_code_bytes)
-                                if text:  # Only add non-empty strings
-                                    bytecode.append(emit(OpCode.LOAD_CONST, text))
-                                    parts.append("str")
-                            elif child.type == "interpolation":
-                                # Expression to format
-                                for expr_child in child.children:
-                                    if expr_child.type not in ["{", "}"]:
-                                        bytecode.extend(
-                                            self._generate_bytecode(
-                                                expr_child, source_code_bytes, file_path
-                                            )
-                                        )
-                                        bytecode.append(emit(OpCode.FORMAT_VALUE, None))
-                                        parts.append("fmt")
-                                        break
-
-                        # Build the final string
-                        if len(parts) > 0:
-                            bytecode.append(emit(OpCode.BUILD_STRING, len(parts)))
-                        return bytecode
-
-                # Fallback for other interpolation patterns
+                # Handle f-string with interpolation
                 string_parts = 0
                 for child in node.children:
                     if child.type == "interpolation":
@@ -863,7 +794,11 @@ class ASTCompiler:
                 bytecode.append(emit(OpCode.LOAD_CONST, str_content))
         elif node_type == "identifier":
             identifier_name = self._get_node_text(node, source_code_bytes)
-            bytecode.append(self._emit_load(identifier_name))
+            # Use LOAD_PARAM if this identifier is a function parameter
+            if identifier_name in self.current_function_params:
+                bytecode.append(emit(OpCode.LOAD_PARAM, identifier_name))
+            else:
+                bytecode.append(emit(OpCode.LOAD_NAME, identifier_name))
         # Boolean and None literals
         elif node_type in ["true", "false"]:
             bytecode.append(emit(OpCode.LOAD_CONST, node_type == "true"))
@@ -994,14 +929,10 @@ class ASTCompiler:
                     bytecode.append(emit(OpCode.BINARY_OPERATION, None))
         elif node_type in ["comparison_operator"]:
             # Handle comparison chains like 'a < b < c'
-            children = list(node.named_children)
-            for i, child in enumerate(children):
+            for child in node.named_children:
                 bytecode.extend(
                     self._generate_bytecode(child, source_code_bytes, file_path)
                 )
-                # For comparison chains with multiple comparisons, copy intermediate values
-                if i > 0 and i < len(children) - 1:
-                    bytecode.append(emit(OpCode.COPY, 1))
             # For comparison chains, we'll use the generic COMPARE_OP
             bytecode.append(emit(OpCode.COMPARE_OP, None))
         elif node_type in ["not_operator"]:
@@ -1014,10 +945,6 @@ class ASTCompiler:
         elif node_type in ["call", "call_expression"]:
             func_node = node.child_by_field_name("function")
             args_node = node.child_by_field_name("arguments")
-
-            # Push NULL for function call optimization (Python 3.11+)
-            bytecode.append(emit(OpCode.PUSH_NULL, None))
-
             if func_node:
                 bytecode.extend(
                     self._generate_bytecode(func_node, source_code_bytes, file_path)
@@ -1083,12 +1010,7 @@ class ASTCompiler:
 
             # Choose appropriate call instruction based on argument types
             if has_kwargs or kwarg_count > 0:
-                # For calls with keyword arguments, emit KW_NAMES first
-                if kwarg_count > 0:
-                    # Create tuple of keyword names (simplified representation)
-                    kw_names_tuple = f"kwnames_{kwarg_count}"
-                    bytecode.append(emit(OpCode.KW_NAMES, kw_names_tuple))
-                bytecode.append(emit(OpCode.CALL_FUNCTION, arg_count + kwarg_count))
+                bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # CALL_FUNCTION_KW
             elif has_starargs:
                 bytecode.append(
                     emit(OpCode.BINARY_OPERATION, None)
@@ -1113,7 +1035,7 @@ class ASTCompiler:
                     bytecode.append(emit(OpCode.BINARY_SUBTRACT, None))
                 # Store back
                 var_name = self._get_node_text(argument_node, source_code_bytes)
-                bytecode.append(self._emit_store(var_name))
+                bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
         elif node_type in ["new_expression"]:
             # Handle `new Constructor()` calls
@@ -1162,8 +1084,10 @@ class ASTCompiler:
                 # yield without value yields None
                 bytecode.append(emit(OpCode.LOAD_CONST, None))
 
-            # Emit proper YIELD_VALUE opcode
-            bytecode.append(emit(OpCode.YIELD_VALUE, None))
+            if is_yield_from:
+                bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # YIELD_FROM
+            else:
+                bytecode.append(emit(OpCode.BINARY_OPERATION, None))  # YIELD_VALUE
 
         elif node_type in ["template_string"]:
             # Handle template literals with ${} substitutions
@@ -1228,36 +1152,9 @@ class ASTCompiler:
             )
 
             if value_node and name_node:
-                # Check if this is tuple/list unpacking (Python)
-                if name_node.type == "pattern_list":
-                    # First evaluate the right side
-                    bytecode.extend(
-                        self._generate_bytecode(
-                            value_node, source_code_bytes, file_path
-                        )
-                    )
-                    # Count the number of targets
-                    target_count = len(
-                        [
-                            child
-                            for child in name_node.named_children
-                            if child.type == "identifier"
-                        ]
-                    )
-                    # Emit UNPACK_SEQUENCE
-                    bytecode.append(emit(OpCode.UNPACK_SEQUENCE, target_count))
-                    # Store each unpacked value
-                    for child in name_node.named_children:
-                        if child.type == "identifier":
-                            var_name = self._get_node_text(child, source_code_bytes)
-                            bytecode.append(self._emit_store(var_name))
-                else:
-                    # For other patterns, evaluate right side first
-                    bytecode.extend(
-                        self._generate_bytecode(
-                            value_node, source_code_bytes, file_path
-                        )
-                    )
+                bytecode.extend(
+                    self._generate_bytecode(value_node, source_code_bytes, file_path)
+                )
 
                 # Handle destructuring patterns (e.g., const { exec, spawn } = ...)
                 if name_node.type == "object_pattern":
@@ -1286,57 +1183,10 @@ class ASTCompiler:
                                 child, source_code_bytes
                             )
                             bytecode.append(emit(OpCode.STORE_NAME, identifier_name))
-                elif name_node.type in ["subscript_expression", "subscript"]:
-                    # Handle subscript assignment: obj[key] = value
-                    # First load the object
-                    object_node = name_node.child_by_field_name(
-                        "object"
-                    ) or name_node.child_by_field_name("value")
-                    index_node = name_node.child_by_field_name(
-                        "index"
-                    ) or name_node.child_by_field_name("subscript")
-
-                    if object_node and index_node:
-                        # Load object
-                        bytecode.extend(
-                            self._generate_bytecode(
-                                object_node, source_code_bytes, file_path
-                            )
-                        )
-                        # Load index/key
-                        bytecode.extend(
-                            self._generate_bytecode(
-                                index_node, source_code_bytes, file_path
-                            )
-                        )
-                        # Store subscript
-                        bytecode.append(emit(OpCode.STORE_SUBSCR, None))
-                elif name_node.type in ["attribute", "member_expression"]:
-                    # Handle attribute assignment: obj.attr = value
-                    object_node = name_node.child_by_field_name(
-                        "object"
-                    ) or name_node.child_by_field_name("value")
-                    attribute_node = name_node.child_by_field_name(
-                        "attribute"
-                    ) or name_node.child_by_field_name("property")
-
-                    if object_node and attribute_node:
-                        # Load object
-                        bytecode.extend(
-                            self._generate_bytecode(
-                                object_node, source_code_bytes, file_path
-                            )
-                        )
-                        # Get attribute name
-                        attr_name = self._get_node_text(
-                            attribute_node, source_code_bytes
-                        )
-                        # Store attribute
-                        bytecode.append(emit(OpCode.STORE_ATTR, attr_name))
                 else:
                     # Regular single variable assignment
                     var_name = self._get_node_text(name_node, source_code_bytes)
-                    bytecode.append(self._emit_store(var_name))
+                    bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
         elif node_type == "return_statement":
             if node.child_count > 1 and node.children[1].type not in [";"]:
@@ -1366,7 +1216,7 @@ class ASTCompiler:
                 bytecode.append(emit(OpCode.BINARY_OPERATION, None))
                 # Store result
                 var_name = self._get_node_text(target_node, source_code_bytes)
-                bytecode.append(self._emit_store(var_name))
+                bytecode.append(emit(OpCode.STORE_NAME, var_name))
 
         elif node_type == "pass_statement":
             # Pass is a no-op, but we'll add a placeholder
@@ -1522,72 +1372,20 @@ class ASTCompiler:
 
         elif node_type in ["global_statement", "nonlocal_statement"]:
             # Process global/nonlocal declarations
-            # These are just declarations and don't generate load/store instructions
             for child in node.named_children:
                 if child.type == "identifier":
                     name = self._get_node_text(child, source_code_bytes)
-                    if node_type == "global_statement":
-                        # Track this as a global variable for future references
-                        self.global_variables.add(name)
-                        # No bytecode generated - this is just a declaration
+                    bytecode.append(emit(OpCode.LOAD_NAME, name))
 
         elif node_type == "delete_statement":
-            # Process delete targets with specific DELETE opcodes
+            # Process delete targets
             for child in node.named_children:
-                if child.type == "identifier":
-                    # Simple variable deletion: del x
-                    var_name = self._get_node_text(child, source_code_bytes)
-                    bytecode.append(emit(OpCode.DELETE_NAME, var_name))
-                elif child.type in ["subscript", "subscript_expression"]:
-                    # Subscript deletion: del lst[i] or del dict[key]
-                    obj_node = child.child_by_field_name(
-                        "value"
-                    ) or child.child_by_field_name("object")
-                    index_node = child.child_by_field_name(
-                        "index"
-                    ) or child.child_by_field_name("subscript")
-
-                    if obj_node and index_node:
-                        # Load object
-                        bytecode.extend(
-                            self._generate_bytecode(
-                                obj_node, source_code_bytes, file_path
-                            )
-                        )
-                        # Load index/key
-                        bytecode.extend(
-                            self._generate_bytecode(
-                                index_node, source_code_bytes, file_path
-                            )
-                        )
-                        # Delete subscript
-                        bytecode.append(emit(OpCode.DELETE_SUBSCR, None))
-                elif child.type in ["attribute", "member_expression"]:
-                    # Attribute deletion: del obj.attr
-                    obj_node = child.child_by_field_name(
-                        "object"
-                    ) or child.child_by_field_name("value")
-                    attr_node = child.child_by_field_name(
-                        "attribute"
-                    ) or child.child_by_field_name("property")
-
-                    if obj_node and attr_node:
-                        # Load object
-                        bytecode.extend(
-                            self._generate_bytecode(
-                                obj_node, source_code_bytes, file_path
-                            )
-                        )
-                        # Get attribute name
-                        attr_name = self._get_node_text(attr_node, source_code_bytes)
-                        # Delete attribute (using generic DELETE_OPERATOR for now)
-                        bytecode.append(emit(OpCode.DELETE_OPERATOR, attr_name))
-                else:
-                    # For other delete targets, fall back to processing the expression
-                    bytecode.extend(
-                        self._generate_bytecode(child, source_code_bytes, file_path)
-                    )
-                    bytecode.append(emit(OpCode.DELETE_OPERATOR, None))
+                bytecode.extend(
+                    self._generate_bytecode(child, source_code_bytes, file_path)
+                )
+            bytecode.append(
+                emit(OpCode.BINARY_OPERATION, None)
+            )  # Placeholder for delete
 
         # --- Control Flow ---
         elif node_type == "if_statement":
@@ -1828,10 +1626,8 @@ class ASTCompiler:
                     self._generate_bytecode(body_node, source_code_bytes, file_path)
                 )
 
-            # Exit contexts in reverse order with exception handling
+            # Exit contexts in reverse order
             for _ in with_items:
-                # Add COPY for exception handling stack management
-                bytecode.append(emit(OpCode.COPY, 3))
                 bytecode.append(emit(OpCode.EXIT_CONTEXT, None))
 
         elif node_type in ["lambda", "arrow_function"]:
@@ -1841,9 +1637,7 @@ class ASTCompiler:
                 # Extract parameters and set context for this function
                 params = self._extract_function_parameters(node, source_code_bytes)
                 previous_params = self.current_function_params
-                previous_in_function = self._in_function_scope
                 self.current_function_params = params
-                self._in_function_scope = True
 
                 func_body_bytecode = self._generate_bytecode(
                     body_node, source_code_bytes, file_path
@@ -1856,7 +1650,6 @@ class ASTCompiler:
 
                 # Restore previous parameter context
                 self.current_function_params = previous_params
-                self._in_function_scope = previous_in_function
 
                 func_source = self._get_node_text(body_node, source_code_bytes)
                 location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
@@ -1993,7 +1786,6 @@ class ASTCompiler:
 
         elif node_type in ["attribute", "member_expression"]:
             # Handle attribute access: obj.attr (Python) or obj.prop (JavaScript)
-            # Generate individual LOAD_ATTR operations for each step in the chain
             object_node = node.child_by_field_name(
                 "object"
             ) or node.child_by_field_name("value")
@@ -2002,7 +1794,6 @@ class ASTCompiler:
             ) or node.child_by_field_name("property")
 
             if object_node:
-                # Load the object first (this may recursively handle chained attributes)
                 bytecode.extend(
                     self._generate_bytecode(object_node, source_code_bytes, file_path)
                 )
@@ -2013,48 +1804,6 @@ class ASTCompiler:
 
         elif node_type in ["f_string", "formatted_string_literal"]:
             # Handle f-string with interpolation: f"Hello {name}!"
-            # Collect string parts and format positions
-            parts = []
-            format_count = 0
-
-            # Handle f-strings more accurately
-            if node_type == "string" and len(node.children) > 0:
-                # Check if it's an f-string by looking at string_start
-                first_child = node.children[0]
-                if first_child.type == "string_start":
-                    string_start = self._get_node_text(first_child, source_code_bytes)
-                    if string_start.startswith("f"):
-                        # Process f-string children
-                        for child in node.children[
-                            1:-1
-                        ]:  # Skip string_start and string_end
-                            if child.type == "string_content":
-                                # Regular string part
-                                text = self._get_node_text(child, source_code_bytes)
-                                if text:  # Only add non-empty strings
-                                    bytecode.append(emit(OpCode.LOAD_CONST, text))
-                                    parts.append("str")
-                            elif child.type == "interpolation":
-                                # Expression to format
-                                expr_node = child.child_by_field_name("expression")
-                                if not expr_node and child.named_children:
-                                    expr_node = child.named_children[0]
-                                if expr_node:
-                                    bytecode.extend(
-                                        self._generate_bytecode(
-                                            expr_node, source_code_bytes, file_path
-                                        )
-                                    )
-                                    bytecode.append(emit(OpCode.FORMAT_VALUE, None))
-                                    parts.append("fmt")
-                                    format_count += 1
-
-                        # Build the final string
-                        if len(parts) > 0:
-                            bytecode.append(emit(OpCode.BUILD_STRING, len(parts)))
-                        return bytecode
-
-            # Fallback to old behavior for other string types
             string_parts = 0
             for child in node.named_children:
                 if child.type == "interpolation":
@@ -2129,9 +1878,7 @@ class ASTCompiler:
             # Extract parameters and set context for this function
             params = self._extract_function_parameters(node, source_code_bytes)
             previous_params = self.current_function_params
-            previous_in_function = self._in_function_scope
             self.current_function_params = params
-            self._in_function_scope = True
 
             func_body_bytecode = self._generate_bytecode(
                 body_node, source_code_bytes, file_path
@@ -2144,7 +1891,6 @@ class ASTCompiler:
 
             # Restore previous parameter context
             self.current_function_params = previous_params
-            self._in_function_scope = previous_in_function
 
             func_source = self._get_node_text(body_node, source_code_bytes)
             location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
@@ -2173,7 +1919,7 @@ class ASTCompiler:
                 bytecode.append(emit(OpCode.GENERATOR_FUNCTION, func_ref_name))
             else:
                 bytecode.append(emit(OpCode.MAKE_FUNCTION, func_ref_name))
-            bytecode.append(self._emit_store(func_name))
+            bytecode.append(emit(OpCode.STORE_NAME, func_name))
 
         elif node_type in ["class_definition", "class_declaration"]:
             class_name = self._get_node_text(
@@ -2201,7 +1947,7 @@ class ASTCompiler:
 
             # Use reference name in bytecode instead of nested CodeObject
             bytecode.append(emit(OpCode.MAKE_CLASS, class_ref_name))
-            bytecode.append(self._emit_store(class_name))
+            bytecode.append(emit(OpCode.STORE_NAME, class_name))
 
         # --- Comprehensions and Generators ---
         elif node_type in [
@@ -2274,37 +2020,13 @@ class ASTCompiler:
 
                     # Generate element expression
                     if element_expr:
-                        if node_type == "dictionary_comprehension":
-                            # For dict comprehensions, element_expr is a pair node
-                            key_node = element_expr.child_by_field_name("key")
-                            value_node = element_expr.child_by_field_name("value")
-                            if key_node and value_node:
-                                # Load key
-                                bytecode.extend(
-                                    self._generate_bytecode(
-                                        key_node, source_code_bytes, file_path
-                                    )
-                                )
-                                # Load value
-                                bytecode.extend(
-                                    self._generate_bytecode(
-                                        value_node, source_code_bytes, file_path
-                                    )
-                                )
-                                # Add to dict
-                                bytecode.append(emit(OpCode.MAP_ADD, 1))
-                        else:
-                            # For list/set comprehensions, generate the element
-                            bytecode.extend(
-                                self._generate_bytecode(
-                                    element_expr, source_code_bytes, file_path
-                                )
+                        bytecode.extend(
+                            self._generate_bytecode(
+                                element_expr, source_code_bytes, file_path
                             )
-                            # Add to collection
-                            if node_type == "list_comprehension":
-                                bytecode.append(emit(OpCode.LIST_APPEND, 1))
-                            elif node_type == "set_comprehension":
-                                bytecode.append(emit(OpCode.SET_ADD, 1))
+                        )
+                        # Add to collection (simplified)
+                        bytecode.append(emit(OpCode.BINARY_OPERATION, None))
 
                     # Jump back to loop start
                     bytecode.append(emit(OpCode.JUMP_FORWARD, loop_start))
@@ -2386,21 +2108,12 @@ class ASTCompiler:
                             )
                         )
 
-        elif node_type == "expression_statement":
-            # Handle expression statements - expressions whose values are discarded
-            for child in node.children:
-                if child.type not in [";", "\n"]:  # Skip semicolons and newlines
-                    bytecode.extend(
-                        self._generate_bytecode(child, source_code_bytes, file_path)
-                    )
-                    # Add POP_TOP to discard the expression result
-                    bytecode.append(emit(OpCode.POP_TOP, None))
-
         # --- Block, Module, and Program Handling ---
         elif node_type in [
             "block",
             "module",
             "program",
+            "expression_statement",
             "lexical_declaration",
             "variable_declaration",
             "const_declaration",
@@ -2478,6 +2191,15 @@ class ASTCompiler:
         return []
 
 
+def print_code_object(code_obj: CodeObject, indent_level: int = 0):
+    """Recursively prints a CodeObject and its nested functions/classes."""
+    header = f"--- CodeObject '{code_obj.name}' from {code_obj.path.name} (lines {code_obj.location[0]}-{code_obj.location[1]}) ---"
+    separator = "-" * len(header)
+    print(header)
+    print(code_obj.to_string())
+    print(separator)
+
+
 def main() -> None:
     """
     Main function to parse arguments, collect files, and compile them.
@@ -2503,7 +2225,7 @@ def main() -> None:
         type=str,
         choices=["console", "csv"],
         default="console",
-        help="Output format (default: console). 'csv' outputs oneline_mapped format to console or file if --save is provided.",
+        help="Output format (default: console). 'csv' saves to file with oneline_mapped format.",
     )
     parser.add_argument(
         "-s",
@@ -2511,11 +2233,14 @@ def main() -> None:
         type=str,
         default=None,
         metavar="FILEPATH",
-        help="Path to save the output. When using --format csv, if not provided output goes to console.",
+        help="Path to save the output. Required when using --format csv.",
     )
     args = parser.parse_args()
 
-    # CSV format no longer requires --save flag; will print to console if not specified
+    # Validate arguments
+    if args.format == "csv" and not args.save:
+        print("Error: --save is required when using --format csv")
+        return
 
     # Create a dictionary of compilers, one for each language.
     compilers: Dict[str, ASTCompiler] = {}
@@ -2540,17 +2265,14 @@ def main() -> None:
     csv_writer_instance: Optional[CSVWriter] = None
 
     try:
-        if args.format == "csv" and args.save:
+        if args.format == "csv":
             print("Setting up CSV output...")
             save_path = Path(args.save)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             csv_writer_instance = CSVWriter(save_path)
             print(f"CSV output will be saved to: {save_path.resolve()}")
-        elif args.format == "csv" and not args.save:
-            # Print CSV header to console
-            print("tokens,hash,language,filepath")
 
-        for source in tqdm(source_files, desc="Processing files", unit="file"):
+        for source in source_files:
             lang = None
             if source.suffix == ".py":
                 lang = "python"
@@ -2562,31 +2284,17 @@ def main() -> None:
                 code_objects = compiler_instance.process_file(source)
 
                 if args.format == "csv":
-                    if csv_writer_instance:
-                        # Write to CSV file
-                        csv_writer_instance.write_code_objects(code_objects)
-                    else:
-                        # Print CSV to console
-                        for obj in code_objects:
-                            row = [
-                                obj.to_string(one_line=True),
-                                obj.to_hash(),
-                                obj.language,
-                                str(obj.path),
-                            ]
-                            # Escape quotes in tokens field if necessary
-                            tokens = (
-                                row[0].replace('"', '""') if '"' in row[0] else row[0]
-                            )
-                            print(f'"{tokens}",{row[1]},{row[2]},{row[3]}')
+                    # Write to CSV
+                    csv_writer_instance.write_code_objects(code_objects)
                 else:
+                    # Print to console
                     for i, code_obj in enumerate(code_objects):
-                        print(f"{code_obj.to_string(one_line=False)}")
+                        print(f"{code_obj.to_string(format_mode='mapped')}")
             else:
                 if args.format == "console":
                     print(f"Skipping unsupported file extension: {source.name}")
 
-        if args.format == "csv" and csv_writer_instance:
+        if args.format == "csv":
             csv_writer_instance.close()
             print(
                 f"Successfully processed {sources_count} files to CSV: {save_path.resolve()}"
