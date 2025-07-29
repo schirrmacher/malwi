@@ -224,26 +224,6 @@ class Instruction:
             and argval in function_mapping
         ):
             return f"{op_code.name} {function_mapping.get(argval)}"
-        # We might want to maintain the function name since it cannot be mapped,
-        # but contains interesting trigger words
-        elif op_code in [
-            OpCode.STORE_NAME,
-            OpCode.LOAD_NAME,
-            OpCode.STORE_GLOBAL,
-            OpCode.LOAD_GLOBAL,
-        ] and any(key in argval for key in function_mapping):
-            if len(argval) > STRING_MAX_LENGTH:
-                longest_match_length = 0
-                longest_match = ""
-                for key in function_mapping:
-                    if key in argval:
-                        match_length = len(key)
-                        if match_length > longest_match_length:
-                            longest_match_length = len(key)
-                            longest_match = key
-                return f"{op_code.name} {longest_match}"
-            elif not for_hashing:
-                return f"{op_code.name} {argval}"
         elif op_code in [OpCode.CALL_FUNCTION]:
             return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
@@ -265,7 +245,7 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
 
         # Cut strings when too long
-        if len(argval) <= STRING_MAX_LENGTH and not for_hashing:
+        if len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
 
         if is_escaped_hex(argval):
