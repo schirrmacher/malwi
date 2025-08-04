@@ -241,9 +241,6 @@ class Instruction:
             return f"{op_code.name} {function_mapping.get(argval)}"
         elif op_code in [OpCode.CALL_FUNCTION]:
             return f"{op_code.name} {argval}"
-        elif op_code in [OpCode.KW_NAMES]:
-            # KW_NAMES contains keyword argument names tuple
-            return f"{op_code.name} {argval}"
         elif op_code in [OpCode.POP_TOP]:
             # POP_TOP discards top of stack, no argument needed
             return f"{op_code.name}"
@@ -1084,12 +1081,10 @@ class ASTCompiler:
                             arg_count += 1
 
             # Choose appropriate call instruction based on argument types
-            if has_kwargs or kwarg_count > 0:
+            if kwarg_count > 0:
                 # For calls with keyword arguments, emit KW_NAMES first
-                if kwarg_count > 0:
-                    # Create tuple of keyword names (simplified representation)
-                    kw_names_tuple = f"kwnames_{kwarg_count}"
-                    bytecode.append(emit(OpCode.KW_NAMES, kw_names_tuple))
+                kw_names_tuple = f"kwnames_{kwarg_count}"
+                bytecode.append(emit(OpCode.KW_NAMES, kw_names_tuple))
                 bytecode.append(emit(OpCode.CALL_FUNCTION, arg_count + kwarg_count))
             elif has_starargs:
                 bytecode.append(

@@ -370,7 +370,48 @@ def func_with_arbitrary_args(*args, **kwargs):
 
 args_val, kwargs_val = func_with_arbitrary_args(1, 2, name="test", value=123)
 
-# 4.4. Lambda functions
+# 4.4. Comprehensive KW_NAMES test cases
+# These test cases specifically trigger KW_NAMES opcode generation
+print("Testing KW_NAMES generation", end="", flush=True)  # KW_NAMES kwnames_2
+open("test.txt", mode="w", encoding="utf-8")  # KW_NAMES kwnames_2
+sorted([3, 1, 4, 2], key=lambda x: x, reverse=True)  # KW_NAMES kwnames_2
+dict(name="test", value=42, flag=True)  # KW_NAMES kwnames_3
+max([1, 2, 3], default=0)  # KW_NAMES kwnames_1
+min([1, 2, 3], default=0)  # KW_NAMES kwnames_1
+range(0, 10, step=2)  # KW_NAMES kwnames_1
+"Hello {name}".format(name="World")  # KW_NAMES kwnames_1
+func_with_args(a=1, b=2, c=3)  # KW_NAMES kwnames_3
+func_with_args(10, 20, c=30)  # KW_NAMES kwnames_1 (mixed positional + keyword)
+
+# Method calls with keyword arguments
+"test string".replace("test", "new", count=1)  # KW_NAMES kwnames_1
+[1, 2, 3].index(2, start=0)  # KW_NAMES kwnames_1
+
+
+# Class instantiation with keyword arguments
+class TestClass:
+    def __init__(self, param1, param2=None, param3=False):
+        self.param1 = param1
+        self.param2 = param2
+        self.param3 = param3
+
+
+test_instance = TestClass("value", param2="optional", param3=True)  # KW_NAMES kwnames_2
+
+# Built-in functions with keyword arguments
+enumerate([1, 2, 3], start=1)  # KW_NAMES kwnames_1
+zip([1, 2], [3, 4], strict=True)  # KW_NAMES kwnames_1 (Python 3.10+)
+filter(
+    lambda x: x > 0,
+    [1, -1, 2],
+)  # No KW_NAMES (positional only)
+
+# Multiple keyword arguments of different types
+complex_call = dict(
+    string_arg="test", int_arg=42, float_arg=3.14, bool_arg=True, none_arg=None
+)  # KW_NAMES kwnames_5
+
+# 4.5. Lambda functions
 multiply = lambda x, y: x * y
 multiply(3, 4)
 
