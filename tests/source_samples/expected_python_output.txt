@@ -761,7 +761,7 @@ BINARY_DIVIDE None
 POP_TOP None
 JUMP_FORWARD 6
 JUMP_FORWARD 4
-MAKE_CLASS MyContext_ref_3
+MAKE_CLASS MyContext_ref_1
 STORE_NAME MyContext
 LOAD_NAME cm
 ENTER_CONTEXT None
@@ -777,14 +777,14 @@ LOAD_NAME print
 LOAD_CONST "\n--- 4. Functions and Scopes ---"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_FUNCTION greet_ref_4
+MAKE_FUNCTION greet_ref_2
 STORE_NAME greet
 PUSH_NULL None
 LOAD_NAME greet
 LOAD_CONST "World"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_FUNCTION func_with_args_ref_5
+MAKE_FUNCTION func_with_args_ref_3
 STORE_NAME func_with_args
 PUSH_NULL None
 LOAD_NAME func_with_args
@@ -819,7 +819,7 @@ LOAD_CONST 3.0
 KW_NAMES kwnames_3
 CALL_FUNCTION 3
 POP_TOP None
-MAKE_FUNCTION func_with_arbitrary_args_ref_6
+MAKE_FUNCTION func_with_arbitrary_args_ref_4
 STORE_NAME func_with_arbitrary_args
 PUSH_NULL None
 LOAD_NAME func_with_arbitrary_args
@@ -836,7 +836,7 @@ STORE_NAME args_val
 STORE_NAME kwargs_val
 STORE_NAME args_val, kwargs_val
 POP_TOP None
-MAKE_FUNCTION lambda_ref_7
+MAKE_FUNCTION lambda_ref_5
 STORE_NAME multiply
 POP_TOP None
 PUSH_NULL None
@@ -845,7 +845,7 @@ LOAD_CONST 3.0
 LOAD_CONST 4.0
 CALL_FUNCTION 2
 POP_TOP None
-MAKE_FUNCTION outer_func_ref_9
+MAKE_FUNCTION outer_func_ref_6
 STORE_NAME outer_func
 PUSH_NULL None
 LOAD_NAME outer_func
@@ -863,7 +863,7 @@ POP_TOP None
 LOAD_CONST 100.0
 STORE_GLOBAL global_var
 POP_TOP None
-MAKE_FUNCTION modify_global_ref_10
+MAKE_FUNCTION modify_global_ref_7
 STORE_NAME modify_global
 PUSH_NULL None
 LOAD_NAME modify_global
@@ -879,7 +879,7 @@ LOAD_NAME print
 LOAD_CONST "\n--- 5. Object-Oriented Programming ---"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_CLASS MyClass_ref_15
+MAKE_CLASS MyClass_ref_8
 STORE_NAME MyClass
 PUSH_NULL None
 LOAD_NAME MyClass
@@ -913,11 +913,11 @@ LOAD_NAME print
 LOAD_CONST "5.1. Classes: PASSED"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_CLASS ParentA_ref_17
+MAKE_CLASS ParentA_ref_9
 STORE_NAME ParentA
-MAKE_CLASS ParentB_ref_19
+MAKE_CLASS ParentB_ref_10
 STORE_NAME ParentB
-MAKE_CLASS Child_ref_21
+MAKE_CLASS Child_ref_11
 STORE_NAME Child
 PUSH_NULL None
 LOAD_NAME Child
@@ -944,7 +944,7 @@ LOAD_NAME print
 LOAD_CONST "5.2. Inheritance: PASSED"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_CLASS Vector_ref_27
+MAKE_CLASS Vector_ref_12
 STORE_NAME Vector
 PUSH_NULL None
 LOAD_NAME Vector
@@ -984,7 +984,7 @@ LOAD_NAME print
 LOAD_CONST "5.3. Dunder Methods: PASSED"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_CLASS Circle_ref_32
+MAKE_CLASS Circle_ref_13
 STORE_NAME Circle
 PUSH_NULL None
 LOAD_NAME Circle
@@ -1017,9 +1017,9 @@ LOAD_NAME print
 LOAD_CONST "\n--- 6. Advanced Features ---"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_FUNCTION my_decorator_ref_34
+MAKE_FUNCTION my_decorator_ref_14
 STORE_NAME my_decorator
-MAKE_FUNCTION say_whee_ref_35
+MAKE_FUNCTION say_whee_ref_15
 STORE_NAME say_whee
 PUSH_NULL None
 LOAD_NAME say_whee
@@ -1030,7 +1030,7 @@ LOAD_NAME print
 LOAD_CONST "6.1. Decorators: PASSED"
 CALL_FUNCTION 1
 POP_TOP None
-GENERATOR_FUNCTION my_generator_ref_36
+GENERATOR_FUNCTION my_generator_ref_16
 STORE_NAME my_generator
 PUSH_NULL None
 LOAD_NAME my_generator
@@ -1060,9 +1060,9 @@ CALL_FUNCTION 1
 POP_TOP None
 JUMP_FORWARD 7
 JUMP_FORWARD 5
-ASYNC_FUNCTION my_coroutine_ref_37
+ASYNC_FUNCTION my_coroutine_ref_17
 STORE_NAME my_coroutine
-ASYNC_FUNCTION main_async_ref_38
+ASYNC_FUNCTION main_async_ref_18
 STORE_NAME main_async
 PUSH_NULL None
 LOAD_NAME asyncio
@@ -1072,9 +1072,9 @@ LOAD_NAME main_async
 CALL_FUNCTION 0
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_CLASS MyMeta_ref_40
+MAKE_CLASS MyMeta_ref_19
 STORE_NAME MyMeta
-MAKE_CLASS MyClassWithMeta_ref_41
+MAKE_CLASS MyClassWithMeta_ref_20
 STORE_NAME MyClassWithMeta
 PUSH_NULL None
 LOAD_NAME hasattr
@@ -1090,7 +1090,7 @@ LOAD_NAME print
 LOAD_CONST "6.4. Metaclasses: PASSED"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_FUNCTION hinted_function_ref_42
+MAKE_FUNCTION hinted_function_ref_21
 STORE_NAME hinted_function
 PUSH_NULL None
 LOAD_NAME hinted_function
@@ -1278,7 +1278,7 @@ LOAD_NAME print
 LOAD_CONST "\n--- 8. Dynamic Features and Introspection ---"
 CALL_FUNCTION 1
 POP_TOP None
-MAKE_CLASS DynamicClass_ref_43
+MAKE_CLASS DynamicClass_ref_22
 STORE_NAME DynamicClass
 PUSH_NULL None
 LOAD_NAME DynamicClass
@@ -1389,7 +1389,7 @@ POP_TOP None
 LOAD_CONST ...
 STORE_NAME ellipsis_val
 POP_TOP None
-MAKE_FUNCTION function_with_ellipsis_ref_44
+MAKE_FUNCTION function_with_ellipsis_ref_23
 STORE_NAME function_with_ellipsis
 LOAD_CONST 42.0
 UNARY_NEGATIVE None
@@ -1458,7 +1458,7 @@ LOAD_CONST "abc"
 COMPARE_OP None
 STORE_NAME not_in_result
 POP_TOP None
-MAKE_FUNCTION lambda_ref_45
+MAKE_FUNCTION lambda_ref_24
 STORE_NAME lambda_func
 POP_TOP None
 PUSH_NULL None
@@ -1559,7 +1559,7 @@ LOAD_CONST 1.0
 BINARY_OPERATION None
 STORE_NAME count
 POP_TOP None
-MAKE_CLASS SimpleContext_ref_48
+MAKE_CLASS SimpleContext_ref_25
 STORE_NAME SimpleContext
 LOAD_NAME ctx_val
 ENTER_CONTEXT None
@@ -1585,7 +1585,7 @@ LOAD_CONST 1.0
 LOAD_CONST 1.0
 COMPARE_OP None
 BINARY_OPERATION None
-MAKE_FUNCTION empty_func_ref_49
+MAKE_FUNCTION empty_func_ref_26
 STORE_NAME empty_func
 PUSH_NULL None
 LOAD_NAME range
@@ -1601,7 +1601,7 @@ LOAD_CONST 3.0
 COMPARE_OP None
 POP_JUMP_IF_FALSE 5
 BINARY_OPERATION None
-MAKE_FUNCTION test_raise_ref_50
+MAKE_FUNCTION test_raise_ref_27
 STORE_NAME test_raise
 IMPORT_FROM math
 IMPORT_FROM sqrt
@@ -1611,16 +1611,16 @@ IMPORT_NAME system
 LOAD_CONST "global"
 STORE_GLOBAL global_var
 POP_TOP None
-MAKE_FUNCTION test_global_ref_51
+MAKE_FUNCTION test_global_ref_28
 STORE_NAME test_global
-MAKE_FUNCTION outer_ref_53
+MAKE_FUNCTION outer_ref_29
 STORE_NAME outer
 LOAD_CONST 42.0
 STORE_GLOBAL simple_global
 POP_TOP None
-MAKE_FUNCTION read_simple_global_ref_54
+MAKE_FUNCTION read_simple_global_ref_30
 STORE_NAME read_simple_global
-MAKE_FUNCTION modify_simple_global_ref_55
+MAKE_FUNCTION modify_simple_global_ref_31
 STORE_NAME modify_simple_global
 LOAD_CONST 10.0
 STORE_GLOBAL global_x
@@ -1631,30 +1631,30 @@ POP_TOP None
 LOAD_CONST 30.0
 STORE_GLOBAL global_z
 POP_TOP None
-MAKE_FUNCTION multiple_globals_ref_56
+MAKE_FUNCTION multiple_globals_ref_32
 STORE_NAME multiple_globals
 LOAD_CONST "I am global"
 STORE_GLOBAL mixed_var
 POP_TOP None
-MAKE_FUNCTION mixed_scope_ref_57
+MAKE_FUNCTION mixed_scope_ref_33
 STORE_NAME mixed_scope
 LOAD_CONST "key"
 LOAD_CONST "value"
 BUILD_MAP 1
 STORE_GLOBAL context_global
 POP_TOP None
-MAKE_FUNCTION global_in_expressions_ref_58
+MAKE_FUNCTION global_in_expressions_ref_34
 STORE_NAME global_in_expressions
-MAKE_FUNCTION global_function_ref_59
+MAKE_FUNCTION global_function_ref_35
 STORE_NAME global_function
-MAKE_CLASS GlobalClass_ref_60
+MAKE_CLASS GlobalClass_ref_36
 STORE_NAME GlobalClass
-MAKE_FUNCTION test_global_callables_ref_61
+MAKE_FUNCTION test_global_callables_ref_37
 STORE_NAME test_global_callables
 LOAD_CONST "outer"
 STORE_GLOBAL outer_global
 POP_TOP None
-MAKE_FUNCTION outer_with_global_ref_63
+MAKE_FUNCTION outer_with_global_ref_38
 STORE_NAME outer_with_global
 LOAD_CONST 1.0
 LOAD_CONST 2.0
@@ -1664,17 +1664,17 @@ LOAD_CONST 5.0
 BUILD_LIST 5
 STORE_GLOBAL comp_global
 POP_TOP None
-MAKE_FUNCTION global_in_comprehensions_ref_64
+MAKE_FUNCTION global_in_comprehensions_ref_39
 STORE_NAME global_in_comprehensions
 LOAD_CONST "global shadow"
 STORE_GLOBAL shadow_var
 POP_TOP None
-MAKE_FUNCTION shadow_test_ref_67
+MAKE_FUNCTION shadow_test_ref_40
 STORE_NAME shadow_test
 LOAD_CONST "my custom type"
 STORE_GLOBAL type
 POP_TOP None
-MAKE_FUNCTION global_shadowing_builtin_ref_68
+MAKE_FUNCTION global_shadowing_builtin_ref_41
 STORE_NAME global_shadowing_builtin
 LOAD_CONST 42.0
 STORE_NAME temp_var
@@ -2246,7 +2246,7 @@ BINARY_SUBSCR None
 LOAD_CONST "deep"
 STORE_SUBSCR None
 POP_TOP None
-MAKE_FUNCTION get_store_key_ref_69
+MAKE_FUNCTION get_store_key_ref_42
 STORE_NAME get_store_key
 LOAD_CONST "from function"
 LOAD_NAME store_obj
@@ -2361,6 +2361,7 @@ CALL_FUNCTION 2
 STORE_GLOBAL eval_func
 POP_TOP None
 RETURN_VALUE None
+MAKE_FUNCTION __enter__
 PUSH_NULL None
 LOAD_GLOBAL print
 LOAD_CONST "Entering context"
@@ -2368,15 +2369,14 @@ CALL_FUNCTION 1
 POP_TOP None
 LOAD_CONST "Hello from with"
 RETURN_VALUE None
+STORE_NAME __enter__
+MAKE_FUNCTION __exit__
 PUSH_NULL None
 LOAD_GLOBAL print
 LOAD_CONST "Exiting context"
 CALL_FUNCTION 1
 POP_TOP None
 RETURN_VALUE None
-MAKE_FUNCTION __enter___ref_1
-STORE_NAME __enter__
-MAKE_FUNCTION __exit___ref_2
 STORE_NAME __exit__
 LOAD_CONST Hello, 
 LOAD_PARAM name
@@ -2397,6 +2397,10 @@ LOAD_PARAM x
 LOAD_PARAM y
 BINARY_MULTIPLY None
 RETURN_VALUE None
+LOAD_CONST 10.0
+STORE_GLOBAL x
+POP_TOP None
+MAKE_FUNCTION inner_func
 LOAD_GLOBAL x
 LOAD_CONST 1.0
 BINARY_OPERATION None
@@ -2404,10 +2408,6 @@ STORE_GLOBAL x
 POP_TOP None
 LOAD_GLOBAL x
 RETURN_VALUE None
-LOAD_CONST 10.0
-STORE_GLOBAL x
-POP_TOP None
-MAKE_FUNCTION inner_func_ref_8
 STORE_GLOBAL inner_func
 LOAD_GLOBAL inner_func
 RETURN_VALUE None
@@ -2415,42 +2415,43 @@ LOAD_CONST 200.0
 STORE_GLOBAL global_var
 POP_TOP None
 RETURN_VALUE None
+LOAD_CONST 10.0
+STORE_NAME class_variable
+POP_TOP None
+MAKE_FUNCTION __init__
 LOAD_PARAM instance_variable
 LOAD_PARAM self
 STORE_ATTR instance_variable
 POP_TOP None
 RETURN_VALUE None
+STORE_NAME __init__
+MAKE_FUNCTION instance_method
 LOAD_PARAM self
 LOAD_ATTR instance_variable
 RETURN_VALUE None
+STORE_NAME instance_method
+MAKE_FUNCTION class_method
 LOAD_PARAM cls
 LOAD_ATTR class_variable
 RETURN_VALUE None
+STORE_NAME class_method
+MAKE_FUNCTION static_method
 LOAD_CONST "static"
 RETURN_VALUE None
-LOAD_CONST 10.0
-STORE_NAME class_variable
-POP_TOP None
-MAKE_FUNCTION __init___ref_11
-STORE_NAME __init__
-MAKE_FUNCTION instance_method_ref_12
-STORE_NAME instance_method
-MAKE_FUNCTION class_method_ref_13
-STORE_NAME class_method
-MAKE_FUNCTION static_method_ref_14
 STORE_NAME static_method
+MAKE_FUNCTION method_a
 LOAD_CONST "A"
 RETURN_VALUE None
-MAKE_FUNCTION method_a_ref_16
 STORE_NAME method_a
+MAKE_FUNCTION method_b
 LOAD_CONST "B"
 RETURN_VALUE None
-MAKE_FUNCTION method_b_ref_18
 STORE_NAME method_b
+MAKE_FUNCTION method_c
 LOAD_CONST "C"
 RETURN_VALUE None
-MAKE_FUNCTION method_c_ref_20
 STORE_NAME method_c
+MAKE_FUNCTION __init__
 LOAD_PARAM x
 LOAD_PARAM self
 STORE_ATTR x
@@ -2460,6 +2461,8 @@ LOAD_PARAM self
 STORE_ATTR y
 POP_TOP None
 RETURN_VALUE None
+STORE_NAME __init__
+MAKE_FUNCTION __add__
 PUSH_NULL None
 LOAD_GLOBAL Vector
 LOAD_PARAM self
@@ -2474,6 +2477,8 @@ LOAD_ATTR y
 BINARY_ADD None
 CALL_FUNCTION 2
 RETURN_VALUE None
+STORE_NAME __add__
+MAKE_FUNCTION __repr__
 LOAD_CONST Vector(
 LOAD_PARAM self
 LOAD_ATTR x
@@ -2485,8 +2490,12 @@ FORMAT_VALUE None
 LOAD_CONST )
 BUILD_STRING 5
 RETURN_VALUE None
+STORE_NAME __repr__
+MAKE_FUNCTION __len__
 LOAD_CONST 2.0
 RETURN_VALUE None
+STORE_NAME __len__
+MAKE_FUNCTION __getitem__
 LOAD_PARAM index
 LOAD_CONST 0.0
 COMPARE_OP None
@@ -2504,24 +2513,20 @@ RETURN_VALUE None
 LOAD_GLOBAL IndexError
 BINARY_OPERATION None
 RETURN_VALUE None
-MAKE_FUNCTION __init___ref_22
-STORE_NAME __init__
-MAKE_FUNCTION __add___ref_23
-STORE_NAME __add__
-MAKE_FUNCTION __repr___ref_24
-STORE_NAME __repr__
-MAKE_FUNCTION __len___ref_25
-STORE_NAME __len__
-MAKE_FUNCTION __getitem___ref_26
 STORE_NAME __getitem__
+MAKE_FUNCTION __init__
 LOAD_PARAM radius
 LOAD_PARAM self
 STORE_ATTR _radius
 POP_TOP None
 RETURN_VALUE None
+STORE_NAME __init__
+MAKE_FUNCTION radius
 LOAD_PARAM self
 LOAD_ATTR _radius
 RETURN_VALUE None
+STORE_NAME radius
+MAKE_FUNCTION radius
 LOAD_PARAM value
 LOAD_CONST 0.0
 COMPARE_OP None
@@ -2536,6 +2541,8 @@ LOAD_PARAM self
 STORE_ATTR _radius
 POP_TOP None
 RETURN_VALUE None
+STORE_NAME radius
+MAKE_FUNCTION area
 LOAD_CONST 3.14
 LOAD_PARAM self
 LOAD_ATTR _radius
@@ -2543,14 +2550,8 @@ LOAD_CONST 2.0
 BINARY_POWER None
 BINARY_MULTIPLY None
 RETURN_VALUE None
-MAKE_FUNCTION __init___ref_28
-STORE_NAME __init__
-MAKE_FUNCTION radius_ref_29
-STORE_NAME radius
-MAKE_FUNCTION radius_ref_30
-STORE_NAME radius
-MAKE_FUNCTION area_ref_31
 STORE_NAME area
+MAKE_FUNCTION wrapper
 PUSH_NULL None
 LOAD_GLOBAL print
 LOAD_CONST "Something is happening before the function is called."
@@ -2570,7 +2571,6 @@ CALL_FUNCTION 1
 POP_TOP None
 LOAD_GLOBAL result
 RETURN_VALUE None
-MAKE_FUNCTION wrapper_ref_33
 STORE_GLOBAL wrapper
 LOAD_GLOBAL wrapper
 RETURN_VALUE None
@@ -2605,6 +2605,7 @@ LOAD_CONST "6.3. Coroutines (async/await): PASSED"
 CALL_FUNCTION 1
 POP_TOP None
 RETURN_VALUE None
+MAKE_FUNCTION __new__
 LOAD_CONST "Hello from metaclass"
 LOAD_PARAM dct
 LOAD_CONST "new_attribute"
@@ -2621,7 +2622,6 @@ LOAD_PARAM bases
 LOAD_PARAM dct
 CALL_FUNCTION 4
 RETURN_VALUE None
-MAKE_FUNCTION __new___ref_39
 STORE_NAME __new__
 
 LOAD_PARAM name
@@ -2639,13 +2639,13 @@ LOAD_PARAM x
 LOAD_CONST 2.0
 BINARY_MULTIPLY None
 RETURN_VALUE None
+MAKE_FUNCTION __enter__
 LOAD_CONST "context_value"
 RETURN_VALUE None
+STORE_NAME __enter__
+MAKE_FUNCTION __exit__
 LOAD_CONST False
 RETURN_VALUE None
-MAKE_FUNCTION __enter___ref_46
-STORE_NAME __enter__
-MAKE_FUNCTION __exit___ref_47
 STORE_NAME __exit__
 RETURN_VALUE None
 PUSH_NULL None
@@ -2658,14 +2658,14 @@ LOAD_CONST "modified"
 STORE_GLOBAL global_var
 POP_TOP None
 RETURN_VALUE None
+LOAD_CONST "outer"
+STORE_GLOBAL nonlocal_var
+POP_TOP None
+MAKE_FUNCTION inner
 LOAD_CONST "inner"
 STORE_GLOBAL nonlocal_var
 POP_TOP None
 RETURN_VALUE None
-LOAD_CONST "outer"
-STORE_GLOBAL nonlocal_var
-POP_TOP None
-MAKE_FUNCTION inner_ref_52
 STORE_GLOBAL inner
 PUSH_NULL None
 LOAD_GLOBAL inner
@@ -2777,6 +2777,10 @@ LOAD_GLOBAL class_ref
 LOAD_GLOBAL result
 LOAD_GLOBAL instance
 RETURN_VALUE None
+LOAD_CONST "inner"
+STORE_GLOBAL inner_var
+POP_TOP None
+MAKE_FUNCTION inner_with_global
 LOAD_GLOBAL outer_global
 STORE_GLOBAL temp1
 POP_TOP None
@@ -2790,10 +2794,6 @@ LOAD_CONST "modified by inner"
 STORE_GLOBAL inner_var
 POP_TOP None
 RETURN_VALUE None
-LOAD_CONST "inner"
-STORE_GLOBAL inner_var
-POP_TOP None
-MAKE_FUNCTION inner_with_global_ref_62
 STORE_GLOBAL inner_with_global
 PUSH_NULL None
 LOAD_GLOBAL inner_with_global
@@ -2839,20 +2839,20 @@ LOAD_GLOBAL list
 LOAD_GLOBAL gen
 CALL_FUNCTION 1
 RETURN_VALUE None
+LOAD_CONST "local shadow"
+STORE_GLOBAL shadow_var
+POP_TOP None
+MAKE_FUNCTION inner_shadow
 LOAD_CONST "modified local"
 STORE_GLOBAL shadow_var
 POP_TOP None
 RETURN_VALUE None
+STORE_GLOBAL inner_shadow
+MAKE_FUNCTION inner_global_shadow
 LOAD_CONST "modified global"
 STORE_GLOBAL shadow_var
 POP_TOP None
 RETURN_VALUE None
-LOAD_CONST "local shadow"
-STORE_GLOBAL shadow_var
-POP_TOP None
-MAKE_FUNCTION inner_shadow_ref_65
-STORE_GLOBAL inner_shadow
-MAKE_FUNCTION inner_global_shadow_ref_66
 STORE_GLOBAL inner_global_shadow
 PUSH_NULL None
 LOAD_GLOBAL inner_shadow

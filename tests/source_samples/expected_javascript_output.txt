@@ -1484,20 +1484,20 @@ STORE_ATTR explicitGlobal
 POP_TOP None
 MAKE_FUNCTION modifyGlobals_ref_28
 STORE_NAME modifyGlobals
-MAKE_FUNCTION outerFunction_ref_30
+MAKE_FUNCTION outerFunction_ref_29
 STORE_NAME outerFunction
-MAKE_FUNCTION globalFunction_ref_31
+MAKE_FUNCTION globalFunction_ref_30
 STORE_NAME globalFunction
 LOAD_CONST "I am a property of a global object"
 LOAD_CONST "I am a method of a global object"
 RETURN_VALUE None
 BUILD_MAP 2
 STORE_NAME globalObject
-MAKE_FUNCTION lambda_ref_32
+MAKE_FUNCTION lambda_ref_31
 STORE_NAME globalArrow
-MAKE_CLASS GlobalClass_ref_33
+MAKE_CLASS GlobalClass_ref_32
 STORE_NAME GlobalClass
-MAKE_FUNCTION testGlobalContexts_ref_34
+MAKE_FUNCTION testGlobalContexts_ref_33
 STORE_NAME testGlobalContexts
 PUSH_NULL None
 LOAD_NAME globalVar
@@ -1513,13 +1513,13 @@ CALL_FUNCTION 0
 POP_TOP None
 LOAD_CONST "global shadow"
 STORE_NAME shadowVar
-MAKE_FUNCTION shadowTest_ref_37
+MAKE_FUNCTION shadowTest_ref_34
 STORE_NAME shadowTest
 LOAD_CONST "I am on globalThis"
 LOAD_NAME globalThis
 STORE_ATTR modernGlobal
 POP_TOP None
-MAKE_FUNCTION testGlobalThis_ref_38
+MAKE_FUNCTION testGlobalThis_ref_35
 STORE_NAME testGlobalThis
 PUSH_NULL None
 LOAD_NAME console
@@ -1729,6 +1729,9 @@ LOAD_GLOBAL global
 STORE_ATTR explicitGlobal
 POP_TOP None
 RETURN_VALUE None
+LOAD_CONST "local to outer"
+STORE_GLOBAL localVar
+MAKE_FUNCTION innerFunction
 PUSH_NULL None
 LOAD_GLOBAL console
 LOAD_ATTR log
@@ -1748,9 +1751,6 @@ LOAD_CONST "created from nested function"
 STORE_GLOBAL deepGlobal
 POP_TOP None
 RETURN_VALUE None
-LOAD_CONST "local to outer"
-STORE_GLOBAL localVar
-MAKE_FUNCTION innerFunction_ref_29
 STORE_GLOBAL innerFunction
 PUSH_NULL None
 LOAD_GLOBAL innerFunction
@@ -1799,18 +1799,18 @@ STORE_GLOBAL implicitGlobal
 POP_TOP None
 BUILD_MAP 0
 RETURN_VALUE None
+LOAD_CONST "local shadow"
+STORE_GLOBAL shadowVar
+MAKE_FUNCTION accessGlobalShadow
 LOAD_GLOBAL shadowVar
 RETURN_VALUE None
+STORE_GLOBAL accessGlobalShadow
+MAKE_FUNCTION modifyGlobalDirectly
 LOAD_CONST "modified via global object"
 LOAD_GLOBAL global
 STORE_ATTR shadowVar
 POP_TOP None
 RETURN_VALUE None
-LOAD_CONST "local shadow"
-STORE_GLOBAL shadowVar
-MAKE_FUNCTION accessGlobalShadow_ref_35
-STORE_GLOBAL accessGlobalShadow
-MAKE_FUNCTION modifyGlobalDirectly_ref_36
 STORE_GLOBAL modifyGlobalDirectly
 LOAD_GLOBAL shadowVar
 PUSH_NULL None

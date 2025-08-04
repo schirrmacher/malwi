@@ -419,6 +419,8 @@ class ASTCompiler:
         self.global_variables = set()
         # Track whether we're currently inside a function scope
         self._in_function_scope = False
+        # Track nesting depth: 0 = module level, 1+ = nested
+        self._nesting_depth = 0
         # Collection to store all CodeObjects (root, functions, classes)
         self.code_objects = []
         # Counter for generating unique reference names
@@ -2130,8 +2132,10 @@ class ASTCompiler:
             params = self._extract_function_parameters(node, source_code_bytes)
             previous_params = self.current_function_params
             previous_in_function = self._in_function_scope
+            previous_nesting_depth = self._nesting_depth
             self.current_function_params = params
             self._in_function_scope = True
+            self._nesting_depth += 1
 
             func_body_bytecode = self._generate_bytecode(
                 body_node, source_code_bytes, file_path
@@ -2145,35 +2149,53 @@ class ASTCompiler:
             # Restore previous parameter context
             self.current_function_params = previous_params
             self._in_function_scope = previous_in_function
+            self._nesting_depth = previous_nesting_depth
 
             func_source = self._get_node_text(body_node, source_code_bytes)
             location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
 
-            # Create separate CodeObject and add to collection
-            func_ref_name = self._generate_ref_name(func_name)
-            func_code_obj = CodeObject(
-                func_ref_name,
-                func_body_bytecode,
-                func_source,
-                file_path,
-                location,
-                self.language_name,
-            )
-            self.code_objects.append(func_code_obj)
+            # Only create separate CodeObject for top-level functions (nesting_depth == 0)
+            if self._nesting_depth == 0:
+                # Create separate CodeObject and add to collection
+                func_ref_name = self._generate_ref_name(func_name)
+                func_code_obj = CodeObject(
+                    func_ref_name,
+                    func_body_bytecode,
+                    func_source,
+                    file_path,
+                    location,
+                    self.language_name,
+                )
+                self.code_objects.append(func_code_obj)
 
-            # Use appropriate opcode based on function type with reference name
-            if is_async and is_generator:
-                # Async generator function
-                bytecode.append(
-                    emit(OpCode.ASYNC_FUNCTION, func_ref_name)
-                )  # Could add ASYNC_GENERATOR if needed
-            elif is_async:
-                bytecode.append(emit(OpCode.ASYNC_FUNCTION, func_ref_name))
-            elif is_generator:
-                bytecode.append(emit(OpCode.GENERATOR_FUNCTION, func_ref_name))
+                # Use appropriate opcode based on function type with reference name
+                if is_async and is_generator:
+                    # Async generator function
+                    bytecode.append(
+                        emit(OpCode.ASYNC_FUNCTION, func_ref_name)
+                    )  # Could add ASYNC_GENERATOR if needed
+                elif is_async:
+                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, func_ref_name))
+                elif is_generator:
+                    bytecode.append(emit(OpCode.GENERATOR_FUNCTION, func_ref_name))
+                else:
+                    bytecode.append(emit(OpCode.MAKE_FUNCTION, func_ref_name))
+                bytecode.append(self._emit_store(func_name))
             else:
-                bytecode.append(emit(OpCode.MAKE_FUNCTION, func_ref_name))
-            bytecode.append(self._emit_store(func_name))
+                # For nested functions, inline the bytecode directly
+                # Use appropriate opcode based on function type (but inline the body)
+                if is_async and is_generator:
+                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, func_name))
+                elif is_async:
+                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, func_name))
+                elif is_generator:
+                    bytecode.append(emit(OpCode.GENERATOR_FUNCTION, func_name))
+                else:
+                    bytecode.append(emit(OpCode.MAKE_FUNCTION, func_name))
+
+                # Inline the function body bytecode
+                bytecode.extend(func_body_bytecode)
+                bytecode.append(self._emit_store(func_name))
 
         elif node_type in ["class_definition", "class_declaration"]:
             class_name = self._get_node_text(
@@ -2181,27 +2203,43 @@ class ASTCompiler:
             )
             body_node = node.child_by_field_name("body")
 
+            # Track nesting depth for classes too
+            previous_nesting_depth = self._nesting_depth
+            self._nesting_depth += 1
+
             class_body_bytecode = self._generate_bytecode(
                 body_node, source_code_bytes, file_path
             )
+
+            # Restore nesting depth
+            self._nesting_depth = previous_nesting_depth
+
             class_source = self._get_node_text(body_node, source_code_bytes)
             location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
 
-            # Create separate CodeObject and add to collection
-            class_ref_name = self._generate_ref_name(class_name)
-            class_code_obj = CodeObject(
-                class_ref_name,
-                class_body_bytecode,
-                class_source,
-                file_path,
-                location,
-                self.language_name,
-            )
-            self.code_objects.append(class_code_obj)
+            # Only create separate CodeObject for top-level classes (nesting_depth == 0)
+            if self._nesting_depth == 0:
+                # Create separate CodeObject and add to collection
+                class_ref_name = self._generate_ref_name(class_name)
+                class_code_obj = CodeObject(
+                    class_ref_name,
+                    class_body_bytecode,
+                    class_source,
+                    file_path,
+                    location,
+                    self.language_name,
+                )
+                self.code_objects.append(class_code_obj)
 
-            # Use reference name in bytecode instead of nested CodeObject
-            bytecode.append(emit(OpCode.MAKE_CLASS, class_ref_name))
-            bytecode.append(self._emit_store(class_name))
+                # Use reference name in bytecode instead of nested CodeObject
+                bytecode.append(emit(OpCode.MAKE_CLASS, class_ref_name))
+                bytecode.append(self._emit_store(class_name))
+            else:
+                # For nested classes, inline the bytecode directly
+                bytecode.append(emit(OpCode.MAKE_CLASS, class_name))
+                # Inline the class body bytecode
+                bytecode.extend(class_body_bytecode)
+                bytecode.append(self._emit_store(class_name))
 
         # --- Comprehensions and Generators ---
         elif node_type in [
