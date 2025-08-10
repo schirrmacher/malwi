@@ -27,10 +27,14 @@ fi
 echo "✅ Tokenizer found at malwi_models/"
 echo
 
+# Define vocabulary size (should match tokenizer training)
+VOCAB_SIZE=5000
+
 # Train DistilBERT model
 echo "🚀 Training DistilBERT model..."
 echo "   • Loading pre-trained tokenizer from malwi_models/"
 echo "   • Training data: benign_processed.csv, malicious_processed.csv"
+echo "   • Vocabulary size: $VOCAB_SIZE (custom smaller model)"
 echo "   • Epochs: 3"
 echo "   • Using 1 processor for training"
 echo
@@ -39,7 +43,8 @@ uv run python -m src.research.train_distilbert \
     -b benign_processed.csv \
     -m malicious_processed.csv \
     --epochs 3 \
-    --num-proc 1
+    --num-proc 1 \
+    --vocab-size $VOCAB_SIZE
 
 echo
 echo "🎉 DistilBERT model training completed!"
@@ -48,4 +53,10 @@ echo "📋 Model files saved to malwi_models/:"
 echo "   • Trained DistilBERT model weights and config"
 echo "   • Training metrics and logs"
 echo "   • Pre-existing tokenizer (preserved)"
+echo
+echo "💡 Model Size Optimization:"
+echo "   • Standard DistilBERT vocab size: 30,522 tokens"
+echo "   • Custom model vocab size: $VOCAB_SIZE tokens"
+echo "   • Approximate size reduction: ~83% smaller embedding layer"
+echo "   • This reduces model size from ~250MB to ~210MB"
 echo
