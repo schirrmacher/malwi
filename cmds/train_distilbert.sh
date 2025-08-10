@@ -28,7 +28,7 @@ echo "✅ Tokenizer found at malwi_models/"
 echo
 
 # Define vocabulary size (should match tokenizer training)
-VOCAB_SIZE=5000
+VOCAB_SIZE=30522
 
 # Train DistilBERT model
 echo "🚀 Training DistilBERT model..."
