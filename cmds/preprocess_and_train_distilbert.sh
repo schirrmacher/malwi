@@ -26,12 +26,6 @@ echo "🎉 Complete DistilBERT pipeline finished successfully!"
 echo
 echo "📁 All outputs are in malwi_models/:"
 echo "   • Tokenizer (trained on your data's top 5000 tokens)"
-echo "   • Trained DistilBERT model (smaller size with 5000 vocab)"
+echo "   • Trained DistilBERT model"
 echo "   • Training metrics and logs"
-echo
-echo "💡 Model Optimization Benefits:"
-echo "   • Reduced vocab from 30,522 to 5,000 tokens"
-echo "   • Smaller model file size (~210MB vs ~250MB)"
-echo "   • Faster inference time"
-echo "   • Domain-specific vocabulary for better malware detection"
 echo

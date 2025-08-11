@@ -360,82 +360,21 @@ def run_training(args):
     results_path = model_output_path / "results"
     logs_path = model_output_path / "logs"
 
-    # Determine actual vocab size from tokenizer
-    actual_vocab_size = len(tokenizer)
+    info(f"Setting up DistilBERT model for fine-tuning from {args.model_name}...")
+    config = DistilBertConfig.from_pretrained(args.model_name, num_labels=2)
+    config.pad_token_id = tokenizer.pad_token_id
+    config.cls_token_id = tokenizer.cls_token_id
+    config.sep_token_id = tokenizer.sep_token_id
 
-    if args.vocab_size != DEFAULT_VOCAB_SIZE and args.vocab_size < actual_vocab_size:
-        warning(
-            f"Requested vocab size ({args.vocab_size}) is smaller than tokenizer vocab ({actual_vocab_size})"
+    model = DistilBertForSequenceClassification.from_pretrained(
+        args.model_name, config=config
+    )
+
+    if len(tokenizer) != model.config.vocab_size:
+        info(
+            f"Resizing model token embeddings from {model.config.vocab_size} to {len(tokenizer)}"
         )
-        warning("Using tokenizer vocab size to avoid missing tokens")
-        args.vocab_size = actual_vocab_size
-
-    info(f"Setting up DistilBERT model...")
-
-    if args.vocab_size < DEFAULT_VOCAB_SIZE:
-        # Create a smaller model from scratch with custom vocab size
-        info(f"Creating custom DistilBERT model with vocab_size={args.vocab_size}")
-
-        # Configure model dimensions based on size parameter
-        model_configs = {
-            "tiny": {
-                "hidden_size": 256,
-                "num_hidden_layers": 4,
-                "num_attention_heads": 4,
-                "intermediate_size": 1024,
-            },
-            "small": {
-                "hidden_size": 512,
-                "num_hidden_layers": 6,
-                "num_attention_heads": 8,
-                "intermediate_size": 2048,
-            },
-            "standard": {
-                "hidden_size": 768,
-                "num_hidden_layers": 6,
-                "num_attention_heads": 12,
-                "intermediate_size": 3072,
-            },
-        }
-
-        model_params = model_configs[args.model_size]
-        info(f"Using {args.model_size} model configuration: {model_params}")
-
-        config = DistilBertConfig(
-            vocab_size=args.vocab_size,
-            hidden_size=model_params["hidden_size"],
-            num_hidden_layers=model_params["num_hidden_layers"],
-            num_attention_heads=model_params["num_attention_heads"],
-            intermediate_size=model_params["intermediate_size"],
-            hidden_act="gelu",
-            hidden_dropout_prob=0.1,
-            attention_probs_dropout_prob=0.1,
-            max_position_embeddings=512,
-            initializer_range=0.02,
-            num_labels=2,
-            pad_token_id=tokenizer.pad_token_id,
-            cls_token_id=tokenizer.cls_token_id,
-            sep_token_id=tokenizer.sep_token_id,
-        )
-        model = DistilBertForSequenceClassification(config)
-        info(f"Created {args.model_size} model: {model.num_parameters():,} parameters")
-    else:
-        # Load pretrained model for standard vocab size
-        info(f"Loading pretrained model from {args.model_name}...")
-        config = DistilBertConfig.from_pretrained(args.model_name, num_labels=2)
-        config.pad_token_id = tokenizer.pad_token_id
-        config.cls_token_id = tokenizer.cls_token_id
-        config.sep_token_id = tokenizer.sep_token_id
-
-        model = DistilBertForSequenceClassification.from_pretrained(
-            args.model_name, config=config
-        )
-
-        if len(tokenizer) != model.config.vocab_size:
-            info(
-                f"Resizing model token embeddings from {model.config.vocab_size} to {len(tokenizer)}"
-            )
-            model.resize_token_embeddings(len(tokenizer))
+        model.resize_token_embeddings(len(tokenizer))
 
     training_arguments = TrainingArguments(
         output_dir=str(results_path),
@@ -483,8 +422,6 @@ def run_training(args):
         "malicious_samples_used": len(malicious_asts),
         "benign_to_malicious_ratio": args.benign_to_malicious_ratio,
         "vocab_size": args.vocab_size,
-        "model_size": args.model_size,
-        "model_parameters": model.num_parameters(),
         "max_length": args.max_length,
         "window_stride": args.window_stride,
         "batch_size": args.batch_size,
@@ -525,13 +462,6 @@ if __name__ == "__main__":
     parser.add_argument("--vocab-size", type=int, default=DEFAULT_VOCAB_SIZE)
     parser.add_argument("--save-steps", type=int, default=DEFAULT_SAVE_STEPS)
     parser.add_argument("--num-proc", type=int, default=DEFAULT_NUM_PROC)
-    parser.add_argument(
-        "--model-size",
-        type=str,
-        choices=["tiny", "small", "standard"],
-        default="standard",
-        help="Model size configuration: tiny (256 hidden), small (512 hidden), standard (768 hidden)",
-    )
     parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
     parser.add_argument(
         "--token-column",
