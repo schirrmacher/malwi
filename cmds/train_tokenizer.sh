@@ -8,9 +8,6 @@ set -e  # Exit on any error
 echo "🔤 Starting tokenizer training..."
 echo
 
-# Define vocabulary size (should match tokenizer training)
-VOCAB_SIZE=30522
-
 # Check if processed data exists
 if [ ! -f "benign_processed.csv" ] || [ ! -f "malicious_processed.csv" ]; then
     echo "❌ Error: Processed data files not found"
@@ -34,7 +31,7 @@ uv run python -m src.research.train_tokenizer \
     -b benign_processed.csv \
     -m malicious_processed.csv \
     -o malwi_models \
-    --top-n-tokens $VOCAB_SIZE \
+    --top-n-tokens 5000 \
     --save-computed-tokens \
     --force-retrain
 
