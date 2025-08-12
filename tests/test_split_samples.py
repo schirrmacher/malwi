@@ -75,7 +75,7 @@ class TestSplitSamples:
         expected_file = (
             Path(__file__).parent
             / "source_samples"
-            / f"{language}_bytecode"
+            / language
             / domain
             / f"{base_name}_bytecode_mapped.txt"
         )

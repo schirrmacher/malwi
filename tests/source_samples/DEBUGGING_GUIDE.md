@@ -28,19 +28,18 @@ uv run python util/view_domain_bytecode.py --list
 
 ```
 tests/source_samples/
-├── python/                    # Python source files
+├── python/                    # Python source + bytecode
 │   ├── control_flow/
-│   │   └── test_control_flow.py
-│   └── ...
-├── python_bytecode/          # Python bytecode outputs
-│   ├── control_flow/
-│   │   ├── test_control_flow_bytecode.txt        # Raw bytecode
-│   │   └── test_control_flow_bytecode_mapped.txt # Mapped bytecode
-│   └── ...
-├── javascript/               # JavaScript source files
-│   └── ...
-└── javascript_bytecode/      # JavaScript bytecode outputs
-    └── ...
+│   │   ├── test_control_flow.py                   # Source file
+│   │   ├── test_control_flow_bytecode.txt         # Raw bytecode  
+│   │   └── test_control_flow_bytecode_mapped.txt  # Mapped bytecode
+│   ├── strings/
+│   │   ├── test_strings.py
+│   │   ├── test_strings_bytecode.txt
+│   │   └── test_strings_bytecode_mapped.txt
+│   └── ... (11 domains total)
+└── javascript/               # JavaScript source + bytecode
+    └── ... (same structure)
 ```
 
 ## Debugging Specific Issues
@@ -49,7 +48,7 @@ tests/source_samples/
 
 ```bash
 # Check if opcode appears in any domain
-grep -r "JUMP_BACKWARD" tests/source_samples/python_bytecode/
+grep -r "JUMP_BACKWARD" tests/source_samples/python/*/
 
 # View specific domain where it should appear
 uv run python util/view_domain_bytecode.py python control_flow --mapped | grep JUMP
@@ -68,7 +67,7 @@ uv run python util/view_domain_bytecode.py python advanced --mapped | grep -A5 -
 ### 3. Scope Issues (LOAD_NAME vs LOAD_GLOBAL)
 
 ```bash
-# Check global/nonlocal handling
+# Check global/nonlocal handling  
 uv run python util/view_domain_bytecode.py python dynamic --mapped | grep -E "LOAD_NAME|LOAD_GLOBAL|STORE_GLOBAL"
 ```
 
