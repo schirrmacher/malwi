@@ -1,0 +1,461 @@
+=== <module> ===
+RESUME 0
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME os
+STORE_NAME os
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME subprocess
+STORE_NAME subprocess
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME socket
+STORE_NAME socket
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME urllib.request
+STORE_NAME urllib.request
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME base64
+STORE_NAME base64
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME pickle
+STORE_NAME pickle
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME marshal
+STORE_NAME marshal
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME types
+STORE_NAME types
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME importlib
+STORE_NAME importlib
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME tempfile
+STORE_NAME tempfile
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME shutil
+STORE_NAME shutil
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME pathlib
+STORE_NAME pathlib
+LOAD_CONST 0
+LOAD_CONST ('environ', 'path', 'listdir')
+IMPORT_NAME os
+IMPORT_FROM environ
+STORE_NAME environ
+IMPORT_FROM path
+STORE_NAME path
+IMPORT_FROM listdir
+STORE_NAME listdir
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('argv', 'exit', 'modules', 'path as sys_path')
+IMPORT_NAME sys
+IMPORT_FROM argv
+STORE_NAME argv
+IMPORT_FROM exit
+STORE_NAME exit
+IMPORT_FROM modules
+STORE_NAME modules
+IMPORT_FROM path as sys_path
+STORE_NAME path as sys_path
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('run', 'Popen', 'PIPE', 'call')
+IMPORT_NAME subprocess
+IMPORT_FROM run
+STORE_NAME run
+IMPORT_FROM Popen
+STORE_NAME Popen
+IMPORT_FROM PIPE
+STORE_NAME PIPE
+IMPORT_FROM call
+STORE_NAME call
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('socket', 'AF_INET', 'SOCK_STREAM')
+IMPORT_NAME socket
+IMPORT_FROM socket
+STORE_NAME socket
+IMPORT_FROM AF_INET
+STORE_NAME AF_INET
+IMPORT_FROM SOCK_STREAM
+STORE_NAME SOCK_STREAM
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('urlparse', 'urljoin')
+IMPORT_NAME urllib.parse
+IMPORT_FROM urlparse
+STORE_NAME urlparse
+IMPORT_FROM urljoin
+STORE_NAME urljoin
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('urlopen', 'Request')
+IMPORT_NAME urllib.request
+IMPORT_FROM urlopen
+STORE_NAME urlopen
+IMPORT_FROM Request
+STORE_NAME Request
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('b64encode', 'b64decode', 'decodebytes')
+IMPORT_NAME base64
+IMPORT_FROM b64encode
+STORE_NAME b64encode
+IMPORT_FROM b64decode
+STORE_NAME b64decode
+IMPORT_FROM decodebytes
+STORE_NAME decodebytes
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('loads', 'dumps', 'load', 'dump')
+IMPORT_NAME pickle
+IMPORT_FROM loads
+STORE_NAME loads
+IMPORT_FROM dumps
+STORE_NAME dumps
+IMPORT_FROM load
+STORE_NAME load
+IMPORT_FROM dump
+STORE_NAME dump
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('loads as marshal_loads', 'dumps as marshal_dumps')
+IMPORT_NAME marshal
+IMPORT_FROM loads as marshal_loads
+STORE_NAME loads as marshal_loads
+IMPORT_FROM dumps as marshal_dumps
+STORE_NAME dumps as marshal_dumps
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('CodeType', 'ModuleType')
+IMPORT_NAME types
+IMPORT_FROM CodeType
+STORE_NAME CodeType
+IMPORT_FROM ModuleType
+STORE_NAME ModuleType
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('import_module', 'util')
+IMPORT_NAME importlib
+IMPORT_FROM import_module
+STORE_NAME import_module
+IMPORT_FROM util
+STORE_NAME util
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('mkstemp', 'mkdtemp', 'NamedTemporaryFile')
+IMPORT_NAME tempfile
+IMPORT_FROM mkstemp
+STORE_NAME mkstemp
+IMPORT_FROM mkdtemp
+STORE_NAME mkdtemp
+IMPORT_FROM NamedTemporaryFile
+STORE_NAME NamedTemporaryFile
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('rmtree', 'copytree', 'move')
+IMPORT_NAME shutil
+IMPORT_FROM rmtree
+STORE_NAME rmtree
+IMPORT_FROM copytree
+STORE_NAME copytree
+IMPORT_FROM move
+STORE_NAME move
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('Path', 'PurePath')
+IMPORT_NAME pathlib
+IMPORT_FROM Path
+STORE_NAME Path
+IMPORT_FROM PurePath
+STORE_NAME PurePath
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME os
+STORE_NAME operating_system
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME subprocess
+STORE_NAME subproc
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME socket
+STORE_NAME sock
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME urllib.request
+STORE_NAME web_request
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME base64
+STORE_NAME b64
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME pickle
+STORE_NAME pkl
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME marshal
+STORE_NAME marsh
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME types
+STORE_NAME tp
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME importlib
+STORE_NAME imp_lib
+LOAD_CONST 0
+LOAD_CONST ('join', 'exists', 'isfile', 'isdir', 'basename', 'dirname')
+IMPORT_NAME os.path
+IMPORT_FROM join
+STORE_NAME join
+IMPORT_FROM exists
+STORE_NAME exists
+IMPORT_FROM isfile
+STORE_NAME isfile
+IMPORT_FROM isdir
+STORE_NAME isdir
+IMPORT_FROM basename
+STORE_NAME basename
+IMPORT_FROM dirname
+STORE_NAME dirname
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('join as path_join', 'exists as path_exists')
+IMPORT_NAME os.path
+IMPORT_FROM join as path_join
+STORE_NAME join as path_join
+IMPORT_FROM exists as path_exists
+STORE_NAME exists as path_exists
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('urlopen as open_url', 'Request as web_request_obj')
+IMPORT_NAME urllib.request
+IMPORT_FROM urlopen as open_url
+STORE_NAME urlopen as open_url
+IMPORT_FROM Request as web_request_obj
+STORE_NAME Request as web_request_obj
+POP_TOP None
+LOAD_CONST 0
+LOAD_CONST ('b64encode as encode_b64', 'b64decode as decode_b64')
+IMPORT_NAME base64
+IMPORT_FROM b64encode as encode_b64
+STORE_NAME b64encode as encode_b64
+IMPORT_FROM b64decode as decode_b64
+STORE_NAME b64decode as decode_b64
+POP_TOP None
+NOP None
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME ctypes
+STORE_NAME ctypes
+LOAD_CONST 0
+LOAD_CONST ('windll', 'wintypes')
+IMPORT_NAME ctypes
+IMPORT_FROM windll
+STORE_NAME windll
+IMPORT_FROM wintypes
+STORE_NAME wintypes
+POP_TOP None
+LOAD_CONST True
+STORE_NAME ctypes_available
+RETURN_CONST None
+PUSH_EXC_INFO None
+LOAD_NAME ImportError
+CHECK_EXC_MATCH None
+POP_JUMP_IF_FALSE 25
+POP_TOP None
+LOAD_CONST False
+STORE_NAME ctypes_available
+POP_EXCEPT None
+RETURN_CONST None
+RERAISE 0
+COPY 3
+POP_EXCEPT None
+RERAISE 1
+NOP None
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME win32api
+STORE_NAME win32api
+LOAD_CONST 0
+LOAD_CONST ('GetSystemMetrics',)
+IMPORT_NAME win32api
+IMPORT_FROM GetSystemMetrics
+STORE_NAME GetSystemMetrics
+POP_TOP None
+LOAD_CONST True
+STORE_NAME win32_available
+RETURN_CONST None
+PUSH_EXC_INFO None
+LOAD_NAME ImportError
+CHECK_EXC_MATCH None
+POP_JUMP_IF_FALSE 23
+POP_TOP None
+LOAD_CONST False
+STORE_NAME win32_available
+POP_EXCEPT None
+RETURN_CONST None
+RERAISE 0
+COPY 3
+POP_EXCEPT None
+RERAISE 1
+NOP None
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME requests
+STORE_NAME requests
+LOAD_CONST 0
+LOAD_CONST ('get', 'post', 'Session')
+IMPORT_NAME requests
+IMPORT_FROM get
+STORE_NAME get
+IMPORT_FROM post
+STORE_NAME post
+IMPORT_FROM Session
+STORE_NAME Session
+POP_TOP None
+LOAD_CONST True
+STORE_NAME requests_available
+RETURN_CONST None
+PUSH_EXC_INFO None
+LOAD_NAME ImportError
+CHECK_EXC_MATCH None
+POP_JUMP_IF_FALSE 27
+POP_TOP None
+LOAD_CONST False
+STORE_NAME requests_available
+POP_EXCEPT None
+RETURN_CONST None
+RERAISE 0
+COPY 3
+POP_EXCEPT None
+RERAISE 1
+NOP None
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME keyring
+STORE_NAME keyring
+LOAD_CONST 0
+LOAD_CONST ('get_password', 'set_password')
+IMPORT_NAME keyring
+IMPORT_FROM get_password
+STORE_NAME get_password
+IMPORT_FROM set_password
+STORE_NAME set_password
+POP_TOP None
+RETURN_CONST None
+PUSH_EXC_INFO None
+LOAD_NAME ImportError
+CHECK_EXC_MATCH None
+POP_JUMP_IF_FALSE 21
+POP_TOP None
+POP_EXCEPT None
+RETURN_CONST None
+RERAISE 0
+COPY 3
+POP_EXCEPT None
+RERAISE 1
+NOP None
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME sqlite3
+STORE_NAME sqlite3
+LOAD_CONST 0
+LOAD_CONST ('connect', 'Row')
+IMPORT_NAME sqlite3
+IMPORT_FROM connect
+STORE_NAME connect
+IMPORT_FROM Row
+STORE_NAME Row
+POP_TOP None
+RETURN_CONST None
+PUSH_EXC_INFO None
+LOAD_NAME ImportError
+CHECK_EXC_MATCH None
+POP_JUMP_IF_FALSE 21
+POP_TOP None
+POP_EXCEPT None
+RETURN_CONST None
+RERAISE 0
+COPY 3
+POP_EXCEPT None
+RERAISE 1
+NOP None
+LOAD_CONST 0
+LOAD_CONST None
+IMPORT_NAME winreg
+STORE_NAME winreg
+LOAD_CONST 0
+LOAD_CONST ('OpenKey', 'QueryValueEx', 'HKEY_LOCAL_MACHINE')
+IMPORT_NAME winreg
+IMPORT_FROM OpenKey
+STORE_NAME OpenKey
+IMPORT_FROM QueryValueEx
+STORE_NAME QueryValueEx
+IMPORT_FROM HKEY_LOCAL_MACHINE
+STORE_NAME HKEY_LOCAL_MACHINE
+POP_TOP None
+RETURN_CONST None
+PUSH_EXC_INFO None
+LOAD_NAME ImportError
+CHECK_EXC_MATCH None
+POP_JUMP_IF_FALSE 23
+POP_TOP None
+POP_EXCEPT None
+RETURN_CONST None
+RERAISE 0
+COPY 3
+POP_EXCEPT None
+RERAISE 1
+LOAD_CONST CodeObject(name=dynamic_import_test_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/imports/test_imports.py, location=(97, 102))
+MAKE_FUNCTION 0
+STORE_NAME dynamic_import_test
+PUSH_NULL None
+LOAD_NAME print
+LOAD_CONST "Import patterns test completed"
+CALL 1
+POP_TOP None
+RETURN_CONST None
+
+=== dynamic_import_test_ref_0 ===
+LOAD_CONST "os"
+STORE_GLOBAL module_name
+PUSH_NULL None
+LOAD_GLOBAL __import__
+LOAD_GLOBAL module_name
+CALL 1
+STORE_GLOBAL imported_os
+PUSH_NULL None
+LOAD_GLOBAL getattr
+LOAD_GLOBAL imported_os
+LOAD_CONST "system"
+CALL 2
+STORE_GLOBAL getattr_call
+PUSH_NULL None
+LOAD_GLOBAL getattr
+LOAD_GLOBAL __builtins__
+LOAD_CONST "exec"
+CALL 2
+STORE_GLOBAL exec_func
+PUSH_NULL None
+LOAD_GLOBAL getattr
+LOAD_GLOBAL __builtins__
+LOAD_CONST "eval"
+CALL 2
+STORE_GLOBAL eval_func
+RETURN_VALUE None

@@ -1,0 +1,335 @@
+=== <module> ===
+RESUME 0
+LOAD_CONST CodeObject(name=delay_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/javascript/advanced/test_advanced.js, location=(4, 6))
+MAKE_FUNCTION 0
+STORE_NAME delay
+LOAD_NAME Promise
+MAKE_FUNCTION lambda_ref_3
+CALL 1
+STORE_NAME promise
+PUSH_NULL None
+PUSH_NULL None
+PUSH_NULL None
+PUSH_NULL None
+LOAD_NAME promise
+LOAD_ATTR then
+MAKE_FUNCTION lambda_ref_4
+CALL 1
+LOAD_ATTR then
+MAKE_FUNCTION lambda_ref_5
+CALL 1
+LOAD_ATTR catch
+MAKE_FUNCTION lambda_ref_6
+CALL 1
+LOAD_ATTR finally
+MAKE_FUNCTION lambda_ref_7
+CALL 1
+POP_TOP None
+PUSH_NULL None
+PUSH_NULL None
+LOAD_NAME Promise
+LOAD_ATTR all
+PUSH_NULL None
+LOAD_NAME delay
+LOAD_CONST 10.0
+CALL 1
+PUSH_NULL None
+LOAD_NAME delay
+LOAD_CONST 20.0
+CALL 1
+BUILD_LIST 2
+CALL 1
+LOAD_ATTR then
+MAKE_FUNCTION lambda_ref_8
+CALL 1
+POP_TOP None
+PUSH_NULL None
+PUSH_NULL None
+LOAD_NAME Promise
+LOAD_ATTR race
+PUSH_NULL None
+LOAD_NAME delay
+LOAD_CONST 10.0
+CALL 1
+PUSH_NULL None
+LOAD_NAME delay
+LOAD_CONST 20.0
+CALL 1
+BUILD_LIST 2
+CALL 1
+LOAD_ATTR then
+MAKE_FUNCTION lambda_ref_9
+CALL 1
+POP_TOP None
+LOAD_CONST CodeObject(name=asyncFunction_ref_10, path=/Users/mav/dev/malwi/tests/source_samples/javascript/advanced/test_advanced.js, location=(26, 33))
+ASYNC_FUNCTION 0
+STORE_NAME asyncFunction
+LOAD_CONST CodeObject(name=fibonacci_ref_11, path=/Users/mav/dev/malwi/tests/source_samples/javascript/advanced/test_advanced.js, location=(36, 42))
+GENERATOR_FUNCTION 0
+STORE_NAME fibonacci
+PUSH_NULL None
+LOAD_NAME fibonacci
+CALL 0
+STORE_NAME fib
+PUSH_NULL None
+LOAD_NAME fib
+LOAD_ATTR next
+CALL 0
+LOAD_ATTR value
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME fib
+LOAD_ATTR next
+CALL 0
+LOAD_ATTR value
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME fib
+LOAD_ATTR next
+CALL 0
+LOAD_ATTR value
+POP_TOP None
+BUILD_MAP 0
+STORE_NAME customIterator
+LOAD_NAME customIterator
+GET_ITER None
+FOR_ITER 2
+STORE_NAME value
+JUMP_BACKWARD 3
+END_FOR None
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+LOAD_CONST 4.0
+LOAD_CONST 5.0
+BUILD_LIST 5
+STORE_NAME a
+STORE_NAME b
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+LOAD_CONST 4.0
+BUILD_MAP 4
+STORE_NAME x
+STORE_NAME y
+LOAD_CONST "Alice"
+LOAD_CONST "NYC"
+LOAD_CONST "10001"
+BUILD_MAP 2
+BUILD_MAP 2
+BUILD_MAP 1
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+BUILD_LIST 2
+STORE_NAME arr1
+LOAD_CONST 3.0
+LOAD_CONST 4.0
+BUILD_LIST 2
+STORE_NAME arr2
+BUILD_LIST 2
+STORE_NAME combined
+LOAD_CONST 1.0
+BUILD_MAP 1
+STORE_NAME obj1
+LOAD_CONST 2.0
+BUILD_MAP 1
+STORE_NAME obj2
+BUILD_MAP 0
+STORE_NAME merged
+LOAD_CONST "World"
+STORE_NAME name
+BINARY_OPERATION None
+STORE_NAME multiline
+PUSH_NULL None
+LOAD_NAME String
+LOAD_ATTR raw
+CALL 7
+STORE_NAME tagged
+PUSH_NULL None
+LOAD_NAME Symbol
+LOAD_CONST 'id'
+CALL 1
+STORE_NAME sym1
+PUSH_NULL None
+LOAD_NAME Symbol
+LOAD_CONST 'id'
+CALL 1
+STORE_NAME sym2
+PUSH_NULL None
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_NAME sym1
+LOAD_NAME sym2
+COMPARE_EQUAL None
+CALL 1
+POP_TOP None
+LOAD_NAME sym1
+LOAD_CONST "value1"
+PUSH_NULL None
+LOAD_NAME Symbol
+LOAD_ATTR for
+LOAD_CONST 'global'
+CALL 1
+LOAD_CONST "value2"
+BUILD_MAP 2
+STORE_NAME obj
+LOAD_CONST 42.0
+BUILD_MAP 1
+STORE_NAME target
+BUILD_MAP 0
+STORE_NAME handler
+LOAD_NAME Proxy
+LOAD_NAME target
+LOAD_NAME handler
+CALL 2
+STORE_NAME proxy
+LOAD_NAME proxy
+LOAD_ATTR value
+POP_TOP None
+LOAD_CONST 100.0
+LOAD_NAME proxy
+STORE_ATTR value
+PUSH_NULL None
+LOAD_NAME Reflect
+LOAD_ATTR get
+LOAD_NAME target
+LOAD_CONST 'value'
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME Reflect
+LOAD_ATTR set
+LOAD_NAME target
+LOAD_CONST 'value'
+LOAD_CONST 200.0
+CALL 3
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME Reflect
+LOAD_ATTR has
+LOAD_NAME target
+LOAD_CONST 'value'
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "Advanced features test completed"
+CALL 1
+POP_TOP None
+RETURN_CONST None
+
+=== lambda_ref_0 ===
+PUSH_NULL None
+LOAD_GLOBAL setTimeout
+LOAD_PARAM resolve
+LOAD_GLOBAL ms
+CALL 2
+RETURN_VALUE None
+
+=== delay_ref_1 ===
+LOAD_GLOBAL Promise
+MAKE_FUNCTION lambda_ref_0
+CALL 1
+RETURN_VALUE None
+
+=== lambda_ref_2 ===
+PUSH_NULL None
+LOAD_GLOBAL resolve
+LOAD_CONST "Success!"
+CALL 1
+RETURN_VALUE None
+
+=== lambda_ref_3 ===
+PUSH_NULL None
+LOAD_GLOBAL setTimeout
+MAKE_FUNCTION lambda_ref_2
+LOAD_CONST 10.0
+CALL 2
+POP_TOP None
+RETURN_VALUE None
+
+=== lambda_ref_4 ===
+PUSH_NULL None
+LOAD_PARAM result
+LOAD_ATTR toUpperCase
+CALL 0
+RETURN_VALUE None
+
+=== lambda_ref_5 ===
+PUSH_NULL None
+LOAD_GLOBAL console
+LOAD_ATTR log
+LOAD_PARAM upper
+CALL 1
+RETURN_VALUE None
+
+=== lambda_ref_6 ===
+PUSH_NULL None
+LOAD_GLOBAL console
+LOAD_ATTR error
+LOAD_PARAM error
+CALL 1
+RETURN_VALUE None
+
+=== lambda_ref_7 ===
+PUSH_NULL None
+LOAD_GLOBAL console
+LOAD_ATTR log
+LOAD_CONST "Cleanup"
+CALL 1
+RETURN_VALUE None
+
+=== lambda_ref_8 ===
+PUSH_NULL None
+LOAD_GLOBAL console
+LOAD_ATTR log
+LOAD_CONST "All done"
+CALL 1
+RETURN_VALUE None
+
+=== lambda_ref_9 ===
+PUSH_NULL None
+LOAD_GLOBAL console
+LOAD_ATTR log
+LOAD_CONST "First done"
+CALL 1
+RETURN_VALUE None
+
+=== asyncFunction_ref_10 ===
+NOP None
+PUSH_NULL None
+LOAD_GLOBAL delay
+LOAD_CONST 10.0
+CALL 1
+AWAIT_EXPRESSION None
+STORE_GLOBAL result
+LOAD_CONST "Async complete"
+RETURN_VALUE None
+RETURN_CONST None
+PUSH_EXC_INFO None
+RERAISE 0
+COPY 3
+POP_EXCEPT None
+RERAISE 1
+RETURN_VALUE None
+
+=== fibonacci_ref_11 ===
+LOAD_CONST 0.0
+STORE_GLOBAL a
+LOAD_CONST 1.0
+STORE_GLOBAL b
+LOAD_CONST True
+POP_JUMP_IF_FALSE 11
+LOAD_CONST None
+YIELD_VALUE None
+POP_TOP None
+LOAD_GLOBAL b
+LOAD_GLOBAL a
+LOAD_GLOBAL b
+BINARY_OP 0
+BUILD_LIST 2
+STORE_NAME a
+STORE_NAME b
+JUMP_BACKWARD 13
+RETURN_VALUE None

@@ -1,0 +1,267 @@
+=== <module> ===
+RESUME 0
+LOAD_CONST CodeObject(name=greet_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(4, 6))
+MAKE_FUNCTION 0
+STORE_NAME greet
+PUSH_NULL None
+LOAD_NAME greet
+LOAD_CONST "World"
+CALL 1
+POP_TOP None
+LOAD_NAME name
+BINARY_OPERATION None
+RETURN_VALUE None
+STORE_NAME farewell
+PUSH_NULL None
+LOAD_NAME farewell
+LOAD_CONST "World"
+CALL 1
+POP_TOP None
+MAKE_FUNCTION lambda_ref_1
+STORE_NAME square
+PUSH_NULL None
+LOAD_NAME square
+LOAD_CONST 4.0
+CALL 1
+POP_TOP None
+MAKE_FUNCTION lambda_ref_2
+STORE_NAME noParams
+MAKE_FUNCTION lambda_ref_3
+STORE_NAME oneParam
+MAKE_FUNCTION lambda_ref_4
+STORE_NAME multiParams
+MAKE_FUNCTION lambda_ref_5
+STORE_NAME blockBody
+LOAD_CONST CodeObject(name=paramsTest_ref_6, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(29, 31))
+MAKE_FUNCTION 0
+STORE_NAME paramsTest
+PUSH_NULL None
+LOAD_NAME paramsTest
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+LOAD_CONST 4.0
+LOAD_CONST 5.0
+CALL 5
+POP_TOP None
+LOAD_CONST CodeObject(name=destructuredParams_ref_7, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(35, 37))
+MAKE_FUNCTION 0
+STORE_NAME destructuredParams
+PUSH_NULL None
+LOAD_NAME destructuredParams
+LOAD_CONST "Alice"
+LOAD_CONST 30.0
+BUILD_MAP 2
+CALL 1
+POP_TOP None
+LOAD_CONST CodeObject(name=makeCounter_ref_8, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(41, 47))
+MAKE_FUNCTION 0
+STORE_NAME makeCounter
+PUSH_NULL None
+LOAD_NAME makeCounter
+CALL 0
+STORE_NAME counter
+PUSH_NULL None
+LOAD_NAME counter
+CALL 0
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME counter
+CALL 0
+POP_TOP None
+PUSH_NULL None
+LOAD_CONST "hidden"
+STORE_NAME privateVar
+CALL 0
+POP_TOP None
+LOAD_CONST CodeObject(name=keywordArgs_ref_9, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(58, 61))
+MAKE_FUNCTION 0
+STORE_NAME keywordArgs
+PUSH_NULL None
+LOAD_NAME keywordArgs
+LOAD_CONST "test"
+LOAD_CONST 42.0
+BUILD_MAP 2
+CALL 1
+POP_TOP None
+LOAD_CONST CodeObject(name=idGenerator_ref_10, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(65, 70))
+GENERATOR_FUNCTION 0
+STORE_NAME idGenerator
+PUSH_NULL None
+LOAD_NAME idGenerator
+CALL 0
+STORE_NAME gen
+PUSH_NULL None
+LOAD_NAME gen
+LOAD_ATTR next
+CALL 0
+LOAD_ATTR value
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME gen
+LOAD_ATTR next
+CALL 0
+LOAD_ATTR value
+POP_TOP None
+LOAD_CONST CodeObject(name=fetchData_ref_13, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(76, 80))
+ASYNC_FUNCTION 0
+STORE_NAME fetchData
+LOAD_CONST CodeObject(name=processData_ref_14, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(82, 85))
+ASYNC_FUNCTION 0
+STORE_NAME processData
+LOAD_NAME Function
+LOAD_CONST 'a'
+LOAD_CONST 'b'
+LOAD_CONST 'return a + b'
+CALL 3
+STORE_NAME add
+PUSH_NULL None
+LOAD_NAME add
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+CALL 2
+POP_TOP None
+LOAD_CONST CodeObject(name=showThis_ref_15, path=/Users/mav/dev/malwi/tests/source_samples/javascript/functions/test_functions.js, location=(92, 94))
+MAKE_FUNCTION 0
+STORE_NAME showThis
+LOAD_CONST 42.0
+BUILD_MAP 1
+STORE_NAME obj
+PUSH_NULL None
+LOAD_NAME showThis
+LOAD_ATTR call
+LOAD_NAME obj
+CALL 1
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME showThis
+LOAD_ATTR apply
+LOAD_NAME obj
+CALL 1
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME showThis
+LOAD_ATTR bind
+LOAD_NAME obj
+CALL 1
+STORE_NAME boundFunc
+PUSH_NULL None
+LOAD_NAME boundFunc
+CALL 0
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME console
+LOAD_ATTR log
+LOAD_CONST "Functions and scopes test completed"
+CALL 1
+POP_TOP None
+RETURN_CONST None
+
+=== greet_ref_0 ===
+BINARY_OPERATION None
+RETURN_VALUE None
+
+=== lambda_ref_1 ===
+LOAD_PARAM x
+LOAD_PARAM x
+BINARY_OP 5
+RETURN_VALUE None
+
+=== lambda_ref_2 ===
+LOAD_CONST "no params"
+RETURN_VALUE None
+
+=== lambda_ref_3 ===
+LOAD_PARAM x
+LOAD_CONST 2.0
+BINARY_OP 5
+RETURN_VALUE None
+
+=== lambda_ref_4 ===
+LOAD_PARAM a
+LOAD_PARAM b
+BINARY_OP 0
+RETURN_VALUE None
+
+=== lambda_ref_5 ===
+LOAD_PARAM x
+LOAD_CONST 2.0
+BINARY_OP 5
+STORE_GLOBAL doubled
+LOAD_GLOBAL doubled
+RETURN_VALUE None
+
+=== paramsTest_ref_6 ===
+LOAD_PARAM a
+LOAD_GLOBAL b
+LOAD_GLOBAL rest
+BUILD_LIST 3
+RETURN_VALUE None
+
+=== destructuredParams_ref_7 ===
+BINARY_OPERATION None
+RETURN_VALUE None
+
+=== makeCounter_ref_8 ===
+LOAD_CONST 0.0
+STORE_GLOBAL count
+LOAD_GLOBAL count
+LOAD_CONST 1.0
+BINARY_ADD None
+STORE_GLOBAL count
+POP_TOP None
+LOAD_GLOBAL count
+RETURN_VALUE None
+RETURN_VALUE None
+
+=== keywordArgs_ref_9 ===
+LOAD_PARAM options
+BUILD_MAP 0
+LOGICAL_OR None
+BUILD_MAP 0
+RETURN_VALUE None
+
+=== idGenerator_ref_10 ===
+LOAD_CONST 1.0
+STORE_GLOBAL id
+LOAD_CONST True
+POP_JUMP_IF_FALSE 4
+LOAD_CONST None
+YIELD_VALUE None
+POP_TOP None
+JUMP_BACKWARD 6
+RETURN_VALUE None
+
+=== lambda_ref_11 ===
+PUSH_NULL None
+LOAD_GLOBAL resolve
+LOAD_CONST "data"
+CALL 1
+RETURN_VALUE None
+
+=== lambda_ref_12 ===
+PUSH_NULL None
+LOAD_GLOBAL setTimeout
+MAKE_FUNCTION lambda_ref_11
+LOAD_CONST 10.0
+CALL 2
+POP_TOP None
+RETURN_VALUE None
+
+=== fetchData_ref_13 ===
+LOAD_GLOBAL Promise
+MAKE_FUNCTION lambda_ref_12
+CALL 1
+RETURN_VALUE None
+
+=== processData_ref_14 ===
+PUSH_NULL None
+LOAD_GLOBAL fetchData
+CALL 0
+AWAIT_EXPRESSION None
+STORE_GLOBAL data
+LOAD_GLOBAL data
+RETURN_VALUE None
+
+=== showThis_ref_15 ===
+RETURN_VALUE None

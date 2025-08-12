@@ -1,0 +1,322 @@
+=== <module> ===
+RESUME 0
+LOAD_CONST CodeObject(name=greet_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(5, 5))
+MAKE_FUNCTION 0
+STORE_NAME greet
+PUSH_NULL None
+LOAD_NAME greet
+LOAD_CONST "World"
+CALL 1
+POP_TOP None
+LOAD_CONST CodeObject(name=func_with_args_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(11, 11))
+MAKE_FUNCTION 0
+STORE_NAME func_with_args
+PUSH_NULL None
+LOAD_NAME func_with_args
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME func_with_args
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+CALL 3
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME func_with_args
+LOAD_CONST 5.0
+LOAD_CONST 5.0
+KW_NAMES ('a', 'b')
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME func_with_args
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+KW_NAMES ('c', 'b', 'a')
+CALL 3
+POP_TOP None
+LOAD_CONST CodeObject(name=func_with_arbitrary_args_ref_2, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(20, 20))
+MAKE_FUNCTION 0
+STORE_NAME func_with_arbitrary_args
+PUSH_NULL None
+LOAD_NAME func_with_arbitrary_args
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST "test"
+LOAD_CONST 123.0
+KW_NAMES ('name', 'value')
+CALL 4
+UNPACK_SEQUENCE 2
+STORE_NAME args_val
+STORE_NAME kwargs_val
+STORE_NAME args_val, kwargs_val
+PUSH_NULL None
+LOAD_NAME print
+LOAD_CONST "Testing KW_NAMES generation"
+LOAD_CONST ""
+LOAD_CONST True
+KW_NAMES ('end', 'flush')
+CALL 3
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME open
+LOAD_CONST "test.txt"
+LOAD_CONST "w"
+LOAD_CONST "utf-8"
+KW_NAMES ('mode', 'encoding')
+CALL 3
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME sorted
+LOAD_CONST 3.0
+LOAD_CONST 1.0
+LOAD_CONST 4.0
+LOAD_CONST 2.0
+BUILD_LIST 4
+MAKE_FUNCTION lambda_ref_3
+LOAD_CONST True
+KW_NAMES ('key', 'reverse')
+CALL 3
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME dict
+LOAD_CONST "test"
+LOAD_CONST 42.0
+LOAD_CONST True
+KW_NAMES ('name', 'value', 'flag')
+CALL 3
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME max
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+BUILD_LIST 3
+LOAD_CONST 0.0
+KW_NAMES ('default',)
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME min
+LOAD_CONST 1.0
+LOAD_CONST 2.0
+LOAD_CONST 3.0
+BUILD_LIST 3
+LOAD_CONST 0.0
+KW_NAMES ('default',)
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME list
+PUSH_NULL None
+LOAD_NAME range
+LOAD_CONST 0.0
+LOAD_CONST 10.0
+LOAD_CONST 2.0
+CALL 3
+CALL 1
+POP_TOP None
+PUSH_NULL None
+LOAD_CONST "Hello {name}"
+LOAD_ATTR format
+LOAD_CONST "World"
+KW_NAMES ('name',)
+CALL 1
+POP_TOP None
+MAKE_FUNCTION lambda_ref_4
+STORE_NAME multiply
+PUSH_NULL None
+LOAD_NAME multiply
+LOAD_CONST 3.0
+LOAD_CONST 4.0
+CALL 2
+POP_TOP None
+LOAD_CONST CodeObject(name=outer_func_ref_5, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(40, 47))
+MAKE_FUNCTION 0
+STORE_NAME outer_func
+PUSH_NULL None
+LOAD_NAME outer_func
+CALL 0
+STORE_NAME closure
+PUSH_NULL None
+LOAD_NAME closure
+CALL 0
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME closure
+CALL 0
+POP_TOP None
+LOAD_CONST 100.0
+STORE_GLOBAL global_var
+LOAD_CONST CodeObject(name=modify_global_ref_6, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(57, 58))
+MAKE_FUNCTION 0
+STORE_NAME modify_global
+PUSH_NULL None
+LOAD_NAME modify_global
+CALL 0
+POP_TOP None
+LOAD_CONST CodeObject(name=outer_ref_7, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(64, 71))
+MAKE_FUNCTION 0
+STORE_NAME outer
+LOAD_CONST CodeObject(name=my_decorator_ref_8, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(75, 78))
+MAKE_FUNCTION 0
+STORE_NAME my_decorator
+LOAD_NAME my_decorator
+LOAD_CONST CodeObject(name=say_whee_ref_9, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(81, 82))
+MAKE_FUNCTION 0
+CALL 0
+STORE_NAME say_whee
+PUSH_NULL None
+LOAD_NAME say_whee
+CALL 0
+POP_TOP None
+LOAD_CONST CodeObject(name=my_generator_ref_10, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(88, 89))
+GENERATOR_FUNCTION 0
+STORE_NAME my_generator
+PUSH_NULL None
+LOAD_NAME my_generator
+LOAD_CONST 3.0
+CALL 1
+STORE_NAME gen
+PUSH_NULL None
+LOAD_NAME next
+LOAD_NAME gen
+CALL 1
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME next
+LOAD_NAME gen
+CALL 1
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME next
+LOAD_NAME gen
+CALL 1
+POP_TOP None
+LOAD_CONST CodeObject(name=hinted_function_ref_11, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(98, 98))
+MAKE_FUNCTION 0
+STORE_NAME hinted_function
+PUSH_NULL None
+LOAD_NAME hinted_function
+LOAD_CONST "Alice"
+LOAD_CONST 30.0
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME print
+LOAD_CONST "Functions and scopes test completed"
+CALL 1
+POP_TOP None
+RETURN_CONST None
+
+=== greet_ref_0 ===
+LOAD_CONST Hello, 
+LOAD_PARAM name
+FORMAT_VALUE None
+LOAD_CONST !
+BUILD_STRING 3
+RETURN_VALUE None
+
+=== func_with_args_ref_1 ===
+LOAD_PARAM a
+LOAD_PARAM b
+BINARY_OP 0
+LOAD_PARAM c
+BINARY_OP 0
+RETURN_VALUE None
+
+=== func_with_arbitrary_args_ref_2 ===
+LOAD_PARAM args
+LOAD_PARAM kwargs
+RETURN_VALUE None
+
+=== lambda_ref_3 ===
+LOAD_PARAM x
+RETURN_VALUE None
+
+=== lambda_ref_4 ===
+LOAD_PARAM x
+LOAD_PARAM y
+BINARY_OP 5
+RETURN_VALUE None
+
+=== outer_func_ref_5 ===
+LOAD_CONST 10.0
+STORE_GLOBAL x
+MAKE_FUNCTION inner_func
+LOAD_DEREF x
+LOAD_CONST 1.0
+BINARY_OP None
+STORE_DEREF x
+LOAD_DEREF x
+RETURN_VALUE None
+STORE_GLOBAL inner_func
+LOAD_GLOBAL inner_func
+RETURN_VALUE None
+
+=== modify_global_ref_6 ===
+LOAD_CONST 200.0
+STORE_GLOBAL global_var
+RETURN_VALUE None
+
+=== outer_ref_7 ===
+LOAD_CONST "outer"
+STORE_DEREF nonlocal_var
+MAKE_FUNCTION inner
+LOAD_CONST "inner"
+STORE_DEREF nonlocal_var
+RETURN_VALUE None
+STORE_GLOBAL inner
+PUSH_NULL None
+LOAD_GLOBAL inner
+CALL 0
+POP_TOP None
+LOAD_DEREF nonlocal_var
+RETURN_VALUE None
+
+=== my_decorator_ref_8 ===
+MAKE_FUNCTION wrapper
+PUSH_NULL None
+LOAD_GLOBAL func
+LOAD_PARAM args
+LOAD_PARAM kwargs
+BINARY_OPERATION None
+STORE_GLOBAL result
+LOAD_GLOBAL result
+RETURN_VALUE None
+STORE_GLOBAL wrapper
+LOAD_GLOBAL wrapper
+RETURN_VALUE None
+
+=== say_whee_ref_9 ===
+LOAD_CONST "Whee!"
+RETURN_VALUE None
+
+=== my_generator_ref_10 ===
+PUSH_NULL None
+LOAD_GLOBAL range
+LOAD_PARAM n
+CALL 1
+GET_ITER None
+FOR_ITER 5
+STORE_NAME i
+LOAD_CONST None
+YIELD_VALUE None
+POP_TOP None
+JUMP_BACKWARD 6
+END_FOR None
+RETURN_VALUE None
+
+=== hinted_function_ref_11 ===
+LOAD_PARAM name
+FORMAT_VALUE None
+LOAD_CONST  is 
+LOAD_PARAM age
+FORMAT_VALUE None
+LOAD_CONST  years old.
+BUILD_STRING 4
+RETURN_VALUE None

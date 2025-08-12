@@ -1,0 +1,151 @@
+=== <module> ===
+RESUME 0
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=DynamicClass_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(5, 5))
+MAKE_FUNCTION 0
+LOAD_CONST DynamicClass
+CALL 2
+STORE_NAME DynamicClass
+PUSH_NULL None
+LOAD_NAME DynamicClass
+CALL 0
+STORE_NAME dyn_obj
+PUSH_NULL None
+LOAD_NAME setattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+LOAD_CONST 123.0
+CALL 3
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME hasattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME getattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME delattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME hasattr
+LOAD_NAME dyn_obj
+LOAD_CONST "dynamic_attr"
+CALL 2
+LOGICAL_NOT None
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME eval
+LOAD_CONST "2 + 3 * 4"
+CALL 1
+STORE_NAME eval_result
+LOAD_CONST "dynamic_var = 10"
+STORE_NAME exec_code
+PUSH_NULL None
+LOAD_NAME exec
+LOAD_NAME exec_code
+CALL 1
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME isinstance
+LOAD_CONST 1.0
+LOAD_NAME int
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME isinstance
+LOAD_CONST "hello"
+LOAD_NAME int
+CALL 2
+LOGICAL_NOT None
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME issubclass
+LOAD_NAME bool
+LOAD_NAME int
+CALL 2
+POP_TOP None
+PUSH_NULL None
+LOAD_NAME type
+LOAD_CONST 123.0
+CALL 1
+LOAD_NAME int
+COMPARE_OP None
+POP_TOP None
+LOAD_CONST "global"
+STORE_GLOBAL global_var
+LOAD_CONST CodeObject(name=test_global_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(29, 30))
+MAKE_FUNCTION 0
+STORE_NAME test_global
+LOAD_CONST CodeObject(name=outer_ref_2, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(33, 40))
+MAKE_FUNCTION 0
+STORE_NAME outer
+LOAD_CONST "global shadow"
+STORE_GLOBAL shadow_var
+LOAD_CONST CodeObject(name=shadow_test_ref_3, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(46, 59))
+MAKE_FUNCTION 0
+STORE_NAME shadow_test
+PUSH_NULL None
+LOAD_NAME print
+LOAD_CONST "Dynamic features and introspection test completed"
+CALL 1
+POP_TOP None
+RETURN_CONST None
+
+=== DynamicClass_ref_0 ===
+
+
+=== test_global_ref_1 ===
+LOAD_CONST "modified"
+STORE_GLOBAL global_var
+RETURN_VALUE None
+
+=== outer_ref_2 ===
+LOAD_CONST "outer"
+STORE_GLOBAL nonlocal_var
+MAKE_FUNCTION inner
+LOAD_CONST "inner"
+STORE_DEREF nonlocal_var
+RETURN_VALUE None
+STORE_GLOBAL inner
+PUSH_NULL None
+LOAD_GLOBAL inner
+CALL 0
+POP_TOP None
+LOAD_DEREF nonlocal_var
+RETURN_VALUE None
+
+=== shadow_test_ref_3 ===
+LOAD_CONST "local shadow"
+STORE_GLOBAL shadow_var
+MAKE_FUNCTION inner_shadow
+LOAD_CONST "modified local"
+STORE_DEREF shadow_var
+RETURN_VALUE None
+STORE_GLOBAL inner_shadow
+MAKE_FUNCTION inner_global_shadow
+LOAD_CONST "modified global"
+STORE_DEREF shadow_var
+RETURN_VALUE None
+STORE_GLOBAL inner_global_shadow
+PUSH_NULL None
+LOAD_GLOBAL inner_shadow
+CALL 0
+POP_TOP None
+LOAD_DEREF shadow_var
+STORE_GLOBAL local_result
+PUSH_NULL None
+LOAD_GLOBAL inner_global_shadow
+CALL 0
+POP_TOP None
+LOAD_GLOBAL local_result
+RETURN_VALUE None
