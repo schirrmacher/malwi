@@ -277,6 +277,13 @@ class Instruction:
         elif op_code in [OpCode.COPY]:
             # COPY duplicates stack values, argument indicates copy depth
             return f"{op_code.name} {argval if argval is not None else '1'}"
+        elif op_code == OpCode.KW_NAMES:
+            # Handle keyword argument names tuple - concatenate with underscores
+            if isinstance(arg, tuple):
+                kw_names_str = "_".join(str(name) for name in arg)
+                return f"{op_code.name} {kw_names_str}"
+            else:
+                return f"{op_code.name} {argval}"
         elif argval in SENSITIVE_PATHS:
             return f"{op_code.name} {SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
         elif is_localhost(argval):
