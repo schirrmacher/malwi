@@ -354,6 +354,41 @@ class MalwiReport:
 
         return txt
 
+    def to_tokens_text(self) -> str:
+        """Generate tokens output format: file path, object name, and tokens separated by newlines."""
+        lines = []
+
+        # Group objects by file path to maintain organization
+        files_with_objects = {}
+        for obj in self.all_objects:
+            if obj.file_path not in files_with_objects:
+                files_with_objects[obj.file_path] = []
+            files_with_objects[obj.file_path].append(obj)
+
+        # Sort files for consistent output
+        for file_path in sorted(files_with_objects.keys()):
+            objects_in_file = files_with_objects[file_path]
+
+            for obj in objects_in_file:
+                # Add file path
+                lines.append(file_path)
+
+                # Add object name
+                lines.append(obj.name)
+
+                # Add all tokens for this object as a single line
+                token_string = obj.to_token_string()
+                lines.append(token_string)
+
+                # Add empty line for separation between objects (except for last object)
+                lines.append("")
+
+        # Remove trailing empty line if it exists
+        if lines and lines[-1] == "":
+            lines.pop()
+
+        return "\n".join(lines)
+
     @classmethod
     def load_models_into_memory(
         cls,

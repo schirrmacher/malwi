@@ -118,6 +118,7 @@ class TestCLIEntry:
         mock_report.to_report_markdown.return_value = "Markdown"
         mock_report.to_report_json.return_value = "JSON"
         mock_report.to_report_yaml.return_value = "YAML"
+        mock_report.to_tokens_text.return_value = "Tokens"
         mock_create.return_value = mock_report
 
         # Test each format
@@ -126,6 +127,7 @@ class TestCLIEntry:
             ("markdown", "Markdown"),
             ("json", "JSON"),
             ("yaml", "YAML"),
+            ("tokens", "Tokens"),
         ]:
             with patch.object(
                 sys, "argv", ["malwi", str(test_file), "--format", fmt, "--quiet"]
@@ -417,6 +419,7 @@ class TestBatchMode:
             ("yaml", ".yaml", "to_report_yaml"),
             ("markdown", ".md", "to_report_markdown"),
             ("demo", ".txt", "to_demo_text"),
+            ("tokens", ".txt", "to_tokens_text"),
         ]
 
         for fmt, expected_ext, method_name in format_extensions:

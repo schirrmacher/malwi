@@ -25,7 +25,13 @@ from malwi._version import __version__
 def run_batch_scan(child_folder: Path, args) -> dict:
     """Run a single scan on a child folder and return results."""
     # Check if output file already exists
-    format_ext = {"demo": ".txt", "markdown": ".md", "json": ".json", "yaml": ".yaml"}
+    format_ext = {
+        "demo": ".txt",
+        "markdown": ".md",
+        "json": ".json",
+        "yaml": ".yaml",
+        "tokens": ".txt",
+    }
     extension = format_ext.get(args.format, ".txt")
     output_file = Path.cwd() / f"malwi_{child_folder.name}{extension}"
 
@@ -48,6 +54,8 @@ def run_batch_scan(child_folder: Path, args) -> dict:
             output = report.to_report_json()
         elif args.format == "markdown":
             output = report.to_report_markdown()
+        elif args.format == "tokens":
+            output = report.to_tokens_text()
         else:
             output = report.to_demo_text()
 
@@ -171,7 +179,7 @@ def main():
     parser.add_argument(
         "--format",
         "-f",
-        choices=["demo", "markdown", "json", "yaml"],
+        choices=["demo", "markdown", "json", "yaml", "tokens"],
         default="demo",
         help="Specify the output format.",
     )
@@ -282,6 +290,8 @@ def main():
         output = report.to_report_json()
     elif args.format == "markdown":
         output = report.to_report_markdown()
+    elif args.format == "tokens":
+        output = report.to_tokens_text()
     else:
         output = report.to_demo_text()
 
