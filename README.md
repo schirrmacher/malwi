@@ -19,25 +19,30 @@ pip install --user malwi
 
 2) **Run**
 ```
-malwi examples/malicious/discordpydebug-0.0.4
+malwi examples/malicious
 ```
 
 3) **Evaluate**: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
 ```
-- files: 12
-  ├── scanned: 3
-  └── skipped: 9
-- objects: 8
-  └── malicious: 4
-      ├── filesystem access: 5
-      ├── fs linking: 5
-      ├── encoding decoding: 3
-      ├── network http request: 3
-      ├── process management: 2
-      ├── deserialization: 1
-      └── package installation execution: 1
+  .--------.---.-|  .--.--.--|__|
+  |        |  _  |  |  |  |  |  |
+  |__|__|__|___._|__|________|__|
+     AI Python Malware Scanner
 
-=> 👹 malicious 0.97
+
+- target: examples/malicious
+- files: 13
+  ├── scanned: 3
+  ├── skipped: 10
+  └── suspicious:
+      └── examples/malicious/discordpydebug-0.0.4/src/discordpydebug/__init__.py
+          └── <module>
+              ├── deserialization
+              ├── user io
+              ├── system interaction
+              └── process management
+
+=> 👹 malicious 1.00
 ```
 
 ## Why malwi?
@@ -101,18 +106,15 @@ The DistilBERT model makes the final maliciousness decision based on the token p
 
 | Metric                     | Value                         |
 |----------------------------|-------------------------------|
-| F1 Score                   | 0.96                          |
-| Recall                     | 0.95                          |
-| Precision                  | 0.98                          |
-| Training time              | ~4 hours                      |
+| F1 Score                   | 0.941                         |
+| Recall                     | 0.900                         |
+| Precision                  | 0.987                         |
+| Training time              | ~5 hours                      |
 | Hardware                   | NVIDIA RTX 4090               |
 | Epochs                     | 3                             |
 
 
 ## Limitations
-
-malwi compiles Python to bytecode, which is highly version dependent. The AI models are trained on that bytecode.
-This means the performance might drop if a user installed a Python version which creates different bytecode instructions. There is no data yet about this.
 
 The malicious dataset includes some boilerplate functions, such as init functions, which can also appear in benign code. These cause false positives during scans. The goal is to triage and reduce such false positives to improve malwi's accuracy.
 
