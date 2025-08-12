@@ -1,6 +1,6 @@
 === <module> ===
 RESUME 0
-LOAD_CONST CodeObject(name=greet_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(5, 5))
+LOAD_CONST CodeObject(name=greet_ref_0, path=tests/source_samples/python/functions/test_functions.py, location=(5, 5))
 MAKE_FUNCTION 0
 STORE_NAME greet
 PUSH_NULL None
@@ -8,7 +8,7 @@ LOAD_NAME greet
 LOAD_CONST "World"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=func_with_args_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(13, 13))
+LOAD_CONST CodeObject(name=func_with_args_ref_1, path=tests/source_samples/python/functions/test_functions.py, location=(13, 13))
 MAKE_FUNCTION 0
 STORE_NAME func_with_args
 PUSH_NULL None
@@ -39,7 +39,7 @@ LOAD_CONST 3.0
 KW_NAMES ('c', 'b', 'a')
 CALL 3
 POP_TOP None
-LOAD_CONST CodeObject(name=func_with_arbitrary_args_ref_2, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(24, 24))
+LOAD_CONST CodeObject(name=func_with_arbitrary_args_ref_2, path=tests/source_samples/python/functions/test_functions.py, location=(24, 24))
 MAKE_FUNCTION 0
 STORE_NAME func_with_arbitrary_args
 PUSH_NULL None
@@ -135,7 +135,7 @@ LOAD_CONST 3.0
 LOAD_CONST 4.0
 CALL 2
 POP_TOP None
-LOAD_CONST CodeObject(name=outer_func_ref_5, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(46, 53))
+LOAD_CONST CodeObject(name=outer_func_ref_5, path=tests/source_samples/python/functions/test_functions.py, location=(46, 53))
 MAKE_FUNCTION 0
 STORE_NAME outer_func
 PUSH_NULL None
@@ -152,21 +152,21 @@ CALL 0
 POP_TOP None
 LOAD_CONST 100.0
 STORE_GLOBAL global_var
-LOAD_CONST CodeObject(name=modify_global_ref_6, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(65, 66))
+LOAD_CONST CodeObject(name=modify_global_ref_6, path=tests/source_samples/python/functions/test_functions.py, location=(65, 66))
 MAKE_FUNCTION 0
 STORE_NAME modify_global
 PUSH_NULL None
 LOAD_NAME modify_global
 CALL 0
 POP_TOP None
-LOAD_CONST CodeObject(name=outer_ref_7, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(74, 81))
+LOAD_CONST CodeObject(name=outer_ref_7, path=tests/source_samples/python/functions/test_functions.py, location=(74, 81))
 MAKE_FUNCTION 0
 STORE_NAME outer
-LOAD_CONST CodeObject(name=my_decorator_ref_8, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(86, 90))
+LOAD_CONST CodeObject(name=my_decorator_ref_8, path=tests/source_samples/python/functions/test_functions.py, location=(86, 90))
 MAKE_FUNCTION 0
 STORE_NAME my_decorator
 LOAD_NAME my_decorator
-LOAD_CONST CodeObject(name=say_whee_ref_9, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(94, 95))
+LOAD_CONST CodeObject(name=say_whee_ref_9, path=tests/source_samples/python/functions/test_functions.py, location=(94, 95))
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME say_whee
@@ -174,7 +174,7 @@ PUSH_NULL None
 LOAD_NAME say_whee
 CALL 0
 POP_TOP None
-LOAD_CONST CodeObject(name=my_generator_ref_10, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(103, 104))
+LOAD_CONST CodeObject(name=my_generator_ref_10, path=tests/source_samples/python/functions/test_functions.py, location=(103, 104))
 GENERATOR_FUNCTION 0
 STORE_NAME my_generator
 PUSH_NULL None
@@ -197,7 +197,7 @@ LOAD_NAME next
 LOAD_NAME gen
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=hinted_function_ref_11, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(115, 115))
+LOAD_CONST CodeObject(name=hinted_function_ref_11, path=tests/source_samples/python/functions/test_functions.py, location=(115, 115))
 MAKE_FUNCTION 0
 STORE_NAME hinted_function
 PUSH_NULL None
@@ -265,7 +265,7 @@ RETURN_VALUE None
 
 === outer_ref_7 ===
 LOAD_CONST "outer"
-STORE_DEREF nonlocal_var
+STORE_GLOBAL nonlocal_var
 MAKE_FUNCTION inner
 LOAD_CONST "inner"
 STORE_DEREF nonlocal_var

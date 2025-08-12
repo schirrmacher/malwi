@@ -1,12 +1,12 @@
 === <module> ===
 RESUME 0
-LOAD_CONST 'Hello world'
+LOAD_CONST "Hello world"
 STORE_NAME single_quoted
 LOAD_CONST "Hello world"
 STORE_NAME double_quoted
-LOAD_CONST '''Multi-line
+LOAD_CONST """Multi-line
 string content
-here'''
+here"""
 STORE_NAME triple_quoted
 LOAD_CONST """Another multi-line
 string with double quotes"""
@@ -236,19 +236,19 @@ STORE_NAME unicode_string
 PUSH_NULL None
 LOAD_NAME unicode_string
 LOAD_ATTR encode
-LOAD_CONST 'utf-8'
+LOAD_CONST "utf-8"
 CALL 1
 STORE_NAME encoded_utf8
 PUSH_NULL None
 LOAD_NAME encoded_utf8
 LOAD_ATTR decode
-LOAD_CONST 'utf-8'
+LOAD_CONST "utf-8"
 CALL 1
 STORE_NAME decoded_back
 PUSH_NULL None
 LOAD_CONST "hello"
 LOAD_ATTR encode
-LOAD_CONST 'ascii'
+LOAD_CONST "ascii"
 CALL 1
 STORE_NAME encoded_ascii
 LOAD_CONST "Hello, {}! You have {} messages."
@@ -272,21 +272,21 @@ PUSH_NULL None
 LOAD_CONST "hello"
 LOAD_ATTR center
 LOAD_CONST 20.0
-LOAD_CONST '*'
+LOAD_CONST "*"
 CALL 2
 STORE_NAME centered
 PUSH_NULL None
 LOAD_CONST "hello"
 LOAD_ATTR ljust
 LOAD_CONST 20.0
-LOAD_CONST '-'
+LOAD_CONST "-"
 CALL 2
 STORE_NAME left_justified
 PUSH_NULL None
 LOAD_CONST "hello"
 LOAD_ATTR rjust
 LOAD_CONST 20.0
-LOAD_CONST '+'
+LOAD_CONST "+"
 CALL 2
 STORE_NAME right_justified
 PUSH_NULL None
@@ -331,7 +331,7 @@ LOAD_CONST 28.0
 BUILD_MAP 2
 BINARY_OP 6
 STORE_NAME percent_dict
-LOAD_CONST "She said \"Hello\" to me"
+LOAD_CONST 'She said "Hello" to me'
 STORE_NAME escaped_quotes
 LOAD_CONST "Line 1\nLine 2\nLine 3"
 STORE_NAME escaped_newline
@@ -473,7 +473,7 @@ STORE_NAME accented
 PUSH_NULL None
 LOAD_NAME unicodedata
 LOAD_ATTR normalize
-LOAD_CONST 'NFD'
+LOAD_CONST "NFD"
 LOAD_NAME accented
 CALL 2
 STORE_NAME normalized
