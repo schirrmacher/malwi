@@ -109,7 +109,7 @@ def predict(token_stats: Dict[str, float]) -> Dict[str, Any]:
 
 
 def main():
-    from research.disassemble_python import MalwiObject, process_files
+    from research.malwi_object import MalwiObject, process_files
 
     parser = argparse.ArgumentParser(
         description="Make predictions using trained SVM model"

@@ -2,16 +2,10 @@
 
 import os
 import sys
-import csv
 import yaml
 import json
 import time
-import types
-import inspect
-import pathlib
 import hashlib
-import warnings
-import argparse
 import questionary
 from datetime import datetime
 
@@ -21,15 +15,14 @@ from pathlib import Path
 from collections import Counter
 from dataclasses import dataclass, field
 from ollama import ChatResponse, chat
-from typing import List, Tuple, Set, TextIO, Optional, Any, Dict, Union
+from typing import List, Tuple, Optional, Any, Dict
 
 from research.mapping import (
     SpecialCases,
-    tokenize_code_type,
-    COMMON_TARGET_FILES,
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
 )
+from research.ast_to_malwicode import ASTCompiler
 from research.predict_distilbert import (
     get_node_text_prediction,
     initialize_models as initialize_distilbert_models,
@@ -40,14 +33,10 @@ from common.messaging import (
     get_message_manager,
     file_error,
     path_error,
-    model_warning,
-    info,
-    progress,
     error,
     success,
     warning,
     debug,
-    critical,
 )
 from malwi._version import __version__
 
@@ -55,9 +44,9 @@ from common.files import read_json_from_file
 
 CONFIDENCE_MALICIOUSNESS_THRESHOLD = 0.8
 
-SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
+SCRIPT_DIR = Path(__file__).resolve().parent
 
-SPECIAL_TOKENS: Set[str] = read_json_from_file(
+SPECIAL_TOKENS: Dict[str, Dict] = read_json_from_file(
     SCRIPT_DIR / "syntax_mapping" / "function_mapping.json"
 )
 
@@ -67,166 +56,63 @@ class MetaAttributes(Enum):
     MALICIOUS_COUNT = "MALICIOUS_COUNT"
 
 
-class CSVWriter:
-    """Handles CSV output operations."""
-
-    def __init__(self, file_path: Path):
-        self.file_path = file_path
-        self.file_handle = None
-        self.writer = None
-        self._initialize_file()
-
-    def _initialize_file(self):
-        """Initialize CSV file with headers if needed."""
-        file_exists_before_open = self.file_path.is_file()
-        is_empty = not file_exists_before_open or self.file_path.stat().st_size == 0
-
-        self.file_handle = open(
-            self.file_path, "a", newline="", encoding="utf-8", errors="replace"
-        )
-        self.writer = csv.writer(self.file_handle)
-
-        if is_empty:
-            self.writer.writerow(["tokens", "hash", "filepath"])
-
-    def write_objects(self, objects_data: List["MalwiObject"]) -> None:
-        """Write MalwiObject data to CSV."""
-        for obj in objects_data:
-            self.writer.writerow(
-                [
-                    obj.to_token_string(),
-                    obj.to_string_hash(),
-                    obj.file_path,
-                ]
-            )
-
-    def close(self):
-        """Close the CSV file."""
-        if self.file_handle:
-            self.file_handle.close()
-
-
-def recursively_disassemble_python(
-    file_path: str,
+def disassemble_file_ast(
     source_code: str,
+    file_path: str,
     language: str,
-    code_obj: Optional[types.CodeType],
-    all_objects_data: List["MalwiObject"],
-    visited_code_ids: Optional[Set[int]] = None,
-    errors: Optional[List[str]] = None,
-) -> None:
-    current_errors = list(errors) if errors is not None else []
-
-    if current_errors or not code_obj:
-        for err_msg in current_errors:
-            object_data = MalwiObject(
-                name=err_msg,
-                language=language,
-                file_path=file_path,
-                code_type=None,
-                file_source_code="",
-                warnings=[err_msg],
-            )
-            all_objects_data.append(object_data)
-        if not code_obj and not current_errors:
-            all_objects_data.append(
-                MalwiObject(
-                    name=SpecialCases.MALFORMED_FILE.value,
-                    language=language,
-                    file_path=file_path,
-                    file_source_code="",
-                    warnings=[SpecialCases.MALFORMED_FILE.value],
-                )
-            )
-        return
-
-    if visited_code_ids is None:
-        visited_code_ids = set()
-
-    if id(code_obj) in visited_code_ids:
-        return
-    visited_code_ids.add(id(code_obj))
-
-    object_data = MalwiObject(
-        name=code_obj.co_qualname,
-        language=language,
-        file_path=file_path,
-        code_type=code_obj,
-        file_source_code=source_code,
-    )
-    all_objects_data.append(object_data)
-
-    for const in code_obj.co_consts:
-        if isinstance(const, types.CodeType):
-            recursively_disassemble_python(
-                file_path=file_path,
-                source_code=source_code,
-                language=language,
-                code_obj=const,
-                all_objects_data=all_objects_data,
-                visited_code_ids=visited_code_ids,
-            )
-
-
-def find_code_object_by_name(
-    code: types.CodeType, target_name: str
-) -> Optional[types.CodeType]:
-    if code.co_qualname == target_name:
-        return code
-    for const in code.co_consts:
-        if isinstance(const, types.CodeType):
-            result = find_code_object_by_name(const, target_name)
-            if result:
-                return result
-    return None
-
-
-def disassemble_python_file(
-    source_code: str, file_path: str, target_object_name: Optional[str] = None
+    target_object_name: Optional[str] = None,
 ) -> List["MalwiObject"]:
+    """
+    Language-independent implementation using AST-to-malwicode API.
+    Converts CodeObject instances from the AST compiler to MalwiObject instances.
+    Supports both Python and JavaScript files.
+    """
     all_objects: List[MalwiObject] = []
     current_file_errors: List[str] = []
 
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", SyntaxWarning)
-            code_object = compile(source_code, file_path, "exec")
+        # Use the AST compiler with the detected language
+        ast_compiler = ASTCompiler(language)
+        code_objects = ast_compiler.process_file(Path(file_path))
 
-        if target_object_name:
-            target_code = find_code_object_by_name(code_object, target_object_name)
-            if target_code:
-                return [
-                    MalwiObject(
-                        name=target_code.co_qualname,
-                        language="python",
-                        file_path=file_path,
-                        file_source_code=source_code,
-                        code_type=target_code,
-                    )
-                ]
+        # Convert CodeObject instances to MalwiObject instances
+        for code_obj in code_objects:
+            # Handle target filtering if specified
+            if target_object_name and code_obj.name != target_object_name:
+                continue
+
+            malwi_obj = MalwiObject(
+                name=code_obj.name,
+                language=language,
+                file_path=file_path,
+                file_source_code=source_code,
+                # Store the AST CodeObject for token extraction
+                ast_code_object=code_obj,
+            )
+
+            all_objects.append(malwi_obj)
+
+        if target_object_name and all_objects:
+            return [all_objects[0]]  # Return only the targeted object
 
     except UnicodeDecodeError:
         current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
-        code_object = None
     except SyntaxError:
         current_file_errors.append(SpecialCases.MALFORMED_SYNTAX.value)
-        code_object = None
-    except Exception:
+    except Exception as e:
         current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
-        code_object = None
 
-    # If compilation failed and no errors were caught, add fallback error
-    if code_object is None and not current_file_errors:
-        current_file_errors.append(SpecialCases.FILE_READING_ISSUES.value)
-
-    recursively_disassemble_python(
-        file_path=file_path,
-        source_code=source_code,
-        language="python",
-        code_obj=code_object,
-        all_objects_data=all_objects,
-        errors=current_file_errors,
-    )
+    # If compilation failed, create an error object
+    if not all_objects and current_file_errors:
+        all_objects.append(
+            MalwiObject(
+                name=SpecialCases.MALFORMED_FILE.value,
+                language=language,
+                file_path=file_path,
+                file_source_code=source_code,
+                warnings=current_file_errors,
+            )
+        )
 
     return all_objects
 
@@ -239,8 +125,19 @@ def process_single_file(
 ) -> Optional[Tuple[List["MalwiObject"], List["MalwiObject"]]]:
     try:
         source_code = file_path.read_text(encoding="utf-8", errors="replace")
-        objects: List[MalwiObject] = disassemble_python_file(
-            source_code, file_path=str(file_path)
+
+        # Detect language based on file extension
+        file_extension = file_path.suffix.lower()
+        if file_extension == ".py":
+            language = "python"
+        elif file_extension in [".js", ".mjs", ".cjs"]:
+            language = "javascript"
+        else:
+            # Default to Python for unknown extensions
+            language = "python"
+
+        objects: List[MalwiObject] = disassemble_file_ast(
+            source_code, file_path=str(file_path), language=language
         )
 
         all_objects = []
@@ -326,19 +223,6 @@ class MalwiReport:
                 report_data["details"].append(obj.to_dict())
 
         return report_data
-
-    def to_report_csv(self, output_stream: TextIO) -> None:
-        """Format objects as CSV and write to a stream."""
-        writer = csv.writer(output_stream)
-        writer.writerow(["tokens", "hash", "filepath"])
-        for obj in self.all_objects:
-            writer.writerow(
-                [
-                    obj.to_token_string(),
-                    obj.to_string_hash(),
-                    obj.file_path,
-                ]
-            )
 
     def to_report_json(self) -> str:
         report_data = self._generate_report_data()
@@ -685,14 +569,7 @@ def process_files(
 def save_yaml_report(obj: "MalwiObject", path: str, code_hash: str) -> None:
     try:
         with open(path, "w", encoding="utf-8") as f:
-            f.write(
-                MalwiObject.to_report_yaml(
-                    [obj],
-                    [obj.file_path],
-                    malicious_threshold=0.0,
-                    number_of_skipped_files=0.0,
-                )
-            )
+            f.write(obj.to_yaml())
         success(f"Saved data for hash {code_hash} to {path}")
     except IOError as e:
         error(f"Failed to write YAML file {path}: {e}")
@@ -717,9 +594,9 @@ def manual_triage(
         obj.maliciousness = 0.0
         save_yaml_report(obj, benign_path, code_hash)
     elif triage_result == "skip":
-        info(f"Skipping sample {code_hash}...")
+        debug(f"Skipping sample {code_hash}...")
     elif triage_result == "exit" or triage_result is None:
-        info("Exiting triage process.")
+        debug("Exiting triage process.")
         exit(0)
     elif triage_result == "tokens" or triage_result is None:
         triage_result: Optional[str] = questionary.select(
@@ -734,7 +611,7 @@ def manual_triage(
                 malicious_path=malicious_path,
             )
         elif triage_result == "exit":
-            info("Exiting triage process.")
+            debug("Exiting triage process.")
             exit(0)
     else:
         warning(f"Unknown triage result '{triage_result}', skipping sample {code_hash}")
@@ -788,7 +665,7 @@ def ollama_triage(
 
 def triage(
     all_objects: List["MalwiObject"],
-    out_path: Path,
+    out_path: str,
     malicious_threshold: float = 0.7,
     grep_string: str = None,
     max_tokens: int = 0,
@@ -883,9 +760,12 @@ class MalwiObject:
     file_path: str
     warnings: List[str]
     file_source_code: str
+    language: str
     code: Optional[str] = None
     maliciousness: Optional[float] = None
-    code_type: Optional[types.CodeType] = None
+    ast_code_object: Optional[object] = (
+        None  # Store AST CodeObject instead of Python CodeType
+    )
 
     def __init__(
         self,
@@ -893,18 +773,17 @@ class MalwiObject:
         language: str,
         file_path: str,
         file_source_code: str,
-        code_type: types.CodeType = None,
+        ast_code_object: Optional[object] = None,
         warnings: List[str] = [],
     ):
         self.name = name
+        self.language = language
         self.file_path = file_path
         self.warnings = list(warnings)
         self.maliciousness = None
-        self.code_type = code_type
+        self.ast_code_object = ast_code_object
         self.file_source_code = file_source_code
-
-        if Path(self.file_path).name in COMMON_TARGET_FILES.get(language, []):
-            self.warnings += [SpecialCases.TARGETED_FILE.value]
+        self.code = None
 
     @classmethod
     def collect_token_stats(
@@ -975,30 +854,38 @@ class MalwiObject:
         initialize_svm_model(svm_layer_path)
 
     @classmethod
-    def all_tokens(
-        cls,
-    ) -> None:
+    def all_tokens(cls, language: str = "python") -> List[str]:
+        """Get all possible tokens for a language."""
         tokens = set()
         tokens.update([member.value for member in SpecialCases])
         tokens.update([member.value for member in MetaAttributes])
-        tokens.update(FUNCTION_MAPPING.get("python", {}).values())
-        tokens.update(IMPORT_MAPPING.get("python", {}).values())
+        tokens.update(FUNCTION_MAPPING.get(language, {}).values())
+        tokens.update(IMPORT_MAPPING.get(language, {}).values())
         unique = list(tokens)
         unique.sort()
         return unique
 
     def to_tokens(self, map_special_tokens: bool = True) -> List[str]:
+        """Extract tokens from the AST CodeObject."""
         all_token_parts: List[str] = []
         all_token_parts.extend(self.warnings)
-        generated_instructions = tokenize_code_type(
-            code_type=self.code_type, map_special_tokens=map_special_tokens
-        )
-        all_token_parts.extend(generated_instructions)
+
+        if self.ast_code_object:
+            # Use AST CodeObject's get_tokens method with language-aware mapping
+            ast_tokens = self.ast_code_object.get_tokens(mapped=map_special_tokens)
+            all_token_parts.extend(ast_tokens)
+        else:
+            # Fallback for error cases
+            all_token_parts.append(SpecialCases.MALFORMED_FILE.value)
+
         return all_token_parts
 
     def calculate_token_stats(self) -> dict:
         token_counts = Counter(self.to_tokens())
-        stats = {token: token_counts.get(token, 0) for token in self.all_tokens()}
+        stats = {
+            token: token_counts.get(token, 0)
+            for token in self.all_tokens(self.language)
+        }
         return stats
 
     def to_token_string(self, map_special_tokens: bool = True) -> str:
@@ -1012,18 +899,22 @@ class MalwiObject:
         return sha256_hash.hexdigest()
 
     def retrieve_source_code(self) -> Optional[str]:
-        try:
-            self.code = inspect.getsource(self.code_type)
+        """Get source code from AST CodeObject."""
+        if self.ast_code_object and hasattr(self.ast_code_object, "source_code"):
+            self.code = self.ast_code_object.source_code
             return self.code
-        except Exception:
-            pass
+        elif self.ast_code_object:
+            # Use the bytecode representation as fallback
+            self.code = self.ast_code_object.to_string(mapped=False, one_line=False)
+            return self.code
         return None
 
     def predict(self) -> Optional[dict]:
         token_string = self.to_token_string()
         prediction = None
         if any(
-            token in token_string for token in SPECIAL_TOKENS.get("python", {}).values()
+            token in token_string
+            for token in SPECIAL_TOKENS.get(self.language, {}).values()
         ):
             prediction = get_node_text_prediction(token_string)
         else:
@@ -1065,204 +956,3 @@ class MalwiObject:
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=4)
-
-    @classmethod
-    def from_file(
-        cls, file_path: Union[str, Path], language: str = "python"
-    ) -> List["MalwiObject"]:
-        file_path = Path(file_path)
-        malwi_objects: List[MalwiObject] = []
-
-        with file_path.open("r", encoding="utf-8") as f:
-            if file_path.suffix in [".yaml", ".yml"]:
-                # Load all YAML documents in the file
-                documents = yaml.safe_load_all(f)
-            elif file_path.suffix == ".json":
-                # JSON normally single doc; for multiple JSON objects in one file,
-                # you could do more advanced parsing, but here just one load:
-                documents = [json.load(f)]
-            else:
-                raise ValueError(f"Unsupported file type: {file_path.suffix}")
-
-            for data in documents:
-                if not data:
-                    continue
-                details = data.get("details", [])
-                for detail in details:
-                    if not details:
-                        continue
-                    file_path = detail.get("path", "") or ""
-                    # Sources field has been removed - skip loading from file
-                    source = ""
-                    contents = detail.get("contents", [])
-
-                    if not contents:
-                        continue
-                    for item in contents:
-                        name = item.get("name")
-                        file_path_val = file_path
-                        warnings = item.get("warnings", [])
-
-                        matchingCodeType = disassemble_python_file(
-                            source_code=source,
-                            file_path=file_path,
-                            target_object_name=name,
-                        )
-
-                        malwi_object = cls(
-                            name=name,
-                            file_source_code=source,
-                            language=language,
-                            file_path=file_path_val,
-                            warnings=warnings,
-                            code_type=matchingCodeType[0].code_type,
-                        )
-                        malwi_objects.append(malwi_object)
-
-        return malwi_objects
-
-
-def main() -> None:
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(
-        description="Recursively disassemble Python files",
-        epilog="Example: python %(prog)s your_script.or_directory --format txt --save output.txt",
-    )
-    parser.add_argument(
-        "path", metavar="PATH", help="The Python file or directory to process."
-    )
-    parser.add_argument(
-        "-f",
-        "--format",
-        type=str,
-        choices=["txt", "csv", "json", "yaml"],
-        default="txt",
-        help="Output format (default: txt). 'json' and 'yaml' are report formats.",
-    )
-    parser.add_argument(
-        "-s",
-        "--save",
-        type=str,
-        default=None,
-        metavar="FILEPATH",
-        help="Path to save the output. If not provided, output goes to stdout.",
-    )
-    parser.add_argument(
-        "--model-path",
-        type=str,
-        default=None,
-        help="Path to the ML model for maliciousness prediction.",
-    )
-    parser.add_argument(
-        "--tokenizer-path",
-        type=str,
-        default=None,
-        help="Path to the tokenizer for the ML model.",
-    )
-    parser.add_argument(
-        "--malicious-threshold",
-        type=float,
-        default=0.5,
-        help="Threshold for classifying as malicious in reports (0.0 to 1.0).",
-    )
-    parser.add_argument("--version", action="version", version="%(prog)s 2.6")
-
-    args: argparse.Namespace = parser.parse_args()
-    input_path_obj: Path = Path(args.path)
-
-    # Step 1: Initialize models
-    progress("Step 1: Initializing ML models...")
-    try:
-        MalwiObject.load_models_into_memory(
-            distilbert_model_path=args.model_path, tokenizer_path=args.tokenizer_path
-        )
-        success("ML models initialized successfully")
-    except Exception as e:
-        model_warning("ML", e)
-
-    if not input_path_obj.exists():
-        path_error(input_path_obj)
-        sys.exit(1)
-
-    # Process input and collect all data
-    csv_writer_instance: Optional[CSVWriter] = None
-
-    try:
-        # Handle CSV output separately for streaming
-        if args.format == "csv" and args.save:
-            progress("Step 2: Setting up CSV output stream...")
-            save_path = Path(args.save)
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            csv_writer_instance = CSVWriter(save_path)
-            info(f"CSV output will be appended to: {save_path.resolve()}")
-
-            # Process files and write directly to CSV
-            progress("Step 3: Processing Python files for CSV export...")
-            result = process_files(
-                input_path_obj,
-                accepted_extensions=["py"],
-                predict=False,
-                predict_svm=False,  # Performance
-                retrieve_source_code=False,
-                silent=False,
-            )
-
-            if result.all_objects:
-                progress("Step 4: Writing objects to CSV file...")
-                csv_writer_instance.write_objects(result.all_objects)
-                success(f"Successfully wrote {len(result.all_objects)} objects to CSV")
-
-            csv_writer_instance.close()
-            success(f"CSV processing completed: {save_path.resolve()}")
-
-        else:
-            # For all other formats, collect data first
-            progress("Step 2: Processing Python files with ML prediction...")
-            result = process_files(
-                input_path_obj,
-                accepted_extensions=["py"],
-                predict=True,
-                retrieve_source_code=True,
-                silent=False,
-                malicious_threshold=args.malicious_threshold,
-            )
-
-            # Handle output
-            progress("Step 3: Preparing output format...")
-            output_file = None
-            output_stream = sys.stdout
-
-            if args.save:
-                save_path = Path(args.save)
-                save_path.parent.mkdir(parents=True, exist_ok=True)
-                output_file = open(save_path, "w", encoding="utf-8", errors="replace")
-                output_stream = output_file
-                info(f"Output will be saved to: {save_path.resolve()}")
-
-            progress(f"Step 4: Generating {args.format.upper()} report...")
-            try:
-                if args.format == "csv":
-                    result.to_report_csv(output_stream)
-                elif args.format == "json":
-                    output_stream.write(result.to_report_json() + "\n")
-                elif args.format == "yaml":
-                    output_stream.write(result.to_report_yaml() + "\n")
-                success(f"Report generation completed in {args.format.upper()} format")
-            finally:
-                if output_file:
-                    output_file.close()
-
-    except Exception as e:
-        critical(f"A critical error occurred: {e}")
-        import traceback
-
-        # Print traceback to stderr directly for debugging
-        traceback.print_exc(file=sys.stderr)
-        if csv_writer_instance:
-            csv_writer_instance.close()
-        sys.exit(1)
-
-    sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()

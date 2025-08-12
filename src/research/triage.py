@@ -4,7 +4,7 @@ from tqdm import tqdm
 from pathlib import Path
 from typing import Optional
 
-from research.disassemble_python import MalwiObject, triage
+from research.malwi_object import MalwiObject, triage
 from common.messaging import (
     configure_messaging,
     info,

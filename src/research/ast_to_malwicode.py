@@ -387,6 +387,33 @@ class CodeObject:
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
 
+    def get_tokens(self, mapped: bool = True) -> List[str]:
+        """
+        Get list of tokens from the bytecode instructions.
+
+        Args:
+            mapped: Whether to apply special token mapping
+
+        Returns:
+            List of token strings
+        """
+        tokens = []
+
+        # Add file targeting warning if applicable
+        if Path(self.path).name in COMMON_TARGET_FILES.get(self.language, []):
+            tokens.append(SpecialCases.TARGETED_FILE.value)
+
+        # Extract tokens from each instruction
+        for instruction in self.byte_code:
+            instruction_str = instruction.to_string(mapped=mapped, for_hashing=False)
+            # Split instruction into opcode and argument tokens
+            parts = instruction_str.split(" ", 1)
+            tokens.append(parts[0].lower())  # Convert opcode to lowercase
+            if len(parts) > 1 and parts[1]:
+                tokens.append(parts[1])
+
+        return tokens
+
 
 def emit(opcode: "OpCode", arg: Any = None, language: str = "python") -> Instruction:
     """Helper function to create Instruction objects."""

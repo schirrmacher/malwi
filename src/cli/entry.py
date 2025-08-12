@@ -6,7 +6,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
-from research.disassemble_python import (
+from research.malwi_object import (
     MalwiObject,
     process_files,
     MalwiReport,

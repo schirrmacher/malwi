@@ -9,7 +9,7 @@ import hashlib
 from pathlib import Path
 from typing import List, Optional, Set
 
-from research.disassemble_python import MalwiObject, process_files
+from research.malwi_object import MalwiObject, process_files
 from common.messaging import (
     configure_messaging,
     info,
