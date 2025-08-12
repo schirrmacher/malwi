@@ -28,7 +28,6 @@ def test_process_files_api(tmp_path):
         input_path=test_file,
         accepted_extensions=["py"],
         predict=False,  # Disable ML to avoid model dependencies
-        retrieve_source_code=False,
         silent=True,
     )
 

@@ -38,9 +38,7 @@ def run_batch_scan(child_folder: Path, args) -> dict:
             input_path=child_folder,
             accepted_extensions=args.extensions,
             predict=True,
-            retrieve_source_code=not args.no_snippets,
             silent=True,  # Silent for individual folder processing in batch mode
-            triaging_type=None,
             malicious_threshold=args.threshold,
         )
 
@@ -214,14 +212,6 @@ def main():
         help="Suppress logging output and progress bar.",
     )
 
-    speed_group = parser.add_argument_group("Efficiency")
-    speed_group.add_argument(
-        "--no-snippets",
-        action="store_false",
-        help="Do not add code snippets of findings in the output to increase performance.",
-        default=True,
-    )
-
     developer_group = parser.add_argument_group("Developer Options")
 
     developer_group.add_argument(
@@ -238,27 +228,8 @@ def main():
         help="Specify the DistilBert model path",
         default=None,
     )
-    triage_group = developer_group.add_mutually_exclusive_group()
-
-    triage_group.add_argument(
-        "--triage",
-        action="store_true",
-        help="Enable manual triage mode (incompatible with --batch).",
-    )
-
-    triage_group.add_argument(
-        "--triage-ollama",
-        action="store_true",
-        help="Enable Ollama triage mode (incompatible with --batch).",
-    )
 
     args = parser.parse_args()
-
-    # Validate incompatible flag combinations
-    if args.batch and (args.triage or args.triage_ollama):
-        parser.error(
-            "Triage modes (--triage, --triage-ollama) are incompatible with --batch mode"
-        )
 
     # Configure unified messaging system
     configure_messaging(quiet=args.quiet)
@@ -296,19 +267,12 @@ def main():
     except Exception as e:
         model_warning("ML", e)
 
-    triaging_type = None
-    if args.triage:
-        triaging_type = "manual"
-    elif args.triage_ollama:
-        triaging_type = "ollama"
-
     report: MalwiReport = process_files(
         input_path=input_path,
         accepted_extensions=args.extensions,
         predict=True,  # Enable prediction for malwi scanner
-        retrieve_source_code=args.no_snippets,
         silent=args.quiet,
-        triaging_type=triaging_type,
+        triaging_type=None,
         malicious_threshold=args.threshold,
     )
 

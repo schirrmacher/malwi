@@ -240,11 +240,8 @@ class TestBatchMode:
         args.threshold = 0.7
         args.extensions = ["py"]
         args.quiet = True
-        args.no_snippets = True
         args.model_path = None
         args.tokenizer_path = None
-        args.triage = False
-        args.triage_ollama = False
 
         with patch("cli.entry.path_error") as mock_path_error:
             process_batch_mode(test_file, args)
@@ -359,11 +356,8 @@ class TestBatchMode:
         args.threshold = 0.7
         args.extensions = ["py"]
         args.quiet = True
-        args.no_snippets = True
         args.model_path = None
         args.tokenizer_path = None
-        args.triage = False
-        args.triage_ollama = False
 
         # Mock the process_files function and report
         mock_report = MagicMock()
@@ -378,9 +372,7 @@ class TestBatchMode:
                     input_path=test_folder,
                     accepted_extensions=["py"],
                     predict=True,
-                    retrieve_source_code=False,  # no_snippets=True means retrieve_source_code=False
                     silent=True,
-                    triaging_type=None,
                     malicious_threshold=0.7,
                 )
 
@@ -404,11 +396,8 @@ class TestBatchMode:
         args.threshold = 0.7
         args.extensions = ["py"]
         args.quiet = True
-        args.no_snippets = True
         args.model_path = None
         args.tokenizer_path = None
-        args.triage = False
-        args.triage_ollama = False
 
         # Mock process_files to raise exception
         with patch("cli.entry.process_files", side_effect=Exception("Test error")):
@@ -438,11 +427,8 @@ class TestBatchMode:
             args.threshold = 0.7
             args.extensions = ["py"]
             args.quiet = True
-            args.no_snippets = True
             args.model_path = None
             args.tokenizer_path = None
-            args.triage = False
-            args.triage_ollama = False
 
             # Mock report with the appropriate method
             mock_report = MagicMock()
@@ -526,11 +512,8 @@ class TestBatchMode:
         args.threshold = 0.7
         args.extensions = ["py"]
         args.quiet = True
-        args.no_snippets = True
         args.model_path = None
         args.tokenizer_path = None
-        args.triage = False
-        args.triage_ollama = False
 
         with patch("cli.entry.Path.cwd", return_value=tmp_path):
             result = run_batch_scan(test_folder, args)

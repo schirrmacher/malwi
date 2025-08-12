@@ -6,13 +6,11 @@ import yaml
 import json
 import time
 import hashlib
-import questionary
 from datetime import datetime
 
 from tqdm import tqdm
 from pathlib import Path
 from dataclasses import dataclass, field
-from ollama import ChatResponse, chat
 from typing import List, Tuple, Optional, Any, Dict
 
 from research.mapping import (
@@ -111,7 +109,6 @@ def disassemble_file_ast(
 def process_single_file(
     file_path: Path,
     predict: bool = True,
-    retrieve_source_code: bool = True,
     maliciousness_threshold: Optional[float] = None,
 ) -> Optional[Tuple[List["MalwiObject"], List["MalwiObject"]]]:
     try:
@@ -144,9 +141,6 @@ def process_single_file(
                     and obj.maliciousness > maliciousness_threshold
                 ):
                     malicious_objects.append(obj)
-
-            if retrieve_source_code:
-                obj.retrieve_source_code()
 
         return all_objects, malicious_objects
 
@@ -420,11 +414,8 @@ def process_files(
     input_path: Path,
     accepted_extensions: Optional[List[str]] = None,
     predict: bool = False,
-    retrieve_source_code: bool = False,
     silent: bool = False,
-    triaging_type: Optional[str] = None,
     malicious_threshold: float = 0.7,
-    llm_api_key: Optional[str] = None,
 ) -> MalwiReport:
     # Track timing and timestamp
     start_time = time.time()
@@ -488,21 +479,11 @@ def process_files(
             file_all_objects, file_malicious_objects = process_single_file(
                 file_path,
                 predict=predict,
-                retrieve_source_code=retrieve_source_code,
                 maliciousness_threshold=malicious_threshold,
             )
             all_objects.extend(file_all_objects)
             malicious_objects.extend(file_malicious_objects)
             files_processed_count += 1
-
-            if triaging_type:
-                triage(
-                    file_all_objects,
-                    out_path="triaging",
-                    malicious_threshold=malicious_threshold,
-                    triaging_type=triaging_type,
-                    llm_api_key=llm_api_key,
-                )
 
         except Exception as e:
             if not silent:
@@ -552,183 +533,6 @@ def process_files(
         start=start_timestamp,
         duration=duration,
     )
-
-
-def save_yaml_report(obj: "MalwiObject", path: str, code_hash: str) -> None:
-    try:
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(obj.to_yaml())
-        success(f"Saved data for hash {code_hash} to {path}")
-    except IOError as e:
-        error(f"Failed to write YAML file {path}: {e}")
-    except Exception as e:
-        error(f"Failed to save YAML data for hash {code_hash}: {e}")
-
-
-def manual_triage(
-    obj: "MalwiObject", code_hash: str, benign_path: str, malicious_path: str
-) -> None:
-    triage_result: Optional[str] = questionary.select(
-        f"Is the following code malicious?\n\n# Original Maliciousness: {obj.maliciousness}\n# {obj.file_path}\n\n{obj.code}\n\n{obj.to_token_string()}",
-        use_shortcuts=True,
-        multiline=True,
-        choices=["yes", "no", "tokens", "skip", "exit"],
-    ).ask()
-
-    if triage_result == "yes":
-        obj.maliciousness = 1.0
-        save_yaml_report(obj, malicious_path, code_hash)
-    elif triage_result == "no":
-        obj.maliciousness = 0.0
-        save_yaml_report(obj, benign_path, code_hash)
-    elif triage_result == "skip":
-        debug(f"Skipping sample {code_hash}...")
-    elif triage_result == "exit" or triage_result is None:
-        debug("Exiting triage process.")
-        exit(0)
-    elif triage_result == "tokens" or triage_result is None:
-        triage_result: Optional[str] = questionary.select(
-            obj.to_token_string(),
-            choices=["proceed", "exit"],
-        ).ask()
-        if triage_result == "proceed" or triage_result is None:
-            manual_triage(
-                obj=obj,
-                code_hash=code_hash,
-                benign_path=benign_path,
-                malicious_path=malicious_path,
-            )
-        elif triage_result == "exit":
-            debug("Exiting triage process.")
-            exit(0)
-    else:
-        warning(f"Unknown triage result '{triage_result}', skipping sample {code_hash}")
-
-
-def auto_triage(
-    obj: "MalwiObject",
-    code_hash: str,
-    path: str,
-) -> None:
-    save_yaml_report(obj, path, code_hash)
-
-
-def ollama_triage(
-    obj: "MalwiObject",
-    code_hash: str,
-    benign_path: str,
-    malicious_path: str,
-    prompt: str,
-    model: str = "gemma3",
-) -> None:
-    try:
-        response: ChatResponse = chat(
-            model=model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-        )
-
-        result_text = response.message.content
-
-        if "yes" in result_text:
-            obj.maliciousness = 1.0
-            save_yaml_report(obj, malicious_path, code_hash)
-            success("Code categorized as malicious")
-        elif "no" in result_text:
-            obj.maliciousness = 0.0
-            save_yaml_report(obj, benign_path, code_hash)
-            success("Code categorized as benign")
-        else:
-            warning(f"Unclear LLM response for {code_hash}: {result_text}, skipping")
-
-    except Exception as e:
-        error_message = str(e)
-        error(f"Failed to authenticate with LLM service: {error_message}")
-        sys.exit(1)
-
-
-def triage(
-    all_objects: List["MalwiObject"],
-    out_path: str,
-    malicious_threshold: float = 0.7,
-    grep_string: str = None,
-    max_tokens: int = 0,
-    triaging_type: str = "manual",
-    auto_triaging: Optional[str] = None,
-    llm_api_key: Optional[str] = None,
-    llm_prompt: Optional[str] = None,
-    llm_model: str = "gemma3",
-):
-    benign_dir = os.path.join(out_path, "benign")
-    malicious_dir = os.path.join(out_path, "malicious")
-
-    os.makedirs(benign_dir, exist_ok=True)
-    os.makedirs(malicious_dir, exist_ok=True)
-
-    for obj in all_objects:
-        if obj.maliciousness < malicious_threshold:
-            continue
-
-        obj.retrieve_source_code()
-
-        if not hasattr(obj, "code") or not obj.code:
-            debug("Object has no source code, skipping...")
-            continue
-
-        if grep_string and not (grep_string in obj.name or grep_string in obj.code):
-            continue
-
-        if max_tokens > 0 and len(obj.to_tokens()) >= max_tokens:
-            continue
-
-        code_hash = hashlib.sha1(obj.code.encode("utf-8", errors="replace")).hexdigest()
-
-        benign_path = os.path.join(benign_dir, f"{code_hash}.yaml")
-        malicious_path = os.path.join(malicious_dir, f"{code_hash}.yaml")
-
-        if os.path.exists(benign_path) or os.path.exists(malicious_path):
-            debug(f"Hash {code_hash} already exists, skipping...")
-            continue
-
-        prompt = llm_prompt
-        if not prompt:
-            prompt = f"""You are a professional security code reviewer.
-Please analyze the following code sample and determine whether it exhibits any signs of malicious behavior.
-Examples of malicious behavior include (but are not limited to):
-- Data exfiltration attempts
-- Code obfuscation or dynamic code execution (e.g., eval, exec, reflection)
-- Unauthorized access or privilege escalation
-- Suspicious network, file system, or subprocess activity
-- Malicious or hidden behavior during installation or setup
-- Modification of system files, environment variables, or dependencies
-- Installation of unnecessary or unverified packages, especially from untrusted sources
-- Use or misuse of cryptographic functions (e.g., weak algorithms, hardcoded secrets)
-- Hardcoded, exposed, or improperly handled cryptographic key material or credentials
-Answer 'yes' or 'no'.\n\n```{obj.code}\n```"""
-        else:
-            prompt = f"{prompt}\n\n```{obj.code}\n```"
-
-        if triaging_type == "ollama":
-            ollama_triage(
-                obj=obj,
-                code_hash=code_hash,
-                benign_path=benign_path,
-                malicious_path=malicious_path,
-                prompt=prompt,
-                model=llm_model,
-            )
-        elif triaging_type == "auto":
-            auto_triage(
-                obj,
-                code_hash,
-                benign_path if auto_triaging == "benign" else malicious_path,
-            )
-        else:
-            manual_triage(obj, code_hash, benign_path, malicious_path)
 
 
 class LiteralStr(str):
