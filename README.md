@@ -87,24 +87,12 @@ TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_c
 This creates a list with malicious code objects. However malicious code might be split into chunks and spread across
 a package. This is why the next layers are needed.
 
-### 4. Create statistics about malicious activities
+### 4. Take final decision
+
+The DistilBERT model makes the final maliciousness decision based on the token patterns.
 
 ```
-- filesystem access: 5
-- fs linking: 5
-- encoding decoding: 3
-- network http request: 3
-- process management: 2
-- deserialization: 1
-- package installation execution: 1
-```
-
-### 5. Take final decision
-
-An SVM layer takes statistics as input and decides if all findings combined are malicious.
-
-```
-=> Maliciousness: 0.96
+=> Maliciousness: 0.92
 ```
 
 ## Benchmarks?
@@ -120,13 +108,6 @@ An SVM layer takes statistics as input and decides if all findings combined are 
 | Hardware                   | NVIDIA RTX 4090               |
 | Epochs                     | 3                             |
 
-### SVM Layer
-
-| Metric                     | Value                         |
-|----------------------------|-------------------------------|
-| F1 Score                   | 0.96                          |
-| Recall                     | 0.95                          |
-| Precision                  | 0.95                          |
 
 ## Limitations
 
@@ -157,16 +138,13 @@ cmds/download_and_preprocess_distilbert.sh
 
 # Complete pipelines
 cmds/preprocess_and_train_distilbert.sh  # Data → Tokenizer → DistilBERT
-cmds/preprocess_and_train_svm.sh         # Data → SVM training
 
 # Individual data preprocessing
 cmds/preprocess_data.sh                  # Process data for ML training
-cmds/preprocess_svm.sh                   # Process data for SVM training
 
 # Individual model training
 cmds/train_tokenizer.sh                  # Train custom tokenizer
 cmds/train_distilbert.sh                 # Train DistilBERT model
-cmds/train_svm_layer.sh                  # Train SVM classifier
 ```
 
 ### Triage

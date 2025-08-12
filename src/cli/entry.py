@@ -87,7 +87,6 @@ def process_batch_mode(input_path: Path, args) -> None:
         MalwiObject.load_models_into_memory(
             distilbert_model_path=args.model_path,
             tokenizer_path=args.tokenizer_path,
-            svm_layer_path=args.svm_path,
         )
     except Exception as e:
         model_warning("ML", e)
@@ -239,13 +238,6 @@ def main():
         help="Specify the DistilBert model path",
         default=None,
     )
-    developer_group.add_argument(
-        "--svm-path",
-        "-svm",
-        metavar="PATH",
-        help="Specify the SVM layer model path",
-        default=None,
-    )
     triage_group = developer_group.add_mutually_exclusive_group()
 
     triage_group.add_argument(
@@ -300,7 +292,6 @@ def main():
         MalwiObject.load_models_into_memory(
             distilbert_model_path=args.model_path,
             tokenizer_path=args.tokenizer_path,
-            svm_layer_path=args.svm_path,
         )
     except Exception as e:
         model_warning("ML", e)

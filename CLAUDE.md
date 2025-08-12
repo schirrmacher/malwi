@@ -4,13 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-malwi is an AI-powered Python malware scanner that detects zero-day vulnerabilities without requiring internet access. It uses a 5-step pipeline:
+malwi is an AI-powered Python malware scanner that detects zero-day vulnerabilities without requiring internet access. It uses a 3-step pipeline:
 
-1. **Bytecode Compilation**: Python files → bytecode
-2. **Token Mapping**: Bytecode → tokens via custom mappings
-3. **DistilBERT Analysis**: Tokens → maliciousness scores
-4. **Statistical Aggregation**: Scores → activity statistics (e.g., DYNAMIC_CODE_EXECUTION, FILESYSTEM_ACCESS)
-5. **SVM Classification**: Statistics → final maliciousness decision
+1. **AST Compilation**: Python/JavaScript files → language-independent bytecode via AST parsing
+2. **Token Mapping**: Bytecode → tokens via custom mappings  
+3. **DistilBERT Analysis**: Tokens → maliciousness scores and final classification
 
 ## Key Commands
 
@@ -35,9 +33,6 @@ uv run ruff format .
 ```bash
 # Full DistilBERT training pipeline
 ./cmds/preprocess_and_train_distilbert.sh
-
-# Full SVM training pipeline
-./cmds/preprocess_and_train_svm.sh
 ```
 
 **Regenerate Test Data:**
@@ -60,14 +55,15 @@ uv run python util/regenerate_test_data.py
 ## Architecture Notes
 
 - **Entry Point**: `src/cli/entry.py` - CLI interface and orchestration
-- **Core Pipeline**: `src/research/disassemble_python.py` → `mapping.py` → `predict_distilbert.py` → `predict_svm_layer.py`
+- **Core Pipeline**: `src/research/malwi_object.py` → `ast_to_malwicode.py` → `predict_distilbert.py`
+- **AST Compilation**: `src/research/ast_to_malwicode.py` - Language-independent bytecode generation
 - **Mapping System**: JSON configs in `src/research/syntax_mapping/` define bytecode-to-token mappings
-- **Models**: Pre-trained models stored in `malwi-models/`
+- **Models**: Pre-trained DistilBERT model stored in `malwi-models/`
 - **Training Data**: Requires `malwi-samples` repository cloned in parent directory
 
 ## Important Considerations
 
-- **Python Version Sensitivity**: Bytecode compilation is Python version-dependent, affecting model performance across versions
+- **Language Support**: Supports both Python and JavaScript files through language-independent AST compilation
 - **Output Formats**: Supports demo, markdown, json, yaml formats via `--format` flag
 - **Triage Options**: Manual (`--triage`) or automated with Ollama (`--triage-ollama`)
-- **Performance**: F1=0.96, Recall=0.95, Precision≥0.95 for both models
+- **Performance**: F1=0.96, Recall=0.95, Precision≥0.95 for DistilBERT model

@@ -28,7 +28,6 @@ from research.predict_distilbert import (
     initialize_models as initialize_distilbert_models,
     get_model_version_string,
 )
-from research.predict_svm_layer import initialize_svm_model, predict as svm_predict
 from common.messaging import (
     get_message_manager,
     file_error,
@@ -42,18 +41,12 @@ from malwi._version import __version__
 
 from common.files import read_json_from_file
 
-CONFIDENCE_MALICIOUSNESS_THRESHOLD = 0.8
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
 SPECIAL_TOKENS: Dict[str, Dict] = read_json_from_file(
     SCRIPT_DIR / "syntax_mapping" / "function_mapping.json"
 )
-
-
-class MetaAttributes(Enum):
-    # Additional attributes for SVM layer training
-    MALICIOUS_COUNT = "MALICIOUS_COUNT"
 
 
 def disassemble_file_ast(
@@ -402,7 +395,6 @@ def process_files(
     silent: bool = False,
     triaging_type: Optional[str] = None,
     malicious_threshold: float = 0.7,
-    predict_svm: bool = True,
     llm_api_key: Optional[str] = None,
 ) -> MalwiReport:
     # Track timing and timestamp
@@ -487,67 +479,27 @@ def process_files(
             if not silent:
                 file_error(file_path, e, "critical processing")
 
-    if len(malicious_objects) == 0:
-        duration = time.time() - start_time
-        return MalwiReport(
-            all_objects=all_objects,
-            malicious_objects=[],
-            threshold=malicious_threshold,
-            all_files=all_files,
-            skipped_files=skipped_files,
-            processed_files=files_processed_count,
-            malicious=False,
-            confidence=1.0,
-            activities=[],
-            input=str(input_path),
-            start=start_timestamp,
-            duration=duration,
-        )
+    # Determine maliciousness based on DistilBERT predictions only
+    malicious = len(malicious_objects) > 0
 
-    if not predict_svm:
-        duration = time.time() - start_time
-        return MalwiReport(
-            all_objects=all_objects,
-            malicious_objects=malicious_objects,
-            threshold=malicious_threshold,
-            all_files=all_files,
-            skipped_files=skipped_files,
-            processed_files=files_processed_count,
-            malicious=False,
-            confidence=0.0,
-            activities=[],
-            input=str(input_path),
-            start=start_timestamp,
-            duration=duration,
-        )
+    # Calculate confidence based on average maliciousness score of detected objects
+    if malicious_objects:
+        confidence = sum(
+            obj.maliciousness for obj in malicious_objects if obj.maliciousness
+        ) / len(malicious_objects)
+    else:
+        confidence = 1.0  # High confidence for clean files
 
-    token_stats = MalwiObject.collect_token_stats(
-        malicious_objects,
-        file_count=len(all_files),
-        malicious_count=len(malicious_objects),
-    )
-
-    # Filter for functions only since those are mainly interesting when investigating
-    filter_values = set(FUNCTION_MAPPING.get("python", {}).values())
-    top_activities = sorted(
-        ((k, v) for k, v in token_stats.items() if v > 0 and k in filter_values),
-        key=lambda item: item[1],
-        reverse=True,
-    )
-    top_activities_string = (f"{k}: {v}" for k, v in top_activities)
-
-    prediction = svm_predict(token_stats)
-
-    malicious = prediction["malicious"]
-    confidence = (
-        prediction["confidence_malicious"]
-        if malicious
-        else prediction["confidence_benign"]
-    )
-
-    if not malicious and confidence < CONFIDENCE_MALICIOUSNESS_THRESHOLD:
-        malicious = True
-        confidence = prediction["confidence_malicious"]
+    # Generate activity list from malicious objects for reporting
+    activities = []
+    if malicious_objects:
+        # Extract function tokens from malicious objects for activity reporting
+        function_tokens = set()
+        filter_values = set(FUNCTION_MAPPING.get("python", {}).values())
+        for obj in malicious_objects:
+            tokens = obj.to_tokens()
+            function_tokens.update(token for token in tokens if token in filter_values)
+        activities = list(function_tokens)
 
     duration = time.time() - start_time
     return MalwiReport(
@@ -559,7 +511,7 @@ def process_files(
         processed_files=files_processed_count,
         malicious=malicious,
         confidence=confidence,
-        activities=top_activities_string,
+        activities=activities,
         input=str(input_path),
         start=start_timestamp,
         duration=duration,
@@ -786,79 +738,20 @@ class MalwiObject:
         self.code = None
 
     @classmethod
-    def collect_token_stats(
-        cls,
-        objects: List["MalwiObject"],
-        file_count: int = 0,
-        malicious_count: int = 0,
-    ) -> dict[str, int]:
-        result: Counter = Counter()
-
-        for obj in objects:
-            stats = obj.calculate_token_stats()
-            result.update(stats)
-
-        # 1. Ensure all possible tokens are present in the result, initializing to 0 if not observed.
-        # This resolves the "empty string" issue by guaranteeing a 0 for unobserved features.
-        for token in cls.all_tokens():
-            if token not in result:
-                result[token] = 0
-
-        # 2. Explicitly set MetaAttributes that are passed as arguments or calculated.
-        # This fixes the FILE_COUNT bug.
-        result[MetaAttributes.MALICIOUS_COUNT.value] = malicious_count
-
-        return dict(result)
-
-    @classmethod
-    def create_decision_tokens(
-        cls,
-        objects: List["MalwiObject"],
-        file_count: int = 0,
-        malicious_count: int = 0,
-    ) -> str:
-        """
-        Create a string of tokens ordered by their count (high to low) for tokens with non-zero values.
-
-        Args:
-            objects: List of MalwiObject instances to analyze
-            file_count: Number of files processed
-            malicious_count: Number of malicious objects found
-
-        Returns:
-            A space-separated string of tokens ordered by their count
-        """
-        # Get token statistics
-        token_stats = cls.collect_token_stats(objects, file_count, malicious_count)
-
-        # Filter tokens with value greater than zero and sort by count (high to low)
-        non_zero_tokens = [
-            (token, count) for token, count in token_stats.items() if count > 0
-        ]
-        sorted_tokens = sorted(non_zero_tokens, key=lambda x: x[1], reverse=True)
-
-        # Create string from ordered tokens
-        ordered_tokens = [token for token, count in sorted_tokens]
-        return " ".join(ordered_tokens)
-
-    @classmethod
     def load_models_into_memory(
         cls,
         distilbert_model_path: Optional[str] = None,
         tokenizer_path: Optional[str] = None,
-        svm_layer_path: Optional[str] = None,
     ) -> None:
         initialize_distilbert_models(
             model_path=distilbert_model_path, tokenizer_path=tokenizer_path
         )
-        initialize_svm_model(svm_layer_path)
 
     @classmethod
     def all_tokens(cls, language: str = "python") -> List[str]:
         """Get all possible tokens for a language."""
         tokens = set()
         tokens.update([member.value for member in SpecialCases])
-        tokens.update([member.value for member in MetaAttributes])
         tokens.update(FUNCTION_MAPPING.get(language, {}).values())
         tokens.update(IMPORT_MAPPING.get(language, {}).values())
         unique = list(tokens)
@@ -879,14 +772,6 @@ class MalwiObject:
             all_token_parts.append(SpecialCases.MALFORMED_FILE.value)
 
         return all_token_parts
-
-    def calculate_token_stats(self) -> dict:
-        token_counts = Counter(self.to_tokens())
-        stats = {
-            token: token_counts.get(token, 0)
-            for token in self.all_tokens(self.language)
-        }
-        return stats
 
     def to_token_string(self, map_special_tokens: bool = True) -> str:
         return " ".join(self.to_tokens(map_special_tokens=map_special_tokens))

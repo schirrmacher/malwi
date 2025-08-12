@@ -243,7 +243,6 @@ class TestBatchMode:
         args.no_snippets = True
         args.model_path = None
         args.tokenizer_path = None
-        args.svm_path = None
         args.triage = False
         args.triage_ollama = False
 
@@ -363,7 +362,6 @@ class TestBatchMode:
         args.no_snippets = True
         args.model_path = None
         args.tokenizer_path = None
-        args.svm_path = None
         args.triage = False
         args.triage_ollama = False
 
@@ -409,7 +407,6 @@ class TestBatchMode:
         args.no_snippets = True
         args.model_path = None
         args.tokenizer_path = None
-        args.svm_path = None
         args.triage = False
         args.triage_ollama = False
 
@@ -444,7 +441,6 @@ class TestBatchMode:
             args.no_snippets = True
             args.model_path = None
             args.tokenizer_path = None
-            args.svm_path = None
             args.triage = False
             args.triage_ollama = False
 
@@ -533,7 +529,6 @@ class TestBatchMode:
         args.no_snippets = True
         args.model_path = None
         args.tokenizer_path = None
-        args.svm_path = None
         args.triage = False
         args.triage_ollama = False
 

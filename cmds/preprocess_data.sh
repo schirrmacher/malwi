@@ -41,6 +41,5 @@ echo
 echo "📖 Next steps:"
 echo "   • Run train_tokenizer.sh to create custom tokenizer"
 echo "   • Run train_distilbert.sh for DistilBERT model training"
-echo "   • Run train_svm_layer.sh for SVM model training"
 echo "   • Or run preprocess_and_train_distilbert.sh for complete pipeline"
 echo
