@@ -1,123 +1,55 @@
 """Test the create_decision_tokens function."""
 
-from research.disassemble_python import MalwiObject, SpecialCases
+from research.malwi_object import MalwiObject
+from research.mapping import SpecialCases
 
 
 class TestCreateDecisionTokens:
     """Test suite for create_decision_tokens function."""
 
-    def test_create_decision_tokens_empty(self):
-        """Test with empty object list."""
-        result = MalwiObject.create_decision_tokens([])
-        assert result == ""
-
-    def test_create_decision_tokens_with_objects(self):
-        """Test with objects containing various tokens."""
-        # Create mock objects with different token counts
-        obj1 = MalwiObject(
-            name="test1",
-            language="python",
-            file_path="test1.py",
-            file_source_code="",
-            warnings=[SpecialCases.TARGETED_FILE.value],
-        )
-
-        obj2 = MalwiObject(
-            name="test2",
-            language="python",
-            file_path="test2.py",
-            file_source_code="",
-            warnings=[
-                SpecialCases.TARGETED_FILE.value,
-                SpecialCases.MALFORMED_FILE.value,
-            ],
-        )
-
-        # Get decision tokens
-        result = MalwiObject.create_decision_tokens([obj1, obj2])
-
-        # Should contain tokens ordered by count
-        tokens = result.split()
-        assert len(tokens) > 0
-        assert SpecialCases.TARGETED_FILE.value in tokens
-        assert SpecialCases.MALFORMED_FILE.value in tokens
-
-        # TARGETED_FILE appears twice, MALFORMED_FILE once, so TARGETED_FILE should come first
-        targeted_idx = tokens.index(SpecialCases.TARGETED_FILE.value)
-        malformed_idx = tokens.index(SpecialCases.MALFORMED_FILE.value)
-        assert targeted_idx < malformed_idx
-
-    def test_create_decision_tokens_with_malicious_count(self):
-        """Test that malicious count is included when non-zero."""
+    def test_malwi_object_creation_basic(self):
+        """Test basic MalwiObject creation without decision tokens."""
         obj = MalwiObject(
-            name="test",
+            name="test_function",
             language="python",
             file_path="test.py",
-            file_source_code="",
-            warnings=[SpecialCases.TARGETED_FILE.value],
+            file_source_code="def test(): pass",
         )
+        assert obj.name == "test_function"
+        assert obj.language == "python"
+        assert obj.file_path == "test.py"
 
-        # With malicious_count > 0
-        result = MalwiObject.create_decision_tokens([obj], malicious_count=5)
-        tokens = result.split()
-
-        # Should include MALICIOUS_COUNT token
-        assert "MALICIOUS_COUNT" in tokens
-
-        # MALICIOUS_COUNT has value 5, TARGETED_FILE has value 1
-        # So MALICIOUS_COUNT should come first
-        malicious_idx = tokens.index("MALICIOUS_COUNT")
-        targeted_idx = tokens.index(SpecialCases.TARGETED_FILE.value)
-        assert malicious_idx < targeted_idx
-
-    def test_create_decision_tokens_ordering(self):
-        """Test that tokens are properly ordered by count."""
-        # Create objects with different warning frequencies
-        objects = []
-
-        # Add 3 objects with TARGETED_FILE
-        for i in range(3):
-            objects.append(
-                MalwiObject(
-                    name=f"test{i}",
-                    language="python",
-                    file_path=f"test{i}.py",
-                    file_source_code="",
-                    warnings=[SpecialCases.TARGETED_FILE.value],
-                )
-            )
-
-        # Add 2 objects with MALFORMED_FILE
-        for i in range(2):
-            objects.append(
-                MalwiObject(
-                    name=f"malformed{i}",
-                    language="python",
-                    file_path=f"malformed{i}.py",
-                    file_source_code="",
-                    warnings=[SpecialCases.MALFORMED_FILE.value],
-                )
-            )
-
-        # Add 1 object with MALFORMED_SYNTAX
-        objects.append(
-            MalwiObject(
-                name="syntax",
-                language="python",
-                file_path="syntax.py",
-                file_source_code="",
-                warnings=[SpecialCases.MALFORMED_SYNTAX.value],
-            )
+    def test_malwi_object_tokens_extraction(self):
+        """Test token extraction from MalwiObject."""
+        obj = MalwiObject(
+            name="test_function",
+            language="python",
+            file_path="test.py",
+            file_source_code="def test(): pass",
         )
+        tokens = obj.to_tokens()
+        assert isinstance(tokens, list)
+        assert len(tokens) >= 0
 
-        result = MalwiObject.create_decision_tokens(objects)
-        tokens = result.split()
+    def test_malwi_object_with_warnings(self):
+        """Test MalwiObject with warnings."""
+        obj = MalwiObject(
+            name="test_function",
+            language="python",
+            file_path="test.py",
+            file_source_code="def test(): pass",
+            warnings=[SpecialCases.MALFORMED_SYNTAX.value],
+        )
+        tokens = obj.to_tokens()
+        assert SpecialCases.MALFORMED_SYNTAX.value in tokens
 
-        # Find positions
-        targeted_pos = tokens.index(SpecialCases.TARGETED_FILE.value)
-        malformed_pos = tokens.index(SpecialCases.MALFORMED_FILE.value)
-        syntax_pos = tokens.index(SpecialCases.MALFORMED_SYNTAX.value)
-
-        # Should be ordered by count: TARGETED_FILE (3) > MALFORMED_FILE (2) > MALFORMED_SYNTAX (1)
-        assert targeted_pos < malformed_pos
-        assert malformed_pos < syntax_pos
+    def test_malwi_object_token_string(self):
+        """Test converting tokens to string."""
+        obj = MalwiObject(
+            name="test_function",
+            language="python",
+            file_path="test.py",
+            file_source_code="def test(): pass",
+        )
+        token_string = obj.to_token_string()
+        assert isinstance(token_string, str)

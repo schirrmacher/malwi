@@ -1,7 +1,7 @@
 """Test the result field in MalwiReport._generate_report_data()."""
 
 from pathlib import Path
-from research.disassemble_python import MalwiReport, MalwiObject
+from research.malwi_object import MalwiReport, MalwiObject
 
 
 class TestReportResultField:

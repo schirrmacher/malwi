@@ -7,7 +7,7 @@ from typing import List
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from research.disassemble_python import MalwiReport
+from research.malwi_object import MalwiReport
 
 
 @dataclass
@@ -124,17 +124,10 @@ class TestMalwiReport(unittest.TestCase):
             data["details"][0]["contents"][0]["name"], self.malicious_obj.name
         )
 
-    def test_to_report_csv(self):
-        """Test CSV report generation."""
-        string_io = io.StringIO()
-        self.malicious_report.to_report_csv(string_io)
-        # FIX: Use splitlines() to robustly handle line endings (\n or \r\n).
-        output = string_io.getvalue().strip().splitlines()
-
-        self.assertEqual(len(output), 3)
-        self.assertEqual(output[0], "tokens,hash,filepath")
-        self.assertIn("TOKEN_EVIL_FUNC,hash_for_evil_func,/tmp/malware.py", output[1])
-        self.assertIn("TOKEN_SAFE_FUNC,hash_for_safe_func,/tmp/script.py", output[2])
+    def test_to_report_csv_not_available(self):
+        """Test that CSV report generation is no longer available."""
+        # CSV generation has been removed in favor of other formats
+        assert not hasattr(self.malicious_report, "to_report_csv")
 
     def test_to_report_json(self):
         """Test JSON report generation."""
