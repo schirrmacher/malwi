@@ -189,7 +189,7 @@ POP_EXCEPT None
 RERAISE 1
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=MyContext_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/control_flow/test_control_flow.py, location=(83, 87))
+LOAD_CONST CodeObject(name=MyContext_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/control_flow/test_control_flow.py, location=(84, 88))
 MAKE_FUNCTION 0
 LOAD_CONST MyContext
 CALL 2
@@ -251,7 +251,7 @@ LOAD_CONST 1.0
 LOAD_CONST 1.0
 COMPARE_OP None
 BINARY_OPERATION None
-LOAD_CONST CodeObject(name=empty_func_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/control_flow/test_control_flow.py, location=(101, 101))
+LOAD_CONST CodeObject(name=empty_func_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/control_flow/test_control_flow.py, location=(104, 104))
 MAKE_FUNCTION 0
 STORE_NAME empty_func
 PUSH_NULL None

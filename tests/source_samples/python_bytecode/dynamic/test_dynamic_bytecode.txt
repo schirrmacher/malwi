@@ -83,15 +83,15 @@ COMPARE_OP None
 POP_TOP None
 LOAD_CONST "global"
 STORE_GLOBAL global_var
-LOAD_CONST CodeObject(name=test_global_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(29, 30))
+LOAD_CONST CodeObject(name=test_global_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(31, 32))
 MAKE_FUNCTION 0
 STORE_NAME test_global
-LOAD_CONST CodeObject(name=outer_ref_2, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(33, 40))
+LOAD_CONST CodeObject(name=outer_ref_2, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(36, 43))
 MAKE_FUNCTION 0
 STORE_NAME outer
 LOAD_CONST "global shadow"
 STORE_GLOBAL shadow_var
-LOAD_CONST CodeObject(name=shadow_test_ref_3, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(46, 59))
+LOAD_CONST CodeObject(name=shadow_test_ref_3, path=/Users/mav/dev/malwi/tests/source_samples/python/dynamic/test_dynamic.py, location=(51, 64))
 MAKE_FUNCTION 0
 STORE_NAME shadow_test
 PUSH_NULL None

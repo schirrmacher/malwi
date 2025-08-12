@@ -422,7 +422,7 @@ RERAISE 0
 COPY 3
 POP_EXCEPT None
 RERAISE 1
-LOAD_CONST CodeObject(name=dynamic_import_test_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/imports/test_imports.py, location=(97, 102))
+LOAD_CONST CodeObject(name=dynamic_import_test_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/imports/test_imports.py, location=(101, 106))
 MAKE_FUNCTION 0
 STORE_NAME dynamic_import_test
 PUSH_NULL None

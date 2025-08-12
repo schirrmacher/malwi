@@ -35,21 +35,21 @@ CALL 0
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=ParentA_ref_3, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(30, 31))
+LOAD_CONST CodeObject(name=ParentA_ref_3, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(32, 33))
 MAKE_FUNCTION 0
 LOAD_CONST ParentA
 CALL 2
 STORE_NAME ParentA
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=ParentB_ref_4, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(34, 35))
+LOAD_CONST CodeObject(name=ParentB_ref_4, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(37, 38))
 MAKE_FUNCTION 0
 LOAD_CONST ParentB
 CALL 2
 STORE_NAME ParentB
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Child_ref_5, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(38, 39))
+LOAD_CONST CodeObject(name=Child_ref_5, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(42, 43))
 MAKE_FUNCTION 0
 LOAD_CONST Child
 CALL 2
@@ -75,7 +75,7 @@ CALL 0
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Vector_ref_6, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(48, 66))
+LOAD_CONST CodeObject(name=Vector_ref_6, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(54, 72))
 MAKE_FUNCTION 0
 LOAD_CONST Vector
 CALL 2
@@ -112,7 +112,7 @@ BINARY_SUBSCR None
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Circle_ref_9, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(77, 92))
+LOAD_CONST CodeObject(name=Circle_ref_9, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(85, 100))
 MAKE_FUNCTION 0
 LOAD_CONST Circle
 CALL 2
@@ -153,14 +153,14 @@ POP_EXCEPT None
 RERAISE 1
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=MyMeta_ref_10, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(106, 108))
+LOAD_CONST CodeObject(name=MyMeta_ref_10, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(116, 118))
 MAKE_FUNCTION 0
 LOAD_CONST MyMeta
 CALL 2
 STORE_NAME MyMeta
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=MyClassWithMeta_ref_11, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(111, 111))
+LOAD_CONST CodeObject(name=MyClassWithMeta_ref_11, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(122, 122))
 MAKE_FUNCTION 0
 LOAD_CONST MyClassWithMeta
 CALL 2
@@ -318,12 +318,12 @@ STORE_ATTR _radius
 RETURN_VALUE None
 STORE_NAME __init__
 LOAD_NAME property
-LOAD_CONST CodeObject(name=radius_ref_7, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(81, 82))
+LOAD_CONST CodeObject(name=radius_ref_7, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(89, 90))
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME radius
 LOAD_NAME property
-LOAD_CONST CodeObject(name=area_ref_8, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(91, 92))
+LOAD_CONST CodeObject(name=area_ref_8, path=/Users/mav/dev/malwi/tests/source_samples/python/oop/test_oop.py, location=(99, 100))
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME area

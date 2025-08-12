@@ -19,7 +19,7 @@ LOAD_CONST 0o777
 STORE_NAME octal_literal
 LOAD_CONST 0xABC
 STORE_NAME hex_literal
-LOAD_CONST 'hello'
+LOAD_CONST "hello"
 STORE_NAME single_quoted_string
 LOAD_CONST "world"
 STORE_NAME double_quoted_string

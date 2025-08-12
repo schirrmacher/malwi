@@ -38,6 +38,7 @@ class TestSplitSamples:
             "stdlib" if language == "python" else "builtin",
             "dynamic",
             "operators",
+            "strings",
         ]
 
         files = []
@@ -158,6 +159,33 @@ class TestSplitSamples:
         assert "BINARY_OP" in bytecode_str
         assert "BINARY_SUBSCR" in bytecode_str
         assert "STORE_SUBSCR" in bytecode_str
+
+    def test_python_strings_domain(self, python_compiler):
+        """Test Python string operations specifically"""
+        file_path = (
+            Path(__file__).parent / "source_samples/python/strings/test_strings.py"
+        )
+        code_objects = python_compiler.process_file(file_path)
+
+        # Check for string-related opcodes
+        bytecode_str = "\n".join(obj.to_string() for obj in code_objects)
+        assert "LOAD_CONST" in bytecode_str  # String literals
+        assert "FORMAT_VALUE" in bytecode_str  # F-string formatting
+        assert "BUILD_STRING" in bytecode_str  # F-string construction
+        assert "BINARY_OP" in bytecode_str  # String concatenation and operations
+
+    def test_javascript_strings_domain(self, js_compiler):
+        """Test JavaScript string operations specifically"""
+        file_path = (
+            Path(__file__).parent / "source_samples/javascript/strings/test_strings.js"
+        )
+        code_objects = js_compiler.process_file(file_path)
+
+        # Check for string-related opcodes
+        bytecode_str = "\n".join(obj.to_string() for obj in code_objects)
+        assert "LOAD_CONST" in bytecode_str  # String literals
+        assert "BINARY_OP" in bytecode_str  # String operations
+        # Template literals would generate specific bytecode patterns
 
     def test_domain_isolation(self, python_compiler, js_compiler):
         """Test that each domain file is self-contained and doesn't depend on others"""

@@ -8,7 +8,7 @@ LOAD_NAME greet
 LOAD_CONST "World"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=func_with_args_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(11, 11))
+LOAD_CONST CodeObject(name=func_with_args_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(13, 13))
 MAKE_FUNCTION 0
 STORE_NAME func_with_args
 PUSH_NULL None
@@ -39,7 +39,7 @@ LOAD_CONST 3.0
 KW_NAMES ('c', 'b', 'a')
 CALL 3
 POP_TOP None
-LOAD_CONST CodeObject(name=func_with_arbitrary_args_ref_2, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(20, 20))
+LOAD_CONST CodeObject(name=func_with_arbitrary_args_ref_2, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(24, 24))
 MAKE_FUNCTION 0
 STORE_NAME func_with_arbitrary_args
 PUSH_NULL None
@@ -135,7 +135,7 @@ LOAD_CONST 3.0
 LOAD_CONST 4.0
 CALL 2
 POP_TOP None
-LOAD_CONST CodeObject(name=outer_func_ref_5, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(40, 47))
+LOAD_CONST CodeObject(name=outer_func_ref_5, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(46, 53))
 MAKE_FUNCTION 0
 STORE_NAME outer_func
 PUSH_NULL None
@@ -152,21 +152,21 @@ CALL 0
 POP_TOP None
 LOAD_CONST 100.0
 STORE_GLOBAL global_var
-LOAD_CONST CodeObject(name=modify_global_ref_6, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(57, 58))
+LOAD_CONST CodeObject(name=modify_global_ref_6, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(65, 66))
 MAKE_FUNCTION 0
 STORE_NAME modify_global
 PUSH_NULL None
 LOAD_NAME modify_global
 CALL 0
 POP_TOP None
-LOAD_CONST CodeObject(name=outer_ref_7, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(64, 71))
+LOAD_CONST CodeObject(name=outer_ref_7, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(74, 81))
 MAKE_FUNCTION 0
 STORE_NAME outer
-LOAD_CONST CodeObject(name=my_decorator_ref_8, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(75, 78))
+LOAD_CONST CodeObject(name=my_decorator_ref_8, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(86, 90))
 MAKE_FUNCTION 0
 STORE_NAME my_decorator
 LOAD_NAME my_decorator
-LOAD_CONST CodeObject(name=say_whee_ref_9, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(81, 82))
+LOAD_CONST CodeObject(name=say_whee_ref_9, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(94, 95))
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME say_whee
@@ -174,7 +174,7 @@ PUSH_NULL None
 LOAD_NAME say_whee
 CALL 0
 POP_TOP None
-LOAD_CONST CodeObject(name=my_generator_ref_10, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(88, 89))
+LOAD_CONST CodeObject(name=my_generator_ref_10, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(103, 104))
 GENERATOR_FUNCTION 0
 STORE_NAME my_generator
 PUSH_NULL None
@@ -197,7 +197,7 @@ LOAD_NAME next
 LOAD_NAME gen
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=hinted_function_ref_11, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(98, 98))
+LOAD_CONST CodeObject(name=hinted_function_ref_11, path=/Users/mav/dev/malwi/tests/source_samples/python/functions/test_functions.py, location=(115, 115))
 MAKE_FUNCTION 0
 STORE_NAME hinted_function
 PUSH_NULL None

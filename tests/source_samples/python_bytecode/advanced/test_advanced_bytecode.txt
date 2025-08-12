@@ -10,10 +10,10 @@ IMPORT_NAME functools
 IMPORT_FROM wraps
 STORE_NAME wraps
 POP_TOP None
-LOAD_CONST CodeObject(name=my_coroutine_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/advanced/test_advanced.py, location=(8, 9))
+LOAD_CONST CodeObject(name=my_coroutine_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/python/advanced/test_advanced.py, location=(9, 10))
 ASYNC_FUNCTION 0
 STORE_NAME my_coroutine
-LOAD_CONST CodeObject(name=main_async_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/advanced/test_advanced.py, location=(12, 13))
+LOAD_CONST CodeObject(name=main_async_ref_1, path=/Users/mav/dev/malwi/tests/source_samples/python/advanced/test_advanced.py, location=(14, 15))
 ASYNC_FUNCTION 0
 STORE_NAME main_async
 PUSH_NULL None
@@ -221,14 +221,14 @@ LOAD_NAME lst
 LOAD_CONST 1.0
 LOAD_CONST 3.0
 DELETE_SUBSCR None
-LOAD_CONST 'a'
+LOAD_CONST "a"
 LOAD_CONST 1.0
-LOAD_CONST 'b'
+LOAD_CONST "b"
 LOAD_CONST 2.0
 BUILD_MAP 2
 STORE_NAME d
 LOAD_NAME d
-LOAD_CONST 'a'
+LOAD_CONST "a"
 DELETE_SUBSCR None
 LOAD_CONST 0.0
 LOAD_CONST 1.0
