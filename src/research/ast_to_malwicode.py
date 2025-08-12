@@ -278,9 +278,9 @@ class Instruction:
             # COPY duplicates stack values, argument indicates copy depth
             return f"{op_code.name} {argval if argval is not None else '1'}"
         elif op_code == OpCode.KW_NAMES:
-            # Handle keyword argument names tuple - concatenate with underscores
+            # Handle keyword argument names tuple - join with spaces
             if isinstance(arg, tuple):
-                kw_names_str = "_".join(str(name) for name in arg)
+                kw_names_str = " ".join(str(name) for name in arg)
                 return f"{op_code.name} {kw_names_str}"
             else:
                 return f"{op_code.name} {argval}"
