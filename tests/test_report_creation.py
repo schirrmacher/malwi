@@ -20,6 +20,10 @@ class MockMalwiObject:
     file_source_code: str = ""
     code: str = ""
     warnings: List[str] = field(default_factory=list)
+    language: str = "python"
+
+    def to_tokens(self) -> List[str]:
+        return [f"TOKEN_{self.name.upper()}", "SYSTEM_INTERACTION", "FILESYSTEM_ACCESS"]
 
     def to_token_string(self) -> str:
         return f"TOKEN_{self.name.upper()}"
@@ -151,8 +155,8 @@ class TestMalwiReport(unittest.TestCase):
         """Test the simple text output for a malicious report."""
         text = self.malicious_report.to_demo_text()
         self.assertIn("- files: 2", text)
-        self.assertIn("malicious: 1", text)
-        self.assertIn("system call", text)
+        self.assertIn("suspicious:", text)
+        self.assertIn("system interaction", text)
         self.assertIn("=> 👹 malicious 0.88", text)
         self.assertIn("/tmp/malware.py", text)  # Check file path is included
 
@@ -160,8 +164,7 @@ class TestMalwiReport(unittest.TestCase):
         """Test the simple text output for a benign report."""
         text = self.benign_report.to_demo_text()
         self.assertIn("- files: 1", text)
-        self.assertIn("objects: 1", text)
-        self.assertIn("good", text)
+        self.assertIn("=> 🟢 good", text)
 
     def test_to_report_markdown(self):
         """Test Markdown report generation."""

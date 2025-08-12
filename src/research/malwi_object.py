@@ -10,9 +10,7 @@ import questionary
 from datetime import datetime
 
 from tqdm import tqdm
-from enum import Enum
 from pathlib import Path
-from collections import Counter
 from dataclasses import dataclass, field
 from ollama import ChatResponse, chat
 from typing import List, Tuple, Optional, Any, Dict
@@ -236,49 +234,80 @@ class MalwiReport:
         txt += f"- files: {stats['total_files']}\n"
         txt += f"  ├── scanned: {stats['processed_files']}\n"
 
-        if result == "malicious":
+        if result == "malicious" or result == "suspicious":
             txt += f"  ├── skipped: {stats['skipped_files']}\n"
-            txt += "  └── suspicious:\n"
-            malicious_files = sorted(
-                set(obj.file_path for obj in self.malicious_objects)
-            )
+            txt += f"  └── suspicious:\n"
+
+            # Group malicious objects by file path
+            files_with_objects = {}
+            for obj in self.malicious_objects:
+                if obj.file_path not in files_with_objects:
+                    files_with_objects[obj.file_path] = []
+                files_with_objects[obj.file_path].append(obj)
+
+            malicious_files = sorted(files_with_objects.keys())
             for i, file_path in enumerate(malicious_files):
-                if i == len(malicious_files) - 1:
+                is_last_file = i == len(malicious_files) - 1
+                if is_last_file:
                     txt += f"      └── {file_path}\n"
+                    file_prefix = "          "
                 else:
                     txt += f"      ├── {file_path}\n"
+                    file_prefix = "      │   "
+
+                # List objects in this file
+                objects_in_file = files_with_objects[file_path]
+                for j, obj in enumerate(objects_in_file):
+                    is_last_object = j == len(objects_in_file) - 1
+                    if is_last_object:
+                        txt += f"{file_prefix}└── {obj.name}\n"
+                        object_prefix = file_prefix + "    "
+                    else:
+                        txt += f"{file_prefix}├── {obj.name}\n"
+                        object_prefix = file_prefix + "│   "
+
+                    # List activities for this object
+                    if result == "malicious":
+                        # Get tokens for this specific object
+                        obj_tokens = obj.to_tokens()
+                        obj_activities = []
+                        # Collect tokens from all languages represented in malicious objects
+                        languages_in_objects = set(
+                            o.language for o in self.malicious_objects
+                        )
+                        all_filter_values = set()
+                        for lang in languages_in_objects:
+                            all_filter_values.update(
+                                FUNCTION_MAPPING.get(lang, {}).values()
+                            )
+
+                        obj_activities = list(
+                            set(
+                                [
+                                    token
+                                    for token in obj_tokens
+                                    if token in all_filter_values
+                                ]
+                            )
+                        )
+
+                        for k, activity in enumerate(obj_activities):
+                            is_last_activity = k == len(obj_activities) - 1
+                            if is_last_activity:
+                                txt += f"{object_prefix}└── {activity.lower().replace('_', ' ')}\n"
+                            else:
+                                txt += f"{object_prefix}├── {activity.lower().replace('_', ' ')}\n"
         else:
             txt += f"  └── skipped: {stats['skipped_files']}\n"
 
-        txt += f"- objects: {stats['processed_objects']}\n"
+        txt += "\n"
 
-        # Use the same three-state result system as other report formats
+        # Final result
         if result == "malicious":
-            txt += f"  └── malicious: {stats['malicious_objects']} \n"
-            activity_list = list(self.activities)
-            for i, activity in enumerate(activity_list):
-                if i == len(list(activity_list)) - 1:
-                    txt += f"      └── {activity.lower().replace('_', ' ')}\n"
-                else:
-                    txt += f"      ├── {activity.lower().replace('_', ' ')}\n"
-            txt += "\n"
             txt += f"=> 👹 malicious {self.confidence:.2f}\n"
         elif result == "suspicious":
-            txt += f"  └── suspicious: {stats['malicious_objects']}\n"
-
-            # Add file paths for suspicious objects
-            malicious_files = sorted(
-                set(obj.file_path for obj in self.malicious_objects)
-            )
-            for i, file_path in enumerate(malicious_files):
-                if i == len(malicious_files) - 1:
-                    txt += f"      └── {file_path}\n"
-                else:
-                    txt += f"      ├── {file_path}\n"
-            txt += "\n"
             txt += f"=> ⚠️ suspicious {self.confidence:.2f}\n"
         else:  # result == "good"
-            txt += "\n"
             txt += "=> 🟢 good\n"
 
         return txt

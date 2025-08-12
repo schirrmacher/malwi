@@ -2097,9 +2097,8 @@ class ASTCompiler:
                 location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
 
                 # Create separate CodeObject and add to collection
-                func_ref_name = self._generate_ref_name("lambda")
                 func_code_obj = CodeObject(
-                    func_ref_name,
+                    "lambda",
                     func_body_bytecode,
                     func_source,
                     file_path,
@@ -2108,8 +2107,8 @@ class ASTCompiler:
                 )
                 self.code_objects.append(func_code_obj)
 
-                # Use reference name in bytecode instead of nested CodeObject
-                bytecode.append(emit(OpCode.MAKE_FUNCTION, func_ref_name))
+                # Use function name in bytecode instead of nested CodeObject
+                bytecode.append(emit(OpCode.MAKE_FUNCTION, "lambda"))
 
         elif node_type == "conditional_expression":
             # Handle ternary operator: condition ? true_expr : false_expr
@@ -2393,9 +2392,8 @@ class ASTCompiler:
                     )
 
                     # Create separate CodeObject and add to collection
-                    func_ref_name = self._generate_ref_name(func_name)
                     func_code_obj = CodeObject(
-                        func_ref_name,
+                        func_name,
                         func_body_bytecode,
                         func_source,
                         file_path,
@@ -2479,9 +2477,8 @@ class ASTCompiler:
             # Only create separate CodeObject for top-level functions (nesting_depth == 0)
             if self._nesting_depth == 0:
                 # Create separate CodeObject and add to collection
-                func_ref_name = self._generate_ref_name(func_name)
                 func_code_obj = CodeObject(
-                    func_ref_name,
+                    func_name,
                     func_body_bytecode,
                     func_source,
                     file_path,
@@ -2544,9 +2541,8 @@ class ASTCompiler:
             # Only create separate CodeObject for top-level classes (nesting_depth == 0)
             if self._nesting_depth == 0:
                 # Create separate CodeObject and add to collection
-                class_ref_name = self._generate_ref_name(class_name)
                 class_code_obj = CodeObject(
-                    class_ref_name,
+                    class_name,
                     class_body_bytecode,
                     class_source,
                     file_path,

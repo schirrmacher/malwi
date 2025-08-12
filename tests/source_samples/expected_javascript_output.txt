@@ -2,7 +2,7 @@ RESUME 0
 LOAD_CONST 'test-export'
 STORE_NAME exportedConst
 EXPORT_NAMED exportedFunction
-LOAD_CONST CodeObject(name=exportedFunction_ref_0, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(61, 61))
+LOAD_CONST CodeObject(name=exportedFunction, path=tests/source_samples/javascript.js, location=(61, 61))
 MAKE_FUNCTION 0
 STORE_NAME exportedFunction
 LOAD_CONST True
@@ -292,7 +292,7 @@ STORE_SUBSCR None
 PUSH_NULL None
 LOAD_NAME arr
 LOAD_ATTR map
-MAKE_FUNCTION lambda_ref_1
+MAKE_FUNCTION lambda
 CALL 1
 POP_TOP None
 PUSH_NULL None
@@ -449,7 +449,7 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 4. Functions and Scopes ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=greet_ref_2, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(252, 254))
+LOAD_CONST CodeObject(name=greet, path=tests/source_samples/javascript.js, location=(252, 254))
 MAKE_FUNCTION 0
 STORE_NAME greet
 PUSH_NULL None
@@ -466,14 +466,14 @@ LOAD_NAME farewell
 LOAD_CONST "World"
 CALL 1
 POP_TOP None
-MAKE_FUNCTION lambda_ref_3
+MAKE_FUNCTION lambda
 STORE_NAME square
 PUSH_NULL None
 LOAD_NAME square
 LOAD_CONST 4.0
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=paramsTest_ref_4, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(268, 270))
+LOAD_CONST CodeObject(name=paramsTest, path=tests/source_samples/javascript.js, location=(268, 270))
 MAKE_FUNCTION 0
 STORE_NAME paramsTest
 PUSH_NULL None
@@ -485,7 +485,7 @@ LOAD_CONST 4.0
 LOAD_CONST 5.0
 CALL 5
 POP_TOP None
-LOAD_CONST CodeObject(name=makeCounter_ref_5, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(274, 280))
+LOAD_CONST CodeObject(name=makeCounter, path=tests/source_samples/javascript.js, location=(274, 280))
 MAKE_FUNCTION 0
 STORE_NAME makeCounter
 PUSH_NULL None
@@ -512,7 +512,7 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 5. Object-Oriented Programming ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=Car_ref_6, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(293, 296))
+LOAD_CONST CodeObject(name=Car, path=tests/source_samples/javascript.js, location=(293, 296))
 MAKE_FUNCTION 0
 STORE_NAME Car
 BINARY_OPERATION None
@@ -538,14 +538,14 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Vehicle_ref_7, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(305, 312))
+LOAD_CONST CodeObject(name=Vehicle, path=tests/source_samples/javascript.js, location=(305, 312))
 MAKE_FUNCTION 0
 LOAD_CONST Vehicle
 CALL 2
 STORE_NAME Vehicle
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Motorcycle_ref_8, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(314, 323))
+LOAD_CONST CodeObject(name=Motorcycle, path=tests/source_samples/javascript.js, location=(314, 323))
 MAKE_FUNCTION 0
 LOAD_CONST Motorcycle
 CALL 2
@@ -568,7 +568,7 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Rectangle_ref_9, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(329, 343))
+LOAD_CONST CodeObject(name=Rectangle, path=tests/source_samples/javascript.js, location=(329, 343))
 MAKE_FUNCTION 0
 LOAD_CONST Rectangle
 CALL 2
@@ -602,10 +602,10 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 6. Advanced Features (ES6+) ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=delay_ref_11, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(357, 359))
+LOAD_CONST CodeObject(name=delay, path=tests/source_samples/javascript.js, location=(357, 359))
 MAKE_FUNCTION 0
 STORE_NAME delay
-LOAD_CONST CodeObject(name=myAsyncFunction_ref_12, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(361, 364))
+LOAD_CONST CodeObject(name=myAsyncFunction, path=tests/source_samples/javascript.js, location=(361, 364))
 ASYNC_FUNCTION 0
 STORE_NAME myAsyncFunction
 PUSH_NULL None
@@ -613,10 +613,10 @@ PUSH_NULL None
 LOAD_NAME myAsyncFunction
 CALL 0
 LOAD_ATTR then
-MAKE_FUNCTION lambda_ref_13
+MAKE_FUNCTION lambda
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=idGenerator_ref_14, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(370, 375))
+LOAD_CONST CodeObject(name=idGenerator, path=tests/source_samples/javascript.js, location=(370, 375))
 GENERATOR_FUNCTION 0
 STORE_NAME idGenerator
 PUSH_NULL None
@@ -842,9 +842,9 @@ CALL 0
 LOAD_NAME Date
 COMPARE_INSTANCEOF None
 STORE_NAME instanceOf
-MAKE_FUNCTION lambda_ref_15
+MAKE_FUNCTION lambda
 STORE_NAME arrowFunc
-MAKE_FUNCTION lambda_ref_16
+MAKE_FUNCTION lambda
 STORE_NAME arrowFunc2
 PUSH_NULL None
 LOAD_NAME arrowFunc
@@ -921,19 +921,19 @@ STORE_NAME ternaryResult
 PUSH_NULL None
 LOAD_NAME arr
 LOAD_ATTR map
-MAKE_FUNCTION lambda_ref_17
+MAKE_FUNCTION lambda
 CALL 1
 STORE_NAME mappedArr
 PUSH_NULL None
 LOAD_NAME arr
 LOAD_ATTR filter
-MAKE_FUNCTION lambda_ref_18
+MAKE_FUNCTION lambda
 CALL 1
 STORE_NAME filteredArr
 PUSH_NULL None
 LOAD_NAME arr
 LOAD_ATTR reduce
-MAKE_FUNCTION lambda_ref_19
+MAKE_FUNCTION lambda
 LOAD_CONST 0.0
 CALL 2
 STORE_NAME reducedVal
@@ -947,14 +947,14 @@ CALL 1
 STORE_NAME regexTest
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Parent_ref_20, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(538, 546))
+LOAD_CONST CodeObject(name=Parent, path=tests/source_samples/javascript.js, location=(538, 546))
 MAKE_FUNCTION 0
 LOAD_CONST Parent
 CALL 2
 STORE_NAME Parent
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Child_ref_21, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(548, 557))
+LOAD_CONST CodeObject(name=Child, path=tests/source_samples/javascript.js, location=(548, 557))
 MAKE_FUNCTION 0
 LOAD_CONST Child
 CALL 2
@@ -964,7 +964,7 @@ LOAD_CONST "Test"
 LOAD_CONST 25.0
 CALL 2
 STORE_NAME childInstance
-LOAD_CONST CodeObject(name=asyncFunc_ref_24, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(562, 566))
+LOAD_CONST CodeObject(name=asyncFunc, path=tests/source_samples/javascript.js, location=(562, 566))
 ASYNC_FUNCTION 0
 STORE_NAME asyncFunc
 LOAD_NAME obj
@@ -975,7 +975,7 @@ LOAD_NAME nullVal
 LOAD_CONST "default"
 BINARY_NULLISH_COALESCING None
 STORE_NAME nullish
-LOAD_CONST CodeObject(name=testThrow_ref_25, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(577, 579))
+LOAD_CONST CodeObject(name=testThrow, path=tests/source_samples/javascript.js, location=(577, 579))
 MAKE_FUNCTION 0
 STORE_NAME testThrow
 LOAD_CONST 0xFF
@@ -1175,7 +1175,7 @@ LOAD_ATTR fill
 LOAD_CONST 0.0
 CALL 1
 LOAD_ATTR map
-MAKE_FUNCTION lambda_ref_26
+MAKE_FUNCTION lambda
 CALL 1
 STORE_NAME payloadArray
 LOAD_NAME payloadArray
@@ -1386,7 +1386,7 @@ LOAD_NAME storeNested
 LOAD_ATTR inner
 LOAD_CONST "mixed"
 STORE_SUBSCR None
-LOAD_CONST CodeObject(name=getStoreKey_ref_27, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(723, 723))
+LOAD_CONST CodeObject(name=getStoreKey, path=tests/source_samples/javascript.js, location=(723, 723))
 MAKE_FUNCTION 0
 STORE_NAME getStoreKey
 LOAD_CONST "from function"
@@ -1434,13 +1434,13 @@ STORE_NAME implicitGlobal
 LOAD_CONST "I am explicitly on global object"
 LOAD_NAME global
 STORE_ATTR explicitGlobal
-LOAD_CONST CodeObject(name=modifyGlobals_ref_28, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(753, 767))
+LOAD_CONST CodeObject(name=modifyGlobals, path=tests/source_samples/javascript.js, location=(753, 767))
 MAKE_FUNCTION 0
 STORE_NAME modifyGlobals
-LOAD_CONST CodeObject(name=outerFunction_ref_29, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(770, 788))
+LOAD_CONST CodeObject(name=outerFunction, path=tests/source_samples/javascript.js, location=(770, 788))
 MAKE_FUNCTION 0
 STORE_NAME outerFunction
-LOAD_CONST CodeObject(name=globalFunction_ref_30, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(791, 793))
+LOAD_CONST CodeObject(name=globalFunction, path=tests/source_samples/javascript.js, location=(791, 793))
 MAKE_FUNCTION 0
 STORE_NAME globalFunction
 LOAD_CONST "I am a property of a global object"
@@ -1448,16 +1448,16 @@ LOAD_CONST "I am a method of a global object"
 RETURN_VALUE None
 BUILD_MAP 2
 STORE_NAME globalObject
-MAKE_FUNCTION lambda_ref_31
+MAKE_FUNCTION lambda
 STORE_NAME globalArrow
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=GlobalClass_ref_32, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(806, 810))
+LOAD_CONST CodeObject(name=GlobalClass, path=tests/source_samples/javascript.js, location=(806, 810))
 MAKE_FUNCTION 0
 LOAD_CONST GlobalClass
 CALL 2
 STORE_NAME GlobalClass
-LOAD_CONST CodeObject(name=testGlobalContexts_ref_33, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(813, 836))
+LOAD_CONST CodeObject(name=testGlobalContexts, path=tests/source_samples/javascript.js, location=(813, 836))
 MAKE_FUNCTION 0
 STORE_NAME testGlobalContexts
 PUSH_NULL None
@@ -1472,13 +1472,13 @@ CALL 0
 POP_TOP None
 LOAD_CONST "global shadow"
 STORE_NAME shadowVar
-LOAD_CONST CodeObject(name=shadowTest_ref_34, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(853, 870))
+LOAD_CONST CodeObject(name=shadowTest, path=tests/source_samples/javascript.js, location=(853, 870))
 MAKE_FUNCTION 0
 STORE_NAME shadowTest
 LOAD_CONST "I am on globalThis"
 LOAD_NAME globalThis
 STORE_ATTR modernGlobal
-LOAD_CONST CodeObject(name=testGlobalThis_ref_35, path=/Users/mav/dev/malwi/tests/source_samples/javascript.js, location=(875, 886))
+LOAD_CONST CodeObject(name=testGlobalThis, path=tests/source_samples/javascript.js, location=(875, 886))
 MAKE_FUNCTION 0
 STORE_NAME testGlobalThis
 PUSH_NULL None
@@ -1572,7 +1572,7 @@ LOAD_GLOBAL ms
 CALL 2
 RETURN_VALUE None
 LOAD_GLOBAL Promise
-MAKE_FUNCTION lambda_ref_10
+MAKE_FUNCTION lambda
 CALL 1
 RETURN_VALUE None
 PUSH_NULL None
@@ -1641,12 +1641,12 @@ CALL 1
 RETURN_VALUE None
 PUSH_NULL None
 LOAD_GLOBAL setTimeout
-MAKE_FUNCTION lambda_ref_22
+MAKE_FUNCTION lambda
 LOAD_CONST 1.0
 CALL 2
 RETURN_VALUE None
 LOAD_GLOBAL Promise
-MAKE_FUNCTION lambda_ref_23
+MAKE_FUNCTION lambda
 CALL 1
 STORE_GLOBAL promise
 LOAD_GLOBAL promise
