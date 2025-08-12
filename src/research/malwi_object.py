@@ -648,8 +648,17 @@ class MalwiObject:
         if code_display_value is None:
             code_display_value = "<source not available>"
 
-        if isinstance(code_display_value, str) and "\n" in code_display_value:
-            final_code_value = LiteralStr(code_display_value.strip())
+        # Normalize line endings for better YAML display
+        if isinstance(code_display_value, str):
+            # Convert \r\n and \r to \n for consistent line endings
+            code_display_value = code_display_value.replace("\r\n", "\n").replace(
+                "\r", "\n"
+            )
+
+            if "\n" in code_display_value:
+                final_code_value = LiteralStr(code_display_value.strip())
+            else:
+                final_code_value = code_display_value
         else:
             final_code_value = code_display_value
 
