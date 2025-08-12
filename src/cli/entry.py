@@ -204,8 +204,8 @@ def main():
         "--extensions",
         "-e",
         nargs="+",
-        default=["py"],
-        help="Specify file extensions to process (default: py).",
+        default=["py", "js", "mjs", "cjs"],
+        help="Specify file extensions to process (default: py, js, mjs, cjs).",
     )
     parser.add_argument(
         "--quiet",

@@ -431,10 +431,10 @@ def calculate_shannon_entropy(data: bytes) -> float:
     return entropy
 
 
-def map_string_arg(argval: str, original_argrepr: str) -> str:
+def map_string_arg(argval: str, original_argrepr: str, language: str = "python") -> str:
     prefix = "STRING"
-    python_function_mapping = FUNCTION_MAPPING.get("python", {})
-    python_import_mapping = IMPORT_MAPPING.get("python", {})
+    function_mapping = FUNCTION_MAPPING.get(language, {})
+    import_mapping = IMPORT_MAPPING.get(language, {})
 
     # Sanitize argval to ensure it's a well-formed Unicode string
     try:
@@ -449,10 +449,10 @@ def map_string_arg(argval: str, original_argrepr: str) -> str:
     argval = sanitized_argval
     argval = reduce_whitespace(remove_newlines(argval))
 
-    if argval in python_function_mapping:
-        return python_function_mapping.get(argval)
-    elif argval in python_import_mapping:
-        return python_import_mapping.get(argval)
+    if argval in function_mapping:
+        return function_mapping.get(argval)
+    elif argval in import_mapping:
+        return import_mapping.get(argval)
     elif argval in SENSITIVE_PATHS:
         return f"{SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
     elif is_localhost(argval):

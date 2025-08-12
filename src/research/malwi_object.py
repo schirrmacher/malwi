@@ -354,7 +354,7 @@ def collect_files_by_extension(
         Tuple of (accepted_files, skipped_files)
     """
     if accepted_extensions is None:
-        accepted_extensions = ["py"]
+        accepted_extensions = ["py", "js", "mjs", "cjs"]
 
     normalized_extensions = [ext.lower().lstrip(".") for ext in accepted_extensions]
     accepted_files = []
@@ -495,10 +495,17 @@ def process_files(
     if malicious_objects:
         # Extract function tokens from malicious objects for activity reporting
         function_tokens = set()
-        filter_values = set(FUNCTION_MAPPING.get("python", {}).values())
+        # Collect tokens from all languages represented in malicious objects
+        languages_in_objects = set(obj.language for obj in malicious_objects)
+        all_filter_values = set()
+        for lang in languages_in_objects:
+            all_filter_values.update(FUNCTION_MAPPING.get(lang, {}).values())
+
         for obj in malicious_objects:
             tokens = obj.to_tokens()
-            function_tokens.update(token for token in tokens if token in filter_values)
+            function_tokens.update(
+                token for token in tokens if token in all_filter_values
+            )
         activities = list(function_tokens)
 
     duration = time.time() - start_time
