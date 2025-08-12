@@ -41,10 +41,8 @@ class TestCLIEntry:
 
     @patch("cli.entry.Path")
     @patch("cli.entry.MalwiObject")
-    @patch("cli.entry.process_files")
-    def test_basic_cli_flow(
-        self, mock_process_files, mock_malwi_object, mock_path, tmp_path
-    ):
+    @patch("cli.entry.MalwiReport.create")
+    def test_basic_cli_flow(self, mock_create, mock_malwi_object, mock_path, tmp_path):
         """Test basic CLI flow with all necessary mocks"""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
@@ -57,7 +55,7 @@ class TestCLIEntry:
         # Mock the report
         mock_report = MagicMock()
         mock_report.to_demo_text.return_value = "Demo output"
-        mock_process_files.return_value = mock_report
+        mock_create.return_value = mock_report
 
         with patch.object(sys, "argv", ["malwi", str(test_file)]):
             with patch("cli.entry.result") as mock_result:
@@ -65,8 +63,8 @@ class TestCLIEntry:
                 mock_result.assert_called_with("Demo output", force=True)
 
     @patch("cli.entry.MalwiObject")
-    @patch("cli.entry.process_files")
-    def test_save_to_file(self, mock_process_files, mock_malwi_object, tmp_path):
+    @patch("cli.entry.MalwiReport.create")
+    def test_save_to_file(self, mock_create, mock_malwi_object, tmp_path):
         """Test saving output to file"""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
@@ -75,7 +73,7 @@ class TestCLIEntry:
         # Mock report
         mock_report = MagicMock()
         mock_report.to_demo_text.return_value = "Saved content"
-        mock_process_files.return_value = mock_report
+        mock_create.return_value = mock_report
 
         # Mock the path existence check for input file
         with patch("cli.entry.Path") as mock_path:
@@ -103,10 +101,8 @@ class TestCLIEntry:
 
     @patch("cli.entry.Path")
     @patch("cli.entry.MalwiObject")
-    @patch("cli.entry.process_files")
-    def test_output_formats(
-        self, mock_process_files, mock_malwi_object, mock_path, tmp_path
-    ):
+    @patch("cli.entry.MalwiReport.create")
+    def test_output_formats(self, mock_create, mock_malwi_object, mock_path, tmp_path):
         """Test different output format options"""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
@@ -122,7 +118,7 @@ class TestCLIEntry:
         mock_report.to_report_markdown.return_value = "Markdown"
         mock_report.to_report_json.return_value = "JSON"
         mock_report.to_report_yaml.return_value = "YAML"
-        mock_process_files.return_value = mock_report
+        mock_create.return_value = mock_report
 
         # Test each format
         for fmt, expected_output in [
@@ -156,7 +152,7 @@ class TestCLIEntry:
         mock_malwi_object.load_models_into_memory.side_effect = Exception("Model error")
 
         with patch.object(sys, "argv", ["malwi", str(test_file)]):
-            with patch("cli.entry.process_files") as mock_process:
+            with patch("cli.entry.MalwiReport.create") as mock_process:
                 mock_report = MagicMock()
                 mock_report.to_demo_text.return_value = "Output"
                 mock_process.return_value = mock_report
@@ -167,11 +163,11 @@ class TestCLIEntry:
 
     @patch("cli.entry.Path")
     @patch("cli.entry.MalwiObject")
-    @patch("cli.entry.process_files")
+    @patch("cli.entry.MalwiReport.create")
     def test_cli_parameters_passed_correctly(
-        self, mock_process_files, mock_malwi_object, mock_path, tmp_path
+        self, mock_create, mock_malwi_object, mock_path, tmp_path
     ):
-        """Test that CLI parameters are passed correctly to process_files"""
+        """Test that CLI parameters are passed correctly to MalwiReport.create"""
         test_file = tmp_path / "test.py"
         test_file.write_text("print('hello')")
 
@@ -186,7 +182,7 @@ class TestCLIEntry:
         # Mock report
         mock_report = MagicMock()
         mock_report.to_demo_text.return_value = ""
-        mock_process_files.return_value = mock_report
+        mock_create.return_value = mock_report
 
         # Test with various parameters
         with patch.object(
@@ -206,9 +202,9 @@ class TestCLIEntry:
             with patch("cli.entry.result"):
                 main()
 
-        # Verify process_files was called with correct arguments
-        mock_process_files.assert_called_once()
-        call_args = mock_process_files.call_args[1]
+        # Verify MalwiReport.create was called with correct arguments
+        mock_create.assert_called_once()
+        call_args = mock_create.call_args[1]
         assert call_args["malicious_threshold"] == 0.9
         assert call_args["accepted_extensions"] == ["py", "pyw"]
         assert call_args["silent"]
@@ -363,11 +359,13 @@ class TestBatchMode:
         mock_report = MagicMock()
         mock_report.to_report_json.return_value = '{"test": "data"}'
 
-        with patch("cli.entry.process_files", return_value=mock_report) as mock_process:
+        with patch(
+            "cli.entry.MalwiReport.create", return_value=mock_report
+        ) as mock_process:
             with patch("cli.entry.Path.cwd", return_value=tmp_path):
                 result = run_batch_scan(test_folder, args)
 
-                # Verify process_files was called with correct arguments
+                # Verify MalwiReport.create was called with correct arguments
                 mock_process.assert_called_once_with(
                     input_path=test_folder,
                     accepted_extensions=["py"],
@@ -399,8 +397,8 @@ class TestBatchMode:
         args.model_path = None
         args.tokenizer_path = None
 
-        # Mock process_files to raise exception
-        with patch("cli.entry.process_files", side_effect=Exception("Test error")):
+        # Mock MalwiReport.create to raise exception
+        with patch("cli.entry.MalwiReport.create", side_effect=Exception("Test error")):
             with patch("cli.entry.Path.cwd", return_value=tmp_path):
                 result = run_batch_scan(test_folder, args)
 
@@ -434,7 +432,7 @@ class TestBatchMode:
             mock_report = MagicMock()
             getattr(mock_report, method_name).return_value = "test output"
 
-            with patch("cli.entry.process_files", return_value=mock_report):
+            with patch("cli.entry.MalwiReport.create", return_value=mock_report):
                 with patch("cli.entry.Path.cwd", return_value=tmp_path):
                     run_batch_scan(test_folder, args)
 

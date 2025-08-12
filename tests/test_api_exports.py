@@ -3,28 +3,28 @@
 
 def test_api_imports():
     """Test that all API components can be imported."""
-    from malwi import __version__, process_files, MalwiReport, MalwiObject
+    from malwi import __version__, MalwiReport, MalwiObject
 
     # Check version
     assert isinstance(__version__, str)
     assert len(__version__) > 0  # Just check it's not empty
 
     # Check functions/classes exist
-    assert callable(process_files)
     assert isinstance(MalwiReport, type)
     assert isinstance(MalwiObject, type)
+    assert callable(MalwiReport.create)
 
 
-def test_process_files_api(tmp_path):
-    """Test the process_files function works through the API."""
-    from malwi import process_files, MalwiReport, __version__
+def test_malwi_report_create_api(tmp_path):
+    """Test the MalwiReport.create method works through the API."""
+    from malwi import MalwiReport, __version__
 
     # Create a simple Python file
     test_file = tmp_path / "test.py"
     test_file.write_text("print('hello world')")
 
     # Test the API
-    result = process_files(
+    result = MalwiReport.create(
         input_path=test_file,
         accepted_extensions=["py"],
         predict=False,  # Disable ML to avoid model dependencies

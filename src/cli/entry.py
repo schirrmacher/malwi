@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from research.malwi_object import (
     MalwiObject,
-    process_files,
     MalwiReport,
 )
 from research.predict_distilbert import get_model_version_string
@@ -34,7 +33,7 @@ def run_batch_scan(child_folder: Path, args) -> dict:
         return {"folder": child_folder.name, "success": True, "skipped": True}
 
     try:
-        report: MalwiReport = process_files(
+        report: MalwiReport = MalwiReport.create(
             input_path=child_folder,
             accepted_extensions=args.extensions,
             predict=True,
@@ -267,7 +266,7 @@ def main():
     except Exception as e:
         model_warning("ML", e)
 
-    report: MalwiReport = process_files(
+    report: MalwiReport = MalwiReport.create(
         input_path=input_path,
         accepted_extensions=args.extensions,
         predict=True,  # Enable prediction for malwi scanner

