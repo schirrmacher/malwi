@@ -427,25 +427,6 @@ def emit(opcode: "OpCode", arg: Any = None, language: str = "python") -> Instruc
     return Instruction(opcode, arg, language)
 
 
-def collect_files_by_extension(
-    path: Path, accepted_extensions: List[str]
-) -> Tuple[List[Path], int]:
-    """
-    Collects files from a path (file or directory) matching the given extensions.
-    """
-    files = []
-    if not path.exists():
-        return [], 0
-    if path.is_file():
-        if path.suffix in accepted_extensions:
-            return [path], 1
-        return [], 0
-    # If it's a directory, search recursively
-    for ext in accepted_extensions:
-        files.extend(path.rglob(f"*{ext}"))
-    return files, len(files)
-
-
 class ASTCompiler:
     """
     Compiles a tree-sitter AST from Python or JavaScript into "Malwicode".
@@ -2921,9 +2902,15 @@ def main() -> None:
         logging.error(f"Failed to initialize compiler: {e}")
         return
 
-    source_files, sources_count = collect_files_by_extension(
-        args.input_path, accepted_extensions=args.extensions
+    # Import here to avoid circular imports
+    from research.malwi_object import collect_files_by_extension
+
+    accepted_files, skipped_files = collect_files_by_extension(
+        input_path=args.input_path, accepted_extensions=args.extensions, silent=False
     )
+
+    source_files = accepted_files
+    sources_count = len(accepted_files)
 
     if sources_count == 0:
         print(f"No files with extensions {args.extensions} found in {args.input_path}")
