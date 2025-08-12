@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import os
 import sys
 import yaml
 import json
@@ -28,10 +27,6 @@ from common.messaging import (
     get_message_manager,
     file_error,
     path_error,
-    error,
-    success,
-    warning,
-    debug,
 )
 from malwi._version import __version__
 
@@ -88,7 +83,7 @@ def disassemble_file_ast(
         current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
     except SyntaxError:
         current_file_errors.append(SpecialCases.MALFORMED_SYNTAX.value)
-    except Exception as e:
+    except Exception:
         current_file_errors.append(SpecialCases.MALFORMED_FILE.value)
 
     # If compilation failed, create an error object
@@ -230,7 +225,7 @@ class MalwiReport:
 
         if result == "malicious" or result == "suspicious":
             txt += f"  ├── skipped: {stats['skipped_files']}\n"
-            txt += f"  └── suspicious:\n"
+            txt += "  └── suspicious:\n"
 
             # Group malicious objects by file path
             files_with_objects = {}

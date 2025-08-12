@@ -272,7 +272,6 @@ def main():
         accepted_extensions=args.extensions,
         predict=True,  # Enable prediction for malwi scanner
         silent=args.quiet,
-        triaging_type=None,
         malicious_threshold=args.threshold,
     )
 
