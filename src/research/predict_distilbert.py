@@ -309,7 +309,8 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
 def get_model_version_string(base_version: str) -> str:
     """Get complete version string including model information."""
     try:
-        initialize_models()
+        # Only try to get model info if models are already initialized
+        # Don't force initialization here to avoid overriding custom paths
 
         # Start with base version
         version_parts = [f"v{base_version}"]
