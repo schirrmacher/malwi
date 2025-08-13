@@ -409,6 +409,7 @@ class MalwiReport:
         predict: bool = False,
         silent: bool = False,
         malicious_threshold: float = 0.7,
+        on_malicious_found: Optional[callable] = None,
     ) -> "MalwiReport":
         """
         Create a MalwiReport by processing files from the given input path.
@@ -419,6 +420,8 @@ class MalwiReport:
             predict: Whether to run maliciousness prediction
             silent: If True, suppress progress messages
             malicious_threshold: Threshold for classifying objects as malicious
+            on_malicious_found: Optional callback function called when malicious objects are found
+                               Function signature: callback(file_path: Path, malicious_objects: List[MalwiObject])
 
         Returns:
             MalwiReport containing analysis results
@@ -490,6 +493,10 @@ class MalwiReport:
                 all_objects.extend(file_all_objects)
                 malicious_objects.extend(file_malicious_objects)
                 files_processed_count += 1
+
+                # Call callback if malicious objects found and callback provided
+                if file_malicious_objects and on_malicious_found:
+                    on_malicious_found(file_path, file_malicious_objects)
 
             except Exception as e:
                 if not silent:

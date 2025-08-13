@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 
 from tqdm import tqdm
@@ -20,6 +21,45 @@ from common.messaging import (
     result,
 )
 from malwi._version import __version__
+
+
+def create_real_time_findings_display(silent: bool = False):
+    """Create a callback function for real-time malicious findings display."""
+    if silent:
+        return None
+    
+    # Keep track of findings count and whether we've displayed before
+    findings_state = {"count": 0, "lines_displayed": 0}
+    
+    def display_malicious_finding(file_path: Path, malicious_objects):
+        """Display malicious findings in real-time using demo-like format."""
+        # Clear previous lines if any
+        if findings_state["lines_displayed"] > 0:
+            # Move cursor up and clear lines
+            for _ in range(findings_state["lines_displayed"]):
+                tqdm.write("\033[1A\033[2K", file=sys.stderr, end="")
+        
+        # Increment counter
+        findings_state["count"] += 1
+        
+        # Display count header
+        count_display = f"- 👹 suspicious files: {findings_state['count']}"
+        tqdm.write(count_display, file=sys.stderr)
+        
+        # Display latest finding with first object name
+        lines_written = 1
+        if malicious_objects:
+            obj_display = f"     └── {file_path}, {malicious_objects[0].name}"
+            tqdm.write(obj_display, file=sys.stderr)
+            lines_written = 2
+        
+        # Update lines displayed count
+        findings_state["lines_displayed"] = lines_written
+        
+        # Force flush to ensure immediate display
+        sys.stderr.flush()
+    
+    return display_malicious_finding
 
 
 def run_batch_scan(child_folder: Path, args) -> dict:
@@ -218,6 +258,11 @@ def main():
         action="store_true",
         help="Suppress logging output and progress bar.",
     )
+    parser.add_argument(
+        "--no-realtime",
+        action="store_true",
+        help="Disable real-time display of malicious findings during large scans.",
+    )
 
     developer_group = parser.add_argument_group("Developer Options")
 
@@ -274,12 +319,19 @@ def main():
     except Exception as e:
         model_warning("ML", e)
 
+    # Create real-time findings display for large scans
+    # Enable for directories when not in quiet mode and not disabled
+    real_time_callback = None
+    if (input_path.is_dir() and not args.quiet and not args.no_realtime):
+        real_time_callback = create_real_time_findings_display(silent=args.quiet)
+
     report: MalwiReport = MalwiReport.create(
         input_path=input_path,
         accepted_extensions=args.extensions,
         predict=True,  # Enable prediction for malwi scanner
         silent=args.quiet,
         malicious_threshold=args.threshold,
+        on_malicious_found=real_time_callback,
     )
 
     output = ""
