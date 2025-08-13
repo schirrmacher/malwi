@@ -4,10 +4,10 @@ import argparse
 import pandas as pd
 from typing import Set
 from pathlib import Path
-from tokenizers import ByteLevelBPETokenizer, Tokenizer
+from tokenizers import Tokenizer, trainers
 from tokenizers.models import BPE
 from tokenizers.normalizers import NFKC, Sequence, Lowercase
-from tokenizers.pre_tokenizers import ByteLevel, Whitespace
+from tokenizers.pre_tokenizers import ByteLevel, Whitespace, PreTokenizer
 from transformers import PreTrainedTokenizerFast
 
 from common.messaging import (
@@ -233,8 +233,6 @@ def create_or_load_tokenizer(
             error("No texts provided for training BPE tokenizer.")
             raise ValueError("Cannot train tokenizer with no data.")
 
-        bpe_trainer_obj = ByteLevelBPETokenizer()
-
         # Essential BPE tokens
         bpe_essential_tokens = [
             "[PAD]",
@@ -261,26 +259,32 @@ def create_or_load_tokenizer(
         info(f"  - SpecialCases tokens: {len(special_cases_tokens)}")
         info(f"  - Computed from input data: {len(computed_special_tokens)}")
 
-        bpe_trainer_obj.train_from_iterator(
-            texts_for_training,
+        # Create a tokenizer with consistent configuration
+        tokenizer = Tokenizer(BPE(unk_token="[UNK]"))
+
+        # Set normalizer (no lowercasing)
+        tokenizer.normalizer = NFKC()
+
+        # Set pre-tokenizer to only split on whitespace
+        tokenizer.pre_tokenizer = Whitespace()
+
+        # Create BPE trainer with special tokens
+        trainer = trainers.BpeTrainer(
             vocab_size=vocab_size,
             min_frequency=2,
             special_tokens=combined_special_tokens,
-        )
-        bpe_trainer_obj.save_model(str(tokenizer_output_path))
-        success(
-            f"BPE components (vocab.json, merges.txt) saved to {tokenizer_output_path}"
+            show_progress=True,
         )
 
-        bpe_model = BPE.from_file(
-            str(vocab_file_path), str(merges_file_path), unk_token="[UNK]"
-        )
-        tk = Tokenizer(bpe_model)
-        tk.normalizer = NFKC()  # Remove Lowercase() to preserve case
-        tk.pre_tokenizer = Whitespace()  # Only split on whitespace, not underscores
+        # Train the tokenizer
+        tokenizer.train_from_iterator(texts_for_training, trainer=trainer)
 
-        tokenizer = PreTrainedTokenizerFast(
-            tokenizer_object=tk,
+        # Save the base tokenizer model
+        tokenizer.save(str(tokenizer_output_path / "tokenizer.json"))
+
+        # Now create PreTrainedTokenizerFast from the saved tokenizer
+        final_tokenizer = PreTrainedTokenizerFast(
+            tokenizer_file=str(tokenizer_output_path / "tokenizer.json"),
             unk_token="[UNK]",
             pad_token="[PAD]",
             cls_token="[CLS]",
@@ -290,12 +294,14 @@ def create_or_load_tokenizer(
             eos_token="[SEP]",
             model_max_length=max_length,
         )
-        tokenizer.save_pretrained(str(tokenizer_output_path))
+
+        # Save the final tokenizer
+        final_tokenizer.save_pretrained(str(tokenizer_output_path))
         success(
             f"PreTrainedTokenizerFast fully saved to {tokenizer_output_path} (tokenizer.json created)."
         )
 
-    return tokenizer
+    return final_tokenizer
 
 
 def train_tokenizer(args):
