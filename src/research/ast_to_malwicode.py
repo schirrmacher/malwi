@@ -2081,8 +2081,8 @@ class ASTCompiler:
                 self.current_function_params = previous_params
                 self._in_function_scope = previous_in_function
 
-                func_source = self._get_node_text(body_node, source_code_bytes)
-                location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
+                func_source = self._get_node_text(node, source_code_bytes)
+                location = (node.start_point[0] + 1, node.end_point[0] + 1)
 
                 # Create separate CodeObject and add to collection
                 func_code_obj = CodeObject(
@@ -2459,8 +2459,8 @@ class ASTCompiler:
             self._in_function_scope = previous_in_function
             self._nesting_depth = previous_nesting_depth
 
-            func_source = self._get_node_text(body_node, source_code_bytes)
-            location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
+            func_source = self._get_node_text(node, source_code_bytes)
+            location = (node.start_point[0] + 1, node.end_point[0] + 1)
 
             # Only create separate CodeObject for top-level functions (nesting_depth == 0)
             if self._nesting_depth == 0:
@@ -2523,8 +2523,8 @@ class ASTCompiler:
             # Restore nesting depth
             self._nesting_depth = previous_nesting_depth
 
-            class_source = self._get_node_text(body_node, source_code_bytes)
-            location = (body_node.start_point[0] + 1, body_node.end_point[0] + 1)
+            class_source = self._get_node_text(node, source_code_bytes)
+            location = (node.start_point[0] + 1, node.end_point[0] + 1)
 
             # Only create separate CodeObject for top-level classes (nesting_depth == 0)
             if self._nesting_depth == 0:
