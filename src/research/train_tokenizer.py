@@ -7,7 +7,7 @@ from pathlib import Path
 from tokenizers import ByteLevelBPETokenizer, Tokenizer
 from tokenizers.models import BPE
 from tokenizers.normalizers import NFKC, Sequence, Lowercase
-from tokenizers.pre_tokenizers import ByteLevel
+from tokenizers.pre_tokenizers import ByteLevel, Whitespace
 from transformers import PreTrainedTokenizerFast
 
 from common.messaging import (
@@ -277,7 +277,7 @@ def create_or_load_tokenizer(
         )
         tk = Tokenizer(bpe_model)
         tk.normalizer = NFKC()  # Remove Lowercase() to preserve case
-        tk.pre_tokenizer = ByteLevel()
+        tk.pre_tokenizer = Whitespace()  # Only split on whitespace, not underscores
 
         tokenizer = PreTrainedTokenizerFast(
             tokenizer_object=tk,
