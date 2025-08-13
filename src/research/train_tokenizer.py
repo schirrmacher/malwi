@@ -274,6 +274,9 @@ def create_or_load_tokenizer(
             min_frequency=2,
             special_tokens=combined_special_tokens,
             show_progress=True,
+            initial_alphabet=list(
+                set("".join(combined_special_tokens))
+            ),  # Include all characters from special tokens
         )
 
         # Train the tokenizer
@@ -294,6 +297,21 @@ def create_or_load_tokenizer(
             eos_token="[SEP]",
             model_max_length=max_length,
         )
+
+        # Add special tokens that should never be split
+        # Remove the standard tokens from the list
+        additional_special_tokens = [
+            token
+            for token in combined_special_tokens
+            if token not in ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
+        ]
+
+        if additional_special_tokens:
+            # This ensures these tokens are never split by the tokenizer
+            final_tokenizer.add_special_tokens(
+                {"additional_special_tokens": additional_special_tokens}
+            )
+            info(f"Added {len(additional_special_tokens)} additional special tokens")
 
         # Save the final tokenizer
         final_tokenizer.save_pretrained(str(tokenizer_output_path))
