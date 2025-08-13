@@ -465,7 +465,7 @@ class MalwiReport:
 
         # Configure progress bar
         tqdm_desc = (
-            f"Processing directory '{input_path.name}'"
+            f"Analyzing '{input_path.name}'"
             if input_path.is_dir() and len(accepted_files) > 1
             else f"Processing '{input_path.name}'"
         )
