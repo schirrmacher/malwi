@@ -31,6 +31,11 @@ from common.messaging import (
 from malwi._version import __version__
 
 from common.files import read_json_from_file
+from common.config import (
+    SUPPORTED_EXTENSIONS,
+    EXTENSION_TO_LANGUAGE,
+    EXTENSION_COMMENT_PREFIX,
+)
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -111,13 +116,9 @@ def process_single_file(
 
         # Detect language based on file extension
         file_extension = file_path.suffix.lower()
-        if file_extension == ".py":
-            language = "python"
-        elif file_extension in [".js", ".mjs", ".cjs"]:
-            language = "javascript"
-        else:
-            # Default to Python for unknown extensions
-            language = "python"
+        language = EXTENSION_TO_LANGUAGE.get(
+            file_extension, "python"
+        )  # Default to Python
 
         objects: List[MalwiObject] = disassemble_file_ast(
             source_code, file_path=str(file_path), language=language
@@ -418,34 +419,9 @@ class MalwiReport:
             output_parts.append("")
 
             # Get comment style based on extension
-            if extension in [".py"]:
-                comment_prefix = "#"
-            elif extension in [
-                ".js",
-                ".mjs",
-                ".cjs",
-                ".ts",
-                ".tsx",
-                ".java",
-                ".c",
-                ".cpp",
-                ".cs",
-                ".go",
-                ".rs",
-            ]:
-                comment_prefix = "//"
-            elif extension in [".rb"]:
-                comment_prefix = "#"
-            elif extension in [".php"]:
-                comment_prefix = "//"
-            elif extension in [".sql"]:
-                comment_prefix = "--"
-            elif extension in [".lua"]:
-                comment_prefix = "--"
-            elif extension in [".r"]:
-                comment_prefix = "#"
-            else:
-                comment_prefix = "#"  # Default to hash comments
+            comment_prefix = EXTENSION_COMMENT_PREFIX.get(
+                extension, "#"
+            )  # Default to hash comments
 
             # Process each file's objects
             for obj in objects:
@@ -644,7 +620,7 @@ def collect_files_by_extension(
         Tuple of (accepted_files, skipped_files)
     """
     if accepted_extensions is None:
-        accepted_extensions = ["py", "js", "mjs", "cjs"]
+        accepted_extensions = SUPPORTED_EXTENSIONS
 
     normalized_extensions = [ext.lower().lstrip(".") for ext in accepted_extensions]
     accepted_files = []

@@ -21,6 +21,7 @@ from common.messaging import (
     result,
 )
 from malwi._version import __version__
+from common.config import SUPPORTED_EXTENSIONS
 
 
 def create_real_time_findings_display(silent: bool = False):
@@ -260,8 +261,8 @@ def main():
         "--extensions",
         "-e",
         nargs="+",
-        default=["py", "js", "mjs", "cjs"],
-        help="Specify file extensions to process (default: py, js, mjs, cjs).",
+        default=SUPPORTED_EXTENSIONS,
+        help=f"Specify file extensions to process (default: {', '.join(SUPPORTED_EXTENSIONS)}).",
     )
     parser.add_argument(
         "--quiet",

