@@ -79,6 +79,7 @@ def run_batch_scan(child_folder: Path, args) -> dict:
         "json": ".json",
         "yaml": ".yaml",
         "tokens": ".txt",
+        "code": ".txt",
     }
     extension = format_ext.get(args.format, ".txt")
     output_file = Path.cwd() / f"malwi_{child_folder.name}{extension}"
@@ -104,6 +105,8 @@ def run_batch_scan(child_folder: Path, args) -> dict:
             output = report.to_report_markdown()
         elif args.format == "tokens":
             output = report.to_tokens_text()
+        elif args.format == "code":
+            output = report.to_code_text()
         else:
             output = report.to_demo_text()
 
@@ -227,7 +230,7 @@ def main():
     parser.add_argument(
         "--format",
         "-f",
-        choices=["demo", "markdown", "json", "yaml", "tokens"],
+        choices=["demo", "markdown", "json", "yaml", "tokens", "code"],
         default="demo",
         help="Specify the output format.",
     )
@@ -359,6 +362,8 @@ def main():
         output = report.to_report_markdown()
     elif args.format == "tokens":
         output = report.to_tokens_text()
+    elif args.format == "code":
+        output = report.to_code_text()
     else:
         output = report.to_demo_text()
 

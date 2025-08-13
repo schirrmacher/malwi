@@ -389,6 +389,85 @@ class MalwiReport:
 
         return "\n".join(lines)
 
+    def to_code_text(self) -> str:
+        """Generate code output format: concatenated malicious code segments grouped by extension with path comments."""
+        # Group malicious objects by file extension
+        objects_by_extension = {}
+        for obj in self.malicious_objects:
+            # Get file extension
+            file_path = Path(obj.file_path)
+            extension = file_path.suffix.lower()
+
+            if extension not in objects_by_extension:
+                objects_by_extension[extension] = []
+            objects_by_extension[extension].append(obj)
+
+        # Build output for each extension group
+        output_parts = []
+
+        for extension in sorted(objects_by_extension.keys()):
+            if not extension:  # Skip files without extension
+                continue
+
+            objects = objects_by_extension[extension]
+
+            # Add header for this extension group
+            output_parts.append(f"{'=' * 80}")
+            output_parts.append(f"# Files with extension: {extension}")
+            output_parts.append(f"{'=' * 80}")
+            output_parts.append("")
+
+            # Get comment style based on extension
+            if extension in [".py"]:
+                comment_prefix = "#"
+            elif extension in [
+                ".js",
+                ".mjs",
+                ".cjs",
+                ".ts",
+                ".tsx",
+                ".java",
+                ".c",
+                ".cpp",
+                ".cs",
+                ".go",
+                ".rs",
+            ]:
+                comment_prefix = "//"
+            elif extension in [".rb"]:
+                comment_prefix = "#"
+            elif extension in [".php"]:
+                comment_prefix = "//"
+            elif extension in [".sql"]:
+                comment_prefix = "--"
+            elif extension in [".lua"]:
+                comment_prefix = "--"
+            elif extension in [".r"]:
+                comment_prefix = "#"
+            else:
+                comment_prefix = "#"  # Default to hash comments
+
+            # Process each file's objects
+            for obj in objects:
+                # Retrieve source code if not already available
+                if not obj.code:
+                    obj.retrieve_source_code()
+
+                if obj.code and obj.code != "<source not available>":
+                    # Add file path comment
+                    output_parts.append(f"{comment_prefix} {'=' * 70}")
+                    output_parts.append(f"{comment_prefix} File: {obj.file_path}")
+                    output_parts.append(f"{comment_prefix} Object: {obj.name}")
+                    output_parts.append(f"{comment_prefix} {'=' * 70}")
+                    output_parts.append("")
+
+                    # Add the code
+                    output_parts.append(obj.code)
+                    output_parts.append("")
+                    output_parts.append("")
+
+        return "\n".join(output_parts)
+
     @classmethod
     def load_models_into_memory(
         cls,
