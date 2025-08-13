@@ -267,7 +267,7 @@ def create_or_load_tokenizer(
             str(vocab_file_path), str(merges_file_path), unk_token="[UNK]"
         )
         tk = Tokenizer(bpe_model)
-        tk.normalizer = Sequence([NFKC(), Lowercase()])
+        tk.normalizer = NFKC()  # Remove Lowercase() to preserve case
         tk.pre_tokenizer = ByteLevel()
 
         tokenizer = PreTrainedTokenizerFast(

@@ -362,6 +362,7 @@ class CodeObject:
         self.path = path
         self.location = location
         self.language = language
+        self._embedding_count = None  # Cached embedding count
 
     def __repr__(self) -> str:
         return (
@@ -415,11 +416,59 @@ class CodeObject:
             instruction_str = instruction.to_string(mapped=mapped, for_hashing=False)
             # Split instruction into opcode and argument tokens
             parts = instruction_str.split(" ", 1)
-            tokens.append(parts[0].lower())  # Convert opcode to lowercase
+            tokens.append(
+                parts[0].upper()
+            )  # Convert opcode to uppercase to match tokenizer vocabulary
             if len(parts) > 1 and parts[1]:
                 tokens.append(parts[1])
 
         return tokens
+
+    @property
+    def embedding_count(self) -> int:
+        """
+        Calculate the number of embeddings (tokens) this CodeObject would create
+        when processed by the DistilBERT tokenizer.
+
+        This helps identify when bytecode streams exceed DistilBERT's context window,
+        which typically causes windowing and can affect model performance.
+
+        Returns:
+            Number of tokens this CodeObject creates when tokenized
+        """
+        if self._embedding_count is None:
+            self._embedding_count = self._calculate_embedding_count()
+        return self._embedding_count
+
+    def _calculate_embedding_count(self) -> int:
+        """
+        Calculate embedding count by tokenizing the token string representation.
+
+        Uses the same tokenization approach as DistilBERT prediction to ensure
+        accurate token count estimation.
+
+        Returns:
+            Number of tokens produced by the tokenizer
+        """
+        # Import here to avoid circular dependencies
+        from research.predict_distilbert import get_thread_tokenizer
+
+        # Get the token string (same format used for prediction)
+        token_string = " ".join(self.get_tokens(mapped=True))
+
+        # Use the same tokenizer that DistilBERT uses
+        tokenizer = get_thread_tokenizer()
+
+        # Tokenize without padding to get actual token count
+        encoded = tokenizer(
+            token_string,
+            return_tensors="pt",
+            padding=False,
+            truncation=False,  # Don't truncate to see full size
+        )
+
+        # Return the number of tokens
+        return encoded["input_ids"].shape[1]
 
 
 def emit(opcode: "OpCode", arg: Any = None, language: str = "python") -> Instruction:

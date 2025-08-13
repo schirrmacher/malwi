@@ -356,7 +356,7 @@ class MalwiReport:
         return txt
 
     def to_tokens_text(self) -> str:
-        """Generate tokens output format: file path, object name, and tokens separated by newlines."""
+        """Generate tokens output format with visualization of malwicode -> DistilBERT token splitting."""
         lines = []
 
         # Group objects by file path to maintain organization
@@ -371,15 +371,38 @@ class MalwiReport:
             objects_in_file = files_with_objects[file_path]
 
             for obj in objects_in_file:
-                # Add file path
-                lines.append(file_path)
+                # Add file path with object name
+                lines.append(f"{file_path}, {obj.name}")
 
-                # Add object name
-                lines.append(obj.name)
-
-                # Add all tokens for this object as a single line
+                # Add malwicode tokens
+                malwicode_tokens = obj.to_tokens()
                 token_string = obj.to_token_string()
-                lines.append(token_string)
+                lines.append(f"MALWICODE_TOKENS: {token_string}")
+                lines.append("")  # Add space after malwicode tokens
+
+                # Add token split visualization
+                try:
+                    from research.predict_distilbert import get_thread_tokenizer
+
+                    tokenizer = get_thread_tokenizer()
+
+                    # Get the actual DistilBERT tokens
+                    distilbert_tokens = tokenizer.tokenize(token_string)
+                    lines.append(f"DISTILBERT_TOKENS: {' '.join(distilbert_tokens)}")
+                    lines.append("")  # Add space after distilbert tokens
+
+                    # Add count comparison
+                    lines.append(
+                        f"TOKEN_SPLIT: {len(malwicode_tokens)} malwicode → {len(distilbert_tokens)} distilbert → {obj.embedding_count} final"
+                    )
+
+                except Exception:
+                    # Fallback if tokenizer not available
+                    lines.append(f"MALWICODE_COUNT: {len(malwicode_tokens)} tokens")
+                    lines.append(
+                        f"DISTILBERT_COUNT: {obj.embedding_count} tokens (tokenizer required for detailed split)"
+                    )
+                    lines.append("")  # Add space in fallback case too
 
                 # Add empty line for separation between objects (except for last object)
                 lines.append("")
@@ -430,10 +453,20 @@ class MalwiReport:
                     obj.retrieve_source_code()
 
                 if obj.code and obj.code != "<source not available>":
-                    # Add file path comment
+                    # Add file path comment with embedding count info
                     output_parts.append(f"{comment_prefix} {'=' * 70}")
                     output_parts.append(f"{comment_prefix} File: {obj.file_path}")
                     output_parts.append(f"{comment_prefix} Object: {obj.name}")
+                    output_parts.append(
+                        f"{comment_prefix} Embedding count: {obj.embedding_count} tokens"
+                    )
+
+                    # Add warning if it exceeds DistilBERT window
+                    if obj.embedding_count > 512:
+                        output_parts.append(
+                            f"{comment_prefix} ⚠️  WOULD TRIGGER DISTILBERT WINDOWING (>{512} tokens)"
+                        )
+
                     output_parts.append(f"{comment_prefix} {'=' * 70}")
                     output_parts.append("")
 
@@ -752,6 +785,24 @@ class MalwiObject:
             return self.code
         return None
 
+    @property
+    def embedding_count(self) -> int:
+        """
+        Get the number of embeddings (tokens) this object would create when processed
+        by the DistilBERT tokenizer.
+
+        This helps identify when bytecode streams exceed DistilBERT's context window
+        (typically 512 tokens), which causes windowing and can affect model performance.
+
+        Returns:
+            Number of tokens this object creates when tokenized for DistilBERT
+        """
+        if self.ast_code_object and hasattr(self.ast_code_object, "embedding_count"):
+            return self.ast_code_object.embedding_count
+        else:
+            # No AST CodeObject available - cannot calculate embedding count
+            return 0
+
     def predict(self) -> Optional[dict]:
         token_string = self.to_token_string()
         prediction = None
@@ -794,6 +845,7 @@ class MalwiObject:
                     "code": final_code_value,
                     "tokens": self.to_token_string(),
                     "hash": self.to_string_hash(),
+                    "embedding_count": self.embedding_count,
                 }
             ],
         }
