@@ -17,6 +17,7 @@ from common.messaging import (
     warning,
     error,
 )
+from research.mapping import SpecialCases
 
 DEFAULT_TOKENIZER_OUTPUT_PATH = Path("malwi_models")
 DEFAULT_MAX_LENGTH = 512
@@ -234,7 +235,7 @@ def create_or_load_tokenizer(
 
         bpe_trainer_obj = ByteLevelBPETokenizer()
 
-        # Only use essential BPE tokens and computed tokens from data
+        # Essential BPE tokens
         bpe_essential_tokens = [
             "[PAD]",
             "[UNK]",
@@ -243,13 +244,21 @@ def create_or_load_tokenizer(
             "[MASK]",
         ]
 
-        # Combine essential tokens with computed tokens from input data
+        # Add SpecialCases tokens from mapping.py
+        special_cases_tokens = [member.value for member in SpecialCases]
+
+        # Combine all special token types
         combined_special_tokens = list(
-            set(bpe_essential_tokens + list(computed_special_tokens))
+            set(
+                bpe_essential_tokens
+                + special_cases_tokens
+                + list(computed_special_tokens)
+            )
         )
 
         info(f"Total special tokens: {len(combined_special_tokens)}")
         info(f"  - BPE essential tokens: {len(bpe_essential_tokens)}")
+        info(f"  - SpecialCases tokens: {len(special_cases_tokens)}")
         info(f"  - Computed from input data: {len(computed_special_tokens)}")
 
         bpe_trainer_obj.train_from_iterator(
