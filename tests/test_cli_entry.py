@@ -646,6 +646,7 @@ class TestPyPICommand:
                     predict=True,
                     silent=True,
                     malicious_threshold=0.7,
+                    on_malicious_found=None,
                 )
 
                 # Verify result output
@@ -820,6 +821,7 @@ class TestPyPICommand:
                     predict=True,
                     silent=True,
                     malicious_threshold=0.9,
+                    on_malicious_found=None,
                 )
 
     @patch("research.pypi.scan_pypi_package")
