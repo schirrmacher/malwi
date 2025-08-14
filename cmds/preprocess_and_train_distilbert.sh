@@ -18,17 +18,21 @@ echo "📋 Step 2: Training custom tokenizer..."
 ./cmds/train_tokenizer.sh
 
 echo
-echo "📋 Step 3: Running DistilBERT model training (256 hidden size)..."
+# Get dynamic values
+HIDDEN_SIZE=${HIDDEN_SIZE:-256}
+TOTAL_TOKENS=${TOTAL_TOKENS:-15000}
+
+echo "📋 Step 3: Running DistilBERT model training (${HIDDEN_SIZE} hidden size)..."
 ./cmds/train_distilbert.sh
 
 echo
 echo "🎉 Complete DistilBERT pipeline finished successfully!"
 echo
 echo "📁 All outputs are in malwi_models/:"
-echo "   • Tokenizer (trained on your data's top 15000 tokens)"
-echo "   • Trained DistilBERT model (256 hidden dimensions)"
+echo "   • Tokenizer (trained on your data's top ${TOTAL_TOKENS} tokens)"
+echo "   • Trained DistilBERT model (${HIDDEN_SIZE} hidden dimensions)"
 echo "   • Training metrics and logs"
 echo
-echo "💡 Tip: For a larger model with potentially better accuracy, manually run:"
-echo "   uv run python -m src.research.train_distilbert -b benign_processed.csv -m malicious_processed.csv --hidden-size 512"
+echo "💡 Tip: For different configurations, set environment variables:"
+echo "   HIDDEN_SIZE=512 TOTAL_TOKENS=20000 ./cmds/preprocess_and_train_distilbert.sh"
 echo

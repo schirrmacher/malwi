@@ -27,23 +27,28 @@ fi
 echo "✅ Tokenizer found at malwi_models/"
 echo
 
+# Set configurable parameters
+EPOCHS=${EPOCHS:-3}
+HIDDEN_SIZE=${HIDDEN_SIZE:-256}
+NUM_PROC=${NUM_PROC:-1}
+
 # Train DistilBERT model
 echo "🚀 Training DistilBERT model..."
 echo "   • Loading pre-trained tokenizer from malwi_models/"
 echo "   • Training data: benign_processed.csv, malicious_processed.csv"
-echo "   • Model size: 256 hidden dimensions (smaller, faster model)"
-echo "   • Epochs: 3"
-echo "   • Using 1 processor for training"
+echo "   • Model size: ${HIDDEN_SIZE} hidden dimensions$([ ${HIDDEN_SIZE} -eq 256 ] && echo " (smaller, faster model)" || echo " (larger model)")"
+echo "   • Epochs: ${EPOCHS}"
+echo "   • Using ${NUM_PROC} processor$([ ${NUM_PROC} -gt 1 ] && echo "s" || echo "") for training"
 echo
-echo "   Note: Use --hidden-size 512 for larger model with better accuracy"
+echo "   Note: Set HIDDEN_SIZE=512 for larger model with better accuracy"
 echo
 
 uv run python -m src.research.train_distilbert \
     -b benign_processed.csv \
     -m malicious_processed.csv \
-    --epochs 3 \
-    --hidden-size 256 \
-    --num-proc 1
+    --epochs ${EPOCHS} \
+    --hidden-size ${HIDDEN_SIZE} \
+    --num-proc ${NUM_PROC}
 
 echo
 echo "🎉 DistilBERT model training completed!"
