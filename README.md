@@ -24,6 +24,7 @@ malwi examples/malicious
 
 3) **Evaluate**: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
 ```
+                  __          __
   .--------.---.-|  .--.--.--|__|
   |        |  _  |  |  |  |  |  |
   |__|__|__|___._|__|________|__|
@@ -31,18 +32,30 @@ malwi examples/malicious
 
 
 - target: examples/malicious
+- seconds: 0.42
 - files: 13
   ├── scanned: 3
   ├── skipped: 10
   └── suspicious:
+      ├── examples/malicious/discordpydebug-0.0.4/setup.py
+      │   └── <module>
+      │       ├── archive compression
+      │       └── package installation execution
       └── examples/malicious/discordpydebug-0.0.4/src/discordpydebug/__init__.py
-          └── <module>
-              ├── deserialization
-              ├── user io
-              ├── system interaction
+          ├── <module>
+          │   ├── process management
+          │   ├── system interaction
+          │   ├── deserialization
+          │   └── user io
+          ├── run
+          │   └── fs linking
+          ├── debug
+          │   ├── fs linking
+          │   └── archive compression
+          └── runcommand
               └── process management
 
-=> 👹 malicious 1.00
+=> 👹 malicious 0.98
 ```
 
 ## Why malwi?
@@ -106,9 +119,9 @@ The DistilBERT model makes the final maliciousness decision based on the token p
 
 | Metric                     | Value                         |
 |----------------------------|-------------------------------|
-| F1 Score                   | 0.941                         |
-| Recall                     | 0.900                         |
-| Precision                  | 0.987                         |
+| F1 Score                   | 0.944                         |
+| Recall                     | 0.906                         |
+| Precision                  | 0.984                         |
 | Training time              | ~5 hours                      |
 | Hardware                   | NVIDIA RTX 4090               |
 | Epochs                     | 3                             |
@@ -147,20 +160,4 @@ cmds/preprocess_data.sh                  # Process data for ML training
 # Individual model training
 cmds/train_tokenizer.sh                  # Train custom tokenizer
 cmds/train_distilbert.sh                 # Train DistilBERT model
-```
-
-### Triage
-
-malwi uses a pipeline that can be enhanced by triaging its results (see `src/research/triage.py`). For automated triaging, you can leverage open-source models in combination with [Ollama](https://ollama.com/).
-
-#### Start LLM
-
-```
-ollama run gemma3
-```
-
-#### Start Triaging
-
-```
-uv run python -m src.research.triage --triage-ollama --path <FOLDER_WITH_MALWI_YAML_RESULTS>
 ```
