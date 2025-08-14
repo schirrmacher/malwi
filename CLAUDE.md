@@ -56,6 +56,20 @@ uv run python -m src.research.preprocess '../malwi-samples' output.csv --chunk-s
 uv run python util/regenerate_test_data.py
 ```
 
+**Usage:**
+```bash
+# Scan local files/directories
+uv run python -m src.cli.entry scan examples/malicious
+
+# Scan PyPI packages
+uv run python -m src.cli.entry pypi requests
+uv run python -m src.cli.entry pypi numpy 1.24.0 --format json --folder downloads
+
+# Different output formats
+uv run python -m src.cli.entry scan examples --format yaml
+uv run python -m src.cli.entry pypi django --format markdown --save output.md
+```
+
 ## Release
 
 1. Run pytests

@@ -593,3 +593,283 @@ class TestBatchMode:
                 # Verify progress bar postfix shows skip and success
                 mock_pbar.set_postfix_str.assert_any_call("⏭️ folder1")
                 mock_pbar.set_postfix_str.assert_any_call("✅ folder2")
+
+
+class TestPyPICommand:
+    """Tests for PyPI subcommand functionality"""
+
+    def test_pypi_help_message(self, capsys):
+        """Test that PyPI help message displays properly"""
+        with patch.object(sys, "argv", ["malwi", "pypi", "--help"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "PyPI package name to scan" in captured.out
+        assert "--folder" in captured.out
+        assert "--format" in captured.out
+        assert "--threshold" in captured.out
+        assert "--save" in captured.out
+
+    @patch("cli.entry.MalwiObject")
+    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.entry.MalwiReport.create")
+    def test_pypi_basic_scan(
+        self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
+    ):
+        """Test basic PyPI package scanning"""
+        # Mock extracted directory
+        extracted_dir = tmp_path / "test_package"
+        extracted_dir.mkdir()
+
+        # Mock scan_pypi_package return
+        mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
+
+        # Mock report
+        mock_report = MagicMock()
+        mock_report.to_demo_text.return_value = "Demo output"
+        mock_create.return_value = mock_report
+
+        with patch.object(sys, "argv", ["malwi", "pypi", "test-package", "--quiet"]):
+            with patch("cli.entry.result") as mock_result:
+                main()
+
+                # Verify scan_pypi_package was called
+                mock_scan_pypi.assert_called_once_with(
+                    "test-package", None, Path("downloads"), show_progress=False
+                )
+
+                # Verify MalwiReport.create was called
+                mock_create.assert_called_once_with(
+                    input_path=extracted_dir,
+                    accepted_extensions=[".py"],
+                    predict=True,
+                    silent=True,
+                    malicious_threshold=0.7,
+                )
+
+                # Verify result output
+                mock_result.assert_called_with("Demo output", force=True)
+
+    @patch("cli.entry.MalwiObject")
+    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.entry.MalwiReport.create")
+    def test_pypi_with_version(
+        self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
+    ):
+        """Test PyPI scanning with specific version"""
+        extracted_dir = tmp_path / "package"
+        extracted_dir.mkdir()
+        mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
+
+        mock_report = MagicMock()
+        mock_report.to_demo_text.return_value = "Output"
+        mock_create.return_value = mock_report
+
+        with patch.object(
+            sys, "argv", ["malwi", "pypi", "requests", "2.31.0", "--quiet"]
+        ):
+            with patch("cli.entry.result"):
+                main()
+
+                # Verify version was passed
+                mock_scan_pypi.assert_called_once_with(
+                    "requests", "2.31.0", Path("downloads"), show_progress=False
+                )
+
+    @patch("cli.entry.MalwiObject")
+    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.entry.MalwiReport.create")
+    def test_pypi_custom_folder(
+        self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
+    ):
+        """Test PyPI scanning with custom download folder"""
+        extracted_dir = tmp_path / "package"
+        extracted_dir.mkdir()
+        mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
+
+        mock_report = MagicMock()
+        mock_report.to_demo_text.return_value = "Output"
+        mock_create.return_value = mock_report
+
+        with patch.object(
+            sys,
+            "argv",
+            ["malwi", "pypi", "numpy", "--folder", "custom_folder", "--quiet"],
+        ):
+            with patch("cli.entry.result"):
+                main()
+
+                # Verify custom folder was used
+                mock_scan_pypi.assert_called_once_with(
+                    "numpy", None, Path("custom_folder"), show_progress=False
+                )
+
+    @patch("cli.entry.MalwiObject")
+    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.entry.MalwiReport.create")
+    def test_pypi_different_formats(
+        self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
+    ):
+        """Test PyPI scanning with different output formats"""
+        extracted_dir = tmp_path / "package"
+        extracted_dir.mkdir()
+        mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
+
+        # Test different formats
+        formats_to_test = [
+            ("json", "to_report_json", '{"result": "test"}'),
+            ("yaml", "to_report_yaml", "result: test"),
+            ("markdown", "to_report_markdown", "# Test Result"),
+            ("tokens", "to_tokens_text", "tokens output"),
+            ("code", "to_code_text", "code output"),
+        ]
+
+        for fmt, method_name, expected_output in formats_to_test:
+            mock_report = MagicMock()
+            getattr(mock_report, method_name).return_value = expected_output
+            mock_create.return_value = mock_report
+
+            with patch.object(
+                sys, "argv", ["malwi", "pypi", "test-pkg", "--format", fmt, "--quiet"]
+            ):
+                with patch("cli.entry.result") as mock_result:
+                    main()
+
+                    # Verify correct format method was called
+                    mock_result.assert_called_with(expected_output, force=True)
+
+    @patch("cli.entry.MalwiObject")
+    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.entry.MalwiReport.create")
+    def test_pypi_save_output(
+        self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
+    ):
+        """Test PyPI scanning with save output option"""
+        extracted_dir = tmp_path / "package"
+        extracted_dir.mkdir()
+        output_file = tmp_path / "pypi_output.json"
+
+        mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
+
+        mock_report = MagicMock()
+        mock_report.to_report_json.return_value = '{"saved": "output"}'
+        mock_create.return_value = mock_report
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "malwi",
+                "pypi",
+                "test-pkg",
+                "--format",
+                "json",
+                "--save",
+                str(output_file),
+                "--quiet",
+            ],
+        ):
+            with patch("cli.entry.info") as mock_info:
+                main()
+
+                # Verify file was saved
+                assert output_file.exists()
+                assert output_file.read_text() == '{"saved": "output"}'
+
+    @patch("cli.entry.MalwiObject")
+    @patch("research.pypi.scan_pypi_package")
+    def test_pypi_scan_failure(self, mock_scan_pypi, mock_malwi_object):
+        """Test PyPI scanning when package download fails"""
+        # Mock failed package download
+        mock_scan_pypi.return_value = (None, [])
+
+        with patch.object(sys, "argv", ["malwi", "pypi", "nonexistent-package"]):
+            with patch("common.messaging.error") as mock_error:
+                result = main()
+
+                # Verify error was logged and function returned
+                mock_error.assert_called_with("Failed to download or extract package")
+                assert result is None
+
+    @patch("cli.entry.MalwiObject")
+    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.entry.MalwiReport.create")
+    def test_pypi_custom_threshold(
+        self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
+    ):
+        """Test PyPI scanning with custom maliciousness threshold"""
+        extracted_dir = tmp_path / "package"
+        extracted_dir.mkdir()
+        mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
+
+        mock_report = MagicMock()
+        mock_report.to_demo_text.return_value = "Output"
+        mock_create.return_value = mock_report
+
+        with patch.object(
+            sys, "argv", ["malwi", "pypi", "test-pkg", "--threshold", "0.9", "--quiet"]
+        ):
+            with patch("cli.entry.result"):
+                main()
+
+                # Verify custom threshold was used
+                mock_create.assert_called_once_with(
+                    input_path=extracted_dir,
+                    accepted_extensions=[".py"],
+                    predict=True,
+                    silent=True,
+                    malicious_threshold=0.9,
+                )
+
+    @patch("research.pypi.scan_pypi_package")
+    def test_pypi_model_loading_error(self, mock_scan_pypi, tmp_path):
+        """Test PyPI scanning continues when model loading fails"""
+        extracted_dir = tmp_path / "package"
+        extracted_dir.mkdir()
+        mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
+
+        with patch("cli.entry.MalwiObject") as mock_malwi_object:
+            # Make model loading fail
+            mock_malwi_object.load_models_into_memory.side_effect = Exception(
+                "Model error"
+            )
+
+            with patch("cli.entry.MalwiReport.create") as mock_create:
+                mock_report = MagicMock()
+                mock_report.to_demo_text.return_value = "Output"
+                mock_create.return_value = mock_report
+
+                with patch.object(
+                    sys, "argv", ["malwi", "pypi", "test-pkg", "--quiet"]
+                ):
+                    with patch("cli.entry.result"):
+                        # Should not crash
+                        main()
+
+                        # Verify processing continued despite model error
+                        mock_create.assert_called_once()
+
+    @patch("cli.entry.MalwiObject")
+    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.entry.MalwiReport.create")
+    def test_pypi_with_progress(
+        self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
+    ):
+        """Test PyPI scanning shows progress when not in quiet mode"""
+        extracted_dir = tmp_path / "package"
+        extracted_dir.mkdir()
+        mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
+
+        mock_report = MagicMock()
+        mock_report.to_demo_text.return_value = "Output"
+        mock_create.return_value = mock_report
+
+        with patch.object(sys, "argv", ["malwi", "pypi", "test-pkg"]):
+            with patch("cli.entry.result"):
+                main()
+
+                # Verify show_progress=True when not quiet
+                mock_scan_pypi.assert_called_once_with(
+                    "test-pkg", None, Path("downloads"), show_progress=True
+                )

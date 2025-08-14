@@ -318,14 +318,73 @@ def pypi_command(args):
      AI Python Malware Scanner\n\n"""
     )
 
-    # TODO: Implement PyPI package scanning logic
-    info(f"📦 Scanning PyPI package: {args.package}")
-    if args.version:
-        info(f"   Version: {args.version}")
-    else:
-        info(f"   Version: latest")
+    # Import PyPI scanner
+    from research.pypi import scan_pypi_package
 
-    info("\n⚠️  PyPI scanning feature not yet implemented")
+    # Use specified download folder
+    download_path = Path(args.folder)
+
+    # Download and extract the package
+    temp_dir, extracted_dirs = scan_pypi_package(
+        args.package, args.version, download_path, show_progress=not args.quiet
+    )
+
+    if not extracted_dirs:
+        from common.messaging import error
+
+        error("Failed to download or extract package")
+        return
+
+    # Load ML models for scanning
+    try:
+        MalwiObject.load_models_into_memory()
+    except Exception as e:
+        model_warning("ML", e)
+
+    # Scan each extracted directory
+    all_reports = []
+    for extracted_dir in extracted_dirs:
+        report: MalwiReport = MalwiReport.create(
+            input_path=extracted_dir,
+            accepted_extensions=[".py"],  # Focus on Python files for PyPI packages
+            predict=True,
+            silent=args.quiet,
+            malicious_threshold=args.threshold,
+        )
+        all_reports.append(report)
+
+    # Combine reports and show results
+    if all_reports:
+        # For now, use the first report (could be enhanced to merge multiple)
+        main_report = all_reports[0]
+
+        # Generate output based on format
+        if args.format == "yaml":
+            output = main_report.to_report_yaml()
+        elif args.format == "json":
+            output = main_report.to_report_json()
+        elif args.format == "markdown":
+            output = main_report.to_report_markdown()
+        elif args.format == "tokens":
+            output = main_report.to_tokens_text()
+        elif args.format == "code":
+            output = main_report.to_code_text()
+        else:
+            output = main_report.to_demo_text()
+
+        if args.save:
+            save_path = Path(args.save)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            save_path.write_text(output, encoding="utf-8")
+            if not args.quiet:
+                info(f"Output saved to {args.save}")
+        else:
+            result(output, force=True)
+
+        if not args.quiet:
+            info(f"Package files downloaded to: {temp_dir}")
+    else:
+        info("No files were processed")
 
 
 def main():
@@ -417,6 +476,35 @@ def main():
         nargs="?",
         default=None,
         help="Package version (optional, defaults to latest)",
+    )
+    pypi_parser.add_argument(
+        "--folder",
+        "-d",
+        metavar="FOLDER",
+        default="downloads",
+        help="Folder to download packages to (default: downloads)",
+    )
+    pypi_parser.add_argument(
+        "--format",
+        "-f",
+        choices=["demo", "markdown", "json", "yaml", "tokens", "code"],
+        default="demo",
+        help="Specify the output format.",
+    )
+    pypi_parser.add_argument(
+        "--threshold",
+        "-mt",
+        metavar="FLOAT",
+        type=float,
+        default=0.7,
+        help="Specify the threshold for classifying code objects as malicious (default: 0.7).",
+    )
+    pypi_parser.add_argument(
+        "--save",
+        "-s",
+        metavar="FILE",
+        help="Specify a file path to save the output.",
+        default=None,
     )
     pypi_parser.add_argument(
         "--quiet",

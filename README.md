@@ -24,7 +24,7 @@ pip install --user malwi
 # Scan local directory
 malwi scan examples/malicious
 
-# Scan PyPI package (coming soon)
+# Scan PyPI package
 malwi pypi requests             # Latest version
 malwi pypi requests 2.31.0      # Specific version
 ```
@@ -64,6 +64,37 @@ malwi pypi requests 2.31.0      # Specific version
 
 => 👹 malicious 0.98
 ```
+
+## PyPI Package Scanning
+
+malwi can directly scan PyPI packages without manually downloading them:
+
+```bash
+# Scan latest version of a package
+malwi pypi requests
+
+# Scan specific version
+malwi pypi numpy 1.24.0
+
+# Custom download folder
+malwi pypi pandas --folder my_scans
+
+# Different output formats
+malwi pypi tensorflow --format json
+malwi pypi django --format yaml --save results.yaml
+
+# Custom maliciousness threshold
+malwi pypi suspicious-package --threshold 0.5
+```
+
+### PyPI Command Options
+- `--folder, -d`: Download folder (default: downloads)  
+- `--format, -f`: Output format (demo, json, yaml, markdown, tokens, code)
+- `--threshold, -mt`: Maliciousness threshold (default: 0.7)
+- `--save, -s`: Save output to file
+- `--quiet, -q`: Suppress logging output
+
+Downloaded packages are preserved in the specified folder for manual inspection and triaging.
 
 ## Why malwi?
 
