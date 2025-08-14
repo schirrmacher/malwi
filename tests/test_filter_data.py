@@ -1,13 +1,29 @@
 import os
 import pytest
-import pandas as pd
 from pathlib import Path
-
 from unittest.mock import patch, MagicMock
-from research.filter_data import process_csv_files, enrich_dataframe_with_triage
+
+# Skip all tests in this module if pandas is not available (training dependencies not installed)
+pytest_plugins = []
+
+try:
+    import pandas as pd
+    from research.filter_data import process_csv_files, enrich_dataframe_with_triage
+
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    pd = None
+    process_csv_files = None
+    enrich_dataframe_with_triage = None
+
+pytestmark = pytest.mark.skipif(
+    not PANDAS_AVAILABLE,
+    reason="pandas not available (training dependencies not installed)",
+)
 
 
-def create_csv(tmp_path: Path, filename: str, data: pd.DataFrame):
+def create_csv(tmp_path: Path, filename: str, data):
     """Helper function to create a CSV file in a temporary directory."""
     file_path = tmp_path / filename
     data.to_csv(file_path, index=False)
@@ -26,9 +42,7 @@ def read_processed_csv(tmp_path: Path, original_filename: str):
     )  # Return empty DataFrame if file doesn't exist (e.g., after error)
 
 
-def assert_df_equal_ignore_order(
-    df1: pd.DataFrame, df2: pd.DataFrame, sort_by_col="hash"
-):
+def assert_df_equal_ignore_order(df1, df2, sort_by_col="hash"):
     """
     Asserts two DataFrames are equal, ignoring row order.
     Sorts by 'hash' column if it exists, otherwise compares as is.
