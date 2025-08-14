@@ -240,6 +240,17 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.INTEGER.value}"
         elif op_code == OpCode.LOAD_CONST and isinstance(arg, float):
             return f"{op_code.name} {SpecialCases.FLOAT.value}"
+        elif op_code == OpCode.LOAD_CONST and isinstance(arg, tuple):
+            # Handle tuples by extracting string content and mapping individual elements
+            # This is especially important for marshal operations and import tuples
+            from research.mapping import map_tuple_arg
+
+            tuple_mapping = map_tuple_arg(arg, str(arg))
+            if tuple_mapping:
+                return f"{op_code.name} {tuple_mapping}"
+            else:
+                # Fallback to LIST token if no meaningful content found
+                return f"{op_code.name} LIST"
         # Map jumps for conditional logic
         elif op_code in (
             OpCode.POP_JUMP_IF_FALSE,
@@ -1596,16 +1607,33 @@ class ASTCompiler:
                 if module_node:
                     module_name = self._get_node_text(module_node, source_code_bytes)
 
-                    # Collect all imported names (there can be multiple with same field name)
-                    imported_names = []
-                    for i in range(node.child_count):
-                        if node.field_name_for_child(i) == "name":
-                            name_node = node.child(i)
-                            imported_names.append(
-                                self._get_node_text(name_node, source_code_bytes)
-                            )
+                    # Collect all imported names and their aliases
+                    import_info = []  # List of (original_name, store_name) tuples
+                    imported_names = []  # List of original names for fromlist
 
-                    if imported_names:
+                    for i in range(node.child_count):
+                        child = node.child(i)
+                        if child.type == "aliased_import":
+                            # Handle "name as alias"
+                            name_node = child.child_by_field_name("name")
+                            alias_node = child.child_by_field_name("alias")
+                            if name_node and alias_node:
+                                original_name = self._get_node_text(
+                                    name_node, source_code_bytes
+                                )
+                                alias_name = self._get_node_text(
+                                    alias_node, source_code_bytes
+                                )
+                                import_info.append((original_name, alias_name))
+                                imported_names.append(original_name)
+                        elif node.field_name_for_child(i) == "name":
+                            # Handle direct import (no alias)
+                            name_node = node.child(i)
+                            name = self._get_node_text(name_node, source_code_bytes)
+                            import_info.append((name, name))
+                            imported_names.append(name)
+
+                    if import_info:
                         # Create fromlist tuple for the import
                         bytecode.append(emit(OpCode.LOAD_CONST, 0))  # Import level
                         bytecode.append(
@@ -1613,10 +1641,10 @@ class ASTCompiler:
                         )  # fromlist as tuple
                         bytecode.append(emit(OpCode.IMPORT_NAME, module_name))
 
-                        # Import each name and store it
-                        for imported_name in imported_names:
-                            bytecode.append(emit(OpCode.IMPORT_FROM, imported_name))
-                            bytecode.append(emit(OpCode.STORE_NAME, imported_name))
+                        # Import each name and store it (using alias if available)
+                        for original_name, store_name in import_info:
+                            bytecode.append(emit(OpCode.IMPORT_FROM, original_name))
+                            bytecode.append(emit(OpCode.STORE_NAME, store_name))
                         bytecode.append(
                             emit(OpCode.POP_TOP, None)
                         )  # Clean up module object
