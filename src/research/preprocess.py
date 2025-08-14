@@ -5,6 +5,7 @@ Processes Python/JavaScript files to generate AST-based malwicode tokens in para
 """
 
 import argparse
+import csv
 import logging
 import multiprocessing as mp
 import tempfile
@@ -53,22 +54,24 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
     processed_count = 0
 
     try:
-        with open(chunk_output, "w", encoding="utf-8") as f:
-            # Write CSV header
-            f.write("tokens,hash,language,filepath\n")
+        with open(chunk_output, "w", encoding="utf-8", newline="") as f:
+            # Use proper CSV writer to handle escaping
+            writer = csv.writer(f)
+            writer.writerow(["tokens", "hash", "language", "filepath"])
 
             for file_path in files:
                 try:
                     code_objects = compiler.process_file(file_path)
 
                     for obj in code_objects:
-                        # Escape quotes in tokens field
-                        tokens = obj.to_string(one_line=True)
-                        tokens = tokens.replace('"', '""') if '"' in tokens else tokens
-
-                        # Write CSV row
-                        f.write(
-                            f'"{tokens}",{obj.to_hash()},{obj.language},{str(obj.path)}\n'
+                        # Write CSV row with proper escaping
+                        writer.writerow(
+                            [
+                                obj.to_string(one_line=True),
+                                obj.to_hash(),
+                                obj.language,
+                                str(obj.path),
+                            ]
                         )
 
                     processed_count += 1
