@@ -1,2 +1,17 @@
 include README.md
 recursive-include src/research/syntax_mapping *.json
+
+# Exclude development and training directories/files from source distributions
+prune tests/
+prune util/
+prune examples/
+prune cmds/
+prune docs/
+prune dist/
+global-exclude *.csv
+global-exclude *.lock
+global-exclude CLAUDE.md
+global-exclude RESEARCH.md
+global-exclude util/build_helpers.py
+global-exclude _moved_files.txt
+prune _training_backup/

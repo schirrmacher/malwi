@@ -70,14 +70,30 @@ uv run python -m src.cli.entry scan examples --format yaml
 uv run python -m src.cli.entry pypi django --format markdown --save output.md
 ```
 
+## Building Package
+
+**For end-user distribution (excludes training files):**
+```bash
+# Backup training files and build clean package
+python util/build_helpers.py backup
+python -m build --wheel
+python util/build_helpers.py restore
+
+# The wheel will only contain files needed for scanning:
+# - malwi_object.py, predict_distilbert.py, ast_to_malwicode.py
+# - mapping.py, pypi.py, triage.py, syntax_mapping/
+# Training files are excluded: train_*.py, preprocess.py, etc.
+```
+
 ## Release
 
 1. Run pytests
 2. Create a version bump, adapt the minor version in:
    - `src/malwi/_version.py` (central version file)
    - Run `uv sync` to update uv.lock
-3. Create a git commit with: version bump
-4. Run: `git tag v<version>` (e.g., `git tag v0.0.15`)
+3. Build clean package: `python util/build_helpers.py backup && python -m build --wheel && python util/build_helpers.py restore`
+4. Create a git commit with: version bump
+5. Run: `git tag v<version>` (e.g., `git tag v0.0.15`)
 
 **Note**: Version is now centralized in `src/malwi/_version.py`. All other files (pyproject.toml, setup.py, CLI) automatically read from this central location.
 

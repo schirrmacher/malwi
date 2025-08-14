@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "malwi - AI Python Malware Scanner"
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = "MIT"
 
 authors = [
     { name = "Marvin Schirrmacher", email = "m@schirrmacher.io" },
@@ -18,35 +18,25 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: MIT License", 
     "Operating System :: OS Independent",
 ]
 
 dependencies = [
-    "accelerate>=1.6.0",
-    "datasets>=3.6.0",
-    "nltk>=3.9.1",
-    "ollama>=0.5.1",
-    "pandas>=2.2.3",
-    "pytest>=8.3.5",
-    "questionary>=2.1.0",
-    "scikit-learn>=1.6.1",
-    "tabulate>=0.9.0",
-    "tokenizers>=0.21.1",
     "torch>=2.7.0",
-    "torchvision>=0.22.0",
-    "tqdm>=4.67.1",
-    "transformers>=4.51.3",
+    "transformers>=4.51.3", 
+    "tokenizers>=0.21.1",
     "tree-sitter>=0.25.0",
-    "tree-sitter-javascript>=0.23.1",
+    "tree-sitter-javascript>=0.23.1", 
     "tree-sitter-python>=0.23.6",
+    "tqdm>=4.67.1",
+    "tabulate>=0.9.0",
 ]
 
 [project.scripts]
 malwi = "cli.entry:main"
 
 [tool.setuptools]
-package-dir = { "" = "src" }
+package-dir = { "" = "src"}
 
 [tool.setuptools.dynamic]
 version = { attr = "malwi._version.__version__" }
@@ -61,6 +51,19 @@ where = ["src"]
 dev = [
     "pytest>=8.3.5",
     "ruff>=0.11.7",
+]
+
+training = [
+    "accelerate>=1.6.0",
+    "datasets>=3.6.0", 
+    "pandas>=2.2.3",
+    "scikit-learn>=1.6.1",
+    "nltk>=3.9.1",
+]
+
+triage = [
+    "ollama>=0.5.1",
+    "questionary>=2.1.0",
 ]
 
 [tool.pytest.ini_options]
