@@ -221,6 +221,7 @@ class MalwiReport:
         result = report_data["result"]
 
         txt = f"- target: {report_data['input']}\n"
+        txt += f"- seconds: {stats['duration']:.2f}\n"
         txt += f"- files: {stats['total_files']}\n"
         txt += f"  ├── scanned: {stats['processed_files']}\n"
 
