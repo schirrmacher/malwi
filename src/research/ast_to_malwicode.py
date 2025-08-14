@@ -220,7 +220,7 @@ class Instruction:
         - Consistent hash generation across different variable names/values
         """
 
-        STRING_MAX_LENGTH = 15
+        STRING_MAX_LENGTH = 20
         prefix = "STRING"
         function_mapping = FUNCTION_MAPPING.get(language, {})
         import_mapping = IMPORT_MAPPING.get(language, {})
@@ -1130,9 +1130,11 @@ class ASTCompiler:
                         bytecode.append(
                             emit(
                                 op_mapping,
-                                op_text
-                                if op_mapping == OpCode.BINARY_OPERATION
-                                else None,
+                                (
+                                    op_text
+                                    if op_mapping == OpCode.BINARY_OPERATION
+                                    else None
+                                ),
                             )
                         )
                 else:
