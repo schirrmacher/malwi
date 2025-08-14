@@ -9,9 +9,11 @@ import csv
 import logging
 import multiprocessing as mp
 import tempfile
+import signal
+import time
 from pathlib import Path
 from typing import List, Dict
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed, TimeoutError
 from tqdm import tqdm
 
 from research.ast_to_malwicode import ASTCompiler
@@ -67,6 +69,7 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
             writer = csv.writer(f)
             writer.writerow(["tokens", "hash", "language", "filepath"])
 
+            total_code_objects = 0
             for file_path in files:
                 try:
                     code_objects = compiler.process_file(file_path)
@@ -81,6 +84,7 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
                                 str(obj.path),
                             ]
                         )
+                        total_code_objects += 1
 
                     processed_count += 1
 
@@ -95,6 +99,7 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
             "success": True,
             "output_file": str(chunk_output),
             "processed_count": processed_count,
+            "code_objects_count": total_code_objects,
         }
 
     except Exception as e:
@@ -246,25 +251,47 @@ def _process_parallel(
         num_processes = mp.cpu_count()
 
     # Limit the number of processes to prevent resource exhaustion
-    # Especially important for large datasets
-    max_processes = min(num_processes, 16)  # Cap at 16 processes
-    if max_processes != num_processes:
+    # Be much more conservative for large datasets
+    if len(files) > 50000:
+        max_processes = min(num_processes, 4)  # Very conservative for large datasets
         print(
-            f"Limiting processes to {max_processes} (from {num_processes}) to prevent resource exhaustion"
+            f"Large dataset: limiting to {max_processes} processes to prevent crashes"
         )
-        num_processes = max_processes
+    elif len(files) > 10000:
+        max_processes = min(num_processes, 8)  # Moderate for medium datasets
+        print(f"Medium dataset: limiting to {max_processes} processes")
+    else:
+        max_processes = min(num_processes, 12)  # Normal limit for small datasets
+
+    if max_processes != num_processes:
+        print(f"Process limit: {max_processes} (from {num_processes})")
+    num_processes = max_processes
 
     # Calculate chunks
     num_chunks = max(1, len(files) // chunk_size)
     num_chunks = min(num_chunks, num_processes * 2)  # Don't create too many chunks
 
-    # For very large datasets, increase chunk size to prevent too many small chunks
-    if len(files) > 50000:
-        min_chunk_size = max(chunk_size, len(files) // (num_processes * 2))
+    # For very large datasets, use much larger chunks to reduce overhead
+    if len(files) > 100000:
+        min_chunk_size = max(
+            2000, len(files) // (num_processes * 2)
+        )  # At least 2000 files per chunk
         num_chunks = max(1, len(files) // min_chunk_size)
         print(
-            f"Large dataset detected - using larger chunk size ({min_chunk_size} files per chunk)"
+            f"Very large dataset: using chunk size of {min_chunk_size} files per chunk"
         )
+    elif len(files) > 50000:
+        min_chunk_size = max(
+            1000, len(files) // (num_processes * 2)
+        )  # At least 1000 files per chunk
+        num_chunks = max(1, len(files) // min_chunk_size)
+        print(f"Large dataset: using chunk size of {min_chunk_size} files per chunk")
+    elif len(files) > 10000:
+        min_chunk_size = max(
+            500, len(files) // (num_processes * 2)
+        )  # At least 500 files per chunk
+        num_chunks = max(1, len(files) // min_chunk_size)
+        print(f"Medium dataset: using chunk size of {min_chunk_size} files per chunk")
 
     print(f"Using {num_processes} processes with {num_chunks} chunks")
 
@@ -308,6 +335,8 @@ def _process_parallel(
             return
 
         print(f"Created {len(chunk_tasks)} processing tasks")
+        total_input_files = sum(len(task["files"]) for task in chunk_tasks)
+        print(f"Total files to process: {total_input_files}")
 
         # Process chunks in parallel
         chunk_results = []
@@ -319,14 +348,17 @@ def _process_parallel(
                 for task in chunk_tasks
             }
 
-            # Collect results with progress bar
+            # Collect results with progress bar and timeout
+            timeout_seconds = 300  # 5 minutes per chunk maximum
             with tqdm(
                 total=len(chunk_tasks), desc="Processing chunks", unit="chunk"
             ) as pbar:
-                for future in as_completed(future_to_chunk):
+                for future in as_completed(future_to_chunk, timeout=timeout_seconds):
                     chunk_id = future_to_chunk[future]
                     try:
-                        result = future.result()
+                        result = future.result(
+                            timeout=30
+                        )  # 30 second timeout for result retrieval
                         chunk_results.append(result)
 
                         if result["success"]:
@@ -334,6 +366,17 @@ def _process_parallel(
                                 processed=result["processed_count"],
                                 chunk=result["chunk_id"],
                             )
+                    except TimeoutError:
+                        # Handle timeout
+                        error_result = {
+                            "chunk_id": chunk_id,
+                            "success": False,
+                            "error": "Process timeout",
+                            "processed_count": 0,
+                        }
+                        chunk_results.append(error_result)
+                        pbar.set_postfix(chunk=chunk_id, status="TIMEOUT")
+                        future.cancel()
                     except Exception as e:
                         # Handle crashed processes
                         error_result = {
@@ -354,6 +397,18 @@ def _process_parallel(
 
         if failed_chunks:
             print(f"⚠️  {len(failed_chunks)} chunks failed")
+            # Calculate lost files by finding the corresponding chunk task
+            failed_files_count = 0
+            for failed in failed_chunks:
+                chunk_id = failed["chunk_id"]
+                # Find the task with matching chunk_id
+                matching_task = next(
+                    (task for task in chunk_tasks if task["chunk_id"] == chunk_id), None
+                )
+                if matching_task:
+                    failed_files_count += len(matching_task["files"])
+
+            print(f"📊 Lost data: ~{failed_files_count} files from failed chunks")
             for failed in failed_chunks:
                 logging.warning(
                     f"Chunk {failed['chunk_id']}: {failed.get('error', 'Unknown error')}"
@@ -363,12 +418,31 @@ def _process_parallel(
             chunk_files = [r["output_file"] for r in successful_chunks]
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
+            # Debug: Check chunk file sizes before combining
+            print("📋 Chunk file analysis:")
+            for i, chunk_file in enumerate(chunk_files):
+                if Path(chunk_file).exists():
+                    with open(chunk_file, "r") as f:
+                        lines = sum(1 for line in f) - 1  # Subtract header
+                    print(f"  Chunk {i}: {lines} rows")
+                else:
+                    print(f"  Chunk {i}: FILE MISSING")
+
             total_rows = combine_csv_chunks(chunk_files, output_path)
             total_processed = sum(r["processed_count"] for r in successful_chunks)
+            total_code_objects = sum(
+                r.get("code_objects_count", 0) for r in successful_chunks
+            )
 
             print(f"✅ Successfully processed {total_processed} files")
-            print(f"📊 Generated {total_rows} code objects")
+            print(f"📊 Generated {total_code_objects} code objects")
+            print(f"📊 CSV rows written: {total_rows}")
             print(f"💾 Output saved to: {output_path.resolve()}")
+
+            if total_code_objects != total_rows:
+                print(
+                    f"⚠️  WARNING: Code objects ({total_code_objects}) != CSV rows ({total_rows})"
+                )
         else:
             raise RuntimeError("All chunks failed - no output generated")
 
