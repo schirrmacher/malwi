@@ -3,7 +3,7 @@
 <img src="malwi-logo.png" alt="Logo">
 <a href='https://huggingface.co/schirrmacher/malwi'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HF-Model-blue'></a>&ensp; 
 
-**malwi** detects Python malware using machine learning. It specializes in finding **zero-day vulnerabilities** and can classify code as malicious or benign without requiring internet access.
+### **malwi** detects Python malware using machine learning. It specializes in finding **zero-day vulnerabilities** and can classify code as malicious or benign without requiring internet access.
 
 ## Key Features
 - 🔍 Detects unknown malware patterns through AI analysis
@@ -122,7 +122,7 @@ The DistilBERT model makes the final maliciousness decision based on the token p
 | F1 Score                   | 0.944                         |
 | Recall                     | 0.906                         |
 | Precision                  | 0.984                         |
-| Training time              | ~5 hours                      |
+| Training time              | ~1 hour                       |
 | Hardware                   | NVIDIA RTX 4090               |
 | Epochs                     | 3                             |
 
@@ -137,27 +137,92 @@ The first iteration focuses on **maliciousness of Python source code**.
 
 Future iterations will cover malware scanning for more languages (JavaScript, Rust, Go) and more formats (binaries, logs).
 
-## Support
+## Contributing & Support
 
-Do you have access to malicious Rust, Go, whatever packages? **Contact me.**
+### 🐛 Report Issues
+Found a bug or have a feature request? [Open an issue](https://github.com/schirrmacher/malwi/issues)
 
-### Develop
+### 📊 Share Malware Samples
+Have access to malicious packages in Rust, Go, or other languages? Your contributions can help expand malwi's detection capabilities:
+- **Email**: [Contact via GitHub profile](https://github.com/schirrmacher)
+- **Submit samples**: Follow responsible disclosure practices
 
-**Prerequisites:** 
-- [uv](https://docs.astral.sh/uv/)
-- Download [malwi-samples](https://github.com/schirrmacher/malwi-samples) in the same parent folder
+### 💬 Community
+- **Discussions**: Share ideas and ask questions in [GitHub Discussions](https://github.com/schirrmacher/malwi/discussions)
+- **Security**: Report security vulnerabilities privately via GitHub Security tab
+
+## Development
+
+### 🛠️ Prerequisites
+
+1. **Package Manager**: Install [uv](https://docs.astral.sh/uv/) for fast Python dependency management
+2. **Training Data**: Clone [malwi-samples](https://github.com/schirrmacher/malwi-samples) in the parent directory:
+   ```bash
+   cd ..
+   git clone https://github.com/schirrmacher/malwi-samples.git
+   cd malwi
+   ```
+
+### 🚀 Quick Start
 
 ```bash
-# Download and process data
-cmds/download_and_preprocess_distilbert.sh
+# Install dependencies
+uv sync
 
-# Complete pipelines
-cmds/preprocess_and_train_distilbert.sh  # Data → Tokenizer → DistilBERT
+# Run tests
+uv run pytest tests
 
-# Individual data preprocessing
-cmds/preprocess_data.sh                  # Process data for ML training
+# Train a model from scratch (full pipeline)
+./cmds/preprocess_and_train_distilbert.sh
+```
 
-# Individual model training
-cmds/train_tokenizer.sh                  # Train custom tokenizer
-cmds/train_distilbert.sh                 # Train DistilBERT model
+### 📚 Training Pipeline
+
+The training pipeline consists of three stages that can be run together or independently:
+
+#### **Complete Pipeline** (Recommended)
+```bash
+# Data preprocessing → Tokenizer training → Model training
+./cmds/preprocess_and_train_distilbert.sh
+```
+
+#### **Individual Stages**
+```bash
+# 1. Data Preprocessing (parallel by default, ~5-7 min on 8 cores)
+./cmds/preprocess_data.sh
+
+# 2. Tokenizer Training (~2 min)
+./cmds/train_tokenizer.sh
+
+# 3. Model Training (~5 hours on NVIDIA RTX 4090)
+./cmds/train_distilbert.sh
+```
+
+### ⚙️ Configuration
+
+```bash
+# Customize parallel processing (preprocessing)
+NUM_PROCESSES=16 ./cmds/preprocess_data.sh
+
+# Train smaller/faster model
+HIDDEN_SIZE=256 ./cmds/train_distilbert.sh
+
+# Train larger/more accurate model  
+HIDDEN_SIZE=512 EPOCHS=5 ./cmds/train_distilbert.sh
+```
+
+### 🧪 Testing & Quality
+
+```bash
+# Run tests
+uv run pytest tests
+
+# Code formatting
+uv run ruff format .
+
+# Linting
+uv run ruff check .
+
+# Regenerate test data (after compiler changes)
+uv run python util/regenerate_test_data.py
 ```
