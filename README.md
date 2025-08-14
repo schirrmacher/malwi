@@ -3,9 +3,11 @@
 <img src="malwi-logo.png" alt="Logo">
 <a href='https://huggingface.co/schirrmacher/malwi'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HF-Model-blue'></a>&ensp; 
 
-### **malwi** detects Python malware using machine learning. It specializes in finding **zero-day vulnerabilities** and can classify code as malicious or benign without requiring internet access.
+## **malwi** detects Python malware using AI.
 
-## Key Features
+It specializes in finding **zero-day vulnerabilities** and can classify code as malicious or benign without requiring internet access.
+
+### Key Features
 - 🔍 Detects unknown malware patterns through AI analysis
 - 🔒 Runs completely offline - no data leaves your machine
 - ⚡ Fast scanning of entire codebases 
