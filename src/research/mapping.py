@@ -36,6 +36,111 @@ class SpecialCases(Enum):
     BOOLEAN = "BOOLEAN"
     INTEGER = "INTEGER"
     FLOAT = "FLOAT"
+    OBJECT = "OBJECT"
+
+    # STRING prefix combinations (4 prefixes × 6 lengths × 4 entropies = 96 combinations)
+    STRING_LEN_XS_ENT_LOW = "STRING_LEN_XS_ENT_LOW"
+    STRING_LEN_XS_ENT_MED = "STRING_LEN_XS_ENT_MED"
+    STRING_LEN_XS_ENT_HIGH = "STRING_LEN_XS_ENT_HIGH"
+    STRING_LEN_XS_ENT_VHIGH = "STRING_LEN_XS_ENT_VHIGH"
+    STRING_LEN_S_ENT_LOW = "STRING_LEN_S_ENT_LOW"
+    STRING_LEN_S_ENT_MED = "STRING_LEN_S_ENT_MED"
+    STRING_LEN_S_ENT_HIGH = "STRING_LEN_S_ENT_HIGH"
+    STRING_LEN_S_ENT_VHIGH = "STRING_LEN_S_ENT_VHIGH"
+    STRING_LEN_M_ENT_LOW = "STRING_LEN_M_ENT_LOW"
+    STRING_LEN_M_ENT_MED = "STRING_LEN_M_ENT_MED"
+    STRING_LEN_M_ENT_HIGH = "STRING_LEN_M_ENT_HIGH"
+    STRING_LEN_M_ENT_VHIGH = "STRING_LEN_M_ENT_VHIGH"
+    STRING_LEN_L_ENT_LOW = "STRING_LEN_L_ENT_LOW"
+    STRING_LEN_L_ENT_MED = "STRING_LEN_L_ENT_MED"
+    STRING_LEN_L_ENT_HIGH = "STRING_LEN_L_ENT_HIGH"
+    STRING_LEN_L_ENT_VHIGH = "STRING_LEN_L_ENT_VHIGH"
+    STRING_LEN_XL_ENT_LOW = "STRING_LEN_XL_ENT_LOW"
+    STRING_LEN_XL_ENT_MED = "STRING_LEN_XL_ENT_MED"
+    STRING_LEN_XL_ENT_HIGH = "STRING_LEN_XL_ENT_HIGH"
+    STRING_LEN_XL_ENT_VHIGH = "STRING_LEN_XL_ENT_VHIGH"
+    STRING_LEN_XXL_ENT_LOW = "STRING_LEN_XXL_ENT_LOW"
+    STRING_LEN_XXL_ENT_MED = "STRING_LEN_XXL_ENT_MED"
+    STRING_LEN_XXL_ENT_HIGH = "STRING_LEN_XXL_ENT_HIGH"
+    STRING_LEN_XXL_ENT_VHIGH = "STRING_LEN_XXL_ENT_VHIGH"
+
+    # STRING_BASE64 prefix combinations
+    STRING_BASE64_LEN_XS_ENT_LOW = "STRING_BASE64_LEN_XS_ENT_LOW"
+    STRING_BASE64_LEN_XS_ENT_MED = "STRING_BASE64_LEN_XS_ENT_MED"
+    STRING_BASE64_LEN_XS_ENT_HIGH = "STRING_BASE64_LEN_XS_ENT_HIGH"
+    STRING_BASE64_LEN_XS_ENT_VHIGH = "STRING_BASE64_LEN_XS_ENT_VHIGH"
+    STRING_BASE64_LEN_S_ENT_LOW = "STRING_BASE64_LEN_S_ENT_LOW"
+    STRING_BASE64_LEN_S_ENT_MED = "STRING_BASE64_LEN_S_ENT_MED"
+    STRING_BASE64_LEN_S_ENT_HIGH = "STRING_BASE64_LEN_S_ENT_HIGH"
+    STRING_BASE64_LEN_S_ENT_VHIGH = "STRING_BASE64_LEN_S_ENT_VHIGH"
+    STRING_BASE64_LEN_M_ENT_LOW = "STRING_BASE64_LEN_M_ENT_LOW"
+    STRING_BASE64_LEN_M_ENT_MED = "STRING_BASE64_LEN_M_ENT_MED"
+    STRING_BASE64_LEN_M_ENT_HIGH = "STRING_BASE64_LEN_M_ENT_HIGH"
+    STRING_BASE64_LEN_M_ENT_VHIGH = "STRING_BASE64_LEN_M_ENT_VHIGH"
+    STRING_BASE64_LEN_L_ENT_LOW = "STRING_BASE64_LEN_L_ENT_LOW"
+    STRING_BASE64_LEN_L_ENT_MED = "STRING_BASE64_LEN_L_ENT_MED"
+    STRING_BASE64_LEN_L_ENT_HIGH = "STRING_BASE64_LEN_L_ENT_HIGH"
+    STRING_BASE64_LEN_L_ENT_VHIGH = "STRING_BASE64_LEN_L_ENT_VHIGH"
+    STRING_BASE64_LEN_XL_ENT_LOW = "STRING_BASE64_LEN_XL_ENT_LOW"
+    STRING_BASE64_LEN_XL_ENT_MED = "STRING_BASE64_LEN_XL_ENT_MED"
+    STRING_BASE64_LEN_XL_ENT_HIGH = "STRING_BASE64_LEN_XL_ENT_HIGH"
+    STRING_BASE64_LEN_XL_ENT_VHIGH = "STRING_BASE64_LEN_XL_ENT_VHIGH"
+    STRING_BASE64_LEN_XXL_ENT_LOW = "STRING_BASE64_LEN_XXL_ENT_LOW"
+    STRING_BASE64_LEN_XXL_ENT_MED = "STRING_BASE64_LEN_XXL_ENT_MED"
+    STRING_BASE64_LEN_XXL_ENT_HIGH = "STRING_BASE64_LEN_XXL_ENT_HIGH"
+    STRING_BASE64_LEN_XXL_ENT_VHIGH = "STRING_BASE64_LEN_XXL_ENT_VHIGH"
+
+    # STRING_HEX prefix combinations
+    STRING_HEX_LEN_XS_ENT_LOW = "STRING_HEX_LEN_XS_ENT_LOW"
+    STRING_HEX_LEN_XS_ENT_MED = "STRING_HEX_LEN_XS_ENT_MED"
+    STRING_HEX_LEN_XS_ENT_HIGH = "STRING_HEX_LEN_XS_ENT_HIGH"
+    STRING_HEX_LEN_XS_ENT_VHIGH = "STRING_HEX_LEN_XS_ENT_VHIGH"
+    STRING_HEX_LEN_S_ENT_LOW = "STRING_HEX_LEN_S_ENT_LOW"
+    STRING_HEX_LEN_S_ENT_MED = "STRING_HEX_LEN_S_ENT_MED"
+    STRING_HEX_LEN_S_ENT_HIGH = "STRING_HEX_LEN_S_ENT_HIGH"
+    STRING_HEX_LEN_S_ENT_VHIGH = "STRING_HEX_LEN_S_ENT_VHIGH"
+    STRING_HEX_LEN_M_ENT_LOW = "STRING_HEX_LEN_M_ENT_LOW"
+    STRING_HEX_LEN_M_ENT_MED = "STRING_HEX_LEN_M_ENT_MED"
+    STRING_HEX_LEN_M_ENT_HIGH = "STRING_HEX_LEN_M_ENT_HIGH"
+    STRING_HEX_LEN_M_ENT_VHIGH = "STRING_HEX_LEN_M_ENT_VHIGH"
+    STRING_HEX_LEN_L_ENT_LOW = "STRING_HEX_LEN_L_ENT_LOW"
+    STRING_HEX_LEN_L_ENT_MED = "STRING_HEX_LEN_L_ENT_MED"
+    STRING_HEX_LEN_L_ENT_HIGH = "STRING_HEX_LEN_L_ENT_HIGH"
+    STRING_HEX_LEN_L_ENT_VHIGH = "STRING_HEX_LEN_L_ENT_VHIGH"
+    STRING_HEX_LEN_XL_ENT_LOW = "STRING_HEX_LEN_XL_ENT_LOW"
+    STRING_HEX_LEN_XL_ENT_MED = "STRING_HEX_LEN_XL_ENT_MED"
+    STRING_HEX_LEN_XL_ENT_HIGH = "STRING_HEX_LEN_XL_ENT_HIGH"
+    STRING_HEX_LEN_XL_ENT_VHIGH = "STRING_HEX_LEN_XL_ENT_VHIGH"
+    STRING_HEX_LEN_XXL_ENT_LOW = "STRING_HEX_LEN_XXL_ENT_LOW"
+    STRING_HEX_LEN_XXL_ENT_MED = "STRING_HEX_LEN_XXL_ENT_MED"
+    STRING_HEX_LEN_XXL_ENT_HIGH = "STRING_HEX_LEN_XXL_ENT_HIGH"
+    STRING_HEX_LEN_XXL_ENT_VHIGH = "STRING_HEX_LEN_XXL_ENT_VHIGH"
+
+    # STRING_ESCAPED_HEX prefix combinations
+    STRING_ESCAPED_HEX_LEN_XS_ENT_LOW = "STRING_ESCAPED_HEX_LEN_XS_ENT_LOW"
+    STRING_ESCAPED_HEX_LEN_XS_ENT_MED = "STRING_ESCAPED_HEX_LEN_XS_ENT_MED"
+    STRING_ESCAPED_HEX_LEN_XS_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_XS_ENT_HIGH"
+    STRING_ESCAPED_HEX_LEN_XS_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_XS_ENT_VHIGH"
+    STRING_ESCAPED_HEX_LEN_S_ENT_LOW = "STRING_ESCAPED_HEX_LEN_S_ENT_LOW"
+    STRING_ESCAPED_HEX_LEN_S_ENT_MED = "STRING_ESCAPED_HEX_LEN_S_ENT_MED"
+    STRING_ESCAPED_HEX_LEN_S_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_S_ENT_HIGH"
+    STRING_ESCAPED_HEX_LEN_S_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_S_ENT_VHIGH"
+    STRING_ESCAPED_HEX_LEN_M_ENT_LOW = "STRING_ESCAPED_HEX_LEN_M_ENT_LOW"
+    STRING_ESCAPED_HEX_LEN_M_ENT_MED = "STRING_ESCAPED_HEX_LEN_M_ENT_MED"
+    STRING_ESCAPED_HEX_LEN_M_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_M_ENT_HIGH"
+    STRING_ESCAPED_HEX_LEN_M_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_M_ENT_VHIGH"
+    STRING_ESCAPED_HEX_LEN_L_ENT_LOW = "STRING_ESCAPED_HEX_LEN_L_ENT_LOW"
+    STRING_ESCAPED_HEX_LEN_L_ENT_MED = "STRING_ESCAPED_HEX_LEN_L_ENT_MED"
+    STRING_ESCAPED_HEX_LEN_L_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_L_ENT_HIGH"
+    STRING_ESCAPED_HEX_LEN_L_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_L_ENT_VHIGH"
+    STRING_ESCAPED_HEX_LEN_XL_ENT_LOW = "STRING_ESCAPED_HEX_LEN_XL_ENT_LOW"
+    STRING_ESCAPED_HEX_LEN_XL_ENT_MED = "STRING_ESCAPED_HEX_LEN_XL_ENT_MED"
+    STRING_ESCAPED_HEX_LEN_XL_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_XL_ENT_HIGH"
+    STRING_ESCAPED_HEX_LEN_XL_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_XL_ENT_VHIGH"
+    STRING_ESCAPED_HEX_LEN_XXL_ENT_LOW = "STRING_ESCAPED_HEX_LEN_XXL_ENT_LOW"
+    STRING_ESCAPED_HEX_LEN_XXL_ENT_MED = "STRING_ESCAPED_HEX_LEN_XXL_ENT_MED"
+    STRING_ESCAPED_HEX_LEN_XXL_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_XXL_ENT_HIGH"
+    STRING_ESCAPED_HEX_LEN_XXL_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_XXL_ENT_VHIGH"
 
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
@@ -394,7 +499,55 @@ def clean_string_literal(url_string):
     return url_string
 
 
+def get_combined_string_token(prefix: str, length: int, entropy: float) -> str:
+    """
+    Get the complete enum token for a string with given prefix, length, and entropy.
+
+    Args:
+        prefix: One of "STRING", "STRING_BASE64", "STRING_HEX", "STRING_ESCAPED_HEX"
+        length: String length
+        entropy: Shannon entropy value
+
+    Returns:
+        Complete token from SpecialCases enum
+    """
+    # Map length to suffix
+    if length <= 10:
+        len_suffix = "LEN_XS"
+    elif length <= 100:
+        len_suffix = "LEN_S"
+    elif length <= 1000:
+        len_suffix = "LEN_M"
+    elif length <= 10000:
+        len_suffix = "LEN_L"
+    elif length <= 100000:
+        len_suffix = "LEN_XL"
+    else:
+        len_suffix = "LEN_XXL"
+
+    # Map entropy to suffix
+    if entropy <= 1.0:
+        ent_suffix = "ENT_LOW"
+    elif entropy <= 2.5:
+        ent_suffix = "ENT_MED"
+    elif entropy <= 5.0:
+        ent_suffix = "ENT_HIGH"
+    else:
+        ent_suffix = "ENT_VHIGH"
+
+    # Build complete token name
+    token_name = f"{prefix}_{len_suffix}_{ent_suffix}"
+
+    # Return the enum value
+    try:
+        return getattr(SpecialCases, token_name).value
+    except AttributeError:
+        # Fallback to concatenated string if enum doesn't exist
+        return token_name
+
+
 def map_entropy_to_token(entropy: float):
+    """Legacy function - use get_combined_string_token instead"""
     if entropy <= 1.0:
         return "ENT_LOW"
     elif entropy <= 2.5:
@@ -406,6 +559,7 @@ def map_entropy_to_token(entropy: float):
 
 
 def map_string_length_to_token(str_len: int):
+    """Legacy function - use get_combined_string_token instead"""
     if str_len <= 10:
         return "LEN_XS"
     elif str_len <= 100:
@@ -432,7 +586,6 @@ def calculate_shannon_entropy(data: bytes) -> float:
 
 
 def map_string_arg(argval: str, original_argrepr: str, language: str = "python") -> str:
-    prefix = "STRING"
     function_mapping = FUNCTION_MAPPING.get(language, {})
     import_mapping = IMPORT_MAPPING.get(language, {})
 
@@ -454,38 +607,43 @@ def map_string_arg(argval: str, original_argrepr: str, language: str = "python")
     elif argval in import_mapping:
         return import_mapping.get(argval)
     elif argval in SENSITIVE_PATHS:
-        return f"{SpecialCases.STRING_SENSITIVE_FILE_PATH.value}"
+        return SpecialCases.STRING_SENSITIVE_FILE_PATH.value
     elif is_localhost(argval):
-        return f"{SpecialCases.STRING_LOCALHOST.value}"
+        return SpecialCases.STRING_LOCALHOST.value
     elif is_valid_ip(argval):
-        return f"{SpecialCases.STRING_IP.value}"
+        return SpecialCases.STRING_IP.value
     elif is_valid_url(argval):
-        return f"{SpecialCases.STRING_URL.value}"
+        return SpecialCases.STRING_URL.value
     elif contains_url(argval):
-        return f"{SpecialCases.STRING_CONTAINS_URL.value}"
+        return SpecialCases.STRING_CONTAINS_URL.value
     elif is_file_path(argval):
-        return f"{SpecialCases.STRING_FILE_PATH.value}"
+        return SpecialCases.STRING_FILE_PATH.value
     else:
         if len(argval) <= STRING_MAX_LENGTH:
             return argval
-        if is_escaped_hex(argval):
-            prefix = SpecialCases.STRING_ESCAPED_HEX.value
-        elif is_hex(argval):
-            prefix = SpecialCases.STRING_HEX.value
-        elif is_base64(argval):
-            prefix = SpecialCases.STRING_BASE64.value
 
-        length_suffix = map_string_length_to_token(len(argval))
+        # Analyze content type for longer strings and return complete enum token
+        if is_escaped_hex(argval):
+            prefix = "STRING_ESCAPED_HEX"
+        elif is_hex(argval):
+            prefix = "STRING_HEX"
+        elif is_base64(argval):
+            prefix = "STRING_BASE64"
+        else:
+            prefix = "STRING"
+
+        # Calculate entropy
         try:
             entropy = calculate_shannon_entropy(argval.encode("utf-8", errors="ignore"))
         except Exception:
             entropy = 0.0
-        entropy_suffix = map_entropy_to_token(entropy)
-        return f"{prefix}_{length_suffix}_{entropy_suffix}"
+
+        # Return complete enum token
+        return get_combined_string_token(prefix, len(argval), entropy)
 
 
 def map_code_object_arg(argval: types.CodeType, original_argrepr: str) -> str:
-    return "OBJECT"
+    return SpecialCases.OBJECT.value
 
 
 def map_tuple_arg(argval: tuple, original_argrepr: str) -> str:
@@ -566,7 +724,6 @@ def map_string_argument(argval: str, language: str = "python") -> str:
     Advanced string argument mapping using language-specific mappings.
     Based on map_string_arg logic but with proper language parameter support.
     """
-    prefix = "STRING"
 
     # Get language-specific mappings
     lang_function_mapping = FUNCTION_MAPPING.get(language, {})
@@ -588,38 +745,40 @@ def map_string_argument(argval: str, language: str = "python") -> str:
     elif argval in lang_import_mapping:
         return lang_import_mapping.get(argval)
     elif argval in SENSITIVE_PATHS:
-        return "STRING_SENSITIVE_FILE_PATH"
+        return SpecialCases.STRING_SENSITIVE_FILE_PATH.value
     elif is_localhost(argval):
-        return "STRING_LOCALHOST"
+        return SpecialCases.STRING_LOCALHOST.value
     elif is_valid_ip(argval):
-        return "STRING_IP"
+        return SpecialCases.STRING_IP.value
     elif is_valid_url(argval):
-        return "STRING_URL"
+        return SpecialCases.STRING_URL.value
     elif contains_url(argval):
-        return "STRING_CONTAINS_URL"
+        return SpecialCases.STRING_CONTAINS_URL.value
     elif is_file_path(argval):
-        return "STRING_FILE_PATH"
+        return SpecialCases.STRING_FILE_PATH.value
     else:
         # Short strings are returned as-is
         if len(argval) <= STRING_MAX_LENGTH:
             return argval
 
-        # Analyze content type for longer strings
+        # Analyze content type for longer strings and return complete enum token
         if is_escaped_hex(argval):
             prefix = "STRING_ESCAPED_HEX"
         elif is_hex(argval):
             prefix = "STRING_HEX"
         elif is_base64(argval):
             prefix = "STRING_BASE64"
+        else:
+            prefix = "STRING"
 
-        # Add length and entropy analysis
-        length_suffix = map_string_length_to_token(len(argval))
+        # Calculate entropy
         try:
             entropy = calculate_shannon_entropy(argval.encode("utf-8", errors="ignore"))
         except Exception:
             entropy = 0.0
-        entropy_suffix = map_entropy_to_token(entropy)
-        return f"{prefix}_{length_suffix}_{entropy_suffix}"
+
+        # Return complete enum token
+        return get_combined_string_token(prefix, len(argval), entropy)
 
 
 def tokenize_code_type(
