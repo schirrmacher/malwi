@@ -448,27 +448,31 @@ class CodeObject:
         accurate token count estimation.
 
         Returns:
-            Number of tokens produced by the tokenizer
+            Number of tokens produced by the tokenizer, or 0 if tokenizer not available
         """
-        # Import here to avoid circular dependencies
-        from research.predict_distilbert import get_thread_tokenizer
+        try:
+            # Import here to avoid circular dependencies
+            from research.predict_distilbert import get_thread_tokenizer
 
-        # Get the token string (same format used for prediction)
-        token_string = " ".join(self.get_tokens(mapped=True))
+            # Get the token string (same format used for prediction)
+            token_string = " ".join(self.get_tokens(mapped=True))
 
-        # Use the same tokenizer that DistilBERT uses
-        tokenizer = get_thread_tokenizer()
+            # Use the same tokenizer that DistilBERT uses
+            tokenizer = get_thread_tokenizer()
 
-        # Tokenize without padding to get actual token count
-        encoded = tokenizer(
-            token_string,
-            return_tensors="pt",
-            padding=False,
-            truncation=False,  # Don't truncate to see full size
-        )
+            # Tokenize without padding to get actual token count
+            encoded = tokenizer(
+                token_string,
+                return_tensors="pt",
+                padding=False,
+                truncation=False,  # Don't truncate to see full size
+            )
 
-        # Return the number of tokens
-        return encoded["input_ids"].shape[1]
+            # Return the number of tokens
+            return encoded["input_ids"].shape[1]
+        except (RuntimeError, ImportError, Exception):
+            # Tokenizer not available or other error - return 0
+            return 0
 
 
 def emit(opcode: "OpCode", arg: Any = None, language: str = "python") -> Instruction:
