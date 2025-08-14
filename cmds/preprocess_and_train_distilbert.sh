@@ -25,7 +25,7 @@ echo
 echo "🎉 Complete DistilBERT pipeline finished successfully!"
 echo
 echo "📁 All outputs are in malwi_models/:"
-echo "   • Tokenizer (trained on your data's top 5000 tokens)"
+echo "   • Tokenizer (trained on your data's top 15000 tokens)"
 echo "   • Trained DistilBERT model (256 hidden dimensions)"
 echo "   • Training metrics and logs"
 echo

@@ -121,7 +121,7 @@ def compute_tokens_from_texts(texts: list[str]) -> Set[str]:
 
 
 def create_special_tokens_from_data(
-    all_texts: list[str], top_n_tokens: int = 5000, base_tokens: Set[str] = None
+    all_texts: list[str], top_n_tokens: int = 15000, base_tokens: Set[str] = None
 ) -> Set[str]:
     """
     Create special tokens from the most frequent tokens in the input data.
@@ -455,8 +455,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--top-n-tokens",
         type=int,
-        default=5000,
-        help="Number of most frequent tokens to use as special tokens (default: 5000)",
+        default=15000,
+        help="Number of most frequent tokens to use as special tokens (default: 15000)",
     )
     parser.add_argument(
         "--save-computed-tokens",

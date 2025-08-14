@@ -22,7 +22,7 @@ echo
 echo "🚀 Training custom tokenizer..."
 echo "   • Using 438 base tokens from function mapping + top frequent tokens from data"
 echo "   • Training on: benign_processed.csv, malicious_processed.csv"
-echo "   • Total tokens: 5000 (438 base + 4562 data-derived)"
+echo "   • Total tokens: 15000 (438 base + 14562 data-derived)"
 echo "   • Output directory: malwi_models/"
 echo "   • Saving computed tokens for inspection"
 echo
@@ -31,7 +31,7 @@ uv run python -m src.research.train_tokenizer \
     -b benign_processed.csv \
     -m malicious_processed.csv \
     -o malwi_models \
-    --top-n-tokens 5000 \
+    --top-n-tokens 15000 \
     --save-computed-tokens \
     --force-retrain
 
