@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+import shutil
 
 from tqdm import tqdm
 from pathlib import Path
@@ -22,6 +23,38 @@ from common.messaging import (
 )
 from malwi._version import __version__
 from common.config import SUPPORTED_EXTENSIONS
+
+
+def copy_malicious_file(file_path: Path, base_input_path: Path, move_dir: Path) -> None:
+    """
+    Copy a malicious file to the move directory while preserving folder structure.
+
+    Args:
+        file_path: Path to the malicious file to copy
+        base_input_path: Base input path that was scanned (to calculate relative path)
+        move_dir: Directory to copy files to
+    """
+    try:
+        # Calculate relative path from the base input path
+        if base_input_path.is_file():
+            # If scanning a single file, just use the filename
+            relative_path = file_path.name
+        else:
+            # If scanning a directory, preserve the folder structure
+            relative_path = file_path.relative_to(base_input_path)
+
+        # Create the destination path
+        dest_path = move_dir / relative_path
+
+        # Create parent directories if they don't exist
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Copy the file
+        shutil.copy2(file_path, dest_path)
+
+    except Exception as e:
+        # Don't fail the scan if copying fails, just log it
+        print(f"Warning: Failed to copy {file_path}: {e}", file=sys.stderr)
 
 
 def create_real_time_findings_display(silent: bool = False):
@@ -251,14 +284,37 @@ def scan_command(args):
     except Exception as e:
         model_warning("ML", e)
 
-    # Create real-time findings display for large scans
-    # Enable for directories when not in quiet mode and not disabled
+    # Create callbacks for real-time display and file copying
     real_time_callback = None
     cleanup_callback = None
+    file_copy_callback = None
+
+    # Set up move directory if specified
+    move_dir = None
+    if args.move:
+        move_dir = Path(args.move)
+        move_dir.mkdir(parents=True, exist_ok=True)
+
+        def file_copy_callback(file_path: Path, malicious_objects):
+            copy_malicious_file(file_path, input_path, move_dir)
+
+    # Enable real-time display for directories when not in quiet mode and not disabled
     if input_path.is_dir() and not args.quiet and not args.no_realtime:
         real_time_callback, cleanup_callback = create_real_time_findings_display(
             silent=args.quiet
         )
+
+    # Combine callbacks if both exist
+    combined_callback = None
+    if real_time_callback and file_copy_callback:
+
+        def combined_callback(file_path: Path, malicious_objects):
+            real_time_callback(file_path, malicious_objects)
+            file_copy_callback(file_path, malicious_objects)
+    elif real_time_callback:
+        combined_callback = real_time_callback
+    elif file_copy_callback:
+        combined_callback = file_copy_callback
 
     report: MalwiReport = MalwiReport.create(
         input_path=input_path,
@@ -266,7 +322,7 @@ def scan_command(args):
         predict=True,  # Enable prediction for malwi scanner
         silent=args.quiet,
         malicious_threshold=args.threshold,
-        on_malicious_found=real_time_callback,
+        on_malicious_found=combined_callback,
     )
 
     # Clean up the real-time display
@@ -341,15 +397,29 @@ def pypi_command(args):
     except Exception as e:
         model_warning("ML", e)
 
+    # Set up move directory if specified
+    move_dir = None
+    file_copy_callback = None
+    if args.move:
+        move_dir = Path(args.move)
+        move_dir.mkdir(parents=True, exist_ok=True)
+
     # Scan each extracted directory
     all_reports = []
     for extracted_dir in extracted_dirs:
+        # Create file copy callback for this extracted directory
+        if move_dir:
+
+            def file_copy_callback(file_path: Path, malicious_objects):
+                copy_malicious_file(file_path, extracted_dir, move_dir)
+
         report: MalwiReport = MalwiReport.create(
             input_path=extracted_dir,
             accepted_extensions=[".py"],  # Focus on Python files for PyPI packages
             predict=True,
             silent=args.quiet,
             malicious_threshold=args.threshold,
+            on_malicious_found=file_copy_callback,
         )
         all_reports.append(report)
 
@@ -449,6 +519,14 @@ def main():
         action="store_true",
         help="Disable real-time display of malicious findings during large scans.",
     )
+    scan_parser.add_argument(
+        "--move",
+        nargs="?",
+        const="findings",
+        metavar="DIR",
+        default=None,
+        help="Copy files with malicious findings to the specified directory, preserving folder structure (default: findings).",
+    )
 
     developer_group = scan_parser.add_argument_group("Developer Options")
     developer_group.add_argument(
@@ -509,6 +587,14 @@ def main():
         "-q",
         action="store_true",
         help="Suppress logging output.",
+    )
+    pypi_parser.add_argument(
+        "--move",
+        nargs="?",
+        const="findings",
+        metavar="DIR",
+        default=None,
+        help="Copy files with malicious findings to the specified directory, preserving folder structure (default: findings).",
     )
 
     args = parser.parse_args()
