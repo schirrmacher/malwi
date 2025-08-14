@@ -32,19 +32,27 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
     Returns:
         Dictionary with processing results and output file path
     """
-    files = chunk_data["files"]
-    language = chunk_data["language"]
-    chunk_id = chunk_data["chunk_id"]
-    temp_dir = Path(chunk_data["temp_dir"])
-
-    # Initialize compiler for this process
     try:
-        compiler = ASTCompiler(language)
-    except ValueError as e:
+        files = chunk_data["files"]
+        language = chunk_data["language"]
+        chunk_id = chunk_data["chunk_id"]
+        temp_dir = Path(chunk_data["temp_dir"])
+
+        # Initialize compiler for this process
+        try:
+            compiler = ASTCompiler(language)
+        except ValueError as e:
+            return {
+                "chunk_id": chunk_id,
+                "success": False,
+                "error": str(e),
+                "processed_count": 0,
+            }
+    except Exception as e:
         return {
-            "chunk_id": chunk_id,
+            "chunk_id": chunk_data.get("chunk_id", "unknown"),
             "success": False,
-            "error": str(e),
+            "error": f"Initialization failed: {str(e)}",
             "processed_count": 0,
         }
 
@@ -237,9 +245,26 @@ def _process_parallel(
     if num_processes is None:
         num_processes = mp.cpu_count()
 
+    # Limit the number of processes to prevent resource exhaustion
+    # Especially important for large datasets
+    max_processes = min(num_processes, 16)  # Cap at 16 processes
+    if max_processes != num_processes:
+        print(
+            f"Limiting processes to {max_processes} (from {num_processes}) to prevent resource exhaustion"
+        )
+        num_processes = max_processes
+
     # Calculate chunks
     num_chunks = max(1, len(files) // chunk_size)
     num_chunks = min(num_chunks, num_processes * 2)  # Don't create too many chunks
+
+    # For very large datasets, increase chunk size to prevent too many small chunks
+    if len(files) > 50000:
+        min_chunk_size = max(chunk_size, len(files) // (num_processes * 2))
+        num_chunks = max(1, len(files) // min_chunk_size)
+        print(
+            f"Large dataset detected - using larger chunk size ({min_chunk_size} files per chunk)"
+        )
 
     print(f"Using {num_processes} processes with {num_chunks} chunks")
 
@@ -299,15 +324,28 @@ def _process_parallel(
                 total=len(chunk_tasks), desc="Processing chunks", unit="chunk"
             ) as pbar:
                 for future in as_completed(future_to_chunk):
-                    result = future.result()
-                    chunk_results.append(result)
-                    pbar.update(1)
+                    chunk_id = future_to_chunk[future]
+                    try:
+                        result = future.result()
+                        chunk_results.append(result)
 
-                    if result["success"]:
-                        pbar.set_postfix(
-                            processed=result["processed_count"],
-                            chunk=result["chunk_id"],
-                        )
+                        if result["success"]:
+                            pbar.set_postfix(
+                                processed=result["processed_count"],
+                                chunk=result["chunk_id"],
+                            )
+                    except Exception as e:
+                        # Handle crashed processes
+                        error_result = {
+                            "chunk_id": chunk_id,
+                            "success": False,
+                            "error": f"Process crashed: {str(e)}",
+                            "processed_count": 0,
+                        }
+                        chunk_results.append(error_result)
+                        pbar.set_postfix(chunk=chunk_id, status="FAILED")
+
+                    pbar.update(1)
 
         # Combine results
         print("📋 Combining chunk results...")
