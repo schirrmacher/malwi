@@ -66,7 +66,9 @@ malwi can directly scan PyPI packages without executing malicious logic, typical
 
 ```bash
 malwi pypi requests
+````
 
+```
                   __          __
   .--------.---.-|  .--.--.--|__|
   |        |  _  |  |  |  |  |  |
@@ -82,15 +84,6 @@ malwi pypi requests
 
 => 🟢 good
 ```
-
-### PyPI Command Options
-- `--folder, -d`: Download folder (default: downloads)  
-- `--format, -f`: Output format (demo, json, yaml, markdown, tokens, code)
-- `--threshold, -mt`: Maliciousness threshold (default: 0.7)
-- `--save, -s`: Save output to file
-- `--quiet, -q`: Suppress logging output
-
-Downloaded packages are preserved in the specified folder for manual inspection and triaging.
 
 ## Why malwi?
 
