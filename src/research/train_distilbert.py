@@ -41,6 +41,7 @@ DEFAULT_BATCH_SIZE = 16
 DEFAULT_VOCAB_SIZE = 30522
 DEFAULT_SAVE_STEPS = 0
 DEFAULT_BENIGN_TO_MALICIOUS_RATIO = 60.0
+DEFAULT_HIDDEN_SIZE = 256  # Default to smaller model for faster training
 DEFAULT_NUM_PROC = (
     os.cpu_count() if os.cpu_count() is not None and os.cpu_count() > 1 else 2
 )
@@ -360,14 +361,51 @@ def run_training(args):
     results_path = model_output_path / "results"
     logs_path = model_output_path / "logs"
 
-    info(f"Setting up DistilBERT model for fine-tuning from {args.model_name}...")
+    info(f"Setting up DistilBERT model with hidden_size={args.hidden_size}...")
+
+    # Load the base config but override key parameters for our custom model
     config = DistilBertConfig.from_pretrained(args.model_name, num_labels=2)
     config.pad_token_id = tokenizer.pad_token_id
     config.cls_token_id = tokenizer.cls_token_id
     config.sep_token_id = tokenizer.sep_token_id
 
-    model = DistilBertForSequenceClassification.from_pretrained(
-        args.model_name, config=config
+    # Configure model size based on hidden_size parameter
+    config.hidden_size = args.hidden_size
+    config.dim = args.hidden_size  # DistilBERT uses 'dim' internally
+
+    # Adjust other dimensions proportionally
+    if args.hidden_size == 256:
+        # Smaller model configuration
+        config.n_heads = 4  # 256/64 = 4 heads (vs 12 for 768)
+        config.n_layers = 4  # Fewer layers for smaller model (vs 6)
+        config.hidden_dim = 1024  # FFN dimension (vs 3072)
+    elif args.hidden_size == 512:
+        # Medium model configuration
+        config.n_heads = 8  # 512/64 = 8 heads
+        config.n_layers = 6  # Standard number of layers
+        config.hidden_dim = 2048  # FFN dimension
+    # Note: 768 would be the original size with 12 heads, 6 layers, 3072 hidden_dim
+
+    # Create model from scratch with the custom configuration
+    # Note: We're not loading pretrained weights since dimensions changed
+    info(
+        f"Creating new DistilBERT model from scratch (not loading pretrained weights)..."
+    )
+    info(f"Model configuration:")
+    info(f"  - Hidden size: {config.hidden_size}")
+    info(f"  - Attention heads: {config.n_heads}")
+    info(f"  - Layers: {config.n_layers}")
+    info(f"  - FFN dimension: {config.hidden_dim}")
+    info(f"  - Max position embeddings: {config.max_position_embeddings}")
+
+    model = DistilBertForSequenceClassification(config=config)
+
+    # Calculate and display model size
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    info(f"Model size: {total_params:,} parameters ({trainable_params:,} trainable)")
+    info(
+        f"Model size in MB: {total_params * 4 / 1024 / 1024:.2f} MB (assuming float32)"
     )
 
     if len(tokenizer) != model.config.vocab_size:
@@ -434,6 +472,9 @@ def run_training(args):
     success("DistilBERT model training completed successfully")
     success(f"Final model saved to: {model_output_path}")
     success(f"Training metrics saved to: {model_output_path}/training_metrics.txt")
+    success(
+        f"Model configuration: hidden_size={args.hidden_size}, layers={config.n_layers}, heads={config.n_heads}"
+    )
 
 
 if __name__ == "__main__":
@@ -462,6 +503,13 @@ if __name__ == "__main__":
     parser.add_argument("--vocab-size", type=int, default=DEFAULT_VOCAB_SIZE)
     parser.add_argument("--save-steps", type=int, default=DEFAULT_SAVE_STEPS)
     parser.add_argument("--num-proc", type=int, default=DEFAULT_NUM_PROC)
+    parser.add_argument(
+        "--hidden-size",
+        type=int,
+        default=DEFAULT_HIDDEN_SIZE,
+        choices=[256, 512],
+        help="Hidden size for DistilBERT model (256 for smaller/faster, 512 for standard)",
+    )
     parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
     parser.add_argument(
         "--token-column",

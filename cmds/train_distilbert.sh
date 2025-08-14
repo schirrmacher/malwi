@@ -31,14 +31,18 @@ echo
 echo "🚀 Training DistilBERT model..."
 echo "   • Loading pre-trained tokenizer from malwi_models/"
 echo "   • Training data: benign_processed.csv, malicious_processed.csv"
+echo "   • Model size: 256 hidden dimensions (smaller, faster model)"
 echo "   • Epochs: 3"
 echo "   • Using 1 processor for training"
+echo
+echo "   Note: Use --hidden-size 512 for larger model with better accuracy"
 echo
 
 uv run python -m src.research.train_distilbert \
     -b benign_processed.csv \
     -m malicious_processed.csv \
     --epochs 3 \
+    --hidden-size 256 \
     --num-proc 1
 
 echo
