@@ -371,44 +371,67 @@ class MalwiReport:
             objects_in_file = files_with_objects[file_path]
 
             for obj in objects_in_file:
-                # Add file path with object name
-                lines.append(f"{file_path}, {obj.name}")
-
                 # Add malwicode tokens
                 malwicode_tokens = obj.to_tokens()
                 token_string = obj.to_token_string()
-                lines.append(f"MALWICODE_TOKENS: {token_string}")
-                lines.append("")  # Add space after malwicode tokens
 
-                # Add token split visualization
+                # Get DistilBERT tokens and counts
                 try:
                     from research.predict_distilbert import get_thread_tokenizer
 
                     tokenizer = get_thread_tokenizer()
-
-                    # Get the actual DistilBERT tokens
                     distilbert_tokens = tokenizer.tokenize(token_string)
-                    lines.append(f"DISTILBERT_TOKENS: {' '.join(distilbert_tokens)}")
-                    lines.append("")  # Add space after distilbert tokens
-
-                    # Add count comparison
-                    lines.append(
-                        f"TOKEN_SPLIT: {len(malwicode_tokens)} malwicode → {len(distilbert_tokens)} distilbert → {obj.embedding_count} final"
-                    )
-
+                    distilbert_count = len(distilbert_tokens)
+                    embedding_count = obj.embedding_count
                 except Exception:
-                    # Fallback if tokenizer not available
-                    lines.append(f"MALWICODE_COUNT: {len(malwicode_tokens)} tokens")
-                    lines.append(
-                        f"DISTILBERT_COUNT: {obj.embedding_count} tokens (tokenizer required for detailed split)"
-                    )
-                    lines.append("")  # Add space in fallback case too
+                    distilbert_tokens = None
+                    distilbert_count = 0
+                    embedding_count = obj.embedding_count
 
-                # Add empty line for separation between objects (except for last object)
+                # Add header with file path, object name, and counts
+                lines.append("=" * 80)
+                lines.append(f"📁 File: {file_path}")
+                lines.append(f"🏷️  Object: {obj.name}")
+                lines.append(
+                    f"📊 Tokens: {len(malwicode_tokens)} malwicode → {distilbert_count} distilbert → {embedding_count} embeddings"
+                )
+                lines.append("=" * 80)
                 lines.append("")
 
-        # Remove trailing empty line if it exists
-        if lines and lines[-1] == "":
+                # Add malwicode tokens
+                lines.append("🔗 MALWICODE:")
+                lines.append("─" * 40)
+
+                # Format tokens in rows of 8 for better readability
+                tokens_per_row = 8
+                for i in range(0, len(malwicode_tokens), tokens_per_row):
+                    row_tokens = malwicode_tokens[i : i + tokens_per_row]
+                    lines.append("  " + " • ".join(row_tokens))
+
+                lines.append("")
+
+                # Add DistilBERT tokens if available
+                if distilbert_tokens is not None:
+                    lines.append("🤖 DISTILBERT:")
+                    lines.append("─" * 40)
+
+                    # Format DistilBERT tokens in rows of 10 for better readability
+                    distilbert_per_row = 10
+                    for i in range(0, len(distilbert_tokens), distilbert_per_row):
+                        row_tokens = distilbert_tokens[i : i + distilbert_per_row]
+                        lines.append("  " + " • ".join(row_tokens))
+
+                else:
+                    lines.append("🤖 DISTILBERT:")
+                    lines.append("─" * 40)
+                    lines.append("  (Tokenizer not available - models not initialized)")
+
+                # Add extra spacing between objects
+                lines.append("")
+                lines.append("")
+
+        # Remove trailing empty lines
+        while lines and lines[-1] == "":
             lines.pop()
 
         return "\n".join(lines)
