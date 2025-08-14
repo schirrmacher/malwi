@@ -3,26 +3,26 @@
 <img src="malwi-logo.png" alt="Logo">
 <a href='https://huggingface.co/schirrmacher/malwi'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HF-Model-blue'></a>&ensp; 
 
+**malwi** detects Python malware using machine learning. It specializes in finding **zero-day vulnerabilities** and can classify code as malicious or benign without requiring internet access.
 
-Detect Python malware _fast_ - no internet, no expensive hardware, no fees.
+## Key Features
+- 🔍 Detects unknown malware patterns through AI analysis
+- 🔒 Runs completely offline - no data leaves your machine
+- ⚡ Fast scanning of entire codebases 
+- 🚫 No external dependencies or cloud services required
+- 📖 Open-source project built on research and open data 🇪🇺
 
-malwi is specialized in detecting **zero-day vulnerabilities**, for classifying code as safe or harmful. 
-
-Open-source software made in Europe.
-Based on open research, open code, open data.
- 🇪🇺🤘🕊️
-
-1) **Install**
+### 1) Install
 ```
 pip install --user malwi
 ```
 
-2) **Run**
+### 2) Run
 ```
 malwi examples/malicious
 ```
 
-3) **Evaluate**: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
+### 3) Evaluate: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
 ```
                   __          __
   .--------.---.-|  .--.--.--|__|
