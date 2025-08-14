@@ -21,12 +21,7 @@ pip install --user malwi
 
 ### 2) Run
 ```bash
-# Scan local directory
 malwi scan examples/malicious
-
-# Scan PyPI package
-malwi pypi requests             # Latest version
-malwi pypi requests 2.31.0      # Specific version
 ```
 
 ### 3) Evaluate: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence
@@ -67,24 +62,25 @@ malwi pypi requests 2.31.0      # Specific version
 
 ## PyPI Package Scanning
 
-malwi can directly scan PyPI packages without manually downloading them:
+malwi can directly scan PyPI packages without executing malicious logic, typically placed in `setup.py` or `__init__.py` files:
 
 ```bash
-# Scan latest version of a package
 malwi pypi requests
 
-# Scan specific version
-malwi pypi numpy 1.24.0
+                  __          __
+  .--------.---.-|  .--.--.--|__|
+  |        |  _  |  |  |  |  |  |
+  |__|__|__|___._|__|________|__|
+     AI Python Malware Scanner
 
-# Custom download folder
-malwi pypi pandas --folder my_scans
 
-# Different output formats
-malwi pypi tensorflow --format json
-malwi pypi django --format yaml --save results.yaml
+- target: downloads/requests-2.32.4.tar
+- seconds: 3.10
+- files: 84
+  ├── scanned: 34
+  └── skipped: 50
 
-# Custom maliciousness threshold
-malwi pypi suspicious-package --threshold 0.5
+=> 🟢 good
 ```
 
 ### PyPI Command Options
