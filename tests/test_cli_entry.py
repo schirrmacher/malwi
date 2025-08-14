@@ -21,20 +21,21 @@ class TestCLIEntry:
             assert exc_info.value.code == 0
         captured = capsys.readouterr()
         assert "malwi - AI Python Malware Scanner" in captured.out
-        assert "PATH" in captured.out
+        assert "scan" in captured.out  # Check for scan subcommand
+        assert "pypi" in captured.out  # Check for pypi subcommand
 
     def test_no_arguments_shows_error(self, capsys):
-        """Test that running without arguments shows error"""
+        """Test that running without arguments shows help"""
         with patch.object(sys, "argv", ["malwi"]):
-            with pytest.raises(SystemExit) as exc_info:
-                main()
-            assert exc_info.value.code == 2
+            # Should show help and exit normally (not with error)
+            result = main()
+            assert result is None
         captured = capsys.readouterr()
-        assert "the following arguments are required: PATH" in captured.err
+        # Should show help output (not error since we just display help)
 
     def test_invalid_path_logs_error(self):
         """Test that invalid path logs error and exits"""
-        with patch.object(sys, "argv", ["malwi", "/non/existent/path"]):
+        with patch.object(sys, "argv", ["malwi", "scan", "/non/existent/path"]):
             # The function logs error and returns without exception
             result = main()
             assert result is None
@@ -57,7 +58,7 @@ class TestCLIEntry:
         mock_report.to_demo_text.return_value = "Demo output"
         mock_create.return_value = mock_report
 
-        with patch.object(sys, "argv", ["malwi", str(test_file)]):
+        with patch.object(sys, "argv", ["malwi", "scan", str(test_file)]):
             with patch("cli.entry.result") as mock_result:
                 main()
                 mock_result.assert_called_with("Demo output", force=True)
@@ -92,7 +93,14 @@ class TestCLIEntry:
             with patch.object(
                 sys,
                 "argv",
-                ["malwi", str(test_file), "--save", str(output_file), "--quiet"],
+                [
+                    "malwi",
+                    "scan",
+                    str(test_file),
+                    "--save",
+                    str(output_file),
+                    "--quiet",
+                ],
             ):
                 main()
 
@@ -130,7 +138,9 @@ class TestCLIEntry:
             ("tokens", "Tokens"),
         ]:
             with patch.object(
-                sys, "argv", ["malwi", str(test_file), "--format", fmt, "--quiet"]
+                sys,
+                "argv",
+                ["malwi", "scan", str(test_file), "--format", fmt, "--quiet"],
             ):
                 with patch("cli.entry.result") as mock_result:
                     main()
@@ -153,7 +163,7 @@ class TestCLIEntry:
         # Make model loading fail
         mock_malwi_object.load_models_into_memory.side_effect = Exception("Model error")
 
-        with patch.object(sys, "argv", ["malwi", str(test_file)]):
+        with patch.object(sys, "argv", ["malwi", "scan", str(test_file)]):
             with patch("cli.entry.MalwiReport.create") as mock_process:
                 mock_report = MagicMock()
                 mock_report.to_demo_text.return_value = "Output"
@@ -192,6 +202,7 @@ class TestCLIEntry:
             "argv",
             [
                 "malwi",
+                "scan",
                 str(test_file),
                 "--threshold",
                 "0.9",
@@ -218,7 +229,9 @@ class TestBatchMode:
     def test_batch_and_save_mutually_exclusive(self, capsys):
         """Test that --batch and --save flags are mutually exclusive"""
         with patch.object(
-            sys, "argv", ["malwi", "/some/path", "--batch", "--save", "test.json"]
+            sys,
+            "argv",
+            ["malwi", "scan", "/some/path", "--batch", "--save", "test.json"],
         ):
             with pytest.raises(SystemExit) as exc_info:
                 main()
@@ -466,7 +479,9 @@ class TestBatchMode:
         ]
         mock_path.return_value = mock_path_instance
 
-        with patch.object(sys, "argv", ["malwi", str(test_dir), "--batch", "--quiet"]):
+        with patch.object(
+            sys, "argv", ["malwi", "scan", str(test_dir), "--batch", "--quiet"]
+        ):
             with patch("cli.entry.process_batch_mode") as mock_batch_mode:
                 main()
                 mock_batch_mode.assert_called_once()
@@ -488,7 +503,7 @@ class TestBatchMode:
             mock_path_instance.exists.return_value = True
             mock_path.return_value = mock_path_instance
 
-            with patch.object(sys, "argv", ["malwi", str(test_dir), "--batch"]):
+            with patch.object(sys, "argv", ["malwi", "scan", str(test_dir), "--batch"]):
                 with patch("cli.entry.MalwiObject") as mock_malwi_object:
                     with patch("cli.entry.process_batch_mode") as mock_batch_mode:
                         main()

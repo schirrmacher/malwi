@@ -20,8 +20,13 @@ pip install --user malwi
 ```
 
 ### 2) Run
-```
-malwi examples/malicious
+```bash
+# Scan local directory
+malwi scan examples/malicious
+
+# Scan PyPI package (coming soon)
+malwi pypi requests             # Latest version
+malwi pypi requests 2.31.0      # Specific version
 ```
 
 ### 3) Evaluate: a [recent zero-day](https://socket.dev/blog/malicious-pypi-package-targets-discord-developers-with-RAT) detected with high confidence

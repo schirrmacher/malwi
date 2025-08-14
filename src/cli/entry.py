@@ -217,84 +217,8 @@ def process_batch_mode(input_path: Path, args) -> None:
             info(f"  - {failure}")
 
 
-def main():
-    parser = argparse.ArgumentParser(description="malwi - AI Python Malware Scanner")
-    parser.add_argument(
-        "--version",
-        "-v",
-        action="version",
-        version=get_model_version_string(__version__),
-    )
-    parser.add_argument(
-        "path", metavar="PATH", help="Specify the package file or folder path."
-    )
-    parser.add_argument(
-        "--format",
-        "-f",
-        choices=["demo", "markdown", "json", "yaml", "tokens", "code"],
-        default="demo",
-        help="Specify the output format.",
-    )
-    # Create mutually exclusive group for batch and save modes
-    output_group = parser.add_mutually_exclusive_group()
-    output_group.add_argument(
-        "--save",
-        "-s",
-        metavar="FILE",
-        help="Specify a file path to save the output.",
-        default=None,
-    )
-    output_group.add_argument(
-        "--batch",
-        action="store_true",
-        help="Run independent scans on each child folder and save results to current directory as malwi_<foldername>.<format>.",
-    )
-    parser.add_argument(
-        "--threshold",
-        "-mt",
-        metavar="FLOAT",
-        type=float,
-        default=0.7,
-        help="Specify the threshold for classifying code objects as malicious (default: 0.7).",
-    )
-    parser.add_argument(
-        "--extensions",
-        "-e",
-        nargs="+",
-        default=SUPPORTED_EXTENSIONS,
-        help=f"Specify file extensions to process (default: {', '.join(SUPPORTED_EXTENSIONS)}).",
-    )
-    parser.add_argument(
-        "--quiet",
-        "-q",
-        action="store_true",
-        help="Suppress logging output and progress bar.",
-    )
-    parser.add_argument(
-        "--no-realtime",
-        action="store_true",
-        help="Disable real-time display of malicious findings during large scans.",
-    )
-
-    developer_group = parser.add_argument_group("Developer Options")
-
-    developer_group.add_argument(
-        "--tokenizer-path",
-        "-t",
-        metavar="PATH",
-        help="Specify the tokenizer path",
-        default=None,
-    )
-    developer_group.add_argument(
-        "--model-path",
-        "-m",
-        metavar="PATH",
-        help="Specify the DistilBert model path",
-        default=None,
-    )
-
-    args = parser.parse_args()
-
+def scan_command(args):
+    """Execute the scan subcommand."""
     # Configure unified messaging system
     configure_messaging(quiet=args.quiet)
 
@@ -306,10 +230,6 @@ def main():
   |__|__|__|___._|__|________|__|
      AI Python Malware Scanner\n\n"""
     )
-
-    if not args.path:
-        parser.print_help()
-        return
 
     # Process files using the consolidated function
     input_path = Path(args.path)
@@ -382,6 +302,141 @@ def main():
 
         # Use result() for consistent output handling
         result(output, force=True)
+
+
+def pypi_command(args):
+    """Execute the pypi subcommand."""
+    # Configure unified messaging system
+    configure_messaging(quiet=args.quiet)
+
+    banner(
+        """
+                  __          __
+  .--------.---.-|  .--.--.--|__|
+  |        |  _  |  |  |  |  |  |
+  |__|__|__|___._|__|________|__|
+     AI Python Malware Scanner\n\n"""
+    )
+
+    # TODO: Implement PyPI package scanning logic
+    info(f"📦 Scanning PyPI package: {args.package}")
+    if args.version:
+        info(f"   Version: {args.version}")
+    else:
+        info(f"   Version: latest")
+
+    info("\n⚠️  PyPI scanning feature not yet implemented")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="malwi - AI Python Malware Scanner")
+    parser.add_argument(
+        "--version",
+        "-v",
+        action="version",
+        version=get_model_version_string(__version__),
+    )
+
+    # Create subparsers for different commands
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Scan subcommand (existing functionality)
+    scan_parser = subparsers.add_parser("scan", help="Scan local files or directories")
+    scan_parser.add_argument(
+        "path", metavar="PATH", help="Specify the package file or folder path."
+    )
+    scan_parser.add_argument(
+        "--format",
+        "-f",
+        choices=["demo", "markdown", "json", "yaml", "tokens", "code"],
+        default="demo",
+        help="Specify the output format.",
+    )
+    # Create mutually exclusive group for batch and save modes
+    output_group = scan_parser.add_mutually_exclusive_group()
+    output_group.add_argument(
+        "--save",
+        "-s",
+        metavar="FILE",
+        help="Specify a file path to save the output.",
+        default=None,
+    )
+    output_group.add_argument(
+        "--batch",
+        action="store_true",
+        help="Run independent scans on each child folder and save results to current directory as malwi_<foldername>.<format>.",
+    )
+    scan_parser.add_argument(
+        "--threshold",
+        "-mt",
+        metavar="FLOAT",
+        type=float,
+        default=0.7,
+        help="Specify the threshold for classifying code objects as malicious (default: 0.7).",
+    )
+    scan_parser.add_argument(
+        "--extensions",
+        "-e",
+        nargs="+",
+        default=SUPPORTED_EXTENSIONS,
+        help=f"Specify file extensions to process (default: {', '.join(SUPPORTED_EXTENSIONS)}).",
+    )
+    scan_parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress logging output and progress bar.",
+    )
+    scan_parser.add_argument(
+        "--no-realtime",
+        action="store_true",
+        help="Disable real-time display of malicious findings during large scans.",
+    )
+
+    developer_group = scan_parser.add_argument_group("Developer Options")
+    developer_group.add_argument(
+        "--tokenizer-path",
+        "-t",
+        metavar="PATH",
+        help="Specify the tokenizer path",
+        default=None,
+    )
+    developer_group.add_argument(
+        "--model-path",
+        "-m",
+        metavar="PATH",
+        help="Specify the DistilBert model path",
+        default=None,
+    )
+
+    # PyPI subcommand (new functionality)
+    pypi_parser = subparsers.add_parser("pypi", help="Scan PyPI packages")
+    pypi_parser.add_argument("package", help="PyPI package name to scan")
+    pypi_parser.add_argument(
+        "version",
+        nargs="?",
+        default=None,
+        help="Package version (optional, defaults to latest)",
+    )
+    pypi_parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress logging output.",
+    )
+
+    args = parser.parse_args()
+
+    # If no command is specified, show help
+    if not args.command:
+        parser.print_help()
+        return
+
+    # Route to appropriate command handler
+    if args.command == "scan":
+        scan_command(args)
+    elif args.command == "pypi":
+        pypi_command(args)
 
 
 if __name__ == "__main__":
