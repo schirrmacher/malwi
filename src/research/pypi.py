@@ -143,6 +143,7 @@ class PyPIScanner:
                     unit="B",
                     unit_scale=True,
                     desc=f"Downloading {filename}",
+                    leave=False,
                 ) as pbar:
 
                     def progress_hook(block_num, block_size, total_size):

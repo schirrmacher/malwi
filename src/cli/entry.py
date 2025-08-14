@@ -381,8 +381,6 @@ def pypi_command(args):
         else:
             result(output, force=True)
 
-        if not args.quiet:
-            info(f"Package files downloaded to: {temp_dir}")
     else:
         info("No files were processed")
 
