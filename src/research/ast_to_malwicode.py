@@ -1,5 +1,4 @@
 import logging
-import argparse
 import hashlib
 from enum import Enum, auto
 from pathlib import Path
@@ -7,8 +6,6 @@ from tree_sitter import Node
 from typing import Optional, Any, List, Tuple, Dict
 
 from tree_sitter import Parser, Language
-from tqdm import tqdm
-from research.csv_writer import CSVWriter
 from research.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
@@ -2933,132 +2930,4 @@ class ASTCompiler:
         return []
 
 
-def main() -> None:
-    """
-    Main function to parse arguments, collect files, and compile them.
-    Detects language based on file extension.
-    """
-    parser = argparse.ArgumentParser(
-        description="A tool to parse source files (Python, JS) and compile them to dummy bytecode."
-    )
-    parser.add_argument(
-        "input_path",
-        type=Path,
-        help="The path to the source file or directory to compile.",
-    )
-    parser.add_argument(
-        "--extensions",
-        nargs="+",
-        default=[".py", ".js"],
-        help="A list of file extensions to process (e.g., .py .js).",
-    )
-    parser.add_argument(
-        "-f",
-        "--format",
-        type=str,
-        choices=["console", "csv"],
-        default="console",
-        help="Output format (default: console). 'csv' outputs oneline_mapped format to console or file if --save is provided.",
-    )
-    parser.add_argument(
-        "-s",
-        "--save",
-        type=str,
-        default=None,
-        metavar="FILEPATH",
-        help="Path to save the output. When using --format csv, if not provided output goes to console.",
-    )
-    args = parser.parse_args()
-
-    # CSV format no longer requires --save flag; will print to console if not specified
-
-    # Create a dictionary of compilers, one for each language.
-    compilers: Dict[str, ASTCompiler] = {}
-    try:
-        if ".py" in args.extensions:
-            compilers["python"] = ASTCompiler("python")
-        if ".js" in args.extensions:
-            compilers["javascript"] = ASTCompiler("javascript")
-    except ValueError as e:
-        logging.error(f"Failed to initialize compiler: {e}")
-        return
-
-    # Import here to avoid circular imports
-    from research.malwi_object import collect_files_by_extension
-
-    accepted_files, skipped_files = collect_files_by_extension(
-        input_path=args.input_path, accepted_extensions=args.extensions, silent=False
-    )
-
-    source_files = accepted_files
-    sources_count = len(accepted_files)
-
-    if sources_count == 0:
-        print(f"No files with extensions {args.extensions} found in {args.input_path}")
-        return
-
-    # Initialize CSV writer if needed
-    csv_writer_instance: Optional[CSVWriter] = None
-
-    try:
-        if args.format == "csv" and args.save:
-            print("Setting up CSV output...")
-            save_path = Path(args.save)
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            csv_writer_instance = CSVWriter(save_path)
-            print(f"CSV output will be saved to: {save_path.resolve()}")
-        elif args.format == "csv" and not args.save:
-            # Print CSV header to console
-            print("tokens,hash,language,filepath")
-
-        for source in tqdm(source_files, desc="Processing files", unit="file"):
-            lang = None
-            if source.suffix == ".py":
-                lang = "python"
-            elif source.suffix == ".js":
-                lang = "javascript"
-
-            compiler_instance = compilers.get(lang)
-            if compiler_instance:
-                code_objects = compiler_instance.process_file(source)
-
-                if args.format == "csv":
-                    if csv_writer_instance:
-                        # Write to CSV file
-                        csv_writer_instance.write_code_objects(code_objects)
-                    else:
-                        # Print CSV to console
-                        for obj in code_objects:
-                            row = [
-                                obj.to_string(one_line=True),
-                                obj.to_hash(),
-                                obj.language,
-                                str(obj.path),
-                            ]
-                            # Escape quotes in tokens field if necessary
-                            tokens = (
-                                row[0].replace('"', '""') if '"' in row[0] else row[0]
-                            )
-                            print(f'"{tokens}",{row[1]},{row[2]},{row[3]}')
-                else:
-                    for i, code_obj in enumerate(code_objects):
-                        print(f"{code_obj.to_string(one_line=False)}")
-            else:
-                if args.format == "console":
-                    print(f"Skipping unsupported file extension: {source.name}")
-
-        if args.format == "csv" and csv_writer_instance:
-            csv_writer_instance.close()
-            print(
-                f"Successfully processed {sources_count} files to CSV: {save_path.resolve()}"
-            )
-
-    except Exception as e:
-        print(f"Error during processing: {e}")
-        if csv_writer_instance:
-            csv_writer_instance.close()
-        return
-
-
-if __name__ == "__main__":
-    main()
+# Main function and CLI removed - use src.research.preprocess instead

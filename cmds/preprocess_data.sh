@@ -15,12 +15,12 @@ rm -f benign.csv malicious.csv malicious_processed.csv benign_processed.csv
 echo "   ✅ Cleanup completed"
 echo
 
-# Step 2: Generate AST data from source files
-echo "📋 Step 2: Generate AST Data"
+# Step 2: Generate AST data from source files (parallel by default)
+echo "📋 Step 2: Generate AST Data (Parallel Processing)"
 echo "   • Generating benign AST data..."
-uv run python -m src.research.ast_to_malwicode '.repo_cache/benign_repos' -f csv -s benign.csv --extensions '.py'
+uv run python -m src.research.preprocess '.repo_cache/benign_repos' benign.csv --extensions '.py'
 echo "   • Generating malicious AST data..."
-uv run python -m src.research.ast_to_malwicode '../malwi-samples/python/malicious' -f csv -s malicious.csv --extensions '.py'
+uv run python -m src.research.preprocess '../malwi-samples/python/malicious' malicious.csv --extensions '.py'
 echo "   ✅ AST data generation completed"
 echo
 
