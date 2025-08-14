@@ -250,48 +250,9 @@ def _process_parallel(
     if num_processes is None:
         num_processes = mp.cpu_count()
 
-    # Limit the number of processes to prevent resource exhaustion
-    # Be much more conservative for large datasets
-    if len(files) > 50000:
-        max_processes = min(num_processes, 4)  # Very conservative for large datasets
-        print(
-            f"Large dataset: limiting to {max_processes} processes to prevent crashes"
-        )
-    elif len(files) > 10000:
-        max_processes = min(num_processes, 8)  # Moderate for medium datasets
-        print(f"Medium dataset: limiting to {max_processes} processes")
-    else:
-        max_processes = min(num_processes, 12)  # Normal limit for small datasets
-
-    if max_processes != num_processes:
-        print(f"Process limit: {max_processes} (from {num_processes})")
-    num_processes = max_processes
-
     # Calculate chunks
     num_chunks = max(1, len(files) // chunk_size)
     num_chunks = min(num_chunks, num_processes * 2)  # Don't create too many chunks
-
-    # For very large datasets, use much larger chunks to reduce overhead
-    if len(files) > 100000:
-        min_chunk_size = max(
-            2000, len(files) // (num_processes * 2)
-        )  # At least 2000 files per chunk
-        num_chunks = max(1, len(files) // min_chunk_size)
-        print(
-            f"Very large dataset: using chunk size of {min_chunk_size} files per chunk"
-        )
-    elif len(files) > 50000:
-        min_chunk_size = max(
-            1000, len(files) // (num_processes * 2)
-        )  # At least 1000 files per chunk
-        num_chunks = max(1, len(files) // min_chunk_size)
-        print(f"Large dataset: using chunk size of {min_chunk_size} files per chunk")
-    elif len(files) > 10000:
-        min_chunk_size = max(
-            500, len(files) // (num_processes * 2)
-        )  # At least 500 files per chunk
-        num_chunks = max(1, len(files) // min_chunk_size)
-        print(f"Medium dataset: using chunk size of {min_chunk_size} files per chunk")
 
     print(f"Using {num_processes} processes with {num_chunks} chunks")
 
