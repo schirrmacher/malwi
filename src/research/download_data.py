@@ -7,6 +7,8 @@ import zipfile
 import tarfile
 import argparse
 import subprocess
+import json
+from pathlib import Path
 
 from urllib.parse import urlparse
 
@@ -558,6 +560,67 @@ REPO_CACHE_DIR = ".repo_cache"
 BENIGN_REPOS_CACHE_PATH = os.path.join(REPO_CACHE_DIR, "benign_repos")
 MALICIOUS_REPOS_CACHE_PATH = os.path.join(REPO_CACHE_DIR, "malicious_repos")
 
+# Load pinned repository configurations
+PINNED_REPOS_CONFIG_PATH = (
+    Path(__file__).parent.parent.parent / "util" / "pinned_repositories.json"
+)
+PINNED_REPOS_CONFIG = None
+
+
+def load_pinned_repositories():
+    """Load pinned repository configuration for reproducible training."""
+    global PINNED_REPOS_CONFIG
+    if PINNED_REPOS_CONFIG is None:
+        try:
+            if PINNED_REPOS_CONFIG_PATH.exists():
+                with open(PINNED_REPOS_CONFIG_PATH, "r") as f:
+                    PINNED_REPOS_CONFIG = json.load(f)
+                logging.info(
+                    f"Loaded pinned repositories configuration with {PINNED_REPOS_CONFIG['metadata']['total_repositories']} repositories"
+                )
+            else:
+                logging.warning(
+                    f"Pinned repositories config not found at {PINNED_REPOS_CONFIG_PATH}"
+                )
+                logging.warning("Falling back to latest commits (non-reproducible)")
+                PINNED_REPOS_CONFIG = {}
+        except Exception as e:
+            logging.error(f"Failed to load pinned repositories config: {e}")
+            logging.warning("Falling back to latest commits (non-reproducible)")
+            PINNED_REPOS_CONFIG = {}
+    return PINNED_REPOS_CONFIG
+
+
+# Global flag to control pinning behavior
+USE_PINNED_COMMITS = True
+
+
+def get_pinned_commit_for_url(repo_url):
+    """Get the pinned commit hash for a repository URL."""
+    if not USE_PINNED_COMMITS:
+        return None
+
+    config = load_pinned_repositories()
+
+    # Check benign repositories
+    benign_repos = config.get("benign_repositories", {})
+    if repo_url in benign_repos:
+        repo_data = benign_repos[repo_url]
+        commit_hash = repo_data.get("commit_hash")
+        if commit_hash:
+            return commit_hash
+
+    # Check malicious repositories
+    malicious_repos = config.get("malicious_repositories", {})
+    if repo_url in malicious_repos:
+        repo_data = malicious_repos[repo_url]
+        commit_hash = repo_data.get("commit_hash")
+        if commit_hash:
+            return commit_hash
+
+    return None
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - [%(module)s.%(funcName)s] %(message)s",
@@ -686,23 +749,78 @@ def get_or_clone_repo(repo_url, target_cache_subdir):
     repo_path = os.path.join(target_cache_subdir, repo_name)
     os.makedirs(target_cache_subdir, exist_ok=True)
 
-    if os.path.exists(repo_path):
-        logging.info(f"Using cached repository {repo_name} from {repo_path}")
+    # Get pinned commit if available
+    pinned_commit = get_pinned_commit_for_url(repo_url)
+
+    # Create cache directory name that includes commit hash for pinned repos
+    if pinned_commit:
+        # Include first 8 chars of commit hash in path for clarity
+        commit_short = pinned_commit[:8]
+        repo_path = os.path.join(target_cache_subdir, f"{repo_name}_{commit_short}")
+        cache_info = f"pinned to {commit_short}"
     else:
-        logging.info(f"Cloning {repo_name} from {repo_url} into {repo_path}")
-        if not run_command(
-            ["git", "clone", "--depth", "1", repo_url, repo_path], repo_name=repo_name
-        ):
-            logging.error(f"Failed to clone {repo_name}.")
-            if os.path.exists(repo_path):
+        cache_info = "latest (non-reproducible)"
+
+    if os.path.exists(repo_path):
+        logging.info(
+            f"Using cached repository {repo_name} ({cache_info}) from {repo_path}"
+        )
+    else:
+        if pinned_commit:
+            logging.info(
+                f"Cloning {repo_name} from {repo_url} (pinned to {commit_short}) into {repo_path}"
+            )
+            # Clone the full repository to get the specific commit
+            if not run_command(
+                ["git", "clone", repo_url, repo_path], repo_name=repo_name
+            ):
+                logging.error(f"Failed to clone {repo_name}.")
+                if os.path.exists(repo_path):
+                    try:
+                        make_writable_recursive(repo_path)
+                        shutil.rmtree(repo_path)
+                    except Exception as e_rm:
+                        logging.warning(
+                            f"Could not clean up partial clone {repo_path}: {e_rm}"
+                        )
+                return None
+
+            # Checkout the specific commit
+            if not run_command(
+                ["git", "checkout", pinned_commit],
+                working_dir=repo_path,
+                repo_name=repo_name,
+            ):
+                logging.error(
+                    f"Failed to checkout commit {pinned_commit} for {repo_name}."
+                )
                 try:
                     make_writable_recursive(repo_path)
                     shutil.rmtree(repo_path)
                 except Exception as e_rm:
                     logging.warning(
-                        f"Could not clean up partial clone {repo_path}: {e_rm}"
+                        f"Could not clean up failed checkout {repo_path}: {e_rm}"
                     )
-            return None
+                return None
+        else:
+            logging.info(
+                f"Cloning {repo_name} from {repo_url} (latest commit) into {repo_path}"
+            )
+            if not run_command(
+                ["git", "clone", "--depth", "1", repo_url, repo_path],
+                repo_name=repo_name,
+            ):
+                logging.error(f"Failed to clone {repo_name}.")
+                if os.path.exists(repo_path):
+                    try:
+                        make_writable_recursive(repo_path)
+                        shutil.rmtree(repo_path)
+                    except Exception as e_rm:
+                        logging.warning(
+                            f"Could not clean up partial clone {repo_path}: {e_rm}"
+                        )
+                return None
+
         make_readonly(repo_path)
     return repo_path
 
@@ -965,6 +1083,16 @@ def main():
         help="Type of dataset to process (default: all)",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+    parser.add_argument(
+        "--use-latest",
+        action="store_true",
+        help="Use latest commits instead of pinned versions (non-reproducible)",
+    )
+    parser.add_argument(
+        "--force-repin",
+        action="store_true",
+        help="Force regeneration of pinned repositories configuration",
+    )
     args, unknown = parser.parse_known_args()
     if unknown:
         logging.debug(f"Ignoring unknown arguments: {unknown}")
@@ -977,6 +1105,34 @@ def main():
         logging.getLogger().setLevel(logging.INFO)
         for handler in logging.getLogger().handlers:
             handler.setLevel(logging.INFO)
+
+    # Handle pinning options
+    global USE_PINNED_COMMITS
+    if args.use_latest:
+        USE_PINNED_COMMITS = False
+        logging.info("Using latest commits (non-reproducible mode)")
+    else:
+        USE_PINNED_COMMITS = True
+        logging.info("Using pinned commits for reproducible training")
+
+    # Handle force repin option
+    if args.force_repin:
+        logging.info("Force regenerating pinned repositories configuration...")
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["uv", "run", "python", "util/pin_repositories.py"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            logging.info("Successfully regenerated pinned repositories configuration")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to regenerate pinned repositories: {e}")
+            logging.error(f"Stdout: {e.stdout}")
+            logging.error(f"Stderr: {e.stderr}")
+            return
 
     logging.info(
         f"Initializing script, using cache directory: {os.path.abspath(REPO_CACHE_DIR)}"

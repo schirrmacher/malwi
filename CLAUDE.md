@@ -29,6 +29,12 @@ uv run ruff check .
 uv run ruff format .
 ```
 
+**Download Training Data:**
+```bash
+# Download all required data (malwi-samples + benign/malicious repos)
+./cmds/download_data.sh
+```
+
 **Training Models:**
 ```bash
 # Full DistilBERT training pipeline (with parallel preprocessing)
@@ -54,6 +60,15 @@ uv run python -m src.research.preprocess '../malwi-samples' output.csv --chunk-s
 ```bash
 # When compiler changes affect output format
 uv run python util/regenerate_test_data.py
+```
+
+**Repository Pinning:**
+```bash
+# Update pinned repository commits for reproducible training
+uv run python util/pin_repositories.py
+
+# Download data with latest commits (non-reproducible)
+uv run python -m src.research.download_data --use-latest
 ```
 
 **Usage:**
@@ -133,6 +148,21 @@ This ensures that:
 - **Parallel Preprocessing**: ~6-8x faster with multi-core processing (40 min → 5-7 min on 8 cores)
 - **Chunk-based Processing**: Each CPU core processes independent file chunks and writes to separate CSV files
 - **Automatic Merging**: Chunk CSVs are merged into final output to avoid I/O bottlenecks
+
+## Reproducible Training
+
+malwi uses pinned repository commits to ensure reproducible training data:
+
+- **Pinned Repositories**: All 533 training repositories are pinned to specific commit hashes in `util/pinned_repositories.json`
+- **Automatic Verification**: Training data downloads use pinned commits by default  
+- **Cache Optimization**: Repository caches include commit hashes in directory names (e.g., `pymatting_a60fdb63`)
+- **Fallback Support**: Missing repositories fall back to latest commits with warnings
+
+**Benefits:**
+- Identical training data across different machines and time periods
+- Reproducible model training results
+- Version control for training data dependencies
+- Easy rollback to previous training data states
 
 ## Important Considerations
 
