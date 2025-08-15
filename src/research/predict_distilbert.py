@@ -340,26 +340,14 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
 
 def get_model_version_string(base_version: str) -> str:
     """Get complete version string including model information."""
-    try:
-        # Only try to get model info if models are already initialized
-        # Don't force initialization here to avoid overriding custom paths
+    from malwi._version import __model_commit__
 
-        # Start with base version
-        version_parts = [f"v{base_version}"]
+    try:
+        # Start with base version and model commit
+        version_parts = [f"v{base_version}", f"model: {__model_commit__}"]
 
         if HF_MODEL_INSTANCE is not None:
             try:
-                # Get HuggingFace commit hash if available
-                model_to_check = (
-                    HF_MODEL_INSTANCE.module if USE_MULTI_GPU else HF_MODEL_INSTANCE
-                )
-                if hasattr(model_to_check, "config"):
-                    config = model_to_check.config
-                    if hasattr(config, "_commit_hash") and config._commit_hash:
-                        version_parts.append(
-                            f"models commit: {config._commit_hash[:8]}"
-                        )
-
                 # Add device information
                 if USE_MULTI_GPU and HF_DEVICE_IDS:
                     version_parts.append(f"GPU x{len(HF_DEVICE_IDS)}")
@@ -379,13 +367,17 @@ def get_model_version_string(base_version: str) -> str:
                 version_parts.append("CPU")
                 python_version = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
                 version_parts.append(python_version)
+        else:
+            # Add basic Python info when models aren't loaded
+            python_version = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            version_parts.append(python_version)
 
         # Join with commas
         version_str = ", ".join(version_parts)
 
     except Exception:
-        # Fallback to basic version if model loading fails
+        # Fallback to basic version if everything fails
         python_version = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-        version_str = f"v{base_version}, CPU, {python_version}"
+        version_str = f"v{base_version}, model: {__model_commit__}, {python_version}"
 
     return version_str

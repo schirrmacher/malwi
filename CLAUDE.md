@@ -67,6 +67,9 @@ uv run python util/regenerate_test_data.py
 # Update pinned repository commits for reproducible training
 uv run python util/pin_repositories.py
 
+# Update model commit hash for releases
+python util/update_model_commit.py
+
 # Download data with latest commits (non-reproducible)
 uv run python -m src.research.download_data --use-latest
 ```
@@ -106,12 +109,12 @@ python util/build_helpers.py restore
 2. Create a version bump, adapt the minor version in:
    - `src/malwi/_version.py` (central version file)
    - Run `uv sync` to update uv.lock
-3. **Pin model version**: `python util/fetch_hf_commit.py schirrmacher/malwi <version> [commit_hash]` to pin the current HuggingFace model commit hash
+3. **Update model commit hash**: `python util/update_model_commit.py` to get latest HuggingFace model commit and update `src/malwi/_version.py`
 4. Build clean package: `python util/build_helpers.py backup && python -m build --wheel && python util/build_helpers.py restore`
-5. Create a git commit with: version bump and model pinning
+5. Create a git commit with: version bump and model commit update
 6. Run: `git tag v<version>` (e.g., `git tag v0.0.15`)
 
-**Note**: Version is now centralized in `src/malwi/_version.py`. All other files (pyproject.toml, setup.py, CLI) automatically read from this central location.
+**Note**: Version and model commit hash are now centralized in `src/malwi/_version.py`. All other files automatically read from this central location.
 
 ## Model Version Pinning
 
