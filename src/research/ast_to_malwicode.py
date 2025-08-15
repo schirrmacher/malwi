@@ -3,7 +3,7 @@ import hashlib
 from enum import Enum, auto
 from pathlib import Path
 from tree_sitter import Node
-from typing import Optional, Any, List, Tuple, Dict
+from typing import Optional, Any, List, Tuple
 
 from tree_sitter import Parser, Language
 from research.mapping import (
@@ -22,6 +22,10 @@ from research.mapping import (
     is_base64,
     is_hex,
     is_valid_url,
+    is_https_url,
+    is_http_url,
+    is_https_url_with_ip,
+    is_http_url_with_ip,
     is_version,
     is_escaped_hex,
     is_file_path,
@@ -298,6 +302,14 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_LOCALHOST.value}"
         elif is_valid_ip(argval):
             return f"{op_code.name} {SpecialCases.STRING_IP.value}"
+        elif is_https_url_with_ip(argval):
+            return f"{op_code.name} {SpecialCases.STRING_HTTPS_URL_WITH_IP.value}"
+        elif is_http_url_with_ip(argval):
+            return f"{op_code.name} {SpecialCases.STRING_HTTP_URL_WITH_IP.value}"
+        elif is_https_url(argval):
+            return f"{op_code.name} {SpecialCases.STRING_HTTPS_URL.value}"
+        elif is_http_url(argval):
+            return f"{op_code.name} {SpecialCases.STRING_HTTP_URL.value}"
         elif is_valid_url(argval):
             return f"{op_code.name} {SpecialCases.STRING_URL.value}"
         elif contains_url(argval):

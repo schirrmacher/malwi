@@ -20,6 +20,10 @@ STRING_MAX_LENGTH = 15
 class SpecialCases(Enum):
     STRING_SENSITIVE_FILE_PATH = "STRING_SENSITIVE_FILE_PATH"
     STRING_URL = "STRING_URL"
+    STRING_HTTPS_URL = "STRING_HTTPS_URL"
+    STRING_HTTP_URL = "STRING_HTTP_URL"
+    STRING_HTTPS_URL_WITH_IP = "STRING_HTTPS_URL_WITH_IP"
+    STRING_HTTP_URL_WITH_IP = "STRING_HTTP_URL_WITH_IP"
     STRING_CONTAINS_URL = "STRING_CONTAINS_URL"
     STRING_VERSION = "STRING_VERSION"
     STRING_ENCODING = "STRING_ENCODING"
@@ -229,6 +233,64 @@ def is_valid_url(content: str) -> bool:
         return bool(result.scheme and result.netloc)
     except Exception:
         return False
+
+
+def is_https_url(content: str) -> bool:
+    """Check if the content is specifically an HTTPS URL."""
+    if not is_valid_url(content):
+        return False
+
+    try:
+        result = urllib.parse.urlparse(content)
+        return result.scheme.lower() == "https"
+    except Exception:
+        return False
+
+
+def is_http_url(content: str) -> bool:
+    """Check if the content is specifically an HTTP URL."""
+    if not is_valid_url(content):
+        return False
+
+    try:
+        result = urllib.parse.urlparse(content)
+        return result.scheme.lower() == "http"
+    except Exception:
+        return False
+
+
+def is_https_url_with_ip(content: str) -> bool:
+    """Check if the content is an HTTPS URL with an IP address as hostname."""
+    if not is_https_url(content):
+        return False
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            # Check if hostname is a valid IP address
+            return is_valid_ip(hostname)
+    except Exception:
+        pass
+
+    return False
+
+
+def is_http_url_with_ip(content: str) -> bool:
+    """Check if the content is an HTTP URL with an IP address as hostname."""
+    if not is_http_url(content):
+        return False
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            # Check if hostname is a valid IP address
+            return is_valid_ip(hostname)
+    except Exception:
+        pass
+
+    return False
 
 
 def is_escaped_hex(s: str) -> bool:
@@ -612,6 +674,14 @@ def map_string_arg(argval: str, original_argrepr: str, language: str = "python")
         return SpecialCases.STRING_LOCALHOST.value
     elif is_valid_ip(argval):
         return SpecialCases.STRING_IP.value
+    elif is_https_url_with_ip(argval):
+        return SpecialCases.STRING_HTTPS_URL_WITH_IP.value
+    elif is_http_url_with_ip(argval):
+        return SpecialCases.STRING_HTTP_URL_WITH_IP.value
+    elif is_https_url(argval):
+        return SpecialCases.STRING_HTTPS_URL.value
+    elif is_http_url(argval):
+        return SpecialCases.STRING_HTTP_URL.value
     elif is_valid_url(argval):
         return SpecialCases.STRING_URL.value
     elif contains_url(argval):
@@ -750,6 +820,14 @@ def map_string_argument(argval: str, language: str = "python") -> str:
         return SpecialCases.STRING_LOCALHOST.value
     elif is_valid_ip(argval):
         return SpecialCases.STRING_IP.value
+    elif is_https_url_with_ip(argval):
+        return SpecialCases.STRING_HTTPS_URL_WITH_IP.value
+    elif is_http_url_with_ip(argval):
+        return SpecialCases.STRING_HTTP_URL_WITH_IP.value
+    elif is_https_url(argval):
+        return SpecialCases.STRING_HTTPS_URL.value
+    elif is_http_url(argval):
+        return SpecialCases.STRING_HTTP_URL.value
     elif is_valid_url(argval):
         return SpecialCases.STRING_URL.value
     elif contains_url(argval):
