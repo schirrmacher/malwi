@@ -1,7 +1,7 @@
 """Test the create_decision_tokens function."""
 
-from research.malwi_object import MalwiObject
-from research.mapping import SpecialCases
+from common.malwi_object import MalwiObject
+from common.mapping import SpecialCases
 
 
 class TestCreateDecisionTokens:

@@ -10,8 +10,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from research.malwi_object import MalwiReport, MalwiObject
-from research.ast_to_malwicode import ASTCompiler
+from common.malwi_object import MalwiReport, MalwiObject
+from common.ast_to_malwicode import ASTCompiler
 
 
 class TestCodeExtraction:
@@ -542,7 +542,7 @@ class TestClass:
                 mock_tokenizer.return_value = mock_encoded
 
                 with patch(
-                    "research.predict_distilbert.get_thread_tokenizer",
+                    "common.predict_distilbert.get_thread_tokenizer",
                     return_value=mock_tokenizer,
                 ):
                     # Test CodeObject embedding_count
@@ -639,7 +639,7 @@ class TestClass:
                 mock_tokenizer.return_value = mock_encoded
 
                 with patch(
-                    "research.predict_distilbert.get_thread_tokenizer",
+                    "common.predict_distilbert.get_thread_tokenizer",
                     return_value=mock_tokenizer,
                 ):
                     compiler = ASTCompiler("python")

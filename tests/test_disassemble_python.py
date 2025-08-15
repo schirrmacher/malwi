@@ -6,7 +6,7 @@
 
 # from unittest.mock import patch
 
-# from research.mapping import SpecialCases
+# from common.mapping import SpecialCases
 
 # from research.disassemble_python import (
 #     MalwiObject,

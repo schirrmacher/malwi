@@ -15,19 +15,15 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/schirrmacher/malwi",
-    packages=find_packages(where="src"),
+    packages=find_packages(where="src", exclude=["research", "research.*"]),
     package_dir={"": "src"},
     include_package_data=True,
     python_requires=">=3.12",
     package_data={
-        "research.syntax_mapping": [
-            "compression_mapping.json",
+        "common.syntax_mapping": [
             "function_mapping.json",
             "import_mapping.json",
-            "node_mapping.json",
-            "node_targets.json",
             "sensitive_files.json",
-            "special_tokens.json",
             "target_files.json",
         ]
     },

@@ -612,7 +612,7 @@ class TestPyPICommand:
         assert "--save" in captured.out
 
     @patch("cli.entry.MalwiObject")
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     @patch("cli.entry.MalwiReport.create")
     def test_pypi_basic_scan(
         self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
@@ -653,7 +653,7 @@ class TestPyPICommand:
                 mock_result.assert_called_with("Demo output", force=True)
 
     @patch("cli.entry.MalwiObject")
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     @patch("cli.entry.MalwiReport.create")
     def test_pypi_with_version(
         self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
@@ -679,7 +679,7 @@ class TestPyPICommand:
                 )
 
     @patch("cli.entry.MalwiObject")
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     @patch("cli.entry.MalwiReport.create")
     def test_pypi_custom_folder(
         self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
@@ -707,7 +707,7 @@ class TestPyPICommand:
                 )
 
     @patch("cli.entry.MalwiObject")
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     @patch("cli.entry.MalwiReport.create")
     def test_pypi_different_formats(
         self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
@@ -741,7 +741,7 @@ class TestPyPICommand:
                     mock_result.assert_called_with(expected_output, force=True)
 
     @patch("cli.entry.MalwiObject")
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     @patch("cli.entry.MalwiReport.create")
     def test_pypi_save_output(
         self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
@@ -779,7 +779,7 @@ class TestPyPICommand:
                 assert output_file.read_text() == '{"saved": "output"}'
 
     @patch("cli.entry.MalwiObject")
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     def test_pypi_scan_failure(self, mock_scan_pypi, mock_malwi_object):
         """Test PyPI scanning when package download fails"""
         # Mock failed package download
@@ -794,7 +794,7 @@ class TestPyPICommand:
                 assert result is None
 
     @patch("cli.entry.MalwiObject")
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     @patch("cli.entry.MalwiReport.create")
     def test_pypi_custom_threshold(
         self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path
@@ -824,7 +824,7 @@ class TestPyPICommand:
                     on_malicious_found=None,
                 )
 
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     def test_pypi_model_loading_error(self, mock_scan_pypi, tmp_path):
         """Test PyPI scanning continues when model loading fails"""
         extracted_dir = tmp_path / "package"
@@ -853,7 +853,7 @@ class TestPyPICommand:
                         mock_create.assert_called_once()
 
     @patch("cli.entry.MalwiObject")
-    @patch("research.pypi.scan_pypi_package")
+    @patch("cli.pypi.scan_pypi_package")
     @patch("cli.entry.MalwiReport.create")
     def test_pypi_with_progress(
         self, mock_create, mock_scan_pypi, mock_malwi_object, tmp_path

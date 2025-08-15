@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 # The path to the module needs to match your project structure.
 # I've kept it as it was in the file you provided.
-from research.predict_distilbert import get_node_text_prediction, initialize_models
+from common.predict_distilbert import get_node_text_prediction, initialize_models
 
 
 class TestWindowingPrediction(unittest.TestCase):
@@ -21,10 +21,10 @@ class TestWindowingPrediction(unittest.TestCase):
 
     # --- THIS IS THE KEY CHANGE ---
     # The mock for HF_DEVICE_INSTANCE is replaced with a direct value using 'new'.
-    @patch("research.predict_distilbert.HF_MODEL_INSTANCE")
-    @patch("research.predict_distilbert.HF_TOKENIZER_INSTANCE")
-    @patch("research.predict_distilbert.get_thread_tokenizer")
-    @patch("research.predict_distilbert.HF_DEVICE_INSTANCE", new="cpu")
+    @patch("common.predict_distilbert.HF_MODEL_INSTANCE")
+    @patch("common.predict_distilbert.HF_TOKENIZER_INSTANCE")
+    @patch("common.predict_distilbert.get_thread_tokenizer")
+    @patch("common.predict_distilbert.HF_DEVICE_INSTANCE", new="cpu")
     def test_long_input_triggers_windowing_and_aggregates_correctly(
         self, mock_get_thread_tokenizer, mock_tokenizer, mock_model
     ):

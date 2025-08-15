@@ -2,7 +2,7 @@ import os
 import argparse
 import pandas as pd
 
-from research.malwi_object import MalwiObject
+from common.malwi_object import MalwiObject
 from common.messaging import (
     configure_messaging,
     info,

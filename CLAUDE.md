@@ -154,7 +154,7 @@ This ensures that:
 - **Core Pipeline**: `src/research/malwi_object.py` → `ast_to_malwicode.py` → `predict_distilbert.py`
 - **Data Preprocessing**: `src/research/preprocess.py` - Parallel processing for fast AST compilation
 - **AST Compilation**: `src/research/ast_to_malwicode.py` - Language-independent bytecode generation
-- **Mapping System**: JSON configs in `src/research/syntax_mapping/` define bytecode-to-token mappings
+- **Mapping System**: JSON configs in `src/common/syntax_mapping/` define bytecode-to-token mappings
 - **Models**: Pre-trained DistilBERT model stored in `malwi-models/`
 - **Training Data**: Requires `malwi-samples` repository cloned in parent directory
 

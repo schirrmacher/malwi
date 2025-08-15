@@ -3,7 +3,7 @@ import pytest
 
 from unittest.mock import MagicMock
 
-from research.mapping import (
+from common.mapping import (
     SpecialCases,
     is_valid_ip,
     is_valid_url,

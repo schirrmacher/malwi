@@ -16,8 +16,8 @@ from typing import List, Dict
 from concurrent.futures import ProcessPoolExecutor, as_completed, TimeoutError
 from tqdm import tqdm
 
-from research.ast_to_malwicode import ASTCompiler
-from research.malwi_object import collect_files_by_extension
+from common.ast_to_malwicode import ASTCompiler
+from common.malwi_object import collect_files_by_extension
 
 
 def process_file_chunk(chunk_data: Dict) -> Dict:

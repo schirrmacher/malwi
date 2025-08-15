@@ -11,7 +11,9 @@
       "Bash(uv run:*)",
       "Bash(chmod:*)",
       "Bash(mkdir:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(sed:*)",
+      "Bash(unzip:*)"
     ]
   },
   "enableAllProjectMcpServers": false

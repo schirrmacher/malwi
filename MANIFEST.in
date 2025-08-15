@@ -1,5 +1,5 @@
 include README.md
-recursive-include src/research/syntax_mapping *.json
+recursive-include src/common/syntax_mapping *.json
 
 # Exclude development and training directories/files from source distributions
 prune tests/

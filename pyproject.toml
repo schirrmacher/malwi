@@ -43,9 +43,10 @@ version = { attr = "malwi._version.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+exclude = ["research", "research.*"]
 
 [tool.setuptools.package-data]
-"research.syntax_mapping" = ["*.json"]
+"common.syntax_mapping" = ["*.json"]
 
 [dependency-groups]
 dev = [

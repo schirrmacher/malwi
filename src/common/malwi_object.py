@@ -12,13 +12,13 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Any, Dict
 
-from research.mapping import (
+from common.mapping import (
     SpecialCases,
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
 )
-from research.ast_to_malwicode import ASTCompiler
-from research.predict_distilbert import (
+from common.ast_to_malwicode import ASTCompiler
+from common.predict_distilbert import (
     get_node_text_prediction,
     initialize_models as initialize_distilbert_models,
     get_model_version_string,
@@ -378,7 +378,7 @@ class MalwiReport:
 
                 # Get DistilBERT tokens and counts
                 try:
-                    from research.predict_distilbert import get_thread_tokenizer
+                    from common.predict_distilbert import get_thread_tokenizer
 
                     tokenizer = get_thread_tokenizer()
                     distilbert_tokens = tokenizer.tokenize(token_string)

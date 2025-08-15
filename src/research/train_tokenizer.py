@@ -17,14 +17,12 @@ from common.messaging import (
     warning,
     error,
 )
-from research.mapping import SpecialCases
+from common.mapping import SpecialCases
 
 DEFAULT_TOKENIZER_OUTPUT_PATH = Path("malwi_models")
 DEFAULT_MAX_LENGTH = 512
 DEFAULT_VOCAB_SIZE = 30522
-DEFAULT_FUNCTION_MAPPING_PATH = Path(
-    "src/research/syntax_mapping/function_mapping.json"
-)
+DEFAULT_FUNCTION_MAPPING_PATH = Path("src/common/syntax_mapping/function_mapping.json")
 
 
 def load_base_tokens_from_function_mapping(

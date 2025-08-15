@@ -6,9 +6,9 @@ import yaml
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from research.mapping import SpecialCases
-from research.malwi_object import MalwiObject, LiteralStr
-from research.ast_to_malwicode import ASTCompiler, CodeObject
+from common.mapping import SpecialCases
+from common.malwi_object import MalwiObject, LiteralStr
+from common.ast_to_malwicode import ASTCompiler, CodeObject
 
 
 class TestMalwiObject:
@@ -53,7 +53,7 @@ class TestMalwiObject:
         assert source is not None
         assert isinstance(source, str)
 
-    @patch("research.malwi_object.get_node_text_prediction")
+    @patch("common.malwi_object.get_node_text_prediction")
     def test_predict(self, mock_predict, malwi_obj):
         """Test maliciousness prediction."""
         mock_predict.return_value = {"probabilities": [0.3, 0.7]}

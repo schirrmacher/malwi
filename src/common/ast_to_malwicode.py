@@ -6,7 +6,7 @@ from tree_sitter import Node
 from typing import Optional, Any, List, Tuple, Dict
 
 from tree_sitter import Parser, Language
-from research.mapping import (
+from common.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
     COMMON_TARGET_FILES,
@@ -240,7 +240,7 @@ class Instruction:
         elif op_code == OpCode.LOAD_CONST and isinstance(arg, tuple):
             # Handle tuples by extracting string content and mapping individual elements
             # This is especially important for marshal operations and import tuples
-            from research.mapping import map_tuple_arg
+            from common.mapping import map_tuple_arg
 
             tuple_mapping = map_tuple_arg(arg, str(arg))
             if tuple_mapping:
@@ -460,7 +460,7 @@ class CodeObject:
         """
         try:
             # Import here to avoid circular dependencies
-            from research.predict_distilbert import get_thread_tokenizer
+            from common.predict_distilbert import get_thread_tokenizer
 
             # Get the token string (same format used for prediction)
             token_string = " ".join(self.get_tokens(mapped=True))

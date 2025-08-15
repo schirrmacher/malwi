@@ -8,11 +8,11 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
-from research.malwi_object import (
+from common.malwi_object import (
     MalwiObject,
     MalwiReport,
 )
-from research.predict_distilbert import get_model_version_string
+from common.predict_distilbert import get_model_version_string
 from common.messaging import (
     configure_messaging,
     banner,
@@ -375,7 +375,7 @@ def pypi_command(args):
     )
 
     # Import PyPI scanner
-    from research.pypi import scan_pypi_package
+    from cli.pypi import scan_pypi_package
 
     # Use specified download folder
     download_path = Path(args.folder)
