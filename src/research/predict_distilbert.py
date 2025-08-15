@@ -7,8 +7,40 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer, DistilBertForSequenceClassification
 
-# Changed to use the same repository for both tokenizer and model
-HF_REPO_NAME = "schirrmacher/malwi"
+# Version-specific model repositories
+from malwi._version import __version__
+
+
+def get_model_config_for_version(version: str) -> Dict[str, str]:
+    """Get the appropriate model repository and revision for a given malwi version."""
+    # Map malwi versions to model configurations
+    # IMPORTANT: Use actual commit hashes, not tags, to ensure reproducibility
+    VERSION_TO_MODEL_CONFIG = {
+        "0.0.21": {
+            "repo": "schirrmacher/malwi",
+            "revision": "21f808cda19f6a465bbdd568960f6b0291321cdf",  # Pinned: 2025-08-14
+        },
+        # Future versions will be added here as they are released
+        # "0.0.22": {
+        #     "repo": "schirrmacher/malwi",
+        #     "revision": "COMMIT_HASH"  # Pin when releasing
+        # },
+        # Fallback for development/unreleased versions
+        "default": {
+            "repo": "schirrmacher/malwi",
+            "revision": "main",  # Latest for development
+        },
+    }
+
+    # Extract major.minor.patch from version
+    base_version = ".".join(__version__.split(".")[:3])
+    return VERSION_TO_MODEL_CONFIG.get(base_version, VERSION_TO_MODEL_CONFIG["default"])
+
+
+# Get model configuration for current version
+MODEL_CONFIG = get_model_config_for_version(__version__)
+HF_REPO_NAME = MODEL_CONFIG["repo"]
+HF_MODEL_REVISION = MODEL_CONFIG["revision"]
 HF_TOKENIZER_NAME = HF_REPO_NAME
 HF_MODEL_NAME = HF_REPO_NAME
 
@@ -38,7 +70,7 @@ def get_thread_tokenizer():
             _thread_local, "tokenizer_path", HF_TOKENIZER_NAME
         )
         _thread_local.tokenizer = AutoTokenizer.from_pretrained(
-            actual_tokenizer_path, trust_remote_code=True
+            actual_tokenizer_path, revision=HF_MODEL_REVISION, trust_remote_code=True
         )
     return _thread_local.tokenizer
 
@@ -67,10 +99,10 @@ def initialize_models(
 
     try:
         HF_TOKENIZER_INSTANCE = AutoTokenizer.from_pretrained(
-            actual_tokenizer_path, trust_remote_code=True
+            actual_tokenizer_path, revision=HF_MODEL_REVISION, trust_remote_code=True
         )
         HF_MODEL_INSTANCE = DistilBertForSequenceClassification.from_pretrained(
-            actual_model_path, trust_remote_code=True
+            actual_model_path, revision=HF_MODEL_REVISION, trust_remote_code=True
         )
 
         # Setup device configuration for single or multi-GPU

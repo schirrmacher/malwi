@@ -91,11 +91,32 @@ python util/build_helpers.py restore
 2. Create a version bump, adapt the minor version in:
    - `src/malwi/_version.py` (central version file)
    - Run `uv sync` to update uv.lock
-3. Build clean package: `python util/build_helpers.py backup && python -m build --wheel && python util/build_helpers.py restore`
-4. Create a git commit with: version bump
-5. Run: `git tag v<version>` (e.g., `git tag v0.0.15`)
+3. **Pin model version**: `python util/fetch_hf_commit.py schirrmacher/malwi <version> [commit_hash]` to pin the current HuggingFace model commit hash
+4. Build clean package: `python util/build_helpers.py backup && python -m build --wheel && python util/build_helpers.py restore`
+5. Create a git commit with: version bump and model pinning
+6. Run: `git tag v<version>` (e.g., `git tag v0.0.15`)
 
 **Note**: Version is now centralized in `src/malwi/_version.py`. All other files (pyproject.toml, setup.py, CLI) automatically read from this central location.
+
+## Model Version Pinning
+
+Each malwi release is pinned to a specific HuggingFace model commit hash to ensure reproducibility:
+
+**Get current model commit hash:**
+```bash
+python util/get_hf_model_info.py 0.0.21
+```
+
+**Update model configuration:**
+```bash
+# Edit src/research/predict_distilbert.py and add the commit hash to VERSION_TO_MODEL_CONFIG
+# Example: "0.0.21": {"repo": "schirrmacher/malwi", "revision": "21f808cda19f6a465bbdd568960f6b0291321cdf"}
+```
+
+This ensures that:
+- Older malwi versions always use compatible models
+- Model updates don't break existing installations
+- Reproducible results across different environments
 
 ## Architecture Notes
 
