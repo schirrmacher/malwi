@@ -393,7 +393,10 @@ def pypi_command(args):
 
     # Load ML models for scanning
     try:
-        MalwiObject.load_models_into_memory()
+        MalwiObject.load_models_into_memory(
+            distilbert_model_path=args.model_path,
+            tokenizer_path=args.tokenizer_path,
+        )
     except Exception as e:
         model_warning("ML", e)
 
@@ -595,6 +598,22 @@ def main():
         metavar="DIR",
         default=None,
         help="Copy files with malicious findings to the specified directory, preserving folder structure (default: findings).",
+    )
+
+    pypi_developer_group = pypi_parser.add_argument_group("Developer Options")
+    pypi_developer_group.add_argument(
+        "--tokenizer-path",
+        "-t",
+        metavar="PATH",
+        help="Specify the tokenizer path",
+        default=None,
+    )
+    pypi_developer_group.add_argument(
+        "--model-path",
+        "-m",
+        metavar="PATH",
+        help="Specify the DistilBert model path",
+        default=None,
     )
 
     args = parser.parse_args()
