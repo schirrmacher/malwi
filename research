@@ -1,0 +1,4 @@
+#!/bin/bash
+
+uv run python -m src.research.cli "$@"
+
