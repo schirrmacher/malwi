@@ -22,6 +22,8 @@ from common.messaging import (
     banner,
 )
 
+# We'll import these functions dynamically when needed to avoid import errors
+
 
 class Step(Enum):
     """Available pipeline steps."""
@@ -37,6 +39,166 @@ class Language(Enum):
     PYTHON = "python"
     JAVASCRIPT = "javascript"
     BOTH = "both"
+
+
+def train_tokenizer_api(
+    benign_csv: str,
+    malicious_csv: str,
+    output_path: str = "malwi_models",
+    top_n_tokens: int = 15000,
+    force_retrain: bool = True,
+) -> bool:
+    """
+    Train tokenizer with a clean API interface.
+
+    Args:
+        benign_csv: Path to benign CSV file
+        malicious_csv: Path to malicious CSV file
+        output_path: Output directory for tokenizer
+        top_n_tokens: Number of top tokens to use
+        force_retrain: Whether to force retrain
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Import dynamically to avoid import errors
+        from research.train_tokenizer import train_tokenizer
+
+        # Create a mock args object for the existing function
+        class Args:
+            def __init__(self):
+                self.benign = benign_csv
+                self.malicious = malicious_csv
+                self.output_path = Path(output_path)
+                self.top_n_tokens = top_n_tokens
+                self.force_retrain = force_retrain
+                self.save_computed_tokens = True
+                self.function_mapping_path = Path(
+                    "src/common/syntax_mapping/function_mapping.json"
+                )
+                self.vocab_size = 30522
+                self.max_length = 512
+                self.token_column = "tokens"
+
+        args = Args()
+        train_tokenizer(args)
+        return True
+    except Exception as e:
+        error(f"Tokenizer training failed: {e}")
+        return False
+
+
+def train_distilbert_api(
+    benign_csv: str,
+    malicious_csv: str,
+    epochs: int = 3,
+    hidden_size: int = 256,
+    num_proc: int = 1,
+) -> bool:
+    """
+    Train DistilBERT model with a clean API interface.
+
+    Args:
+        benign_csv: Path to benign CSV file
+        malicious_csv: Path to malicious CSV file
+        epochs: Number of training epochs
+        hidden_size: Hidden layer size
+        num_proc: Number of processes
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Import dynamically to avoid import errors
+        from research.train_distilbert import run_training
+
+        # Create a mock args object for the existing function
+        class Args:
+            def __init__(self):
+                self.benign = benign_csv
+                self.malicious = malicious_csv
+                self.epochs = epochs
+                self.hidden_size = hidden_size
+                self.num_proc = num_proc
+                self.tokenizer_path = Path("malwi_models")
+                self.model_output = Path("malwi_models")
+                self.model_name = "distilbert-base-uncased"
+                self.max_length = 512
+                self.window_stride = 128
+                self.batch_size = 16
+                self.save_steps = 0
+                self.benign_to_malicious_ratio = 60.0
+
+        args = Args()
+        run_training(args)
+        return True
+    except Exception as e:
+        error(f"DistilBERT training failed: {e}")
+        return False
+
+
+def clone_or_update_repo(repo_url: str, target_path: Path) -> bool:
+    """
+    Clone or update a git repository.
+
+    Args:
+        repo_url: URL of the repository to clone
+        target_path: Path where to clone/update the repository
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        if not target_path.exists():
+            info(f"   • Cloning repository: {repo_url}")
+            original_dir = os.getcwd()
+            os.chdir(target_path.parent)
+            subprocess.run(["git", "clone", repo_url, target_path.name], check=True)
+            os.chdir(original_dir)
+            success(f"   Repository cloned successfully to {target_path}")
+        else:
+            info(f"   • Updating existing repository: {target_path}")
+            original_dir = os.getcwd()
+            os.chdir(target_path)
+            subprocess.run(["git", "pull", "origin", "main"], check=True)
+            os.chdir(original_dir)
+            success(f"   Repository updated successfully")
+        return True
+    except subprocess.CalledProcessError as e:
+        error(f"Git operation failed for {repo_url}: {e}")
+        return False
+    except Exception as e:
+        error(f"Unexpected error during git operation: {e}")
+        return False
+
+
+def get_directory_size(directory_path: Path) -> str:
+    """
+    Get the size of a directory in human-readable format.
+
+    Args:
+        directory_path: Path to the directory
+
+    Returns:
+        Human-readable size string (e.g., "1.2G", "500M")
+    """
+    try:
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(directory_path):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                if os.path.exists(filepath):
+                    total_size += os.path.getsize(filepath)
+
+        # Convert to human-readable format
+        for unit in ["B", "K", "M", "G", "T"]:
+            if total_size < 1024.0:
+                return f"{total_size:.1f}{unit}"
+            total_size /= 1024.0
+        return f"{total_size:.1f}P"
+    except Exception:
+        return "unknown"
 
 
 class ResearchCLI:
@@ -159,43 +321,28 @@ Examples:
             progress("Step 1: Downloading malwi-samples...")
             malwi_samples_path = Path("../malwi-samples")
 
-            if not malwi_samples_path.exists():
-                info("   • Cloning malwi-samples repository...")
-                os.chdir("..")
-                subprocess.run(
-                    [
-                        "git",
-                        "clone",
-                        "https://github.com/schirrmacher/malwi-samples.git",
-                    ],
-                    check=True,
-                )
-                os.chdir("malwi")
-                success("   malwi-samples cloned successfully")
-            else:
-                info("   • Updating existing malwi-samples repository...")
-                original_dir = os.getcwd()
-                os.chdir("../malwi-samples")
-                subprocess.run(["git", "pull", "origin", "main"], check=True)
-                os.chdir(original_dir)
-                success("   malwi-samples updated successfully")
+            if not clone_or_update_repo(
+                "https://github.com/schirrmacher/malwi-samples.git", malwi_samples_path
+            ):
+                error("Failed to clone/update malwi-samples repository")
+                return False
 
             # Step 2: Download training repositories (benign + malicious)
             progress("Step 2: Downloading training repositories...")
             info("   • Using pinned commits for reproducible training")
             info("   • This may take 10-30 minutes depending on network speed")
 
-            # Import here to avoid circular dependencies
-            from research.download_data import (
-                process_benign_repositories,
-                process_malicious_repositories,
-                BENIGN_REPO_URLS,
-                MALICIOUS_REPO_URLS,
-            )
-
             # Process language-specific repositories
             if args.language in [Language.PYTHON.value, Language.BOTH.value]:
                 info("   • Processing Python repositories...")
+                # Import download functions dynamically
+                from research.download_data import (
+                    process_benign_repositories,
+                    process_malicious_repositories,
+                    BENIGN_REPO_URLS,
+                    MALICIOUS_REPO_URLS,
+                )
+
                 process_benign_repositories(BENIGN_REPO_URLS)
                 process_malicious_repositories(MALICIOUS_REPO_URLS)
 
@@ -216,31 +363,13 @@ Examples:
             # Show disk usage summary
             info("💾 Disk usage summary:")
             if malwi_samples_path.exists():
-                try:
-                    result = subprocess.run(
-                        ["du", "-sh", str(malwi_samples_path)],
-                        capture_output=True,
-                        text=True,
-                        check=True,
-                    )
-                    size = result.stdout.split()[0]
-                    info(f"   • malwi-samples: {size}")
-                except:
-                    info("   • malwi-samples: unknown size")
+                size = get_directory_size(malwi_samples_path)
+                info(f"   • malwi-samples: {size}")
 
             repo_cache_path = Path(".repo_cache")
             if repo_cache_path.exists():
-                try:
-                    result = subprocess.run(
-                        ["du", "-sh", str(repo_cache_path)],
-                        capture_output=True,
-                        text=True,
-                        check=True,
-                    )
-                    size = result.stdout.split()[0]
-                    info(f"   • Repository cache: {size}")
-                except:
-                    info("   • Repository cache: unknown size")
+                size = get_directory_size(repo_cache_path)
+                info(f"   • Repository cache: {size}")
 
             return True
 
@@ -283,69 +412,40 @@ Examples:
 
             if args.language in [Language.PYTHON.value, Language.BOTH.value]:
                 info("   • Generating benign Python AST data...")
+                # Import preprocess function dynamically
+                from research.preprocess import preprocess_data
+
                 # Generate benign data from cached repos
-                subprocess.run(
-                    [
-                        "uv",
-                        "run",
-                        "python",
-                        "-m",
-                        "src.research.preprocess",
-                        ".repo_cache/benign_repos",
-                        "benign.csv",
-                        "--extensions",
-                        ".py",
-                    ],
-                    check=True,
+                preprocess_data(
+                    input_path=Path(".repo_cache/benign_repos"),
+                    output_path=Path("benign.csv"),
+                    extensions=[".py"],
+                    use_parallel=True,
                 )
 
                 # Add false-positives from malwi-samples
-                subprocess.run(
-                    [
-                        "uv",
-                        "run",
-                        "python",
-                        "-m",
-                        "src.research.preprocess",
-                        "../malwi-samples/python/benign",
-                        "benign.csv",
-                        "--extensions",
-                        ".py",
-                    ],
-                    check=True,
+                preprocess_data(
+                    input_path=Path("../malwi-samples/python/benign"),
+                    output_path=Path("benign.csv"),
+                    extensions=[".py"],
+                    use_parallel=True,
                 )
 
                 info("   • Generating malicious Python AST data...")
                 # Generate malicious data
-                subprocess.run(
-                    [
-                        "uv",
-                        "run",
-                        "python",
-                        "-m",
-                        "src.research.preprocess",
-                        "../malwi-samples/python/malicious",
-                        "malicious.csv",
-                        "--extensions",
-                        ".py",
-                    ],
-                    check=True,
+                preprocess_data(
+                    input_path=Path("../malwi-samples/python/malicious"),
+                    output_path=Path("malicious.csv"),
+                    extensions=[".py"],
+                    use_parallel=True,
                 )
 
                 # Add suspicious findings for future training categories
-                subprocess.run(
-                    [
-                        "uv",
-                        "run",
-                        "python",
-                        "-m",
-                        "src.research.preprocess",
-                        "../malwi-samples/python/suspicious",
-                        "malicious.csv",
-                        "--extensions",
-                        ".py",
-                    ],
-                    check=True,
+                preprocess_data(
+                    input_path=Path("../malwi-samples/python/suspicious"),
+                    output_path=Path("malicious.csv"),
+                    extensions=[".py"],
+                    use_parallel=True,
                 )
 
             if args.language in [Language.JAVASCRIPT.value, Language.BOTH.value]:
@@ -356,21 +456,11 @@ Examples:
             # Step 3: Filter and process the data
             progress("Step 3: Data Processing")
             info("   • Filtering and processing data...")
-            subprocess.run(
-                [
-                    "uv",
-                    "run",
-                    "python",
-                    "-m",
-                    "src.research.filter_data",
-                    "-b",
-                    "benign.csv",
-                    "-m",
-                    "malicious.csv",
-                    "--triaging",
-                    "triaging",
-                ],
-                check=True,
+            # Import filter function dynamically
+            from research.filter_data import process_csv_files
+
+            process_csv_files(
+                benign="benign.csv", malicious="malicious.csv", triage_dir="triaging"
             )
             success("   Data processing completed")
 
@@ -423,26 +513,14 @@ Examples:
             info("   • Total tokens: 15000 (default)")
             info("   • Output directory: malwi_models/")
 
-            subprocess.run(
-                [
-                    "uv",
-                    "run",
-                    "python",
-                    "-m",
-                    "src.research.train_tokenizer",
-                    "-b",
-                    "benign_processed.csv",
-                    "-m",
-                    "malicious_processed.csv",
-                    "-o",
-                    "malwi_models",
-                    "--top-n-tokens",
-                    "15000",
-                    "--save-computed-tokens",
-                    "--force-retrain",
-                ],
-                check=True,
-            )
+            if not train_tokenizer_api(
+                benign_csv="benign_processed.csv",
+                malicious_csv="malicious_processed.csv",
+                output_path="malwi_models",
+                top_n_tokens=15000,
+                force_retrain=True,
+            ):
+                return False
 
             success("Tokenizer training completed successfully!")
             info("📋 Generated tokenizer files in malwi_models/:")
@@ -474,26 +552,14 @@ Examples:
             hidden_size = os.environ.get("HIDDEN_SIZE", "256")
             num_proc = os.environ.get("NUM_PROC", "1")
 
-            subprocess.run(
-                [
-                    "uv",
-                    "run",
-                    "python",
-                    "-m",
-                    "src.research.train_distilbert",
-                    "-b",
-                    "benign_processed.csv",
-                    "-m",
-                    "malicious_processed.csv",
-                    "--epochs",
-                    epochs,
-                    "--hidden-size",
-                    hidden_size,
-                    "--num-proc",
-                    num_proc,
-                ],
-                check=True,
-            )
+            if not train_distilbert_api(
+                benign_csv="benign_processed.csv",
+                malicious_csv="malicious_processed.csv",
+                epochs=int(epochs),
+                hidden_size=int(hidden_size),
+                num_proc=int(num_proc),
+            ):
+                return False
 
             success("DistilBERT model training completed!")
             info("📋 Model files saved to malwi_models/:")
