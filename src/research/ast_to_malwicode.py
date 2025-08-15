@@ -26,16 +26,6 @@ from research.mapping import (
     is_http_url,
     is_https_url_with_ip,
     is_http_url_with_ip,
-    # Service category URL detection functions
-    is_version_control_url,
-    is_code_snippets_url,
-    is_package_manager_url,
-    is_cloud_hosting_url,
-    is_documentation_url,
-    is_messenger_url,
-    is_ci_cd_url,
-    is_monitoring_url,
-    is_database_url,
     is_version,
     is_escaped_hex,
     is_file_path,
@@ -316,25 +306,6 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_HTTPS_URL_WITH_IP.value}"
         elif is_http_url_with_ip(argval):
             return f"{op_code.name} {SpecialCases.STRING_HTTP_URL_WITH_IP.value}"
-        # Service category URLs (most specific to least specific)
-        elif is_ci_cd_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_CI_CD.value}"
-        elif is_code_snippets_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_CODE_SNIPPETS.value}"
-        elif is_version_control_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_VERSION_CONTROL.value}"
-        elif is_package_manager_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_PACKAGE_MANAGER.value}"
-        elif is_cloud_hosting_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_CLOUD_HOSTING.value}"
-        elif is_documentation_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_DOCUMENTATION.value}"
-        elif is_messenger_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_MESSENGER.value}"
-        elif is_monitoring_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_MONITORING.value}"
-        elif is_database_url(argval):
-            return f"{op_code.name} {SpecialCases.STRING_URL_DATABASE.value}"
         elif is_https_url(argval):
             return f"{op_code.name} {SpecialCases.STRING_HTTPS_URL.value}"
         elif is_http_url(argval):
