@@ -74,6 +74,18 @@ python util/update_model_commit.py
 uv run python -m src.research.download_data --use-latest
 ```
 
+**Data Triaging:**
+```bash
+# Triage newest PyPI packages for suspicious content
+uv run python util/triage_pypi.py --count 50
+
+# Dry run to see what packages would be scanned
+uv run python util/triage_pypi.py --count 10 --dry-run
+
+# Custom timeout and move directory
+uv run python util/triage_pypi.py --timeout 180 --move-dir ./findings
+```
+
 **Usage:**
 ```bash
 # Scan local files/directories
