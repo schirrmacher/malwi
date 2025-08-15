@@ -24,6 +24,16 @@ class SpecialCases(Enum):
     STRING_HTTP_URL = "STRING_HTTP_URL"
     STRING_HTTPS_URL_WITH_IP = "STRING_HTTPS_URL_WITH_IP"
     STRING_HTTP_URL_WITH_IP = "STRING_HTTP_URL_WITH_IP"
+    # Service category URLs
+    STRING_URL_VERSION_CONTROL = "STRING_URL_VERSION_CONTROL"
+    STRING_URL_CODE_SNIPPETS = "STRING_URL_CODE_SNIPPETS"
+    STRING_URL_PACKAGE_MANAGER = "STRING_URL_PACKAGE_MANAGER"
+    STRING_URL_CLOUD_HOSTING = "STRING_URL_CLOUD_HOSTING"
+    STRING_URL_DOCUMENTATION = "STRING_URL_DOCUMENTATION"
+    STRING_URL_MESSENGER = "STRING_URL_MESSENGER"
+    STRING_URL_CI_CD = "STRING_URL_CI_CD"
+    STRING_URL_MONITORING = "STRING_URL_MONITORING"
+    STRING_URL_DATABASE = "STRING_URL_DATABASE"
     STRING_CONTAINS_URL = "STRING_CONTAINS_URL"
     STRING_VERSION = "STRING_VERSION"
     STRING_ENCODING = "STRING_ENCODING"
@@ -287,6 +297,317 @@ def is_http_url_with_ip(content: str) -> bool:
         if hostname:
             # Check if hostname is a valid IP address
             return is_valid_ip(hostname)
+    except Exception:
+        pass
+
+    return False
+
+
+def is_version_control_url(content: str) -> bool:
+    """Check if the URL belongs to version control platforms."""
+    if not is_valid_url(content):
+        return False
+
+    version_control_domains = [
+        "github.com",
+        "www.github.com",
+        "gitlab.com",
+        "www.gitlab.com",
+        "bitbucket.org",
+        "www.bitbucket.org",
+    ]
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            return hostname.lower() in version_control_domains
+    except Exception:
+        pass
+
+    return False
+
+
+def is_code_snippets_url(content: str) -> bool:
+    """Check if the URL belongs to code snippet platforms."""
+    if not is_valid_url(content):
+        return False
+
+    code_snippet_domains = [
+        "gist.github.com",
+        "gist.githubusercontent.com",
+        "pastebin.com",
+        "www.pastebin.com",
+        "codepen.io",
+        "www.codepen.io",
+        "jsfiddle.net",
+        "www.jsfiddle.net",
+        "codesandbox.io",
+        "www.codesandbox.io",
+    ]
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            return hostname.lower() in code_snippet_domains
+    except Exception:
+        pass
+
+    return False
+
+
+def is_package_manager_url(content: str) -> bool:
+    """Check if the URL belongs to package management platforms."""
+    if not is_valid_url(content):
+        return False
+
+    package_manager_domains = [
+        "npmjs.com",
+        "www.npmjs.com",
+        "pypi.org",
+        "www.pypi.org",
+        "mvnrepository.com",
+        "www.mvnrepository.com",
+        "hub.docker.com",
+        "www.hub.docker.com",
+        "rubygems.org",
+        "www.rubygems.org",
+        "crates.io",
+        "www.crates.io",
+        "packagist.org",
+        "www.packagist.org",
+        "nuget.org",
+        "www.nuget.org",
+    ]
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            return hostname.lower() in package_manager_domains
+    except Exception:
+        pass
+
+    return False
+
+
+def is_cloud_hosting_url(content: str) -> bool:
+    """Check if the URL belongs to cloud hosting platforms."""
+    if not is_valid_url(content):
+        return False
+
+    cloud_hosting_domains = [
+        "aws.amazon.com",
+        "console.aws.amazon.com",
+        "azure.microsoft.com",
+        "portal.azure.com",
+        "cloud.google.com",
+        "console.cloud.google.com",
+        "digitalocean.com",
+        "www.digitalocean.com",
+        "heroku.com",
+        "www.heroku.com",
+        "dashboard.heroku.com",
+        "vercel.com",
+        "www.vercel.com",
+        "netlify.com",
+        "www.netlify.com",
+        "app.netlify.com",
+        "firebase.google.com",
+        "console.firebase.google.com",
+        "fly.io",
+        "www.fly.io",
+    ]
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            return hostname.lower() in cloud_hosting_domains
+    except Exception:
+        pass
+
+    return False
+
+
+def is_documentation_url(content: str) -> bool:
+    """Check if the URL belongs to documentation/learning platforms."""
+    if not is_valid_url(content):
+        return False
+
+    documentation_domains = [
+        "stackoverflow.com",
+        "www.stackoverflow.com",
+        "developer.mozilla.org",
+        "dev.to",
+        "www.dev.to",
+        "medium.com",
+        "www.medium.com",
+        "freecodecamp.org",
+        "www.freecodecamp.org",
+        "w3schools.com",
+        "www.w3schools.com",
+        "docs.microsoft.com",
+        "geeksforgeeks.org",
+        "www.geeksforgeeks.org",
+        "css-tricks.com",
+        "www.css-tricks.com",
+    ]
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            return hostname.lower() in documentation_domains
+    except Exception:
+        pass
+
+    return False
+
+
+def is_messenger_url(content: str) -> bool:
+    """Check if the URL belongs to messaging platforms."""
+    if not is_valid_url(content):
+        return False
+
+    messenger_domains = [
+        "slack.com",
+        "www.slack.com",
+        "app.slack.com",
+        "discord.com",
+        "www.discord.com",
+        "teams.microsoft.com",
+        "telegram.org",
+        "www.telegram.org",
+        "web.telegram.org",
+        "whatsapp.com",
+        "www.whatsapp.com",
+        "web.whatsapp.com",
+    ]
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            return hostname.lower() in messenger_domains
+    except Exception:
+        pass
+
+    return False
+
+
+def is_ci_cd_url(content: str) -> bool:
+    """Check if the URL belongs to CI/CD platforms."""
+    if not is_valid_url(content):
+        return False
+
+    ci_cd_domains = [
+        "jenkins.io",
+        "www.jenkins.io",
+        "circleci.com",
+        "www.circleci.com",
+        "app.circleci.com",
+        "travis-ci.org",
+        "www.travis-ci.org",
+        "travis-ci.com",
+        "www.travis-ci.com",
+    ]
+
+    # Also check for GitHub Actions and GitLab CI paths
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        path = result.path.lower()
+
+        if hostname:
+            hostname_lower = hostname.lower()
+
+            # Direct CI/CD domains
+            if hostname_lower in ci_cd_domains:
+                return True
+
+            # GitHub Actions paths
+            if hostname_lower in ["github.com", "www.github.com"]:
+                if "/actions" in path or "features/actions" in path:
+                    return True
+
+            # GitLab CI paths
+            if hostname_lower in ["gitlab.com", "www.gitlab.com", "about.gitlab.com"]:
+                if (
+                    "stages-devops-lifecycle" in path
+                    or "verify" in path
+                    or "/ci" in path
+                ):
+                    return True
+
+    except Exception:
+        pass
+
+    return False
+
+
+def is_monitoring_url(content: str) -> bool:
+    """Check if the URL belongs to monitoring/observability platforms."""
+    if not is_valid_url(content):
+        return False
+
+    monitoring_domains = [
+        "datadoghq.com",
+        "www.datadoghq.com",
+        "app.datadoghq.com",
+        "newrelic.com",
+        "www.newrelic.com",
+        "one.newrelic.com",
+        "sentry.io",
+        "www.sentry.io",
+        "grafana.com",
+        "www.grafana.com",
+        "prometheus.io",
+        "www.prometheus.io",
+    ]
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            return hostname.lower() in monitoring_domains
+    except Exception:
+        pass
+
+    return False
+
+
+def is_database_url(content: str) -> bool:
+    """Check if the URL belongs to database platforms."""
+    if not is_valid_url(content):
+        return False
+
+    database_domains = [
+        "mongodb.com",
+        "www.mongodb.com",
+        "cloud.mongodb.com",
+        "postgresql.org",
+        "www.postgresql.org",
+        "redis.io",
+        "www.redis.io",
+        "mysql.com",
+        "www.mysql.com",
+        "planetscale.com",
+        "www.planetscale.com",
+        "supabase.com",
+        "www.supabase.com",
+        "app.supabase.com",
+        "elastic.co",
+        "www.elastic.co",
+        "cloud.elastic.co",
+    ]
+
+    try:
+        result = urllib.parse.urlparse(content)
+        hostname = result.hostname
+        if hostname:
+            return hostname.lower() in database_domains
     except Exception:
         pass
 
@@ -678,6 +999,25 @@ def map_string_arg(argval: str, original_argrepr: str, language: str = "python")
         return SpecialCases.STRING_HTTPS_URL_WITH_IP.value
     elif is_http_url_with_ip(argval):
         return SpecialCases.STRING_HTTP_URL_WITH_IP.value
+    # Service category URLs (most specific to least specific)
+    elif is_ci_cd_url(argval):
+        return SpecialCases.STRING_URL_CI_CD.value
+    elif is_code_snippets_url(argval):
+        return SpecialCases.STRING_URL_CODE_SNIPPETS.value
+    elif is_version_control_url(argval):
+        return SpecialCases.STRING_URL_VERSION_CONTROL.value
+    elif is_package_manager_url(argval):
+        return SpecialCases.STRING_URL_PACKAGE_MANAGER.value
+    elif is_cloud_hosting_url(argval):
+        return SpecialCases.STRING_URL_CLOUD_HOSTING.value
+    elif is_documentation_url(argval):
+        return SpecialCases.STRING_URL_DOCUMENTATION.value
+    elif is_messenger_url(argval):
+        return SpecialCases.STRING_URL_MESSENGER.value
+    elif is_monitoring_url(argval):
+        return SpecialCases.STRING_URL_MONITORING.value
+    elif is_database_url(argval):
+        return SpecialCases.STRING_URL_DATABASE.value
     elif is_https_url(argval):
         return SpecialCases.STRING_HTTPS_URL.value
     elif is_http_url(argval):
@@ -824,6 +1164,25 @@ def map_string_argument(argval: str, language: str = "python") -> str:
         return SpecialCases.STRING_HTTPS_URL_WITH_IP.value
     elif is_http_url_with_ip(argval):
         return SpecialCases.STRING_HTTP_URL_WITH_IP.value
+    # Service category URLs (most specific to least specific)
+    elif is_ci_cd_url(argval):
+        return SpecialCases.STRING_URL_CI_CD.value
+    elif is_code_snippets_url(argval):
+        return SpecialCases.STRING_URL_CODE_SNIPPETS.value
+    elif is_version_control_url(argval):
+        return SpecialCases.STRING_URL_VERSION_CONTROL.value
+    elif is_package_manager_url(argval):
+        return SpecialCases.STRING_URL_PACKAGE_MANAGER.value
+    elif is_cloud_hosting_url(argval):
+        return SpecialCases.STRING_URL_CLOUD_HOSTING.value
+    elif is_documentation_url(argval):
+        return SpecialCases.STRING_URL_DOCUMENTATION.value
+    elif is_messenger_url(argval):
+        return SpecialCases.STRING_URL_MESSENGER.value
+    elif is_monitoring_url(argval):
+        return SpecialCases.STRING_URL_MONITORING.value
+    elif is_database_url(argval):
+        return SpecialCases.STRING_URL_DATABASE.value
     elif is_https_url(argval):
         return SpecialCases.STRING_HTTPS_URL.value
     elif is_http_url(argval):

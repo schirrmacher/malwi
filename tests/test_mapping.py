@@ -12,6 +12,16 @@ from research.mapping import (
     is_file_path,
     is_localhost,
     contains_url,
+    # Service category URL detection functions
+    is_version_control_url,
+    is_code_snippets_url,
+    is_package_manager_url,
+    is_cloud_hosting_url,
+    is_documentation_url,
+    is_messenger_url,
+    is_ci_cd_url,
+    is_monitoring_url,
+    is_database_url,
     map_entropy_to_token,
     map_string_length_to_token,
     map_code_object_arg,
@@ -201,6 +211,328 @@ def test_url_mapping_priority():
     assert map_string_arg("ssh://server.com:22", "") == SpecialCases.STRING_URL.value
 
 
+def test_is_version_control_url():
+    """Test version control platform URL detection."""
+    # Valid version control URLs
+    assert is_version_control_url("https://github.com")
+    assert is_version_control_url("https://www.github.com/user/repo")
+    assert is_version_control_url("https://gitlab.com/project")
+    assert is_version_control_url("https://www.gitlab.com")
+    assert is_version_control_url("https://bitbucket.org/team/repo")
+    assert is_version_control_url("https://www.bitbucket.org")
+
+    # Not version control URLs
+    assert not is_version_control_url("https://example.com")
+    assert not is_version_control_url("https://google.com")
+    assert not is_version_control_url("not-a-url")
+    assert not is_version_control_url("")
+
+
+def test_is_code_snippets_url():
+    """Test code snippet platform URL detection."""
+    # Valid code snippet URLs
+    assert is_code_snippets_url("https://gist.github.com/user/123456")
+    assert is_code_snippets_url("https://pastebin.com/abcd1234")
+    assert is_code_snippets_url("https://www.pastebin.com")
+    assert is_code_snippets_url("https://codepen.io/user/pen/xyz")
+    assert is_code_snippets_url("https://www.codepen.io")
+    assert is_code_snippets_url("https://jsfiddle.net/user/abc123")
+    assert is_code_snippets_url("https://www.jsfiddle.net")
+    assert is_code_snippets_url("https://codesandbox.io/s/project")
+    assert is_code_snippets_url("https://www.codesandbox.io")
+
+    # Not code snippet URLs
+    assert not is_code_snippets_url("https://github.com")
+    assert not is_code_snippets_url("https://stackoverflow.com")
+    assert not is_code_snippets_url("not-a-url")
+    assert not is_code_snippets_url("")
+
+
+def test_is_package_manager_url():
+    """Test package manager platform URL detection."""
+    # Valid package manager URLs
+    assert is_package_manager_url("https://npmjs.com/package/react")
+    assert is_package_manager_url("https://www.npmjs.com")
+    assert is_package_manager_url("https://pypi.org/project/requests")
+    assert is_package_manager_url("https://www.pypi.org")
+    assert is_package_manager_url("https://mvnrepository.com/artifact/junit")
+    assert is_package_manager_url("https://www.mvnrepository.com")
+    assert is_package_manager_url("https://hub.docker.com/r/nginx")
+    assert is_package_manager_url("https://www.hub.docker.com")
+    assert is_package_manager_url("https://rubygems.org/gems/rails")
+    assert is_package_manager_url("https://www.rubygems.org")
+    assert is_package_manager_url("https://crates.io/crates/serde")
+    assert is_package_manager_url("https://www.crates.io")
+    assert is_package_manager_url("https://packagist.org/packages/symfony")
+    assert is_package_manager_url("https://www.packagist.org")
+    assert is_package_manager_url("https://nuget.org/packages/Newtonsoft.Json")
+    assert is_package_manager_url("https://www.nuget.org")
+
+    # Not package manager URLs
+    assert not is_package_manager_url("https://github.com")
+    assert not is_package_manager_url("https://stackoverflow.com")
+    assert not is_package_manager_url("not-a-url")
+    assert not is_package_manager_url("")
+
+
+def test_is_cloud_hosting_url():
+    """Test cloud hosting platform URL detection."""
+    # Valid cloud hosting URLs
+    assert is_cloud_hosting_url("https://aws.amazon.com/ec2")
+    assert is_cloud_hosting_url("https://console.aws.amazon.com")
+    assert is_cloud_hosting_url("https://azure.microsoft.com/services")
+    assert is_cloud_hosting_url("https://portal.azure.com")
+    assert is_cloud_hosting_url("https://cloud.google.com/compute")
+    assert is_cloud_hosting_url("https://console.cloud.google.com")
+    assert is_cloud_hosting_url("https://digitalocean.com/droplets")
+    assert is_cloud_hosting_url("https://www.digitalocean.com")
+    assert is_cloud_hosting_url("https://heroku.com/apps")
+    assert is_cloud_hosting_url("https://www.heroku.com")
+    assert is_cloud_hosting_url("https://dashboard.heroku.com")
+    assert is_cloud_hosting_url("https://vercel.com/dashboard")
+    assert is_cloud_hosting_url("https://www.vercel.com")
+    assert is_cloud_hosting_url("https://netlify.com/sites")
+    assert is_cloud_hosting_url("https://www.netlify.com")
+    assert is_cloud_hosting_url("https://app.netlify.com")
+    assert is_cloud_hosting_url("https://firebase.google.com/console")
+    assert is_cloud_hosting_url("https://console.firebase.google.com")
+    assert is_cloud_hosting_url("https://fly.io/apps")
+    assert is_cloud_hosting_url("https://www.fly.io")
+
+    # Not cloud hosting URLs
+    assert not is_cloud_hosting_url("https://github.com")
+    assert not is_cloud_hosting_url("https://stackoverflow.com")
+    assert not is_cloud_hosting_url("not-a-url")
+    assert not is_cloud_hosting_url("")
+
+
+def test_is_documentation_url():
+    """Test documentation/learning platform URL detection."""
+    # Valid documentation URLs
+    assert is_documentation_url("https://stackoverflow.com/questions/123")
+    assert is_documentation_url("https://www.stackoverflow.com")
+    assert is_documentation_url("https://developer.mozilla.org/docs")
+    assert is_documentation_url("https://dev.to/article")
+    assert is_documentation_url("https://www.dev.to")
+    assert is_documentation_url("https://medium.com/@user/article")
+    assert is_documentation_url("https://www.medium.com")
+    assert is_documentation_url("https://freecodecamp.org/learn")
+    assert is_documentation_url("https://www.freecodecamp.org")
+    assert is_documentation_url("https://w3schools.com/html")
+    assert is_documentation_url("https://www.w3schools.com")
+    assert is_documentation_url("https://docs.microsoft.com/en-us")
+    assert is_documentation_url("https://geeksforgeeks.org/article")
+    assert is_documentation_url("https://www.geeksforgeeks.org")
+    assert is_documentation_url("https://css-tricks.com/guide")
+    assert is_documentation_url("https://www.css-tricks.com")
+
+    # Not documentation URLs
+    assert not is_documentation_url("https://github.com")
+    assert not is_documentation_url("https://npmjs.com")
+    assert not is_documentation_url("not-a-url")
+    assert not is_documentation_url("")
+
+
+def test_is_messenger_url():
+    """Test messaging platform URL detection."""
+    # Valid messenger URLs
+    assert is_messenger_url("https://slack.com/workspace")
+    assert is_messenger_url("https://www.slack.com")
+    assert is_messenger_url("https://app.slack.com/client")
+    assert is_messenger_url("https://discord.com/channels/123")
+    assert is_messenger_url("https://www.discord.com")
+    assert is_messenger_url("https://teams.microsoft.com/l/team")
+    assert is_messenger_url("https://telegram.org/apps")
+    assert is_messenger_url("https://www.telegram.org")
+    assert is_messenger_url("https://web.telegram.org")
+    assert is_messenger_url("https://whatsapp.com/download")
+    assert is_messenger_url("https://www.whatsapp.com")
+    assert is_messenger_url("https://web.whatsapp.com")
+
+    # Not messenger URLs
+    assert not is_messenger_url("https://github.com")
+    assert not is_messenger_url("https://stackoverflow.com")
+    assert not is_messenger_url("not-a-url")
+    assert not is_messenger_url("")
+
+
+def test_is_ci_cd_url():
+    """Test CI/CD platform URL detection."""
+    # Valid CI/CD URLs
+    assert is_ci_cd_url("https://jenkins.io/doc")
+    assert is_ci_cd_url("https://www.jenkins.io")
+    assert is_ci_cd_url("https://circleci.com/docs")
+    assert is_ci_cd_url("https://www.circleci.com")
+    assert is_ci_cd_url("https://app.circleci.com/projects")
+    assert is_ci_cd_url("https://travis-ci.org/user/repo")
+    assert is_ci_cd_url("https://www.travis-ci.org")
+    assert is_ci_cd_url("https://travis-ci.com/builds")
+    assert is_ci_cd_url("https://www.travis-ci.com")
+
+    # GitHub Actions specific paths
+    assert is_ci_cd_url("https://github.com/features/actions")
+    assert is_ci_cd_url("https://github.com/user/repo/actions")
+    assert is_ci_cd_url("https://www.github.com/features/actions")
+
+    # GitLab CI specific paths
+    assert is_ci_cd_url("https://gitlab.com/user/project/-/ci/pipelines")
+    assert is_ci_cd_url("https://about.gitlab.com/stages-devops-lifecycle/verify/")
+    assert is_ci_cd_url("https://www.gitlab.com/features/ci-cd")
+
+    # Not CI/CD URLs (regular GitHub/GitLab without CI paths)
+    assert not is_ci_cd_url("https://github.com/user/repo")
+    assert not is_ci_cd_url("https://gitlab.com/user/project")
+    assert not is_ci_cd_url("https://stackoverflow.com")
+    assert not is_ci_cd_url("not-a-url")
+    assert not is_ci_cd_url("")
+
+
+def test_is_monitoring_url():
+    """Test monitoring/observability platform URL detection."""
+    # Valid monitoring URLs
+    assert is_monitoring_url("https://datadoghq.com/dashboards")
+    assert is_monitoring_url("https://www.datadoghq.com")
+    assert is_monitoring_url("https://app.datadoghq.com")
+    assert is_monitoring_url("https://newrelic.com/platform")
+    assert is_monitoring_url("https://www.newrelic.com")
+    assert is_monitoring_url("https://one.newrelic.com")
+    assert is_monitoring_url("https://sentry.io/organizations")
+    assert is_monitoring_url("https://www.sentry.io")
+    assert is_monitoring_url("https://grafana.com/grafana")
+    assert is_monitoring_url("https://www.grafana.com")
+    assert is_monitoring_url("https://prometheus.io/docs")
+    assert is_monitoring_url("https://www.prometheus.io")
+
+    # Not monitoring URLs
+    assert not is_monitoring_url("https://github.com")
+    assert not is_monitoring_url("https://stackoverflow.com")
+    assert not is_monitoring_url("not-a-url")
+    assert not is_monitoring_url("")
+
+
+def test_is_database_url():
+    """Test database platform URL detection."""
+    # Valid database URLs
+    assert is_database_url("https://mongodb.com/atlas")
+    assert is_database_url("https://www.mongodb.com")
+    assert is_database_url("https://cloud.mongodb.com")
+    assert is_database_url("https://postgresql.org/docs")
+    assert is_database_url("https://www.postgresql.org")
+    assert is_database_url("https://redis.io/commands")
+    assert is_database_url("https://www.redis.io")
+    assert is_database_url("https://mysql.com/products")
+    assert is_database_url("https://www.mysql.com")
+    assert is_database_url("https://planetscale.com/docs")
+    assert is_database_url("https://www.planetscale.com")
+    assert is_database_url("https://supabase.com/dashboard")
+    assert is_database_url("https://www.supabase.com")
+    assert is_database_url("https://app.supabase.com")
+    assert is_database_url("https://elastic.co/elasticsearch")
+    assert is_database_url("https://www.elastic.co")
+    assert is_database_url("https://cloud.elastic.co")
+
+    # Not database URLs
+    assert not is_database_url("https://github.com")
+    assert not is_database_url("https://stackoverflow.com")
+    assert not is_database_url("not-a-url")
+    assert not is_database_url("")
+
+
+def test_service_url_mapping_integration():
+    """Test that service URLs are correctly mapped by map_string_arg."""
+    from research.mapping import map_string_arg, SpecialCases
+
+    # Version control URLs
+    assert (
+        map_string_arg("https://github.com/user/repo", "")
+        == SpecialCases.STRING_URL_VERSION_CONTROL.value
+    )
+    assert (
+        map_string_arg("https://gitlab.com/project", "")
+        == SpecialCases.STRING_URL_VERSION_CONTROL.value
+    )
+
+    # Code snippet URLs
+    assert (
+        map_string_arg("https://pastebin.com/abc123", "")
+        == SpecialCases.STRING_URL_CODE_SNIPPETS.value
+    )
+    assert (
+        map_string_arg("https://gist.github.com/user/123", "")
+        == SpecialCases.STRING_URL_CODE_SNIPPETS.value
+    )
+
+    # Package manager URLs
+    assert (
+        map_string_arg("https://pypi.org/project/requests", "")
+        == SpecialCases.STRING_URL_PACKAGE_MANAGER.value
+    )
+    assert (
+        map_string_arg("https://npmjs.com/package/react", "")
+        == SpecialCases.STRING_URL_PACKAGE_MANAGER.value
+    )
+
+    # Cloud hosting URLs
+    assert (
+        map_string_arg("https://aws.amazon.com/ec2", "")
+        == SpecialCases.STRING_URL_CLOUD_HOSTING.value
+    )
+    assert (
+        map_string_arg("https://vercel.com/dashboard", "")
+        == SpecialCases.STRING_URL_CLOUD_HOSTING.value
+    )
+
+    # Documentation URLs
+    assert (
+        map_string_arg("https://stackoverflow.com/questions", "")
+        == SpecialCases.STRING_URL_DOCUMENTATION.value
+    )
+    assert (
+        map_string_arg("https://developer.mozilla.org/docs", "")
+        == SpecialCases.STRING_URL_DOCUMENTATION.value
+    )
+
+    # Messenger URLs
+    assert (
+        map_string_arg("https://slack.com/workspace", "")
+        == SpecialCases.STRING_URL_MESSENGER.value
+    )
+    assert (
+        map_string_arg("https://discord.com/channels", "")
+        == SpecialCases.STRING_URL_MESSENGER.value
+    )
+
+    # CI/CD URLs
+    assert (
+        map_string_arg("https://github.com/features/actions", "")
+        == SpecialCases.STRING_URL_CI_CD.value
+    )
+    assert (
+        map_string_arg("https://circleci.com/docs", "")
+        == SpecialCases.STRING_URL_CI_CD.value
+    )
+
+    # Monitoring URLs
+    assert (
+        map_string_arg("https://datadoghq.com/dashboards", "")
+        == SpecialCases.STRING_URL_MONITORING.value
+    )
+    assert (
+        map_string_arg("https://sentry.io/organizations", "")
+        == SpecialCases.STRING_URL_MONITORING.value
+    )
+
+    # Database URLs
+    assert (
+        map_string_arg("https://mongodb.com/atlas", "")
+        == SpecialCases.STRING_URL_DATABASE.value
+    )
+    assert (
+        map_string_arg("https://supabase.com/dashboard", "")
+        == SpecialCases.STRING_URL_DATABASE.value
+    )
+
+
 def test_is_escaped_hex():
     assert is_escaped_hex(r"\x41\x42\x43")
 
@@ -286,6 +618,34 @@ class TestArgumentMapping:
             # New enhanced URL types
             ("http://8.149.140.24:8082", SpecialCases.STRING_HTTP_URL_WITH_IP.value),
             ("https://192.168.1.1:443", SpecialCases.STRING_HTTPS_URL_WITH_IP.value),
+            # Service category URLs
+            (
+                "https://github.com/user/repo",
+                SpecialCases.STRING_URL_VERSION_CONTROL.value,
+            ),
+            (
+                "https://pastebin.com/abc123",
+                SpecialCases.STRING_URL_CODE_SNIPPETS.value,
+            ),
+            (
+                "https://pypi.org/project/requests",
+                SpecialCases.STRING_URL_PACKAGE_MANAGER.value,
+            ),
+            ("https://aws.amazon.com/ec2", SpecialCases.STRING_URL_CLOUD_HOSTING.value),
+            (
+                "https://stackoverflow.com/questions",
+                SpecialCases.STRING_URL_DOCUMENTATION.value,
+            ),
+            ("https://slack.com/workspace", SpecialCases.STRING_URL_MESSENGER.value),
+            (
+                "https://github.com/features/actions",
+                SpecialCases.STRING_URL_CI_CD.value,
+            ),
+            (
+                "https://datadoghq.com/dashboards",
+                SpecialCases.STRING_URL_MONITORING.value,
+            ),
+            ("https://mongodb.com/atlas", SpecialCases.STRING_URL_DATABASE.value),
             ("http://malicious-site.com", SpecialCases.STRING_HTTP_URL.value),
             ("https://secure-site.org", SpecialCases.STRING_HTTPS_URL.value),
             ("ftp://files.example.com", SpecialCases.STRING_URL.value),
