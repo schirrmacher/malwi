@@ -19,8 +19,12 @@ echo
 echo "📋 Step 2: Generate AST Data (Parallel Processing)"
 echo "   • Generating benign AST data..."
 uv run python -m src.research.preprocess '.repo_cache/benign_repos' benign.csv --extensions '.py'
+# False-positives:
+uv run python -m src.research.preprocess '../malwi-samples/python/benign' benign.csv --extensions '.py'
 echo "   • Generating malicious AST data..."
 uv run python -m src.research.preprocess '../malwi-samples/python/malicious' malicious.csv --extensions '.py'
+# Add also suspicious findings which might be used for training on different categories in the future
+uv run python -m src.research.preprocess '../malwi-samples/python/suspicious' malicious.csv --extensions '.py'
 echo "   ✅ AST data generation completed"
 echo
 

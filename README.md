@@ -87,7 +87,7 @@ malwi pypi requests
 
 ## Why malwi?
 
-[The number of _malicious open-source packages_ is growing](https://arxiv.org/pdf/2404.04991). This is not just a threat to your business but also to the open-source community.
+[The number of _malicious open-source packages_ is growing](https://arxiv.org/pdf/2404.04991). This represents a threat to the open-source community.
 
 Typical malware behaviors include:
 
@@ -166,21 +166,17 @@ Future iterations will cover malware scanning for more languages (JavaScript, Ru
 
 ## Contributing & Support
 
-### 🐛 Report Issues
+### Report Issues
 Found a bug or have a feature request? [Open an issue](https://github.com/schirrmacher/malwi/issues)
 
-### 📊 Share Malware Samples
+### Share Malware Samples
 Have access to malicious packages in Rust, Go, or other languages? Your contributions can help expand malwi's detection capabilities:
 - **Email**: [Contact via GitHub profile](https://github.com/schirrmacher)
 - **Submit samples**: Follow responsible disclosure practices
 
-### 💬 Community
-- **Discussions**: Share ideas and ask questions in [GitHub Discussions](https://github.com/schirrmacher/malwi/discussions)
-- **Security**: Report security vulnerabilities privately via GitHub Security tab
-
 ## Development
 
-### 🛠️ Prerequisites
+### Prerequisites
 
 1. **Package Manager**: Install [uv](https://docs.astral.sh/uv/) for fast Python dependency management
 2. **Training Data**: Clone [malwi-samples](https://github.com/schirrmacher/malwi-samples) in the parent directory:
@@ -190,7 +186,7 @@ Have access to malicious packages in Rust, Go, or other languages? Your contribu
    cd malwi
    ```
 
-### 🚀 Quick Start
+### Quick Start
 
 ```bash
 # Install dependencies
@@ -203,42 +199,52 @@ uv run pytest tests
 ./cmds/preprocess_and_train_distilbert.sh
 ```
 
-### 📚 Training Pipeline
+### Training Pipeline
 
 The training pipeline consists of three stages that can be run together or independently:
 
-#### **Complete Pipeline** (Recommended)
+#### Complete Pipeline (With Data Download)
+```bash
+# Downloads benign samples from popular repos → Data preprocessing → Training
+./cmds/download_and_preprocess_distilbert.sh  # Downloads training data first
+./cmds/train_tokenizer.sh                      # Train tokenizer
+./cmds/train_distilbert.sh                     # Train model
+```
+
+#### Complete Pipeline (Without Download)
 ```bash
 # Data preprocessing → Tokenizer training → Model training
 ./cmds/preprocess_and_train_distilbert.sh
 ```
 
-#### **Individual Stages**
+#### Individual Stages
 ```bash
-# 1. Data Preprocessing (parallel by default, ~5-7 min on 8 cores)
+# 1. Download benign samples from popular GitHub repositories
+uv run python -m src.research.download_data
+
+# 2. Data Preprocessing (parallel by default, ~5-7 min on 8 cores)
 ./cmds/preprocess_data.sh
 
-# 2. Tokenizer Training (~2 min)
+# 3. Tokenizer Training (~2 min)
 ./cmds/train_tokenizer.sh
 
-# 3. Model Training (~5 hours on NVIDIA RTX 4090)
+# 4. Model Training (~5 hours on NVIDIA RTX 4090)
 ./cmds/train_distilbert.sh
 ```
 
-### ⚙️ Configuration
+### Training Data Sources
 
-```bash
-# Customize parallel processing (preprocessing)
-NUM_PROCESSES=16 ./cmds/preprocess_data.sh
+The preprocessing script (`preprocess_data.sh`) combines multiple data sources for robust model training:
 
-# Train smaller/faster model
-HIDDEN_SIZE=256 ./cmds/train_distilbert.sh
+#### Benign Samples
+- `.repo_cache/benign_repos/` - Clean Python repositories (populated by `download_data` from popular GitHub repos)
+- `../malwi-samples/python/benign/` - False-positives
 
-# Train larger/more accurate model  
-HIDDEN_SIZE=512 EPOCHS=5 ./cmds/train_distilbert.sh
-```
+#### Malicious Samples
+- `../malwi-samples/python/malicious/` - Confirmed malware samples
+- `../malwi-samples/python/suspicious/` - Suspicious code patterns, not necessarily malicious (used for future multi-category classification)
 
-### 🧪 Testing & Quality
+### Testing & Quality
 
 ```bash
 # Run tests
