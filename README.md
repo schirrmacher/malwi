@@ -192,7 +192,7 @@ uv sync
 uv run pytest tests
 
 # Train a model from scratch (full pipeline with automatic data download)
-./research --steps download preprocess train
+./research download preprocess train
 ```
 
 ### Research CLI
@@ -202,7 +202,7 @@ The research CLI (`./research`) provides a streamlined interface for the entire 
 #### Complete Pipeline
 ```bash
 # Full pipeline: Download data → Preprocess → Train models
-./research --steps download preprocess train --language python
+./research download preprocess train --language python
 
 # Default pipeline (preprocess + train, assumes data exists)
 ./research --language python
@@ -211,11 +211,11 @@ The research CLI (`./research`) provides a streamlined interface for the entire 
 #### Individual Pipeline Steps
 ```bash
 # 1. Download training data (clones malwi-samples + downloads repositories)
-./research --steps download
+./research download
 
 # 2. Data preprocessing only (parallel processing, ~4 min on 32 cores)
-./research --steps preprocess --language python
+./research preprocess --language python
 
 # 3. Model training only (tokenizer + DistilBERT, ~40 minutes on NVIDIA RTX 4090)
-./research --steps train
+./research train
 ```

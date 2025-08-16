@@ -209,27 +209,27 @@ class ResearchCLI:
         self.parser = self._setup_parser()
 
     def _setup_parser(self) -> argparse.ArgumentParser:
-        """Set up the argument parser with all options."""
+        """Set up the argument parser with subcommands."""
         parser = argparse.ArgumentParser(
             description="malwi Research CLI - Unified interface for training pipeline",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Examples:
   # Run full pipeline for Python
-  python -m research.cli --steps download preprocess train --language python
+  ./research download preprocess train --language python
   
-  # Preprocess and train JavaScript (default steps)
-  python -m research.cli --language javascript
+  # Preprocess and train (default steps)
+  ./research --language python
   
   # Download data only
-  python -m research.cli --steps download
+  ./research download
             """,
         )
 
         # Pipeline steps
         parser.add_argument(
-            "--steps",
-            nargs="+",
+            "pipeline_steps",
+            nargs="*",
             choices=[step.value for step in Step],
             default=["preprocess", "train"],
             help="Pipeline steps to execute (default: preprocess train)",
@@ -258,22 +258,38 @@ Examples:
         """
         parsed_args = self.parser.parse_args(args)
 
-        # No validation needed for simplified CLI
-
         # Configure messaging
         configure_messaging(quiet=False)
 
-        # Execute pipeline steps
+        # Execute pipeline steps directly
         try:
-            for step in parsed_args.steps:
-                if not self._execute_step(step, parsed_args):
-                    return 1
+            return self._handle_steps_command(parsed_args)
         except KeyboardInterrupt:
-            warning("Pipeline interrupted by user")
+            warning("Operation interrupted by user")
             return 130
         except Exception as e:
-            error(f"Pipeline failed: {e}")
+            error(f"Operation failed: {e}")
             return 1
+
+    def _handle_steps_command(self, args: argparse.Namespace) -> int:
+        """
+        Handle the steps subcommand.
+
+        Args:
+            args: Parsed command line arguments
+
+        Returns:
+            Exit code (0 for success, non-zero for failure)
+        """
+        # Use default steps if none provided
+        steps_to_execute = (
+            args.pipeline_steps if args.pipeline_steps else ["preprocess", "train"]
+        )
+
+        # Execute pipeline steps
+        for step in steps_to_execute:
+            if not self._execute_step(step, args):
+                return 1
 
         success("Pipeline completed successfully!")
         return 0
