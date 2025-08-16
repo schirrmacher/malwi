@@ -91,6 +91,7 @@ class TestMalwiReport(unittest.TestCase):
             input="/tmp",
             start="2024-01-01T12:00:00",
             duration=2.5,
+            all_file_types=[".py"],
         )
 
         self.benign_report = MalwiReport(
@@ -106,6 +107,7 @@ class TestMalwiReport(unittest.TestCase):
             input="/tmp/script.py",
             start="2024-01-01T12:00:00",
             duration=1.0,
+            all_file_types=[".py"],
         )
 
     def test_generate_report_data(self):

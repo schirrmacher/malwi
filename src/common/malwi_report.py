@@ -36,6 +36,7 @@ class MalwiReport:
     input: str  # The targeted folder/file path
     start: str  # ISO 8601 timestamp when scan started
     duration: float  # Duration in seconds
+    all_file_types: List[str]  # All file extensions found in the scanned package
     version: str = field(
         default_factory=lambda: get_model_version_string(__version__)
     )  # Malwi version with model hash
@@ -51,6 +52,7 @@ class MalwiReport:
             "malicious_objects": len(self.malicious_objects),
             "start": self.start,
             "duration": self.duration,
+            "file_types": self.all_file_types,
         }
 
         # Determine the result based on malicious flag and malicious objects count
@@ -95,13 +97,30 @@ class MalwiReport:
         stats = report_data["statistics"]
         result = report_data["result"]
 
+        # Calculate file types for processed and skipped files
+        processed_files = [f for f in self.all_files if f not in self.skipped_files]
+        processed_types = list(
+            set(f.suffix.lower() for f in processed_files if f.suffix)
+        )
+        skipped_types = list(
+            set(f.suffix.lower() for f in self.skipped_files if f.suffix)
+        )
+        processed_types.sort()
+        skipped_types.sort()
+
+        # Format file type strings
+        processed_types_str = (
+            f" ({', '.join(processed_types)})" if processed_types else ""
+        )
+        skipped_types_str = f" ({', '.join(skipped_types)})" if skipped_types else ""
+
         txt = f"- target: {report_data['input']}\n"
         txt += f"- seconds: {stats['duration']:.2f}\n"
         txt += f"- files: {stats['total_files']}\n"
-        txt += f"  ├── scanned: {stats['processed_files']}\n"
+        txt += f"  ├── scanned: {stats['processed_files']}{processed_types_str}\n"
 
         if result == "malicious" or result == "suspicious":
-            txt += f"  ├── skipped: {stats['skipped_files']}\n"
+            txt += f"  ├── skipped: {stats['skipped_files']}{skipped_types_str}\n"
             txt += "  └── suspicious:\n"
 
             # Group malicious objects by file path
@@ -164,7 +183,7 @@ class MalwiReport:
                             else:
                                 txt += f"{object_prefix}├── {activity.lower().replace('_', ' ')}\n"
         else:
-            txt += f"  └── skipped: {stats['skipped_files']}\n"
+            txt += f"  └── skipped: {stats['skipped_files']}{skipped_types_str}\n"
 
         txt += "\n"
 
@@ -434,6 +453,17 @@ class MalwiReport:
         )
 
         all_files = accepted_files + skipped_files
+
+        # Extract all unique file extensions found in the package
+        all_file_types = list(
+            set(
+                file_path.suffix.lower()
+                for file_path in all_files
+                if file_path.suffix  # Only include files with extensions
+            )
+        )
+        all_file_types.sort()  # Sort for consistent ordering
+
         all_objects: List[MalwiObject] = []
         malicious_objects: List[MalwiObject] = []
 
@@ -454,6 +484,7 @@ class MalwiReport:
                 input=str(input_path),
                 start=start_timestamp,
                 duration=duration,
+                all_file_types=all_file_types,
             )
 
         # Configure progress bar
@@ -538,4 +569,5 @@ class MalwiReport:
             input=str(input_path),
             start=start_timestamp,
             duration=duration,
+            all_file_types=all_file_types,
         )

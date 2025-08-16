@@ -23,6 +23,7 @@ class TestReportResultField:
             input="/test",
             start="2024-01-01T12:00:00",
             duration=1.5,
+            all_file_types=[],
         )
 
         data = report._generate_report_data()
@@ -51,6 +52,7 @@ class TestReportResultField:
             input="test.py",
             start="2024-01-01T12:00:00",
             duration=1.5,
+            all_file_types=[".py"],
         )
 
         data = report._generate_report_data()
@@ -79,6 +81,7 @@ class TestReportResultField:
             input="test.py",
             start="2024-01-01T12:00:00",
             duration=1.5,
+            all_file_types=[".py"],
         )
 
         data = report._generate_report_data()
@@ -99,6 +102,7 @@ class TestReportResultField:
             input="/test",
             start="2024-01-01T12:00:00",
             duration=1.5,
+            all_file_types=[],
         )
 
         json_output = report.to_report_json()
@@ -119,6 +123,7 @@ class TestReportResultField:
             input="/test",
             start="2024-01-01T12:00:00",
             duration=1.5,
+            all_file_types=[],
         )
 
         yaml_output = report.to_report_yaml()
@@ -140,6 +145,7 @@ class TestReportResultField:
             input="/test",
             start="2024-01-01T12:00:00",
             duration=1.5,
+            all_file_types=[],
         )
         markdown = good_report.to_report_markdown()
         assert "> 🟢 **Good**:" in markdown
@@ -166,6 +172,7 @@ class TestReportResultField:
             input="test.py",
             start="2024-01-01T12:00:00",
             duration=1.5,
+            all_file_types=[".py"],
         )
         markdown = suspicious_report.to_report_markdown()
         assert "> ⚠️  **Suspicious**:" in markdown
@@ -188,6 +195,7 @@ class TestReportResultField:
             input="test.py",
             start="2024-01-01T12:00:00",
             duration=1.5,
+            all_file_types=[".py"],
         )
         markdown = malicious_report.to_report_markdown()
         assert "> 👹 **Malicious**:" in markdown
