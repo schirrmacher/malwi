@@ -5,7 +5,7 @@ import pytest
 # Add the parent directory to the path to import the compiler
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.common.ast_to_malwicode import ASTCompiler
+from src.common.bytecode import ASTCompiler
 
 # --- Test Fixtures ---
 

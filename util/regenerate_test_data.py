@@ -12,7 +12,7 @@ from pathlib import Path
 src_path = Path(__file__).parent.parent / "src"
 sys.path.append(str(src_path))
 
-from common.ast_to_malwicode import ASTCompiler
+from common.bytecode import ASTCompiler
 
 
 def normalize_paths_in_output(content: str, project_root: Path) -> str:

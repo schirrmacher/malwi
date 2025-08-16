@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .ast_to_malwicode import CodeObject
+    from common.bytecode import CodeObject
 
 
 class CSVWriter:

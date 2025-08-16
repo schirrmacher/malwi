@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 
 from common.mapping import SpecialCases
 from common.malwi_object import MalwiObject, LiteralStr
-from common.ast_to_malwicode import ASTCompiler, CodeObject
+from common.bytecode import ASTCompiler, CodeObject
 
 
 class TestMalwiObject:

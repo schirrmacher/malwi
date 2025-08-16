@@ -14,7 +14,8 @@
       "Bash(mv:*)",
       "Bash(sed:*)",
       "Bash(unzip:*)",
-      "Bash(timeout 10s uv run:*)"
+      "Bash(timeout 10s uv run:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": false

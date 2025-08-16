@@ -11,7 +11,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from common.malwi_object import MalwiReport, MalwiObject
-from common.ast_to_malwicode import ASTCompiler
+from common.bytecode import ASTCompiler
 
 
 class TestCodeExtraction:

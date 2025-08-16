@@ -17,7 +17,7 @@ from common.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
 )
-from common.ast_to_malwicode import ASTCompiler
+from common.bytecode import ASTCompiler
 from common.predict_distilbert import (
     get_node_text_prediction,
     initialize_models as initialize_distilbert_models,

@@ -16,7 +16,7 @@ from typing import List, Dict
 from concurrent.futures import ProcessPoolExecutor, as_completed, TimeoutError
 from tqdm import tqdm
 
-from common.ast_to_malwicode import ASTCompiler
+from common.bytecode import ASTCompiler
 from common.malwi_object import collect_files_by_extension
 
 
