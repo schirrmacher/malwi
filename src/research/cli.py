@@ -121,7 +121,7 @@ def train_distilbert_api(
                 self.hidden_size = hidden_size
                 self.num_proc = num_proc
                 self.tokenizer_path = Path("malwi_models")
-                self.model_output = Path("malwi_models")
+                self.model_output_path = Path("malwi_models")
                 self.model_name = "distilbert-base-uncased"
                 self.max_length = 512
                 self.window_stride = 128
