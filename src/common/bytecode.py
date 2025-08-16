@@ -525,7 +525,8 @@ class ASTCompiler:
         self.nonlocal_variables = set()
         # Track nesting depth: 0 = module level, 1+ = nested
         self._nesting_depth = 0
-        # Note: CodeObjects collection removed - functions/classes are now inlined
+        # Collection to store all CodeObjects (root, functions, classes)
+        self.code_objects = []
         # Counter for generating unique reference names
         self._next_ref_id = 0
 
@@ -533,11 +534,11 @@ class ASTCompiler:
         self, root_node: Node, source_code_bytes: bytes, file_path: Path
     ) -> List[CodeObject]:
         """
-        Public method to initiate the compilation of an AST to a single root CodeObject.
-        Functions and classes are now inlined instead of creating separate CodeObjects.
-        Returns a list with only the root CodeObject for compatibility.
+        Public method to initiate the compilation of an AST to multiple CodeObjects.
+        Returns a list with the root CodeObject first, followed by function and class CodeObjects.
         """
-        # Reset for each compilation
+        # Reset collections for each compilation
+        self.code_objects = []
         self._next_ref_id = 0
 
         # First pass: Collect all variables that are declared global anywhere in the module
@@ -572,8 +573,8 @@ class ASTCompiler:
             language=self.language_name,
         )
 
-        # Return only the root CodeObject (functions/classes are now inlined)
-        return [root_code_obj]
+        # Return root CodeObject first, followed by function/class CodeObjects
+        return [root_code_obj] + self.code_objects
 
     def _generate_ref_name(self, base_name: str) -> str:
         """Generate a unique reference name for a CodeObject."""
@@ -2160,8 +2161,22 @@ class ASTCompiler:
                 self.current_function_params = previous_params
                 self._in_function_scope = previous_in_function
 
-                # Inline the function body instead of creating separate CodeObject
-                bytecode.extend(func_body_bytecode)
+                func_source = self._get_node_text(node, source_code_bytes)
+                location = (node.start_point[0] + 1, node.end_point[0] + 1)
+
+                # Create separate CodeObject and add to collection
+                func_code_obj = CodeObject(
+                    "lambda",
+                    func_body_bytecode,
+                    func_source,
+                    file_path,
+                    location,
+                    self.language_name,
+                )
+                self.code_objects.append(func_code_obj)
+
+                # Use function name in bytecode instead of nested CodeObject
+                bytecode.append(emit(OpCode.MAKE_FUNCTION, "lambda"))
 
         elif node_type == "conditional_expression":
             # Handle ternary operator: condition ? true_expr : false_expr
@@ -2444,23 +2459,27 @@ class ASTCompiler:
                         function_node.end_point[0] + 1,
                     )
 
-                    # Inline decorated function instead of creating separate CodeObject
-                    # Mark function definition with special token
-                    bytecode.append(
-                        emit(
-                            OpCode.LOAD_CONST, f"__DECORATED_FUNCTION_DEF_{func_name}__"
-                        )
+                    # Create separate CodeObject and add to collection
+                    func_code_obj = CodeObject(
+                        func_name,
+                        func_body_bytecode,
+                        func_source,
+                        file_path,
+                        location,
+                        self.language_name,
                     )
+                    self.code_objects.append(func_code_obj)
 
-                    # Add function body inline
-                    bytecode.extend(func_body_bytecode)
+                    # Load function code object and make function
+                    bytecode.append(emit(OpCode.LOAD_CONST, func_code_obj))
+                    bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))
 
-                    # Mark end of function
-                    bytecode.append(
-                        emit(
-                            OpCode.LOAD_CONST, f"__END_DECORATED_FUNCTION_{func_name}__"
-                        )
-                    )
+                    # Apply decorator(s) - CALL with 0 args (function is on stack)
+                    for i in range(len(decorators)):
+                        bytecode.append(emit(OpCode.CALL, 0))
+
+                    # Store the decorated function
+                    bytecode.append(emit(OpCode.STORE_NAME, func_name))
 
         # --- High-Level Structures (Functions, Classes) ---
         elif node_type in [
@@ -2523,15 +2542,49 @@ class ASTCompiler:
             func_source = self._get_node_text(node, source_code_bytes)
             location = (node.start_point[0] + 1, node.end_point[0] + 1)
 
-            # Inline function definition instead of creating separate CodeObject
-            # Mark function definition with special token
-            bytecode.append(emit(OpCode.LOAD_CONST, f"__FUNCTION_DEF_{func_name}__"))
+            # Only create separate CodeObject for top-level functions (nesting_depth == 0)
+            if self._nesting_depth == 0:
+                # Create separate CodeObject and add to collection
+                func_code_obj = CodeObject(
+                    func_name,
+                    func_body_bytecode,
+                    func_source,
+                    file_path,
+                    location,
+                    self.language_name,
+                )
+                self.code_objects.append(func_code_obj)
 
-            # Add function body inline
-            bytecode.extend(func_body_bytecode)
+                # Python-like structure: LOAD_CONST -> MAKE_FUNCTION -> STORE_NAME
+                # Load the code object as a constant (similar to Python's approach)
+                bytecode.append(emit(OpCode.LOAD_CONST, func_code_obj))
 
-            # Mark end of function
-            bytecode.append(emit(OpCode.LOAD_CONST, f"__END_FUNCTION_{func_name}__"))
+                # Use appropriate opcode based on function type with arg=0 (no defaults)
+                if is_async and is_generator:
+                    # Async generator function
+                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, 0))
+                elif is_async:
+                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, 0))
+                elif is_generator:
+                    bytecode.append(emit(OpCode.GENERATOR_FUNCTION, 0))
+                else:
+                    bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))
+                bytecode.append(self._emit_store(func_name))
+            else:
+                # For nested functions, inline the bytecode directly
+                # Use appropriate opcode based on function type (but inline the body)
+                if is_async and is_generator:
+                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, func_name))
+                elif is_async:
+                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, func_name))
+                elif is_generator:
+                    bytecode.append(emit(OpCode.GENERATOR_FUNCTION, func_name))
+                else:
+                    bytecode.append(emit(OpCode.MAKE_FUNCTION, func_name))
+
+                # Inline the function body bytecode
+                bytecode.extend(func_body_bytecode)
+                bytecode.append(self._emit_store(func_name))
 
         elif node_type in ["class_definition", "class_declaration"]:
             class_name = self._get_node_text(
@@ -2553,15 +2606,35 @@ class ASTCompiler:
             class_source = self._get_node_text(node, source_code_bytes)
             location = (node.start_point[0] + 1, node.end_point[0] + 1)
 
-            # Inline class definition instead of creating separate CodeObject
-            # Mark class definition with special token
-            bytecode.append(emit(OpCode.LOAD_CONST, f"__CLASS_DEF_{class_name}__"))
+            # Only create separate CodeObject for top-level classes (nesting_depth == 0)
+            if self._nesting_depth == 0:
+                # Create separate CodeObject and add to collection
+                class_code_obj = CodeObject(
+                    class_name,
+                    class_body_bytecode,
+                    class_source,
+                    file_path,
+                    location,
+                    self.language_name,
+                )
+                self.code_objects.append(class_code_obj)
 
-            # Add class body inline
-            bytecode.extend(class_body_bytecode)
-
-            # Mark end of class
-            bytecode.append(emit(OpCode.LOAD_CONST, f"__END_CLASS_{class_name}__"))
+                # Python class protocol: PUSH_NULL + LOAD_BUILD_CLASS + LOAD_CONST + MAKE_FUNCTION + class_name + CALL
+                bytecode.append(emit(OpCode.PUSH_NULL, None))
+                bytecode.append(emit(OpCode.LOAD_BUILD_CLASS, None))
+                bytecode.append(
+                    emit(OpCode.LOAD_CONST, class_code_obj)
+                )  # Class code object
+                bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))  # No defaults
+                bytecode.append(emit(OpCode.LOAD_CONST, class_name))  # Class name
+                bytecode.append(emit(OpCode.CALL, 2))  # Call build class with 2 args
+                bytecode.append(self._emit_store(class_name))
+            else:
+                # For nested classes, inline the bytecode directly
+                bytecode.append(emit(OpCode.MAKE_CLASS, class_name))
+                # Inline the class body bytecode
+                bytecode.extend(class_body_bytecode)
+                bytecode.append(self._emit_store(class_name))
 
         # --- Comprehensions and Generators ---
         elif node_type in [
