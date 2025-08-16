@@ -19,7 +19,6 @@ from common.messaging import (
     warning,
     error,
     progress,
-    banner,
 )
 
 # We'll import these functions dynamically when needed to avoid import errors
@@ -305,9 +304,8 @@ Examples:
         Returns:
             True if step succeeded, False otherwise
         """
-        banner(f"\n{'=' * 60}")
-        banner(f"🚀 Executing step: {step.upper()}")
-        banner(f"{'=' * 60}")
+
+        info(f"🚀 Executing step: {step.upper()}")
 
         if step == Step.DOWNLOAD.value:
             return self._download_data(args)
