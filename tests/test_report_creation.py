@@ -7,7 +7,7 @@ from typing import List
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from common.malwi_object import MalwiReport
+from common.malwi_report import MalwiReport
 
 
 @dataclass

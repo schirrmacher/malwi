@@ -8,7 +8,8 @@ from pathlib import Path
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from common.malwi_object import MalwiObject, MalwiReport
+from common.malwi_object import MalwiObject
+from common.malwi_report import MalwiReport
 from common.files import copy_file
 from common.config import SUPPORTED_EXTENSIONS
 from common.messaging import (

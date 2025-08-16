@@ -6,7 +6,7 @@ from malwi._version import __version__
 def __getattr__(name):
     """Lazy import to avoid circular import issues."""
     if name == "MalwiReport":
-        from common.malwi_object import MalwiReport
+        from common.malwi_report import MalwiReport
 
         return MalwiReport
     elif name == "MalwiObject":

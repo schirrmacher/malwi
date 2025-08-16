@@ -10,7 +10,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from common.malwi_object import MalwiReport, MalwiObject
+from common.malwi_object import MalwiObject
+from common.malwi_report import MalwiReport
 from common.bytecode import ASTCompiler
 
 

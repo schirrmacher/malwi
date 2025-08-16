@@ -15,7 +15,8 @@ import urllib.request
 import urllib.error
 from tqdm import tqdm
 
-from common.malwi_object import MalwiObject, MalwiReport
+from common.malwi_object import MalwiObject
+from common.malwi_report import MalwiReport
 from common.files import copy_file
 from common.messaging import (
     configure_messaging,
