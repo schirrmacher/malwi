@@ -31,11 +31,11 @@ malwi scan examples/malicious
      AI Python Malware Scanner
 
 
-- target: examples/malicious
-- seconds: 0.42
-- files: 13
-  ├── scanned: 3
-  ├── skipped: 10
+- target: examples
+- seconds: 1.87
+- files: 14
+  ├── scanned: 4 (.py)
+  ├── skipped: 10 (.cfg, .md, .toml, .txt)
   └── suspicious:
       ├── examples/malicious/discordpydebug-0.0.4/setup.py
       │   └── <module>
@@ -44,8 +44,8 @@ malwi scan examples/malicious
       └── examples/malicious/discordpydebug-0.0.4/src/discordpydebug/__init__.py
           ├── <module>
           │   ├── process management
-          │   ├── system interaction
           │   ├── deserialization
+          │   ├── system interaction
           │   └── user io
           ├── run
           │   └── fs linking
@@ -89,72 +89,79 @@ Malicious actors are increasingly [targeting open-source projects](https://arxiv
 
 Common malicious behaviors include:
 
-- Data exfiltration: Theft of sensitive information such as credentials, API keys, or user data.
-- Backdoors: Unauthorized remote access to systems, enabling attackers to exploit vulnerabilities.
-- Destructive actions: Deliberate sabotage, including file deletion, database corruption, or application disruption.
+- **Data exfiltration**: Theft of sensitive information such as credentials, API keys, or user data.
+- **Backdoors**: Unauthorized remote access to systems, enabling attackers to exploit vulnerabilities.
+- **Destructive actions**: Deliberate sabotage, including file deletion, database corruption, or application disruption.
 
 ## How does it work?
 
-malwi applies [DistilBert](https://huggingface.co/docs/transformers/model_doc/distilbert) based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1). The [malwi-samples](https://github.com/schirrmacher/malwi-samples) dataset is used for training.
+malwi is based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1).
 
-### 1. Compile Python files to bytecode
+Imagine there is a function like:
 
-```
+```python
 def runcommand(value):
     output = subprocess.run(value, shell=True, capture_output=True)
     return [output.stdout, output.stderr]
 ```
 
-```
-  0           RESUME                   0
-
-  1           LOAD_CONST               0 (<code object runcommand at 0x5b4f60ae7540, file "example.py", line 1>)
-              MAKE_FUNCTION
-              STORE_NAME               0 (runcommand)
-              RETURN_CONST             1 (None)
-  ...
-```
-
-### 2. Map bytecode to tokens
+### 1. Files are compiled to create an Abstract Syntax Tree with [Tree-sitter](https://tree-sitter.github.io/tree-sitter/index.html)
 
 ```
-TARGETED_FILE resume load_global subprocess load_attr run load_fast value load_const INTEGER load_const INTEGER kw_names capture_output shell call store_fast output load_fast output load_attr stdout load_fast output load_attr stderr build_list return_value
+module [0, 0] - [3, 0]
+  function_definition [0, 0] - [2, 41]
+    name: identifier [0, 4] - [0, 14]
+    parameters: parameters [0, 14] - [0, 21]
+      identifier [0, 15] - [0, 20]
+...
 ```
 
-### 3. Feed tokens into pre-trained DistilBert
+### 2. The AST is transpiled to dummy bytecode
+
+The bytecode is enhanced with security related instructions.
 
 ```
-=> Maliciousness: 0.92
+TARGETED_FILE PUSH_NULL LOAD_GLOBAL PROCESS_MANAGEMENT LOAD_ATTR run LOAD_PARAM value LOAD_CONST BOOLEAN LOAD_CONST BOOLEAN KW_NAMES shell capture_output CALL STRING_VERSION STORE_GLOBAL output LOAD_GLOBAL output LOAD_ATTR stdout LOAD_GLOBAL output LOAD_ATTR stderr BUILD_LIST STRING_VERSION RETURN_VALUE
 ```
 
-This creates a list with malicious code objects. However malicious code might be split into chunks and spread across
-a package. This is why the next layers are needed.
+### 3. The bytecode is fed into a pre-trained [DistilBERT](https://huggingface.co/docs/transformers/model_doc/distilbert)
 
-### 4. Take final decision
-
-The DistilBERT model makes the final maliciousness decision based on the token patterns.
+A DistilBERT model trained on [malware-samples](https://github.com/schirrmacher/malwi-samples) is used to identify suspicious code patterns.
 
 ```
-=> Maliciousness: 0.92
+=> Maliciousness: 0.98
 ```
 
 ## Benchmarks?
 
-### DistilBert
-
-| Metric                     | Value                         |
-|----------------------------|-------------------------------|
-| F1 Score                   | 0.944                         |
-| Recall                     | 0.906                         |
-| Precision                  | 0.984                         |
-| Training time              | ~1 hour                       |
-| Hardware                   | NVIDIA RTX 4090               |
-| Epochs                     | 3                             |
-
+```
+training_loss: 0.0110
+epochs_completed: 3.0000
+original_train_samples: 598540.0000
+windowed_train_features: 831865.0000
+original_validation_samples: 149636.0000
+windowed_validation_features: 204781.0000
+benign_samples_used: 734930.0000
+malicious_samples_used: 13246.0000
+benign_to_malicious_ratio: 60.0000
+vocab_size: 30522.0000
+max_length: 512.0000
+window_stride: 128.0000
+batch_size: 16.0000
+eval_loss: 0.0107
+eval_accuracy: 0.9980
+eval_f1: 0.9521
+eval_precision: 0.9832
+eval_recall: 0.9229
+eval_runtime: 115.5982
+eval_samples_per_second: 1771.4900
+eval_steps_per_second: 110.7200
+epoch: 3.0000
+```
 
 ## Limitations
 
-The malicious dataset includes some boilerplate functions, such as init functions, which can also appear in benign code. These cause false positives during scans. The goal is to triage and reduce such false positives to improve malwi's accuracy.
+The malicious dataset includes some boilerplate functions, such as setup functions, which can also appear in benign code. These cause false positives during scans. The goal is to triage and reduce such false positives to improve malwi's accuracy.
 
 ## What's next?
 
@@ -164,25 +171,16 @@ Future iterations will cover malware scanning for more languages (JavaScript, Ru
 
 ## Contributing & Support
 
-### Report Issues
-Found a bug or have a feature request? [Open an issue](https://github.com/schirrmacher/malwi/issues)
-
-### Share Malware Samples
-Have access to malicious packages in Rust, Go, or other languages? Your contributions can help expand malwi's detection capabilities:
-- **Email**: [Contact via GitHub profile](https://github.com/schirrmacher)
-- **Submit samples**: Follow responsible disclosure practices
+- Found a bug or have a feature request? [Open an issue](https://github.com/schirrmacher/malwi/issues).
+- Do you have access to malicious packages in Rust, Go, or other languages? [Contact via GitHub profile](https://github.com/schirrmacher).
+- Struggling with false-positive findings? [Create a Pull-Request](https://github.com/schirrmacher/malwi-samples/pulls).
 
 ## Development
 
 ### Prerequisites
 
 1. **Package Manager**: Install [uv](https://docs.astral.sh/uv/) for fast Python dependency management
-2. **Training Data**: Clone [malwi-samples](https://github.com/schirrmacher/malwi-samples) in the parent directory:
-   ```bash
-   cd ..
-   git clone https://github.com/schirrmacher/malwi-samples.git
-   cd malwi
-   ```
+2. **Training Data**: The research CLI will automatically clone [malwi-samples](https://github.com/schirrmacher/malwi-samples) when needed
 
 ### Quick Start
 
@@ -193,67 +191,31 @@ uv sync
 # Run tests
 uv run pytest tests
 
-# Train a model from scratch (full pipeline)
-./cmds/preprocess_and_train_distilbert.sh
+# Train a model from scratch (full pipeline with automatic data download)
+./research --steps download preprocess train
 ```
 
-### Training Pipeline
+### Research CLI
 
-The training pipeline consists of three stages that can be run together or independently:
+The research CLI (`./research`) provides a streamlined interface for the entire training pipeline:
 
-#### Complete Pipeline (With Data Download)
+#### Complete Pipeline
 ```bash
-# Downloads benign samples from popular repos → Data preprocessing → Training
-./cmds/download_and_preprocess_distilbert.sh  # Downloads training data first
-./cmds/train_tokenizer.sh                      # Train tokenizer
-./cmds/train_distilbert.sh                     # Train model
+# Full pipeline: Download data → Preprocess → Train models
+./research --steps download preprocess train --language python
+
+# Default pipeline (preprocess + train, assumes data exists)
+./research --language python
 ```
 
-#### Complete Pipeline (Without Download)
+#### Individual Pipeline Steps
 ```bash
-# Data preprocessing → Tokenizer training → Model training
-./cmds/preprocess_and_train_distilbert.sh
-```
+# 1. Download training data (clones malwi-samples + downloads repositories)
+./research --steps download
 
-#### Individual Stages
-```bash
-# 1. Download benign samples from popular GitHub repositories
-uv run python -m src.research.download_data
+# 2. Data preprocessing only (parallel processing, ~4 min on 32 cores)
+./research --steps preprocess --language python
 
-# 2. Data Preprocessing (parallel by default, ~5-7 min on 8 cores)
-./cmds/preprocess_data.sh
-
-# 3. Tokenizer Training (~2 min)
-./cmds/train_tokenizer.sh
-
-# 4. Model Training (~5 hours on NVIDIA RTX 4090)
-./cmds/train_distilbert.sh
-```
-
-### Training Data Sources
-
-The preprocessing script (`preprocess_data.sh`) combines multiple data sources for robust model training:
-
-#### Benign Samples
-- `.repo_cache/benign_repos/` - Clean Python repositories (populated by `download_data` from popular GitHub repos)
-- `../malwi-samples/python/benign/` - False-positives
-
-#### Malicious Samples
-- `../malwi-samples/python/malicious/` - Confirmed malware samples
-- `../malwi-samples/python/suspicious/` - Suspicious code patterns, not necessarily malicious (used for future multi-category classification)
-
-### Testing & Quality
-
-```bash
-# Run tests
-uv run pytest tests
-
-# Code formatting
-uv run ruff format .
-
-# Linting
-uv run ruff check .
-
-# Regenerate test data (after compiler changes)
-uv run python util/regenerate_test_data.py
+# 3. Model training only (tokenizer + DistilBERT, ~40 minutes on NVIDIA RTX 4090)
+./research --steps train
 ```
