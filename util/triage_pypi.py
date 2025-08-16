@@ -86,25 +86,32 @@ def get_newest_pypi_packages(limit: int = 100) -> List[str]:
             return []
 
 
-def scan_package(package_name: str, move_dir: Path, cli_path: Path, timeout: int = 300) -> dict:
+def scan_package(package_name: str, move_dir: Path, cli_path: Path, api_key: str, model: str = "mistral-medium-2508", timeout: int = 300) -> dict:
     """
-    Scan a single PyPI package with malwi.
+    Scan a single PyPI package with malwi triage AI analysis.
     
     Args:
         package_name: Name of the PyPI package
-        move_dir: Directory to move suspicious findings to
+        move_dir: Directory to move findings to
         cli_path: Path to the malwi CLI
+        api_key: API key for AI analysis
+        model: AI model to use for analysis
+        timeout: Timeout for the scan in seconds
         
     Returns:
-        Dictionary with scan results
+        Dictionary with scan results and AI analysis
     """
     try:
-        # Construct the malwi command
+        # Construct the malwi triage command with AI analysis
         cmd = [
-            str(cli_path),
-            "pypi", 
+            "uv", "run", "python", "-m", "src.cli.entry",
+            "triage", "pypi", 
             package_name,
-            "--move", str(move_dir),
+            "--api-key", api_key,
+            "--model", model,
+            "--suspicious", str(move_dir / "suspicious"),
+            "--malicious", str(move_dir / "malicious"), 
+            "--benign", str(move_dir / "benign"),
             "--quiet"  # Reduce output noise
         ]
         
@@ -113,15 +120,37 @@ def scan_package(package_name: str, move_dir: Path, cli_path: Path, timeout: int
             cmd,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            cwd=cli_path.parent  # Run from project root
         )
+        
+        # Parse AI analysis results from output
+        stdout = result.stdout
+        ai_analysis = []
+        
+        # Extract AI reasoning from output
+        lines = stdout.split('\n')
+        for i, line in enumerate(lines):
+            if "Analysis:" in line:
+                ai_analysis.append(line.strip())
+        
+        # Determine threat level from triage results
+        threat_level = "clean"
+        if "malicious" in stdout.lower() and not "0 malicious" in stdout.lower():
+            threat_level = "malicious"
+        elif "suspicious" in stdout.lower() and not "0 suspicious" in stdout.lower():
+            threat_level = "suspicious"
+        elif "benign" in stdout.lower() and not "0 benign" in stdout.lower():
+            threat_level = "benign"
         
         return {
             "package": package_name,
             "success": result.returncode == 0,
-            "stdout": result.stdout,
+            "stdout": stdout,
             "stderr": result.stderr,
-            "suspicious": "👹" in result.stdout or "malicious" in result.stdout.lower()
+            "threat_level": threat_level,
+            "ai_analysis": ai_analysis,
+            "suspicious": threat_level in ["suspicious", "malicious"]
         }
         
     except subprocess.TimeoutExpired:
@@ -129,6 +158,8 @@ def scan_package(package_name: str, move_dir: Path, cli_path: Path, timeout: int
             "package": package_name,
             "success": False,
             "error": "Timeout",
+            "threat_level": "unknown",
+            "ai_analysis": [],
             "suspicious": False
         }
     except Exception as e:
@@ -136,6 +167,8 @@ def scan_package(package_name: str, move_dir: Path, cli_path: Path, timeout: int
             "package": package_name,
             "success": False,
             "error": str(e),
+            "threat_level": "unknown", 
+            "ai_analysis": [],
             "suspicious": False
         }
 
@@ -173,18 +206,32 @@ def main():
         action="store_true",
         help="Enable debug logging"
     )
+    parser.add_argument(
+        "--api-key",
+        type=str,
+        required=True,
+        help="API key for AI analysis (required)"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="mistral-medium-2508",
+        choices=["mistral-medium-2508", "mistral-large-2411"],
+        help="AI model to use for analysis (default: mistral-medium-2508)"
+    )
     
     args = parser.parse_args()
     
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
     
-    print("🔍 PyPI Package Triage Utility")
+    print("🔍 PyPI Package Triage Utility with AI Analysis")
     print("=" * 50)
     print(f"📊 Configuration:")
     print(f"   • Packages to scan: {args.count}")
     print(f"   • Move directory: {args.move_dir}")
     print(f"   • Timeout per scan: {args.timeout}s")
+    print(f"   • AI Model: {args.model}")
     print(f"   • Dry run: {args.dry_run}")
     print("=" * 50)
     
@@ -238,14 +285,19 @@ def main():
         for package_name in pbar:
             pbar.set_postfix_str(f"Scanning {package_name[:20]}...")
             
-            # Update scan_package call to use timeout from args
-            result = scan_package(package_name, move_dir, cli_path, timeout=args.timeout)
+            # Update scan_package call to use AI analysis
+            result = scan_package(package_name, move_dir, cli_path, args.api_key, args.model, timeout=args.timeout)
             results.append(result)
             
-            if result.get("suspicious", False):
+            threat_level = result.get("threat_level", "unknown")
+            
+            if threat_level == "malicious":
                 suspicious_count += 1
-                pbar.set_postfix_str(f"👹 {package_name} - SUSPICIOUS!")
-                # Brief pause to show the suspicious finding
+                pbar.set_postfix_str(f"💀 {package_name} - MALICIOUS!")
+                time.sleep(0.8)  # Longer pause for malicious
+            elif threat_level == "suspicious":
+                suspicious_count += 1
+                pbar.set_postfix_str(f"⚠️ {package_name} - SUSPICIOUS!")
                 time.sleep(0.5)
             elif not result.get("success", False):
                 failed_count += 1
@@ -262,12 +314,22 @@ def main():
     print(f"Failed scans: {failed_count}")
     print(f"Clean packages: {len(packages) - suspicious_count - failed_count}")
     
-    # List suspicious packages
-    suspicious_packages = [r for r in results if r.get("suspicious", False)]
-    if suspicious_packages:
-        print(f"\n👹 Suspicious packages ({len(suspicious_packages)}):")
-        for result in suspicious_packages:
-            print(f"  - {result['package']}")
+    # List suspicious and malicious packages with AI analysis
+    threat_packages = [r for r in results if r.get("suspicious", False)]
+    if threat_packages:
+        print(f"\n🚨 Packages requiring attention ({len(threat_packages)}):")
+        for result in threat_packages:
+            threat_level = result.get("threat_level", "unknown")
+            emoji = "💀" if threat_level == "malicious" else "⚠️"
+            print(f"\n  {emoji} {result['package']} ({threat_level.upper()})")
+            
+            # Show AI analysis if available
+            ai_analysis = result.get("ai_analysis", [])
+            if ai_analysis:
+                for analysis in ai_analysis[:2]:  # Show first 2 analyses
+                    print(f"     🤖 {analysis}")
+            else:
+                print(f"     📝 No detailed AI analysis available")
     
     # List failed packages
     failed_packages = [r for r in results if not r.get("success", False) and not r.get("suspicious", False)]
