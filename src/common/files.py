@@ -4,7 +4,10 @@ import pathlib
 import sys
 import shutil
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional, Tuple
+
+from common.config import SUPPORTED_EXTENSIONS
+from common.messaging import path_error
 
 
 def read_json_from_file(filepath: pathlib.Path) -> Dict[str, Any]:
@@ -53,3 +56,45 @@ def copy_file(file_path: Path, base_input_path: Path, move_dir: Path) -> None:
     except Exception as e:
         # Don't fail the operation if copying fails, just log it
         print(f"Warning: Failed to copy {file_path}: {e}", file=sys.stderr)
+
+
+def collect_files_by_extension(
+    input_path: Path,
+    accepted_extensions: Optional[List[str]] = None,
+    silent: bool = False,
+) -> Tuple[List[Path], List[Path]]:
+    """
+    Collect files from the input path, filtering by accepted extensions.
+    Args:
+        input_path: Path to file or directory
+        accepted_extensions: List of file extensions to accept (without dots)
+        silent: If True, suppress error messages
+    Returns:
+        Tuple of (accepted_files, skipped_files)
+    """
+    if accepted_extensions is None:
+        accepted_extensions = SUPPORTED_EXTENSIONS
+    normalized_extensions = [ext.lower().lstrip(".") for ext in accepted_extensions]
+    accepted_files = []
+    skipped_files = []
+    if not input_path.exists():
+        if not silent:
+            path_error(input_path)
+        return accepted_files, skipped_files
+    if input_path.is_file():
+        file_extension = input_path.suffix.lstrip(".").lower()
+        if file_extension in normalized_extensions:
+            accepted_files.append(input_path)
+        else:
+            skipped_files.append(input_path)
+    elif input_path.is_dir():
+        for file_path in input_path.rglob("*"):
+            if file_path.is_file():
+                file_extension = file_path.suffix.lstrip(".").lower()
+                if file_extension in normalized_extensions:
+                    accepted_files.append(file_path)
+                else:
+                    skipped_files.append(file_path)
+    else:
+        skipped_files.append(input_path)
+    return accepted_files, skipped_files

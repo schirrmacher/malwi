@@ -17,7 +17,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed, TimeoutError
 from tqdm import tqdm
 
 from common.bytecode import ASTCompiler
-from common.malwi_object import collect_files_by_extension
+from common.files import collect_files_by_extension
 
 
 def process_file_chunk(chunk_data: Dict) -> Dict:
