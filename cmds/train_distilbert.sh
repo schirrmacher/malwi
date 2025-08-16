@@ -48,7 +48,8 @@ uv run python -m src.research.train_distilbert \
     -m malicious_processed.csv \
     --epochs ${EPOCHS} \
     --hidden-size ${HIDDEN_SIZE} \
-    --num-proc ${NUM_PROC}
+    --num-proc ${NUM_PROC} \
+    --token-column tokens
 
 echo
 echo "🎉 DistilBERT model training completed!"

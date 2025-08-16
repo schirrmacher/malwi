@@ -128,6 +128,7 @@ def train_distilbert_api(
                 self.batch_size = 16
                 self.save_steps = 0
                 self.benign_to_malicious_ratio = 60.0
+                self.token_column = "tokens"
 
         args = Args()
         run_training(args)
