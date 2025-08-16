@@ -2,9 +2,6 @@ RESUME 0
 LOAD_CONST 'test-export'
 STORE_NAME exportedConst
 EXPORT_NAMED exportedFunction
-LOAD_CONST CodeObject(name=exportedFunction, path=tests/source_samples/javascript.js, location=(61, 61))
-MAKE_FUNCTION 0
-STORE_NAME exportedFunction
 LOAD_CONST True
 BUILD_MAP 1
 PUSH_NULL None
@@ -449,9 +446,6 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 4. Functions and Scopes ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=greet, path=tests/source_samples/javascript.js, location=(252, 254))
-MAKE_FUNCTION 0
-STORE_NAME greet
 PUSH_NULL None
 LOAD_NAME greet
 LOAD_CONST "World"
@@ -473,9 +467,6 @@ LOAD_NAME square
 LOAD_CONST 4.0
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=paramsTest, path=tests/source_samples/javascript.js, location=(268, 270))
-MAKE_FUNCTION 0
-STORE_NAME paramsTest
 PUSH_NULL None
 LOAD_NAME paramsTest
 LOAD_CONST 1.0
@@ -485,9 +476,6 @@ LOAD_CONST 4.0
 LOAD_CONST 5.0
 CALL 5
 POP_TOP None
-LOAD_CONST CodeObject(name=makeCounter, path=tests/source_samples/javascript.js, location=(274, 280))
-MAKE_FUNCTION 0
-STORE_NAME makeCounter
 PUSH_NULL None
 LOAD_NAME makeCounter
 CALL 0
@@ -512,9 +500,6 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 5. Object-Oriented Programming ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=Car, path=tests/source_samples/javascript.js, location=(293, 296))
-MAKE_FUNCTION 0
-STORE_NAME Car
 BINARY_OPERATION None
 RETURN_VALUE None
 LOAD_NAME Car
@@ -536,20 +521,6 @@ LOAD_ATTR log
 LOAD_CONST "5.1. Constructor Functions: PASSED"
 CALL 1
 POP_TOP None
-PUSH_NULL None
-LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Vehicle, path=tests/source_samples/javascript.js, location=(305, 312))
-MAKE_FUNCTION 0
-LOAD_CONST Vehicle
-CALL 2
-STORE_NAME Vehicle
-PUSH_NULL None
-LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Motorcycle, path=tests/source_samples/javascript.js, location=(314, 323))
-MAKE_FUNCTION 0
-LOAD_CONST Motorcycle
-CALL 2
-STORE_NAME Motorcycle
 LOAD_NAME Motorcycle
 LOAD_CONST 'Ninja'
 LOAD_CONST 'Kawasaki'
@@ -566,13 +537,6 @@ LOAD_ATTR log
 LOAD_CONST "5.2. ES6 Classes: PASSED"
 CALL 1
 POP_TOP None
-PUSH_NULL None
-LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Rectangle, path=tests/source_samples/javascript.js, location=(329, 343))
-MAKE_FUNCTION 0
-LOAD_CONST Rectangle
-CALL 2
-STORE_NAME Rectangle
 LOAD_NAME Rectangle
 LOAD_CONST 10.0
 LOAD_CONST 5.0
@@ -602,12 +566,6 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 6. Advanced Features (ES6+) ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=delay, path=tests/source_samples/javascript.js, location=(357, 359))
-MAKE_FUNCTION 0
-STORE_NAME delay
-LOAD_CONST CodeObject(name=myAsyncFunction, path=tests/source_samples/javascript.js, location=(361, 364))
-ASYNC_FUNCTION 0
-STORE_NAME myAsyncFunction
 PUSH_NULL None
 PUSH_NULL None
 LOAD_NAME myAsyncFunction
@@ -616,9 +574,6 @@ LOAD_ATTR then
 MAKE_FUNCTION lambda
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=idGenerator, path=tests/source_samples/javascript.js, location=(370, 375))
-GENERATOR_FUNCTION 0
-STORE_NAME idGenerator
 PUSH_NULL None
 LOAD_NAME idGenerator
 CALL 0
@@ -945,28 +900,11 @@ LOAD_ATTR test
 LOAD_CONST "Test string"
 CALL 1
 STORE_NAME regexTest
-PUSH_NULL None
-LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Parent, path=tests/source_samples/javascript.js, location=(538, 546))
-MAKE_FUNCTION 0
-LOAD_CONST Parent
-CALL 2
-STORE_NAME Parent
-PUSH_NULL None
-LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Child, path=tests/source_samples/javascript.js, location=(548, 557))
-MAKE_FUNCTION 0
-LOAD_CONST Child
-CALL 2
-STORE_NAME Child
 LOAD_NAME Child
 LOAD_CONST "Test"
 LOAD_CONST 25.0
 CALL 2
 STORE_NAME childInstance
-LOAD_CONST CodeObject(name=asyncFunc, path=tests/source_samples/javascript.js, location=(562, 566))
-ASYNC_FUNCTION 0
-STORE_NAME asyncFunc
 LOAD_NAME obj
 LOAD_ATTR deep
 LOAD_ATTR property
@@ -975,9 +913,6 @@ LOAD_NAME nullVal
 LOAD_CONST "default"
 BINARY_NULLISH_COALESCING None
 STORE_NAME nullish
-LOAD_CONST CodeObject(name=testThrow, path=tests/source_samples/javascript.js, location=(577, 579))
-MAKE_FUNCTION 0
-STORE_NAME testThrow
 LOAD_CONST 0xFF
 LOAD_CONST 0x0F
 BINARY_OP 1
@@ -1386,9 +1321,6 @@ LOAD_NAME storeNested
 LOAD_ATTR inner
 LOAD_CONST "mixed"
 STORE_SUBSCR None
-LOAD_CONST CodeObject(name=getStoreKey, path=tests/source_samples/javascript.js, location=(723, 723))
-MAKE_FUNCTION 0
-STORE_NAME getStoreKey
 LOAD_CONST "from function"
 LOAD_NAME storeObj
 PUSH_NULL None
@@ -1434,15 +1366,6 @@ STORE_NAME implicitGlobal
 LOAD_CONST "I am explicitly on global object"
 LOAD_NAME global
 STORE_ATTR explicitGlobal
-LOAD_CONST CodeObject(name=modifyGlobals, path=tests/source_samples/javascript.js, location=(753, 767))
-MAKE_FUNCTION 0
-STORE_NAME modifyGlobals
-LOAD_CONST CodeObject(name=outerFunction, path=tests/source_samples/javascript.js, location=(770, 788))
-MAKE_FUNCTION 0
-STORE_NAME outerFunction
-LOAD_CONST CodeObject(name=globalFunction, path=tests/source_samples/javascript.js, location=(791, 793))
-MAKE_FUNCTION 0
-STORE_NAME globalFunction
 LOAD_CONST "I am a property of a global object"
 LOAD_CONST "I am a method of a global object"
 RETURN_VALUE None
@@ -1450,16 +1373,6 @@ BUILD_MAP 2
 STORE_NAME globalObject
 MAKE_FUNCTION lambda
 STORE_NAME globalArrow
-PUSH_NULL None
-LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=GlobalClass, path=tests/source_samples/javascript.js, location=(806, 810))
-MAKE_FUNCTION 0
-LOAD_CONST GlobalClass
-CALL 2
-STORE_NAME GlobalClass
-LOAD_CONST CodeObject(name=testGlobalContexts, path=tests/source_samples/javascript.js, location=(813, 836))
-MAKE_FUNCTION 0
-STORE_NAME testGlobalContexts
 PUSH_NULL None
 LOAD_NAME globalVar
 STORE_NAME globalInIIFE
@@ -1472,15 +1385,9 @@ CALL 0
 POP_TOP None
 LOAD_CONST "global shadow"
 STORE_NAME shadowVar
-LOAD_CONST CodeObject(name=shadowTest, path=tests/source_samples/javascript.js, location=(853, 870))
-MAKE_FUNCTION 0
-STORE_NAME shadowTest
 LOAD_CONST "I am on globalThis"
 LOAD_NAME globalThis
 STORE_ATTR modernGlobal
-LOAD_CONST CodeObject(name=testGlobalThis, path=tests/source_samples/javascript.js, location=(875, 886))
-MAKE_FUNCTION 0
-STORE_NAME testGlobalThis
 PUSH_NULL None
 LOAD_NAME console
 LOAD_ATTR log

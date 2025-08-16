@@ -563,11 +563,16 @@ class ASTCompiler:
         # Add RETURN_CONST at the end instead of leaving it open
         bytecode.append(emit(OpCode.RETURN_CONST, None))
 
+        # Extract only module-level source code (excludes function/class definitions)
+        module_source_code = self._extract_module_level_source_code(
+            source_code, self.code_objects
+        )
+
         # Create root CodeObject
         root_code_obj = CodeObject(
             name="<module>",
             byte_code=bytecode,
-            source_code=source_code,
+            source_code=module_source_code,
             path=file_path,
             location=location,
             language=self.language_name,
@@ -575,6 +580,50 @@ class ASTCompiler:
 
         # Return root CodeObject first, followed by function/class CodeObjects
         return [root_code_obj] + self.code_objects
+
+    def _extract_module_level_source_code(
+        self, source_code: str, function_class_objects: List[CodeObject]
+    ) -> str:
+        """
+        Extract only module-level source code lines, excluding function/class definitions.
+
+        Args:
+            source_code: The complete source code of the file
+            function_class_objects: List of CodeObjects for functions and classes
+
+        Returns:
+            String containing only module-level source code lines
+        """
+        if not source_code:
+            return ""
+
+        # Get all function/class definition line ranges
+        excluded_ranges = []
+        for code_obj in function_class_objects:
+            if hasattr(code_obj, "location") and code_obj.location:
+                start_line, end_line = code_obj.location
+                excluded_ranges.append((start_line, end_line))
+
+        # Sort ranges by start line
+        excluded_ranges.sort()
+
+        # Split source into lines
+        source_lines = source_code.split("\n")
+        module_lines = []
+
+        for line_num, line_content in enumerate(source_lines, 1):
+            # Check if this line is within any excluded range
+            is_excluded = False
+            for start_line, end_line in excluded_ranges:
+                if start_line <= line_num <= end_line:
+                    is_excluded = True
+                    break
+
+            # Include line if it's not excluded
+            if not is_excluded:
+                module_lines.append(line_content)
+
+        return "\n".join(module_lines)
 
     def _generate_ref_name(self, base_name: str) -> str:
         """Generate a unique reference name for a CodeObject."""
@@ -2555,21 +2604,9 @@ class ASTCompiler:
                 )
                 self.code_objects.append(func_code_obj)
 
-                # Python-like structure: LOAD_CONST -> MAKE_FUNCTION -> STORE_NAME
-                # Load the code object as a constant (similar to Python's approach)
-                bytecode.append(emit(OpCode.LOAD_CONST, func_code_obj))
-
-                # Use appropriate opcode based on function type with arg=0 (no defaults)
-                if is_async and is_generator:
-                    # Async generator function
-                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, 0))
-                elif is_async:
-                    bytecode.append(emit(OpCode.ASYNC_FUNCTION, 0))
-                elif is_generator:
-                    bytecode.append(emit(OpCode.GENERATOR_FUNCTION, 0))
-                else:
-                    bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))
-                bytecode.append(self._emit_store(func_name))
+                # For top-level functions, don't add creation opcodes to module bytecode
+                # since they're already represented as separate CodeObjects
+                # This prevents duplication in tokenized output
             else:
                 # For nested functions, inline the bytecode directly
                 # Use appropriate opcode based on function type (but inline the body)
@@ -2619,16 +2656,9 @@ class ASTCompiler:
                 )
                 self.code_objects.append(class_code_obj)
 
-                # Python class protocol: PUSH_NULL + LOAD_BUILD_CLASS + LOAD_CONST + MAKE_FUNCTION + class_name + CALL
-                bytecode.append(emit(OpCode.PUSH_NULL, None))
-                bytecode.append(emit(OpCode.LOAD_BUILD_CLASS, None))
-                bytecode.append(
-                    emit(OpCode.LOAD_CONST, class_code_obj)
-                )  # Class code object
-                bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))  # No defaults
-                bytecode.append(emit(OpCode.LOAD_CONST, class_name))  # Class name
-                bytecode.append(emit(OpCode.CALL, 2))  # Call build class with 2 args
-                bytecode.append(self._emit_store(class_name))
+                # For top-level classes, don't add creation opcodes to module bytecode
+                # since they're already represented as separate CodeObjects
+                # This prevents duplication in tokenized output
             else:
                 # For nested classes, inline the bytecode directly
                 bytecode.append(emit(OpCode.MAKE_CLASS, class_name))
