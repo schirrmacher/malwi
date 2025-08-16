@@ -255,12 +255,22 @@ class MalwiReport:
         """Generate tokens output format with visualization of malwicode -> DistilBERT token splitting."""
         lines = []
 
-        # Group objects by file path to maintain organization
+        # Group malicious objects by file path to maintain organization
         files_with_objects = {}
-        for obj in self.all_objects:
+        for obj in self.malicious_objects:  # Only show malicious objects
             if obj.file_path not in files_with_objects:
                 files_with_objects[obj.file_path] = []
             files_with_objects[obj.file_path].append(obj)
+
+        # Handle case when no malicious objects found
+        if not files_with_objects:
+            lines.append("=" * 80)
+            lines.append("📊 TOKENS OUTPUT")
+            lines.append("=" * 80)
+            lines.append("")
+            lines.append("✅ No malicious objects found - nothing to display")
+            lines.append("")
+            return "\n".join(lines)
 
         # Sort files for consistent output
         for file_path in sorted(files_with_objects.keys()):
@@ -287,28 +297,55 @@ class MalwiReport:
                 # Add header with file path, object name, and counts
                 lines.append("=" * 80)
                 lines.append(f"📁 File: {file_path}")
-                lines.append(f"🏷️  Object: {obj.name}")
+
+                # Add object name with location info if available
+                object_line = f"🏷️  Object: {obj.name}"
+                if hasattr(obj, "ast_code_object") and obj.ast_code_object:
+                    if hasattr(obj.ast_code_object, "location"):
+                        start_line, end_line = obj.ast_code_object.location
+                        object_line += f" 📍 Lines {start_line}-{end_line}"
+                lines.append(object_line)
+
                 lines.append(
                     f"📊 Tokens: {len(malwicode_tokens)} malwicode → {distilbert_count} distilbert → {embedding_count} embeddings"
                 )
+                if obj.maliciousness is not None:
+                    lines.append(f"🎯 Maliciousness: {obj.maliciousness:.4f}")
                 lines.append("=" * 80)
                 lines.append("")
 
-                # Add malwicode tokens
-                lines.append("🔗 MALWICODE:")
+                # Add source code - prefer CodeObject's specific source over full file source
+                lines.append("📝 SOURCE CODE:")
                 lines.append("─" * 40)
 
-                # Format tokens in rows of 8 for better readability
-                tokens_per_row = 8
-                for i in range(0, len(malwicode_tokens), tokens_per_row):
-                    row_tokens = malwicode_tokens[i : i + tokens_per_row]
-                    lines.append("  " + " • ".join(row_tokens))
+                # Try to get the specific source code for this CodeObject
+                source_to_display = None
+                if hasattr(obj, "ast_code_object") and obj.ast_code_object:
+                    if hasattr(obj.ast_code_object, "source_code"):
+                        source_to_display = obj.ast_code_object.source_code
 
+                # Fallback to file source code if CodeObject source not available
+                if source_to_display is None and hasattr(obj, "file_source_code"):
+                    source_to_display = obj.file_source_code
+
+                if source_to_display:
+                    # Add line numbers to source code for better readability
+                    source_lines = source_to_display.split("\n")
+                    # Get starting line number if we have location info
+                    start_line_num = 1
+                    if hasattr(obj, "ast_code_object") and obj.ast_code_object:
+                        if hasattr(obj.ast_code_object, "location"):
+                            start_line_num = obj.ast_code_object.location[0]
+
+                    for i, line in enumerate(source_lines, start_line_num):
+                        lines.append(f"  {i:4d} | {line}")
+                else:
+                    lines.append("  [Source code not available]")
                 lines.append("")
 
                 # Add DistilBERT tokens if available
                 if distilbert_tokens is not None:
-                    lines.append("🤖 DISTILBERT:")
+                    lines.append("🔗 TOKENS:")
                     lines.append("─" * 40)
 
                     # Format DistilBERT tokens in rows of 10 for better readability
@@ -318,7 +355,7 @@ class MalwiReport:
                         lines.append("  " + " • ".join(row_tokens))
 
                 else:
-                    lines.append("🤖 DISTILBERT:")
+                    lines.append("🔗 TOKENS:")
                     lines.append("─" * 40)
                     lines.append("  (Tokenizer not available - models not initialized)")
 

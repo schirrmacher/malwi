@@ -58,6 +58,7 @@ def test_malwi_report_exports():
         input="/test/path",
         start="2024-01-01T12:00:00",
         duration=1.5,
+        all_file_types=[],
     )
 
     # Test export methods - version should contain base version
