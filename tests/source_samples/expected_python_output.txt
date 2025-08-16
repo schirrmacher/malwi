@@ -475,6 +475,9 @@ RERAISE 0
 COPY 3
 POP_EXCEPT None
 RERAISE 1
+LOAD_CONST CodeObject(name=dynamic_import_test, path=tests/source_samples/python.py, location=(119, 126))
+MAKE_FUNCTION 0
+STORE_NAME dynamic_import_test
 PUSH_NULL None
 LOAD_NAME print
 LOAD_CONST "--- Extended Import Test Cases: COMPLETED ---"
@@ -1071,6 +1074,13 @@ COPY 3
 POP_EXCEPT None
 RERAISE 1
 PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=MyContext, path=tests/source_samples/python.py, location=(326, 332))
+MAKE_FUNCTION 0
+LOAD_CONST MyContext
+CALL 2
+STORE_NAME MyContext
+PUSH_NULL None
 LOAD_NAME MyContext
 CALL 0
 BEFORE_WITH None
@@ -1102,11 +1112,17 @@ LOAD_NAME print
 LOAD_CONST "\n--- 4. Functions and Scopes ---"
 CALL 1
 POP_TOP None
+LOAD_CONST CodeObject(name=greet, path=tests/source_samples/python.py, location=(348, 349))
+MAKE_FUNCTION 0
+STORE_NAME greet
 PUSH_NULL None
 LOAD_NAME greet
 LOAD_CONST "World"
 CALL 1
 POP_TOP None
+LOAD_CONST CodeObject(name=func_with_args, path=tests/source_samples/python.py, location=(356, 357))
+MAKE_FUNCTION 0
+STORE_NAME func_with_args
 PUSH_NULL None
 LOAD_NAME func_with_args
 LOAD_CONST 1.0
@@ -1135,6 +1151,9 @@ LOAD_CONST 3.0
 KW_NAMES ('c', 'b', 'a')
 CALL 3
 POP_TOP None
+LOAD_CONST CodeObject(name=func_with_arbitrary_args, path=tests/source_samples/python.py, location=(367, 368))
+MAKE_FUNCTION 0
+STORE_NAME func_with_arbitrary_args
 PUSH_NULL None
 LOAD_NAME func_with_arbitrary_args
 LOAD_CONST 1.0
@@ -1255,6 +1274,13 @@ KW_NAMES ('start',)
 CALL 2
 POP_TOP None
 PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=TestClass, path=tests/source_samples/python.py, location=(392, 396))
+MAKE_FUNCTION 0
+LOAD_CONST TestClass
+CALL 2
+STORE_NAME TestClass
+PUSH_NULL None
 LOAD_NAME TestClass
 LOAD_CONST "value"
 LOAD_CONST "optional"
@@ -1312,6 +1338,9 @@ LOAD_CONST 3.0
 LOAD_CONST 4.0
 CALL 2
 POP_TOP None
+LOAD_CONST CodeObject(name=outer_func, path=tests/source_samples/python.py, location=(420, 428))
+MAKE_FUNCTION 0
+STORE_NAME outer_func
 PUSH_NULL None
 LOAD_NAME outer_func
 CALL 0
@@ -1326,6 +1355,9 @@ CALL 0
 POP_TOP None
 LOAD_CONST 100.0
 STORE_GLOBAL global_var
+LOAD_CONST CodeObject(name=modify_global, path=tests/source_samples/python.py, location=(439, 441))
+MAKE_FUNCTION 0
+STORE_NAME modify_global
 PUSH_NULL None
 LOAD_NAME modify_global
 CALL 0
@@ -1340,6 +1372,13 @@ LOAD_NAME print
 LOAD_CONST "\n--- 5. Object-Oriented Programming ---"
 CALL 1
 POP_TOP None
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=MyClass, path=tests/source_samples/python.py, location=(455, 470))
+MAKE_FUNCTION 0
+LOAD_CONST MyClass
+CALL 2
+STORE_NAME MyClass
 PUSH_NULL None
 LOAD_NAME MyClass
 LOAD_CONST 20.0
@@ -1372,6 +1411,27 @@ LOAD_CONST "5.1. Classes: PASSED"
 CALL 1
 POP_TOP None
 PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=ParentA, path=tests/source_samples/python.py, location=(483, 485))
+MAKE_FUNCTION 0
+LOAD_CONST ParentA
+CALL 2
+STORE_NAME ParentA
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=ParentB, path=tests/source_samples/python.py, location=(488, 490))
+MAKE_FUNCTION 0
+LOAD_CONST ParentB
+CALL 2
+STORE_NAME ParentB
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=Child, path=tests/source_samples/python.py, location=(493, 495))
+MAKE_FUNCTION 0
+LOAD_CONST Child
+CALL 2
+STORE_NAME Child
+PUSH_NULL None
 LOAD_NAME Child
 CALL 0
 STORE_NAME child_obj
@@ -1395,6 +1455,13 @@ LOAD_NAME print
 LOAD_CONST "5.2. Inheritance: PASSED"
 CALL 1
 POP_TOP None
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=Vector, path=tests/source_samples/python.py, location=(506, 525))
+MAKE_FUNCTION 0
+LOAD_CONST Vector
+CALL 2
+STORE_NAME Vector
 PUSH_NULL None
 LOAD_NAME Vector
 LOAD_CONST 1.0
@@ -1430,6 +1497,13 @@ LOAD_NAME print
 LOAD_CONST "5.3. Dunder Methods: PASSED"
 CALL 1
 POP_TOP None
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=Circle, path=tests/source_samples/python.py, location=(538, 554))
+MAKE_FUNCTION 0
+LOAD_CONST Circle
+CALL 2
+STORE_NAME Circle
 PUSH_NULL None
 LOAD_NAME Circle
 LOAD_CONST 5.0
@@ -1474,6 +1548,9 @@ LOAD_NAME print
 LOAD_CONST "\n--- 6. Advanced Features ---"
 CALL 1
 POP_TOP None
+LOAD_CONST CodeObject(name=my_decorator, path=tests/source_samples/python.py, location=(575, 583))
+MAKE_FUNCTION 0
+STORE_NAME my_decorator
 LOAD_NAME my_decorator
 LOAD_CONST CodeObject(name=say_whee, path=tests/source_samples/python.py, location=(587, 588))
 MAKE_FUNCTION 0
@@ -1488,6 +1565,9 @@ LOAD_NAME print
 LOAD_CONST "6.1. Decorators: PASSED"
 CALL 1
 POP_TOP None
+LOAD_CONST CodeObject(name=my_generator, path=tests/source_samples/python.py, location=(596, 598))
+GENERATOR_FUNCTION 0
+STORE_NAME my_generator
 PUSH_NULL None
 LOAD_NAME my_generator
 LOAD_CONST 3.0
@@ -1531,6 +1611,12 @@ RERAISE 0
 COPY 3
 POP_EXCEPT None
 RERAISE 1
+LOAD_CONST CodeObject(name=my_coroutine, path=tests/source_samples/python.py, location=(612, 614))
+ASYNC_FUNCTION 0
+STORE_NAME my_coroutine
+LOAD_CONST CodeObject(name=main_async, path=tests/source_samples/python.py, location=(617, 619))
+ASYNC_FUNCTION 0
+STORE_NAME main_async
 PUSH_NULL None
 LOAD_NAME asyncio
 LOAD_ATTR run
@@ -1539,6 +1625,20 @@ LOAD_NAME main_async
 CALL 0
 CALL 1
 POP_TOP None
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=MyMeta, path=tests/source_samples/python.py, location=(626, 629))
+MAKE_FUNCTION 0
+LOAD_CONST MyMeta
+CALL 2
+STORE_NAME MyMeta
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=MyClassWithMeta, path=tests/source_samples/python.py, location=(632, 633))
+MAKE_FUNCTION 0
+LOAD_CONST MyClassWithMeta
+CALL 2
+STORE_NAME MyClassWithMeta
 PUSH_NULL None
 LOAD_NAME hasattr
 LOAD_NAME MyClassWithMeta
@@ -1553,6 +1653,9 @@ LOAD_NAME print
 LOAD_CONST "6.4. Metaclasses: PASSED"
 CALL 1
 POP_TOP None
+LOAD_CONST CodeObject(name=hinted_function, path=tests/source_samples/python.py, location=(642, 643))
+MAKE_FUNCTION 0
+STORE_NAME hinted_function
 PUSH_NULL None
 LOAD_NAME hinted_function
 LOAD_CONST "Alice"
@@ -1726,6 +1829,13 @@ LOAD_CONST "\n--- 8. Dynamic Features and Introspection ---"
 CALL 1
 POP_TOP None
 PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=DynamicClass, path=tests/source_samples/python.py, location=(701, 702))
+MAKE_FUNCTION 0
+LOAD_CONST DynamicClass
+CALL 2
+STORE_NAME DynamicClass
+PUSH_NULL None
 LOAD_NAME DynamicClass
 CALL 0
 STORE_NAME dyn_obj
@@ -1827,6 +1937,9 @@ LOAD_CONST None
 STORE_NAME none_val
 LOAD_CONST ...
 STORE_NAME ellipsis_val
+LOAD_CONST CodeObject(name=function_with_ellipsis, path=tests/source_samples/python.py, location=(742, 743))
+MAKE_FUNCTION 0
+STORE_NAME function_with_ellipsis
 LOAD_CONST 42.0
 UNARY_NEGATIVE None
 STORE_NAME negative_num
@@ -2002,6 +2115,13 @@ BINARY_OP None
 STORE_NAME count
 JUMP_BACKWARD 9
 PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=SimpleContext, path=tests/source_samples/python.py, location=(808, 813))
+MAKE_FUNCTION 0
+LOAD_CONST SimpleContext
+CALL 2
+STORE_NAME SimpleContext
+PUSH_NULL None
 LOAD_NAME SimpleContext
 CALL 0
 BEFORE_WITH None
@@ -2060,6 +2180,9 @@ LOAD_CONST 1.0
 LOAD_CONST 1.0
 COMPARE_OP None
 BINARY_OPERATION None
+LOAD_CONST CodeObject(name=empty_func, path=tests/source_samples/python.py, location=(828, 829))
+MAKE_FUNCTION 0
+STORE_NAME empty_func
 PUSH_NULL None
 LOAD_NAME range
 LOAD_CONST 5.0
@@ -2079,6 +2202,9 @@ POP_JUMP_IF_FALSE 5
 BINARY_OPERATION None
 JUMP_BACKWARD 13
 END_FOR None
+LOAD_CONST CodeObject(name=test_raise, path=tests/source_samples/python.py, location=(840, 841))
+MAKE_FUNCTION 0
+STORE_NAME test_raise
 LOAD_CONST 0
 LOAD_CONST ('sqrt',)
 IMPORT_NAME math
@@ -2091,22 +2217,59 @@ IMPORT_NAME sys
 STORE_NAME system
 LOAD_CONST "global"
 STORE_GLOBAL global_var
+LOAD_CONST CodeObject(name=test_global, path=tests/source_samples/python.py, location=(852, 854))
+MAKE_FUNCTION 0
+STORE_NAME test_global
+LOAD_CONST CodeObject(name=outer, path=tests/source_samples/python.py, location=(857, 865))
+MAKE_FUNCTION 0
+STORE_NAME outer
 LOAD_CONST 42.0
 STORE_GLOBAL simple_global
+LOAD_CONST CodeObject(name=read_simple_global, path=tests/source_samples/python.py, location=(875, 877))
+MAKE_FUNCTION 0
+STORE_NAME read_simple_global
+LOAD_CONST CodeObject(name=modify_simple_global, path=tests/source_samples/python.py, location=(880, 884))
+MAKE_FUNCTION 0
+STORE_NAME modify_simple_global
 LOAD_CONST 10.0
 STORE_GLOBAL global_x
 LOAD_CONST 20.0
 STORE_GLOBAL global_y
 LOAD_CONST 30.0
 STORE_GLOBAL global_z
+LOAD_CONST CodeObject(name=multiple_globals, path=tests/source_samples/python.py, location=(893, 899))
+MAKE_FUNCTION 0
+STORE_NAME multiple_globals
 LOAD_CONST "I am global"
 STORE_GLOBAL mixed_var
+LOAD_CONST CodeObject(name=mixed_scope, path=tests/source_samples/python.py, location=(906, 922))
+MAKE_FUNCTION 0
+STORE_NAME mixed_scope
 LOAD_CONST "key"
 LOAD_CONST "value"
 BUILD_MAP 1
 STORE_GLOBAL context_global
+LOAD_CONST CodeObject(name=global_in_expressions, path=tests/source_samples/python.py, location=(929, 944))
+MAKE_FUNCTION 0
+STORE_NAME global_in_expressions
+LOAD_CONST CodeObject(name=global_function, path=tests/source_samples/python.py, location=(948, 949))
+MAKE_FUNCTION 0
+STORE_NAME global_function
+PUSH_NULL None
+LOAD_BUILD_CLASS None
+LOAD_CONST CodeObject(name=GlobalClass, path=tests/source_samples/python.py, location=(952, 953))
+MAKE_FUNCTION 0
+LOAD_CONST GlobalClass
+CALL 2
+STORE_NAME GlobalClass
+LOAD_CONST CodeObject(name=test_global_callables, path=tests/source_samples/python.py, location=(956, 965))
+MAKE_FUNCTION 0
+STORE_NAME test_global_callables
 LOAD_CONST "outer"
 STORE_GLOBAL outer_global
+LOAD_CONST CodeObject(name=outer_with_global, path=tests/source_samples/python.py, location=(972, 992))
+MAKE_FUNCTION 0
+STORE_NAME outer_with_global
 LOAD_CONST 1.0
 LOAD_CONST 2.0
 LOAD_CONST 3.0
@@ -2114,10 +2277,19 @@ LOAD_CONST 4.0
 LOAD_CONST 5.0
 BUILD_LIST 5
 STORE_GLOBAL comp_global
+LOAD_CONST CodeObject(name=global_in_comprehensions, path=tests/source_samples/python.py, location=(999, 1011))
+MAKE_FUNCTION 0
+STORE_NAME global_in_comprehensions
 LOAD_CONST "global shadow"
 STORE_GLOBAL shadow_var
+LOAD_CONST CodeObject(name=shadow_test, path=tests/source_samples/python.py, location=(1018, 1037))
+MAKE_FUNCTION 0
+STORE_NAME shadow_test
 LOAD_CONST "my custom type"
 STORE_GLOBAL type
+LOAD_CONST CodeObject(name=global_shadowing_builtin, path=tests/source_samples/python.py, location=(1044, 1056))
+MAKE_FUNCTION 0
+STORE_NAME global_shadowing_builtin
 LOAD_CONST 42.0
 STORE_NAME temp_var
 DELETE_NAME temp_var
@@ -2614,6 +2786,9 @@ LOAD_CONST "inner"
 BINARY_SUBSCR None
 LOAD_CONST "deep"
 STORE_SUBSCR None
+LOAD_CONST CodeObject(name=get_store_key, path=tests/source_samples/python.py, location=(1220, 1221))
+MAKE_FUNCTION 0
+STORE_NAME get_store_key
 LOAD_CONST "from function"
 LOAD_NAME store_obj
 PUSH_NULL None
