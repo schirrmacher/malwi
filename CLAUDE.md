@@ -150,13 +150,63 @@ This ensures that:
 
 ## Architecture Notes
 
-- **Entry Point**: `src/cli/entry.py` - CLI interface and orchestration
-- **Core Pipeline**: `src/research/malwi_object.py` → `ast_to_malwicode.py` → `predict_distilbert.py`
+- **Entry Point**: `src/cli/entry.py` - Main CLI interface and subcommand routing
+- **Scan Command**: `src/cli/scan.py` - Local file/directory scanning functionality
+- **PyPI Command**: `src/cli/pypi.py` - PyPI package downloading and scanning
+- **Core Pipeline**: `src/common/malwi_object.py` → `src/common/bytecode.py` → `src/common/predict_distilbert.py`
 - **Data Preprocessing**: `src/research/preprocess.py` - Parallel processing for fast AST compilation
-- **AST Compilation**: `src/research/ast_to_malwicode.py` - Language-independent bytecode generation
+- **AST Compilation**: `src/common/bytecode.py` - Language-independent bytecode generation (renamed from ast_to_malwicode.py)
+- **File Operations**: `src/common/files.py` - File copying and utility functions
 - **Mapping System**: JSON configs in `src/common/syntax_mapping/` define bytecode-to-token mappings
 - **Models**: Pre-trained DistilBERT model stored in `malwi-models/`
 - **Training Data**: Requires `malwi-samples` repository cloned in parent directory
+
+## CLI Subcommand Structure
+
+The CLI follows a modular subcommand architecture with clear separation of concerns:
+
+### Creating New Subcommands
+
+To add a new subcommand (e.g., `git`):
+
+1. **Create subcommand file**: `src/cli/git.py`
+2. **Implement command function**: `git_command(args)`
+3. **Create parser setup function**: `setup_git_parser(subparsers)`
+4. **Register in entry.py**: Import and call `setup_git_parser(subparsers)`
+
+### Example Subcommand Structure
+
+```python
+# src/cli/new_command.py
+from common.messaging import configure_messaging, info
+
+def new_command(args):
+    """Execute the new subcommand."""
+    configure_messaging(quiet=args.quiet)
+    info("Processing new command...")
+    # Command implementation here
+
+def setup_new_parser(subparsers):
+    """Set up the new subcommand parser."""
+    parser = subparsers.add_parser("new", help="Description of new command")
+    parser.add_argument("--option", help="Command option")
+    parser.set_defaults(func=new_command)
+```
+
+```python
+# src/cli/entry.py - Add import and setup call
+from cli.new_command import setup_new_parser
+
+def main():
+    # ... existing code ...
+    setup_new_parser(subparsers)
+    # ... rest of main function ...
+```
+
+### Current Subcommands
+
+- **scan**: Local file/directory scanning (`src/cli/scan.py`)
+- **pypi**: PyPI package scanning (`src/cli/pypi.py`)
 
 ## Performance
 

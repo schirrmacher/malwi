@@ -231,9 +231,23 @@ def result(message: str, *args: Any, force: bool = False) -> None:
     get_message_manager().result(message, *args, force=force)
 
 
-def banner(message: str) -> None:
-    """Print banner message using global manager."""
-    get_message_manager().banner(message)
+def banner(message: str = None) -> None:
+    """Print banner message with ASCII logo using global manager."""
+    ascii_logo = """
+                  __          __
+  .--------.---.-|  .--.--.--|__|
+  |        |  _  |  |  |  |  |  |
+  |__|__|__|___._|__|________|__|
+     AI Python Malware Scanner
+
+"""
+
+    if message:
+        full_banner = ascii_logo + message
+    else:
+        full_banner = ascii_logo
+
+    get_message_manager().banner(full_banner)
 
 
 def debug(message: str, *args: Any) -> None:

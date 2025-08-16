@@ -15,7 +15,16 @@ import urllib.request
 import urllib.error
 from tqdm import tqdm
 
-from common.messaging import info, error
+from common.malwi_object import MalwiObject, MalwiReport
+from common.files import copy_file
+from common.messaging import (
+    configure_messaging,
+    banner,
+    model_warning,
+    info,
+    error,
+    result,
+)
 
 
 class PyPIScanner:
@@ -271,3 +280,163 @@ def scan_pypi_package(
     """
     scanner = PyPIScanner(temp_dir)
     return scanner.scan_package(package_name, version, show_progress)
+
+
+def pypi_command(args):
+    """Execute the pypi subcommand."""
+    # Configure unified messaging system
+    configure_messaging(quiet=args.quiet)
+
+    banner()
+
+    # Use specified download folder
+    download_path = Path(args.folder)
+
+    # Download and extract the package
+    temp_dir, extracted_dirs = scan_pypi_package(
+        args.package, args.version, download_path, show_progress=not args.quiet
+    )
+
+    if not extracted_dirs:
+        error("Failed to download or extract package")
+        return
+
+    # Load ML models for scanning
+    try:
+        MalwiObject.load_models_into_memory(
+            distilbert_model_path=args.model_path,
+            tokenizer_path=args.tokenizer_path,
+        )
+    except Exception as e:
+        model_warning("ML", e)
+
+    # Set up move directory if specified
+    move_dir = None
+    file_copy_callback = None
+    if args.move:
+        move_dir = Path(args.move)
+        move_dir.mkdir(parents=True, exist_ok=True)
+
+    # Scan each extracted directory
+    all_reports = []
+    for extracted_dir in extracted_dirs:
+        # Create file copy callback for this extracted directory
+        if move_dir:
+
+            def file_copy_callback(file_path: Path, malicious_objects):
+                copy_file(file_path, extracted_dir, move_dir)
+
+        report: MalwiReport = MalwiReport.create(
+            input_path=extracted_dir,
+            accepted_extensions=[".py"],  # Focus on Python files for PyPI packages
+            predict=True,
+            silent=args.quiet,
+            malicious_threshold=args.threshold,
+            on_malicious_found=file_copy_callback,
+        )
+        all_reports.append(report)
+
+    # Combine reports and show results
+    if all_reports:
+        # For now, use the first report (could be enhanced to merge multiple)
+        main_report = all_reports[0]
+
+        # Generate output based on format
+        if args.format == "yaml":
+            output = main_report.to_report_yaml()
+        elif args.format == "json":
+            output = main_report.to_report_json()
+        elif args.format == "markdown":
+            output = main_report.to_report_markdown()
+        elif args.format == "tokens":
+            output = main_report.to_tokens_text()
+        elif args.format == "code":
+            output = main_report.to_code_text()
+        else:
+            output = main_report.to_demo_text()
+
+        if args.save:
+            save_path = Path(args.save)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            save_path.write_text(output, encoding="utf-8")
+            if not args.quiet:
+                info(f"Output saved to {args.save}")
+        else:
+            result(output, force=True)
+
+    else:
+        info("No files were processed")
+
+
+def setup_pypi_parser(subparsers):
+    """Set up the pypi subcommand parser."""
+    pypi_parser = subparsers.add_parser("pypi", help="Scan PyPI packages")
+    pypi_parser.add_argument("package", help="PyPI package name to scan")
+    pypi_parser.add_argument(
+        "version",
+        nargs="?",
+        default=None,
+        help="Package version (optional, defaults to latest)",
+    )
+    pypi_parser.add_argument(
+        "--folder",
+        "-d",
+        metavar="FOLDER",
+        default="downloads",
+        help="Folder to download packages to (default: downloads)",
+    )
+    pypi_parser.add_argument(
+        "--format",
+        "-f",
+        choices=["demo", "markdown", "json", "yaml", "tokens", "code"],
+        default="demo",
+        help="Specify the output format.",
+    )
+    pypi_parser.add_argument(
+        "--threshold",
+        "-mt",
+        metavar="FLOAT",
+        type=float,
+        default=0.7,
+        help="Specify the threshold for classifying code objects as malicious (default: 0.7).",
+    )
+    pypi_parser.add_argument(
+        "--save",
+        "-s",
+        metavar="FILE",
+        help="Specify a file path to save the output.",
+        default=None,
+    )
+    pypi_parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress logging output.",
+    )
+    pypi_parser.add_argument(
+        "--move",
+        nargs="?",
+        const="findings",
+        metavar="DIR",
+        default=None,
+        help="Copy files with malicious findings to the specified directory, preserving folder structure (default: findings).",
+    )
+
+    pypi_developer_group = pypi_parser.add_argument_group("Developer Options")
+    pypi_developer_group.add_argument(
+        "--tokenizer-path",
+        "-t",
+        metavar="PATH",
+        help="Specify the tokenizer path",
+        default=None,
+    )
+    pypi_developer_group.add_argument(
+        "--model-path",
+        "-m",
+        metavar="PATH",
+        help="Specify the DistilBert model path",
+        default=None,
+    )
+
+    # Set the command handler
+    pypi_parser.set_defaults(func=pypi_command)

@@ -8,11 +8,9 @@
 It specializes in finding **zero-day vulnerabilities** and can classify code as malicious or benign without requiring internet access.
 
 ### Key Features
-- 🔍 Detects unknown malware patterns through AI analysis
+- 🇪🇺 Open-source project built on open research and data
 - 🔒 Runs completely offline - no data leaves your machine
-- ⚡ Fast scanning of entire codebases 
-- 🚫 No external dependencies or cloud services required
-- 📖 Open-source project built on research and open data 🇪🇺
+- ⚡ Fast scanning of entire codebases
 
 ### 1) Install
 ```
@@ -87,13 +85,13 @@ malwi pypi requests
 
 ## Why malwi?
 
-[The number of _malicious open-source packages_ is growing](https://arxiv.org/pdf/2404.04991). This represents a threat to the open-source community.
+Malicious actors are increasingly [targeting open-source projects](https://arxiv.org/pdf/2404.04991), introducing packages designed to compromise security.
 
-Typical malware behaviors include:
+Common malicious behaviors include:
 
-- _Exfiltration_ of data: Stealing credentials, API keys, or sensitive user data.
-- _Backdoors_: Allowing remote attackers to gain unauthorized access to your system.
-- _Destructive_ actions: Deleting files, corrupting databases, or sabotaging applications.
+- Data exfiltration: Theft of sensitive information such as credentials, API keys, or user data.
+- Backdoors: Unauthorized remote access to systems, enabling attackers to exploit vulnerabilities.
+- Destructive actions: Deliberate sabotage, including file deletion, database corruption, or application disruption.
 
 ## How does it work?
 
