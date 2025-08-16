@@ -98,3 +98,52 @@ def collect_files_by_extension(
     else:
         skipped_files.append(input_path)
     return accepted_files, skipped_files
+
+
+def concatenate_files(malicious_objects, scan_target: Path, threshold: float) -> str:
+    """
+    Concatenate malicious file contents into a single string for LLM processing.
+
+    Args:
+        malicious_objects: List of MalwiObject instances that are malicious
+        scan_target: Path that was scanned (for header info)
+        threshold: Maliciousness threshold used
+
+    Returns:
+        String containing concatenated file contents with headers
+    """
+    content_parts = []
+    content_parts.append("# Malicious Files Found by malwi Scanner\n")
+    content_parts.append(f"# Scan target: {scan_target}\n")
+    content_parts.append(f"# Total malicious files: {len(malicious_objects)}\n")
+    content_parts.append(f"# Threshold: {threshold}\n\n")
+
+    for malwi_obj in malicious_objects:
+        try:
+            source_file = Path(malwi_obj.file_path)
+
+            # Add file header
+            content_parts.append(f"# File: {source_file}\n")
+            if hasattr(malwi_obj, "activities") and malwi_obj.activities:
+                content_parts.append(
+                    f"# Detected Activities: {', '.join(malwi_obj.activities)}\n"
+                )
+            content_parts.append(f"# {'=' * 60}\n\n")
+
+            # Read and add file content
+            try:
+                file_content = source_file.read_text(encoding="utf-8", errors="ignore")
+                content_parts.append(file_content)
+                content_parts.append(f"\n\n# End of {source_file}\n")
+                content_parts.append("#" * 80 + "\n\n")
+            except Exception as read_error:
+                content_parts.append(
+                    f"# ERROR: Could not read file content: {read_error}\n"
+                )
+                content_parts.append("#" * 80 + "\n\n")
+
+        except Exception as e:
+            content_parts.append(f"# ERROR: Failed to process file: {e}\n")
+            content_parts.append("#" * 80 + "\n\n")
+
+    return "".join(content_parts)

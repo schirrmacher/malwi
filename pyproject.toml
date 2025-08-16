@@ -65,6 +65,7 @@ training = [
 triage = [
     "ollama>=0.5.1",
     "questionary>=2.1.0",
+    "ag2[mistral]==0.9.8.post1",
 ]
 
 [tool.pytest.ini_options]
