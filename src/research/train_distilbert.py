@@ -224,8 +224,7 @@ def cleanup_model_directory(model_output_path: Path):
 
 
 def run_training(args):
-    if args.disable_hf_datasets_progress_bar:
-        disable_progress_bar()
+    disable_progress_bar()
 
     progress("Starting DistilBERT model training...")
 
@@ -510,7 +509,6 @@ if __name__ == "__main__":
         choices=[256, 512],
         help="Hidden size for DistilBERT model (256 for smaller/faster, 512 for standard)",
     )
-    parser.add_argument("--disable-hf-datasets-progress-bar", action="store_true")
     parser.add_argument(
         "--token-column",
         type=str,
