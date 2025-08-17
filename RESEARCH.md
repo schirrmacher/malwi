@@ -2,13 +2,15 @@
 
 This document tracks the AI model training research progress for malwi, documenting chronological improvements and performance metrics.
 
-## Performance Tracking
-
-Each research iteration is tagged with the format: `{commit_hash}_f1/{score}` where the score represents the F1 performance metric.
-
 ## Research Timeline
 
 ### August 2025
+
+#### 2025-08-17: Code Detection Category Performance Impact
+- **Commit**: `1acc57be`
+- **Finding**: New string categories (`STRING_BASH`, `STRING_SQL`, `STRING_CODE`) cause 95x slower preprocessing on malicious files
+- **Data**: Benign: 20min/230k files vs Malicious: 1.5h/11k files (cancelled due to timeout with 5 unfinished futures)
+- **Impact**: Code detection categories are highly discriminative but computationally expensive
 
 #### 2025-08-04: Keyword Names Logic Optimization
 - **Tag**: `1f6b7a1e_f1/0.925` 
