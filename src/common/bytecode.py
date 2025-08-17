@@ -312,16 +312,16 @@ class Instruction:
         # This preserves short identifiers like "Optional", "some_var" as-is
         elif len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
-        elif is_bash_code(argval):
-            return f"{op_code.name} {SpecialCases.STRING_BASH.value}"
-        elif is_sql(argval):
-            return f"{op_code.name} {SpecialCases.STRING_SQL.value}"
-        elif is_code(argval):
-            return f"{op_code.name} {SpecialCases.STRING_CODE.value}"
-        elif is_hex(argval):
-            return f"{op_code.name} {SpecialCases.STRING_HEX.value}"
-        elif is_base64(argval):
-            return f"{op_code.name} {SpecialCases.STRING_BASE64.value}"
+        # elif is_bash_code(argval):
+        #     return f"{op_code.name} {SpecialCases.STRING_BASH.value}"
+        # elif is_sql(argval):
+        #     return f"{op_code.name} {SpecialCases.STRING_SQL.value}"
+        # elif is_code(argval):
+        #     return f"{op_code.name} {SpecialCases.STRING_CODE.value}"
+        # elif is_hex(argval):
+        #     return f"{op_code.name} {SpecialCases.STRING_HEX.value}"
+        # elif is_base64(argval):
+        #     return f"{op_code.name} {SpecialCases.STRING_BASE64.value}"
 
         # Default case for long strings
         return f"{op_code.name} {SpecialCases.STRING.value}"
