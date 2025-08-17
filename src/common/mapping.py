@@ -1,20 +1,19 @@
 import re
-import dis
+
 import math
-import types
+
 import socket
 import urllib
 import codecs
 import pathlib
 import collections
-
+import base64
+import binascii
 from enum import Enum
 from packaging.version import Version, InvalidVersion
-from typing import Optional, Any, Dict, Set
+from typing import Any, Dict, Set
 
 from common.files import read_json_from_file
-
-STRING_MAX_LENGTH = 15
 
 
 class SpecialCases(Enum):
@@ -236,16 +235,72 @@ def is_escaped_hex(s: str) -> bool:
     return bool(pattern.match(s))
 
 
-def is_base64(s: str) -> bool:
-    base64_char_pattern = re.compile(r"^[A-Za-z0-9+/]*(={0,2})$")
-    if not s:
+def is_base64(text: str) -> bool:
+    """
+    Checks if a given string is a valid Base64 encoded value.
+
+    Args:
+        text (str): The input string to check.
+
+    Returns:
+        bool: True if the string is valid Base64, False otherwise.
+    """
+    if not isinstance(text, str) or not text.strip():
         return False
-    return bool(base64_char_pattern.match(s)) and len(s) % 4 == 0
+
+    try:
+        # The input to b64decode must be ASCII bytes.
+        # If the string contains non-ASCII characters, it's not Base64.
+        text_as_bytes = text.encode("ascii")
+
+        # The decode function will raise a binascii.Error if the input is
+        # not valid Base64, checking for correct characters, padding, and length.
+        # The 'validate=True' flag ensures strict adherence to the alphabet.
+        base64.b64decode(text_as_bytes, validate=True)
+        return True
+    except (binascii.Error, UnicodeDecodeError):
+        # A binascii.Error indicates invalid Base64 (e.g., bad padding).
+        # A UnicodeDecodeError indicates the string wasn't pure ASCII.
+        return False
 
 
-def is_hex(s: str) -> bool:
-    hex_char_pattern_strict = re.compile(r"^[A-Fa-f0-9]+$")
-    return bool(hex_char_pattern_strict.match(s))
+def is_hex(text: str) -> bool:
+    """
+    Checks if a given string is a valid hexadecimal value.
+
+    A string is considered hexadecimal if it optionally starts with '0x',
+    has an even number of characters, and contains only valid hex digits
+    (0-9 and A-F, case-insensitive).
+
+    Args:
+        text (str): The input string to check.
+
+    Returns:
+        bool: True if the string is a valid hex value, False otherwise.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return False
+
+    # Handle the optional '0x' prefix
+    if text.lower().startswith("0x"):
+        text = text[2:]
+
+    # After stripping the prefix, the string can't be empty.
+    if not text:
+        return False
+
+    # A hex string representing bytes must have an even number of digits.
+    if len(text) % 2 != 0:
+        return False
+
+    # The most robust way to check for hex characters is to try conversion.
+    try:
+        # Convert the string to an integer from base 16.
+        int(text, 16)
+        return True
+    except ValueError:
+        # The conversion failed, so it's not a valid hex string.
+        return False
 
 
 def contains_url(text: str) -> bool:
@@ -599,3 +654,380 @@ def map_tuple_arg(argval: tuple, original_argrepr: str) -> str:
     ordered = list(result)
     ordered.sort()
     return " ".join(ordered)
+
+
+def is_bash_code(text: str, threshold: int = 3) -> bool:
+    """
+    Analyzes a string to determine if it's likely bash code.
+
+    This function uses a heuristic scoring model, checking for common bash
+    commands, control structures, and syntax. It returns a boolean value.
+
+    Args:
+        text (str): The input string to check.
+        threshold (int): The internal score needed to return True. A lower
+                         value increases sensitivity. Defaults to 3.
+
+    Returns:
+        bool: True if the string is likely bash code, False otherwise.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return False
+
+    score = 0
+
+    # Heuristic 1: Shebang (strong indicator)
+    if re.search(r"^#!\s*/(usr/)?bin/(bash|sh|zsh)", text):
+        score += 10
+
+    # Heuristic 2: Common commands and control structures
+    # Extended list of common bash/shell commands
+    keywords = [
+        "ls",
+        "cd",
+        "echo",
+        "rm",
+        "grep",
+        "awk",
+        "sed",
+        "cat",
+        "curl",
+        "wget",
+        "sudo",
+        "chmod",
+        "chown",
+        "mkdir",
+        "touch",
+        "cp",
+        "mv",
+        "find",
+        "xargs",
+        "tar",
+        "gzip",
+        "gunzip",
+        "zip",
+        "unzip",
+        "ps",
+        "kill",
+        "pkill",
+        "top",
+        "df",
+        "du",
+        "mount",
+        "umount",
+        "export",
+        "source",
+        "alias",
+        "unset",
+        "set",
+        "eval",
+        "exec",
+        "if",
+        "then",
+        "else",
+        "elif",
+        "fi",
+        "for",
+        "while",
+        "do",
+        "done",
+        "case",
+        "esac",
+        "function",
+        "return",
+        "break",
+        "continue",
+        "true",
+        "false",
+        "test",
+        "exit",
+        "trap",
+        "wait",
+        "sleep",
+        "head",
+        "tail",
+        "sort",
+        "uniq",
+        "cut",
+        "paste",
+        "join",
+        "comm",
+        "diff",
+        "patch",
+        "tee",
+        "nc",
+        "ssh",
+        "scp",
+        "rsync",
+        "git",
+        "docker",
+        "kubectl",
+        "npm",
+        "pip",
+        "apt",
+        "yum",
+        "brew",
+        "systemctl",
+        "service",
+        "journalctl",
+        "cron",
+        "at",
+    ]
+
+    # Count how many bash keywords appear
+    keyword_count = 0
+    for keyword in keywords:
+        if re.search(r"\b" + re.escape(keyword) + r"\b", text.lower()):
+            keyword_count += 1
+
+    # Award points based on keyword density
+    if keyword_count >= 3:
+        score += 4
+    elif keyword_count >= 2:
+        score += 3
+    elif keyword_count >= 1:
+        score += 2
+
+    # Heuristic 3: Shell-specific syntax and operators
+    if re.search(r"\$[a-zA-Z_]|\$\{[^}]+\}", text):  # Variable expansion: $VAR, ${VAR}
+        score += 2
+    if re.search(r"\$\([^)]+\)|`[^`]+`", text):  # Command substitution: $(...), `...`
+        score += 3
+    if re.search(r"\||>>?|<|&&|\|\||;", text):  # Piping, redirection, logical operators
+        score += 1
+    if re.search(
+        r"(^|\s)-[a-zA-Z]|\s--[a-zA-Z][a-zA-Z0-9-]*", text
+    ):  # Command line options
+        score += 1
+
+    # Heuristic 4: Common bash patterns
+    if re.search(r"\[\s+.*\s+\]", text):  # Test brackets: [ condition ]
+        score += 2
+    if re.search(r"\$\?", text):  # Exit status variable
+        score += 1
+    if re.search(r"^\s*#(?!#)", text, re.MULTILINE):  # Shell comments (not shebang)
+        score += 1
+    if re.search(r"2>&1|1>&2|&>|2>", text):  # File descriptor redirection
+        score += 2
+    if re.search(r"[^\\][\*\?]", text):  # Wildcards (not escaped)
+        score += 1
+    if re.search(r"~\/|\/home\/|\/usr\/|\/etc\/|\/var\/|\/tmp\/", text):  # Common paths
+        score += 1
+
+    return score >= threshold
+
+
+def is_code(text: str, threshold: float = 0.25) -> bool:
+    """
+    Analyzes a string to determine if it likely contains code.
+
+    This function uses a heuristic model based on several indicators:
+    1.  **Symbol Density**: The ratio of non-alphanumeric characters.
+    2.  **Keyword Presence**: Common programming keywords.
+    3.  **Structural Patterns**: Looks for function definitions, tags, etc.
+    4.  **Indentation**: Checks for lines starting with significant whitespace.
+
+    Args:
+        text (str): The input string to check.
+        threshold (float): A value between 0 and 1.0. A higher value requires
+                         more evidence before classifying text as code.
+                         Defaults to 0.25.
+
+    Returns:
+        bool: True if the string is likely code, False otherwise.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return False
+
+    score = 0.0
+
+    # 1. --- Symbol Density Analysis ---
+    # Code tends to have a higher ratio of symbols to letters.
+    text_length = len(text)
+    non_alnum_count = len(re.findall(r"[^a-zA-Z0-9\s]", text))
+    symbol_density = non_alnum_count / text_length if text_length > 0 else 0
+
+    # Only award symbol density points if it's a reasonable code-like density
+    # Allow higher density for JSON/data structures
+    if 0.12 < symbol_density <= 0.6:  # Sweet spot for code and data structures
+        score += 0.4
+    elif 0.05 < symbol_density <= 0.12:  # Partial credit for moderate symbol density
+        score += 0.2
+
+    # 2. --- Keyword Presence ---
+    # Look for keywords common across many languages.
+    keywords = {
+        "if",
+        "else",
+        "elif",
+        "for",
+        "while",
+        "do",
+        "return",
+        "yield",
+        "function",
+        "def",
+        "class",
+        "struct",
+        "interface",
+        "enum",
+        "import",
+        "from",
+        "include",
+        "require",
+        "using",
+        "namespace",
+        "const",
+        "let",
+        "var",
+        "auto",
+        "int",
+        "float",
+        "string",
+        "bool",
+        "public",
+        "private",
+        "protected",
+        "static",
+        "final",
+        "abstract",
+        "true",
+        "false",
+        "null",
+        "None",
+        "nil",
+        "undefined",
+        "switch",
+        "case",
+        "default",
+        "break",
+        "continue",
+        "try",
+        "catch",
+        "finally",
+        "except",
+        "throw",
+        "raise",
+        "new",
+        "delete",
+        "malloc",
+        "free",
+        "this",
+        "self",
+        "super",
+        "lambda",
+        "async",
+        "await",
+        "typeof",
+        "instanceof",
+        "extends",
+        "implements",
+        "inherits",
+        "override",
+    }
+
+    # Using a set for efficient lookup
+    found_keywords = {
+        word for word in re.findall(r"\b\w+\b", text.lower()) if word in keywords
+    }
+
+    # Award points based on keyword count
+    if len(found_keywords) >= 3:
+        score += 0.6
+    elif len(found_keywords) >= 2:
+        score += 0.5
+    elif len(found_keywords) >= 1:
+        score += 0.3
+
+    # 3. --- Structural Patterns (Regex) ---
+    patterns = [
+        r"<\s*/?\s*\w+.*?>",  # HTML/XML tags: <html>, </div>
+        r"==|!=|<=|>=|\+=|=>|->",  # Common operators: ==, !=, +=, =>
+        r"//|#|/\*|\*/",  # Comments: //, #, /*, */
+        r"\b(def|function)\s+\w+\s*\(",  # Function definition
+        r"[\[\]\{\}]",  # Brackets and braces
+    ]
+    for pattern in patterns:
+        if re.search(pattern, text):
+            score += 0.2  # Add a smaller score for each pattern found
+
+    # 4. --- Indentation ---
+    # Check if any line (after the first) starts with multiple spaces or a tab.
+    lines = text.splitlines()
+    if len(lines) > 1:
+        for line in lines[1:]:
+            if re.match(r"^\s{2,}|^\t", line):
+                score += 0.3
+                break  # Only need to find one instance
+
+    # Normalize the score to be roughly between 0 and 1+
+    # This is a simple normalization; a more complex one could be used.
+    final_score = min(score, 1.0)
+
+    return final_score >= threshold
+
+
+def is_sql(text: str) -> bool:
+    """
+    Detects if a given string contains a SQL statement.
+
+    This function uses a set of regular expressions to find common SQL
+    keywords and query structures. It's case-insensitive.
+
+    Args:
+        text (str): The input string to check.
+
+    Returns:
+        bool: True if the string is likely a SQL statement, False otherwise.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return False
+
+    # 1. High-confidence patterns for core SQL commands
+    # These patterns look for the basic structure of the most common queries.
+    sql_patterns = [
+        # More specific patterns to avoid false positives
+        r"\bselect\s+[\w\*,\s\.]+\s+from\s+[\w\.]+(\s+where|\s+group|\s+order|\s+limit|;|\s*--|\s*$)",  # SELECT ... FROM table with SQL context
+        r"\binsert\s+into\s+\w+\s*\([^)]*\)\s*values\s*\(",  # INSERT INTO table (...) VALUES (
+        r"\bupdate\s+\w+\s+set\s+\w+\s*=",  # UPDATE table SET column =
+        r"\bdelete\s+from\s+\w+",  # DELETE FROM table
+        r"\b(create|alter|drop)\s+(table|database|view|index|procedure|function)\s+\w+",  # DDL
+        r"\b(grant|revoke)\s+\w+\s+on\s+\w+",  # Permissions
+        r"\btruncate\s+table\s+\w+",  # TRUNCATE TABLE
+    ]
+
+    # Check for the primary, high-confidence patterns first
+    for pattern in sql_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            return True
+
+    # 2. Fallback check for a combination of other common SQL keywords
+    # This can catch partial queries or less common statements.
+    secondary_keywords = [
+        r"\bwhere\s+\w+\s*[=<>!]",  # WHERE with condition
+        r"\bgroup\s+by\s+\w+",  # GROUP BY
+        r"\border\s+by\s+\w+",  # ORDER BY
+        r"\b(left|right|inner|outer|full)\s+join\s+\w+",  # JOINs
+        r"\bon\s+\w+\.\w+\s*=\s*\w+\.\w+",  # ON join condition
+        r"\bhaving\s+\w+\s*[=<>!]",  # HAVING with condition
+        r"\bunion\s+(all\s+)?select",  # UNION
+        r"\blike\s+['\"][^'\"]*['\"]",  # LIKE with pattern
+        r"\bin\s*\([^)]*\)",  # IN clause
+        r"\bexists\s*\(",  # EXISTS
+        r"\bcount\s*\(",  # COUNT function
+        r"\bmax\s*\(",  # MAX function
+        r"\bmin\s*\(",  # MIN function
+        r"\bavg\s*\(",  # AVG function
+        r"\bsum\s*\(",  # SUM function
+    ]
+
+    found_keywords = 0
+    for keyword_pattern in secondary_keywords:
+        if re.search(keyword_pattern, text, re.IGNORECASE):
+            found_keywords += 1
+
+    # If we find at least two of these secondary keywords, it's a strong sign.
+    if found_keywords >= 2:
+        return True
+
+    return False
