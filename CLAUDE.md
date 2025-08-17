@@ -115,6 +115,52 @@ python util/build_helpers.py restore
 # Training files are excluded: train_*.py, preprocess.py, etc.
 ```
 
+## Research Workflow
+
+**For AI model training research and performance tracking:**
+
+### Tagging Research Commits
+When you complete a training run and have performance metrics:
+
+1. **Tag Format**: `{commit_hash}_f1/{score}` where score is the F1 performance metric
+2. **Tag Command**: `git tag {commit_hash}_f1/{score}`
+3. **Example**: `git tag 2b4abcab_f1/0.958`
+
+### Recording Research Progress
+Use this workflow to document research progress:
+
+**Prompt Template for Claude:**
+```
+Research commit: [commit_hash]
+F1 Score: [score] 
+Change: [brief description of what was changed]
+Reasoning: [why the performance improved/decreased]
+
+Please tag this commit and update RESEARCH.md with the chronological entry.
+```
+
+**Example:**
+```
+Research commit: abc123de
+F1 Score: 0.962
+Change: Optimized string tokenization with caching
+Reasoning: Reduced noise in token mapping improved model accuracy by 0.4 points
+
+Please tag this commit and update RESEARCH.md with the chronological entry.
+```
+
+**Claude will:**
+1. Create the git tag with format `{commit}_f1/{score}`
+2. Update `RESEARCH.md` with chronological entry
+3. Add analysis of performance trend vs previous experiments
+4. Suggest next research directions based on patterns
+
+### Research Documentation
+- **RESEARCH.md**: Chronological tracking of all model training experiments
+- **Performance metrics**: F1 scores, precision, recall tracked over time
+- **Failed experiments**: Documented to prevent repeating unsuccessful approaches
+- **Key insights**: Analysis of what works and what doesn't
+
 ## Release
 
 1. Run pytests
