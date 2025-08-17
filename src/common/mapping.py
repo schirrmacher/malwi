@@ -1,12 +1,9 @@
 import re
 
-import math
-
 import socket
 import urllib
 import codecs
 import pathlib
-import collections
 import base64
 import binascii
 from enum import Enum
@@ -27,119 +24,17 @@ class SpecialCases(Enum):
     STRING_IP = "STRING_IP"
     STRING_BASE64 = "STRING_BASE64"
     STRING_HEX = "STRING_HEX"
-    STRING_ESCAPED_HEX = "STRING_ESCAPED_HEX"
+    STRING_BASH = "STRING_BASH"
+    STRING_SQL = "STRING_SQL"
+    STRING_CODE = "STRING_CODE"
+    STRING = "STRING"
     MALFORMED_FILE = "MALFORMED_FILE"
     MALFORMED_SYNTAX = "MALFORMED_SYNTAX"
-    FILE_READING_ISSUES = "FILE_READING_ISSUES"
     TARGETED_FILE = "TARGETED_FILE"
     BOOLEAN = "BOOLEAN"
     INTEGER = "INTEGER"
     FLOAT = "FLOAT"
     OBJECT = "OBJECT"
-
-    # STRING prefix combinations (4 prefixes × 6 lengths × 4 entropies = 96 combinations)
-    STRING_LEN_XS_ENT_LOW = "STRING_LEN_XS_ENT_LOW"
-    STRING_LEN_XS_ENT_MED = "STRING_LEN_XS_ENT_MED"
-    STRING_LEN_XS_ENT_HIGH = "STRING_LEN_XS_ENT_HIGH"
-    STRING_LEN_XS_ENT_VHIGH = "STRING_LEN_XS_ENT_VHIGH"
-    STRING_LEN_S_ENT_LOW = "STRING_LEN_S_ENT_LOW"
-    STRING_LEN_S_ENT_MED = "STRING_LEN_S_ENT_MED"
-    STRING_LEN_S_ENT_HIGH = "STRING_LEN_S_ENT_HIGH"
-    STRING_LEN_S_ENT_VHIGH = "STRING_LEN_S_ENT_VHIGH"
-    STRING_LEN_M_ENT_LOW = "STRING_LEN_M_ENT_LOW"
-    STRING_LEN_M_ENT_MED = "STRING_LEN_M_ENT_MED"
-    STRING_LEN_M_ENT_HIGH = "STRING_LEN_M_ENT_HIGH"
-    STRING_LEN_M_ENT_VHIGH = "STRING_LEN_M_ENT_VHIGH"
-    STRING_LEN_L_ENT_LOW = "STRING_LEN_L_ENT_LOW"
-    STRING_LEN_L_ENT_MED = "STRING_LEN_L_ENT_MED"
-    STRING_LEN_L_ENT_HIGH = "STRING_LEN_L_ENT_HIGH"
-    STRING_LEN_L_ENT_VHIGH = "STRING_LEN_L_ENT_VHIGH"
-    STRING_LEN_XL_ENT_LOW = "STRING_LEN_XL_ENT_LOW"
-    STRING_LEN_XL_ENT_MED = "STRING_LEN_XL_ENT_MED"
-    STRING_LEN_XL_ENT_HIGH = "STRING_LEN_XL_ENT_HIGH"
-    STRING_LEN_XL_ENT_VHIGH = "STRING_LEN_XL_ENT_VHIGH"
-    STRING_LEN_XXL_ENT_LOW = "STRING_LEN_XXL_ENT_LOW"
-    STRING_LEN_XXL_ENT_MED = "STRING_LEN_XXL_ENT_MED"
-    STRING_LEN_XXL_ENT_HIGH = "STRING_LEN_XXL_ENT_HIGH"
-    STRING_LEN_XXL_ENT_VHIGH = "STRING_LEN_XXL_ENT_VHIGH"
-
-    # STRING_BASE64 prefix combinations
-    STRING_BASE64_LEN_XS_ENT_LOW = "STRING_BASE64_LEN_XS_ENT_LOW"
-    STRING_BASE64_LEN_XS_ENT_MED = "STRING_BASE64_LEN_XS_ENT_MED"
-    STRING_BASE64_LEN_XS_ENT_HIGH = "STRING_BASE64_LEN_XS_ENT_HIGH"
-    STRING_BASE64_LEN_XS_ENT_VHIGH = "STRING_BASE64_LEN_XS_ENT_VHIGH"
-    STRING_BASE64_LEN_S_ENT_LOW = "STRING_BASE64_LEN_S_ENT_LOW"
-    STRING_BASE64_LEN_S_ENT_MED = "STRING_BASE64_LEN_S_ENT_MED"
-    STRING_BASE64_LEN_S_ENT_HIGH = "STRING_BASE64_LEN_S_ENT_HIGH"
-    STRING_BASE64_LEN_S_ENT_VHIGH = "STRING_BASE64_LEN_S_ENT_VHIGH"
-    STRING_BASE64_LEN_M_ENT_LOW = "STRING_BASE64_LEN_M_ENT_LOW"
-    STRING_BASE64_LEN_M_ENT_MED = "STRING_BASE64_LEN_M_ENT_MED"
-    STRING_BASE64_LEN_M_ENT_HIGH = "STRING_BASE64_LEN_M_ENT_HIGH"
-    STRING_BASE64_LEN_M_ENT_VHIGH = "STRING_BASE64_LEN_M_ENT_VHIGH"
-    STRING_BASE64_LEN_L_ENT_LOW = "STRING_BASE64_LEN_L_ENT_LOW"
-    STRING_BASE64_LEN_L_ENT_MED = "STRING_BASE64_LEN_L_ENT_MED"
-    STRING_BASE64_LEN_L_ENT_HIGH = "STRING_BASE64_LEN_L_ENT_HIGH"
-    STRING_BASE64_LEN_L_ENT_VHIGH = "STRING_BASE64_LEN_L_ENT_VHIGH"
-    STRING_BASE64_LEN_XL_ENT_LOW = "STRING_BASE64_LEN_XL_ENT_LOW"
-    STRING_BASE64_LEN_XL_ENT_MED = "STRING_BASE64_LEN_XL_ENT_MED"
-    STRING_BASE64_LEN_XL_ENT_HIGH = "STRING_BASE64_LEN_XL_ENT_HIGH"
-    STRING_BASE64_LEN_XL_ENT_VHIGH = "STRING_BASE64_LEN_XL_ENT_VHIGH"
-    STRING_BASE64_LEN_XXL_ENT_LOW = "STRING_BASE64_LEN_XXL_ENT_LOW"
-    STRING_BASE64_LEN_XXL_ENT_MED = "STRING_BASE64_LEN_XXL_ENT_MED"
-    STRING_BASE64_LEN_XXL_ENT_HIGH = "STRING_BASE64_LEN_XXL_ENT_HIGH"
-    STRING_BASE64_LEN_XXL_ENT_VHIGH = "STRING_BASE64_LEN_XXL_ENT_VHIGH"
-
-    # STRING_HEX prefix combinations
-    STRING_HEX_LEN_XS_ENT_LOW = "STRING_HEX_LEN_XS_ENT_LOW"
-    STRING_HEX_LEN_XS_ENT_MED = "STRING_HEX_LEN_XS_ENT_MED"
-    STRING_HEX_LEN_XS_ENT_HIGH = "STRING_HEX_LEN_XS_ENT_HIGH"
-    STRING_HEX_LEN_XS_ENT_VHIGH = "STRING_HEX_LEN_XS_ENT_VHIGH"
-    STRING_HEX_LEN_S_ENT_LOW = "STRING_HEX_LEN_S_ENT_LOW"
-    STRING_HEX_LEN_S_ENT_MED = "STRING_HEX_LEN_S_ENT_MED"
-    STRING_HEX_LEN_S_ENT_HIGH = "STRING_HEX_LEN_S_ENT_HIGH"
-    STRING_HEX_LEN_S_ENT_VHIGH = "STRING_HEX_LEN_S_ENT_VHIGH"
-    STRING_HEX_LEN_M_ENT_LOW = "STRING_HEX_LEN_M_ENT_LOW"
-    STRING_HEX_LEN_M_ENT_MED = "STRING_HEX_LEN_M_ENT_MED"
-    STRING_HEX_LEN_M_ENT_HIGH = "STRING_HEX_LEN_M_ENT_HIGH"
-    STRING_HEX_LEN_M_ENT_VHIGH = "STRING_HEX_LEN_M_ENT_VHIGH"
-    STRING_HEX_LEN_L_ENT_LOW = "STRING_HEX_LEN_L_ENT_LOW"
-    STRING_HEX_LEN_L_ENT_MED = "STRING_HEX_LEN_L_ENT_MED"
-    STRING_HEX_LEN_L_ENT_HIGH = "STRING_HEX_LEN_L_ENT_HIGH"
-    STRING_HEX_LEN_L_ENT_VHIGH = "STRING_HEX_LEN_L_ENT_VHIGH"
-    STRING_HEX_LEN_XL_ENT_LOW = "STRING_HEX_LEN_XL_ENT_LOW"
-    STRING_HEX_LEN_XL_ENT_MED = "STRING_HEX_LEN_XL_ENT_MED"
-    STRING_HEX_LEN_XL_ENT_HIGH = "STRING_HEX_LEN_XL_ENT_HIGH"
-    STRING_HEX_LEN_XL_ENT_VHIGH = "STRING_HEX_LEN_XL_ENT_VHIGH"
-    STRING_HEX_LEN_XXL_ENT_LOW = "STRING_HEX_LEN_XXL_ENT_LOW"
-    STRING_HEX_LEN_XXL_ENT_MED = "STRING_HEX_LEN_XXL_ENT_MED"
-    STRING_HEX_LEN_XXL_ENT_HIGH = "STRING_HEX_LEN_XXL_ENT_HIGH"
-    STRING_HEX_LEN_XXL_ENT_VHIGH = "STRING_HEX_LEN_XXL_ENT_VHIGH"
-
-    # STRING_ESCAPED_HEX prefix combinations
-    STRING_ESCAPED_HEX_LEN_XS_ENT_LOW = "STRING_ESCAPED_HEX_LEN_XS_ENT_LOW"
-    STRING_ESCAPED_HEX_LEN_XS_ENT_MED = "STRING_ESCAPED_HEX_LEN_XS_ENT_MED"
-    STRING_ESCAPED_HEX_LEN_XS_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_XS_ENT_HIGH"
-    STRING_ESCAPED_HEX_LEN_XS_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_XS_ENT_VHIGH"
-    STRING_ESCAPED_HEX_LEN_S_ENT_LOW = "STRING_ESCAPED_HEX_LEN_S_ENT_LOW"
-    STRING_ESCAPED_HEX_LEN_S_ENT_MED = "STRING_ESCAPED_HEX_LEN_S_ENT_MED"
-    STRING_ESCAPED_HEX_LEN_S_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_S_ENT_HIGH"
-    STRING_ESCAPED_HEX_LEN_S_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_S_ENT_VHIGH"
-    STRING_ESCAPED_HEX_LEN_M_ENT_LOW = "STRING_ESCAPED_HEX_LEN_M_ENT_LOW"
-    STRING_ESCAPED_HEX_LEN_M_ENT_MED = "STRING_ESCAPED_HEX_LEN_M_ENT_MED"
-    STRING_ESCAPED_HEX_LEN_M_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_M_ENT_HIGH"
-    STRING_ESCAPED_HEX_LEN_M_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_M_ENT_VHIGH"
-    STRING_ESCAPED_HEX_LEN_L_ENT_LOW = "STRING_ESCAPED_HEX_LEN_L_ENT_LOW"
-    STRING_ESCAPED_HEX_LEN_L_ENT_MED = "STRING_ESCAPED_HEX_LEN_L_ENT_MED"
-    STRING_ESCAPED_HEX_LEN_L_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_L_ENT_HIGH"
-    STRING_ESCAPED_HEX_LEN_L_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_L_ENT_VHIGH"
-    STRING_ESCAPED_HEX_LEN_XL_ENT_LOW = "STRING_ESCAPED_HEX_LEN_XL_ENT_LOW"
-    STRING_ESCAPED_HEX_LEN_XL_ENT_MED = "STRING_ESCAPED_HEX_LEN_XL_ENT_MED"
-    STRING_ESCAPED_HEX_LEN_XL_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_XL_ENT_HIGH"
-    STRING_ESCAPED_HEX_LEN_XL_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_XL_ENT_VHIGH"
-    STRING_ESCAPED_HEX_LEN_XXL_ENT_LOW = "STRING_ESCAPED_HEX_LEN_XXL_ENT_LOW"
-    STRING_ESCAPED_HEX_LEN_XXL_ENT_MED = "STRING_ESCAPED_HEX_LEN_XXL_ENT_MED"
-    STRING_ESCAPED_HEX_LEN_XXL_ENT_HIGH = "STRING_ESCAPED_HEX_LEN_XXL_ENT_HIGH"
-    STRING_ESCAPED_HEX_LEN_XXL_ENT_VHIGH = "STRING_ESCAPED_HEX_LEN_XXL_ENT_VHIGH"
 
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
@@ -235,33 +130,11 @@ def is_escaped_hex(s: str) -> bool:
     return bool(pattern.match(s))
 
 
-def is_base64(text: str) -> bool:
-    """
-    Checks if a given string is a valid Base64 encoded value.
-
-    Args:
-        text (str): The input string to check.
-
-    Returns:
-        bool: True if the string is valid Base64, False otherwise.
-    """
-    if not isinstance(text, str) or not text.strip():
+def is_base64(s: str) -> bool:
+    base64_char_pattern = re.compile(r"^[A-Za-z0-9+/]*(={0,2})$")
+    if not s:
         return False
-
-    try:
-        # The input to b64decode must be ASCII bytes.
-        # If the string contains non-ASCII characters, it's not Base64.
-        text_as_bytes = text.encode("ascii")
-
-        # The decode function will raise a binascii.Error if the input is
-        # not valid Base64, checking for correct characters, padding, and length.
-        # The 'validate=True' flag ensures strict adherence to the alphabet.
-        base64.b64decode(text_as_bytes, validate=True)
-        return True
-    except (binascii.Error, UnicodeDecodeError):
-        # A binascii.Error indicates invalid Base64 (e.g., bad padding).
-        # A UnicodeDecodeError indicates the string wasn't pure ASCII.
-        return False
+    return bool(base64_char_pattern.match(s)) and len(s) % 4 == 0
 
 
 def is_hex(text: str) -> bool:
@@ -554,92 +427,6 @@ def clean_string_literal(url_string):
     return url_string
 
 
-def get_combined_string_token(prefix: str, length: int, entropy: float) -> str:
-    """
-    Get the complete enum token for a string with given prefix, length, and entropy.
-
-    Args:
-        prefix: One of "STRING", "STRING_BASE64", "STRING_HEX", "STRING_ESCAPED_HEX"
-        length: String length
-        entropy: Shannon entropy value
-
-    Returns:
-        Complete token from SpecialCases enum
-    """
-    # Map length to suffix
-    if length <= 10:
-        len_suffix = "LEN_XS"
-    elif length <= 100:
-        len_suffix = "LEN_S"
-    elif length <= 1000:
-        len_suffix = "LEN_M"
-    elif length <= 10000:
-        len_suffix = "LEN_L"
-    elif length <= 100000:
-        len_suffix = "LEN_XL"
-    else:
-        len_suffix = "LEN_XXL"
-
-    # Map entropy to suffix
-    if entropy <= 1.0:
-        ent_suffix = "ENT_LOW"
-    elif entropy <= 2.5:
-        ent_suffix = "ENT_MED"
-    elif entropy <= 5.0:
-        ent_suffix = "ENT_HIGH"
-    else:
-        ent_suffix = "ENT_VHIGH"
-
-    # Build complete token name
-    token_name = f"{prefix}_{len_suffix}_{ent_suffix}"
-
-    # Return the enum value
-    try:
-        return getattr(SpecialCases, token_name).value
-    except AttributeError:
-        # Fallback to concatenated string if enum doesn't exist
-        return token_name
-
-
-def map_entropy_to_token(entropy: float):
-    """Legacy function - use get_combined_string_token instead"""
-    if entropy <= 1.0:
-        return "ENT_LOW"
-    elif entropy <= 2.5:
-        return "ENT_MED"
-    elif entropy <= 5.0:
-        return "ENT_HIGH"
-    else:
-        return "ENT_VHIGH"
-
-
-def map_string_length_to_token(str_len: int):
-    """Legacy function - use get_combined_string_token instead"""
-    if str_len <= 10:
-        return "LEN_XS"
-    elif str_len <= 100:
-        return "LEN_S"
-    elif str_len <= 1000:
-        return "LEN_M"
-    elif str_len <= 10000:
-        return "LEN_L"
-    elif str_len <= 100000:
-        return "LEN_XL"
-    else:
-        return "LEN_XXL"
-
-
-def calculate_shannon_entropy(data: bytes) -> float:
-    if not data:
-        return 0.0
-    length = len(data)
-    byte_counts = collections.Counter(data)
-    entropy = -sum(
-        (count / length) * math.log2(count / length) for count in byte_counts.values()
-    )
-    return entropy
-
-
 def map_tuple_arg(argval: tuple, original_argrepr: str) -> str:
     result = set()
     for item in argval:
@@ -817,21 +604,18 @@ def is_bash_code(text: str, threshold: int = 3) -> bool:
     return score >= threshold
 
 
-def is_code(text: str, threshold: float = 0.25) -> bool:
+def is_code(text: str, threshold: float = 0.3) -> bool:
     """
     Analyzes a string to determine if it likely contains code.
 
-    This function uses a heuristic model based on several indicators:
-    1.  **Symbol Density**: The ratio of non-alphanumeric characters.
-    2.  **Keyword Presence**: Common programming keywords.
-    3.  **Structural Patterns**: Looks for function definitions, tags, etc.
-    4.  **Indentation**: Checks for lines starting with significant whitespace.
+    This function uses a heuristic model to detect actual programming code,
+    while avoiding false positives on natural language text with punctuation.
 
     Args:
         text (str): The input string to check.
         threshold (float): A value between 0 and 1.0. A higher value requires
                          more evidence before classifying text as code.
-                         Defaults to 0.25.
+                         Defaults to 0.3 (balanced).
 
     Returns:
         bool: True if the string is likely code, False otherwise.
@@ -839,132 +623,171 @@ def is_code(text: str, threshold: float = 0.25) -> bool:
     if not isinstance(text, str) or not text.strip():
         return False
 
+    # Must have meaningful length for code detection
+    if len(text.strip()) < 3:
+        return False
+
     score = 0.0
 
-    # 1. --- Symbol Density Analysis ---
-    # Code tends to have a higher ratio of symbols to letters.
-    text_length = len(text)
-    non_alnum_count = len(re.findall(r"[^a-zA-Z0-9\s]", text))
-    symbol_density = non_alnum_count / text_length if text_length > 0 else 0
+    # 1. --- Strong Code Indicators (High Weight) ---
+    # These are patterns that strongly suggest actual code
+    strong_patterns = [
+        r"\b(def|function|class|struct|interface)\s+\w+\s*[\(\{]",  # Function/class definitions
+        r"\blambda\s+\w*\s*:",  # Lambda functions
+        r"\b(if|while|for)\s*[\(\s].*[\)\s]*[\{\:]",  # Control structures with proper syntax
+        r"[a-zA-Z_]\w*\s*[\[\(]\s*[^)]*\s*[\]\)]\s*[\{\=\;]",  # Function calls/array access with syntax
+        r"[a-zA-Z_]\w*\.\w+\s*\(",  # Method calls like obj.method()
+        r"=>\s*[\{\w]|function\s*\(",  # Arrow functions or function expressions
+        r"</?[a-zA-Z][^>]*>",  # HTML/XML tags
+        r"[\[\{]\s*[\"']?\w+[\"']?\s*:\s*[\"']?[^,}\]]+[\"']?",  # JSON/object syntax
+        r"^\s*[a-zA-Z_]\w*\s*[=\+\-\*\/]\s*[^;]+;?\s*$",  # Assignment statements
+        r"\b(import|from)\s+[\w\.]+(\s+import\s+|\s+as\s+)",  # Import statements
+        r"[.#][\w-]+\s*\{[^}]*\}",  # CSS selectors with properties
+        r"[\w-]+\s*:\s*[^;]+;",  # CSS property declarations
+        r"^\s*\[[^\]]+\]\s*$",  # Configuration file sections like [section]
+        r"^\s*[\w-]+\s*=\s*[^=]+$",  # Configuration assignments like key=value
+        r"^\s*#(?!#)",  # Comments (including Python)
+        r"^\s*//",  # JavaScript/C++ comments
+        r"/\*.*?\*/",  # Multi-line comments
+        r"\bprint\s*\(",  # Print statements
+    ]
 
-    # Only award symbol density points if it's a reasonable code-like density
-    # Allow higher density for JSON/data structures
-    if 0.12 < symbol_density <= 0.6:  # Sweet spot for code and data structures
-        score += 0.4
-    elif 0.05 < symbol_density <= 0.12:  # Partial credit for moderate symbol density
-        score += 0.2
+    for pattern in strong_patterns:
+        if re.search(pattern, text, re.IGNORECASE | re.MULTILINE):
+            score += 0.35  # High weight for strong indicators
 
-    # 2. --- Keyword Presence ---
-    # Look for keywords common across many languages.
-    keywords = {
+    # 2. --- Programming Keywords (Medium Weight) ---
+    code_keywords = {
+        "def",
+        "function",
+        "class",
+        "struct",
+        "interface",
+        "enum",
         "if",
         "else",
         "elif",
         "for",
         "while",
         "do",
-        "return",
-        "yield",
-        "function",
-        "def",
-        "class",
-        "struct",
-        "interface",
-        "enum",
-        "import",
-        "from",
-        "include",
-        "require",
-        "using",
-        "namespace",
-        "const",
-        "let",
-        "var",
-        "auto",
-        "int",
-        "float",
-        "string",
-        "bool",
-        "public",
-        "private",
-        "protected",
-        "static",
-        "final",
-        "abstract",
-        "true",
-        "false",
-        "null",
-        "None",
-        "nil",
-        "undefined",
         "switch",
         "case",
-        "default",
+        "return",
+        "yield",
         "break",
         "continue",
         "try",
         "catch",
         "finally",
-        "except",
         "throw",
         "raise",
-        "new",
-        "delete",
-        "malloc",
-        "free",
-        "this",
-        "self",
-        "super",
+        "import",
+        "from",
+        "include",
+        "require",
+        "const",
+        "let",
+        "var",
+        "public",
+        "private",
+        "protected",
+        "static",
         "lambda",
         "async",
         "await",
         "typeof",
         "instanceof",
         "extends",
-        "implements",
-        "inherits",
-        "override",
+        "new",
+        "delete",
+        "this",
+        "self",
+        "super",
     }
 
-    # Using a set for efficient lookup
     found_keywords = {
-        word for word in re.findall(r"\b\w+\b", text.lower()) if word in keywords
+        word for word in re.findall(r"\b\w+\b", text.lower()) if word in code_keywords
     }
 
-    # Award points based on keyword count
+    # Award keyword points - more generous for imports and basic constructs
     if len(found_keywords) >= 3:
-        score += 0.6
-    elif len(found_keywords) >= 2:
-        score += 0.5
-    elif len(found_keywords) >= 1:
         score += 0.3
+    elif len(found_keywords) >= 2:
+        score += 0.25
+    elif len(found_keywords) >= 1:
+        score += 0.15
 
-    # 3. --- Structural Patterns (Regex) ---
-    patterns = [
-        r"<\s*/?\s*\w+.*?>",  # HTML/XML tags: <html>, </div>
-        r"==|!=|<=|>=|\+=|=>|->",  # Common operators: ==, !=, +=, =>
-        r"//|#|/\*|\*/",  # Comments: //, #, /*, */
-        r"\b(def|function)\s+\w+\s*\(",  # Function definition
-        r"[\[\]\{\}]",  # Brackets and braces
+    # 3. --- Code Syntax Patterns (Medium Weight) ---
+    syntax_patterns = [
+        r"==|!=|<=|>=|\+=|-=|\*=|/=|&&|\|\||::",  # Programming operators
+        r"[a-zA-Z_]\w*\[[\w\s\+\-\*\/\%]+\]",  # Array/object access with expressions
+        r"\{\s*[^}]+\s*\}",  # Code blocks or object literals
+        r";[\s]*$|;[\s]*\n",  # Semicolon line endings
     ]
-    for pattern in patterns:
-        if re.search(pattern, text):
-            score += 0.2  # Add a smaller score for each pattern found
 
-    # 4. --- Indentation ---
-    # Check if any line (after the first) starts with multiple spaces or a tab.
+    syntax_count = sum(1 for pattern in syntax_patterns if re.search(pattern, text))
+    if syntax_count >= 2:
+        score += 0.25
+    elif syntax_count >= 1:
+        score += 0.1
+
+    # 4. --- Indented Multi-line Code ---
     lines = text.splitlines()
     if len(lines) > 1:
-        for line in lines[1:]:
-            if re.match(r"^\s{2,}|^\t", line):
-                score += 0.3
-                break  # Only need to find one instance
+        indented_lines = sum(1 for line in lines[1:] if re.match(r"^\s{2,}|^\t", line))
+        if indented_lines >= 2:
+            score += 0.2
+        elif indented_lines >= 1:
+            score += 0.1
 
-    # Normalize the score to be roughly between 0 and 1+
-    # This is a simple normalization; a more complex one could be used.
-    final_score = min(score, 1.0)
+    # 5. --- Negative Indicators (Reduce Score) ---
+    # These patterns suggest natural language, not code
+    # Only apply if we don't already have strong code indicators
+    if (
+        score < 0.3
+    ):  # Only apply negative patterns if we don't have strong code evidence
+        negative_patterns = [
+            r"\b(PASSED|FAILED|Starting|Finished|Test|Case|COMPLETED)\b",  # Test output
+            r"^[\-\=\*]{3,}.*[\-\=\*]{3,}$",  # Decorative lines
+            r"^\d+\.\d+\.",  # Numbered sections
+            r"^[A-Z][a-z]+.*[a-z]\s*$",  # Sentence-like capitalization
+        ]
 
-    return final_score >= threshold
+        for pattern in negative_patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                score -= 0.2
+                break
+
+    # Check for natural language patterns - but be more careful
+    natural_language_words = [
+        "the",
+        "and",
+        "or",
+        "but",
+        "with",
+        "that",
+        "this",
+        "have",
+        "will",
+        "would",
+        "should",
+        "could",
+        "are",
+        "is",
+        "was",
+        "were",
+    ]
+    natural_word_count = sum(
+        1
+        for word in re.findall(r"\b\w+\b", text.lower())
+        if word in natural_language_words
+    )
+
+    # Only penalize if we have many natural language words, few code keywords, AND no strong code patterns
+    if natural_word_count >= 3 and len(found_keywords) <= 1 and score < 0.3:
+        score -= 0.3
+
+    return score >= threshold
 
 
 def is_sql(text: str) -> bool:

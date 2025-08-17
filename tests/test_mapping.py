@@ -6,25 +6,10 @@ from common.mapping import (
     is_file_path,
     is_localhost,
     contains_url,
-    map_entropy_to_token,
-    map_string_length_to_token,
-    calculate_shannon_entropy,
     is_bash_code,
     is_code,
     is_sql,
 )
-
-
-def test_map_entropy_to_token():
-    assert map_entropy_to_token(0.5) == "ENT_LOW"
-
-
-def test_map_string_length_to_token():
-    assert map_string_length_to_token(5) == "LEN_XS"
-
-
-def test_calculate_shannon_entropy():
-    assert calculate_shannon_entropy(b"aabb") == 1.0
 
 
 def test_is_valid_ip():

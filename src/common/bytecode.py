@@ -3,7 +3,7 @@ import hashlib
 from enum import Enum, auto
 from pathlib import Path
 from tree_sitter import Node
-from typing import Optional, Any, List, Tuple, Dict
+from typing import Optional, Any, List, Tuple
 
 from tree_sitter import Parser, Language
 from common.mapping import (
@@ -13,20 +13,19 @@ from common.mapping import (
     reduce_whitespace,
     remove_newlines,
     SpecialCases,
-    map_entropy_to_token,
-    map_string_length_to_token,
     clean_string_literal,
-    calculate_shannon_entropy,
     is_valid_encoding_name,
     is_valid_ip,
     is_base64,
     is_hex,
     is_valid_url,
     is_version,
-    is_escaped_hex,
     is_file_path,
     contains_url,
     is_localhost,
+    is_bash_code,
+    is_code,
+    is_sql,
     SENSITIVE_PATHS,
 )
 
@@ -221,7 +220,6 @@ class Instruction:
         """
 
         STRING_MAX_LENGTH = 20
-        prefix = "STRING"
         function_mapping = FUNCTION_MAPPING.get(language, {})
         import_mapping = IMPORT_MAPPING.get(language, {})
 
@@ -310,25 +308,23 @@ class Instruction:
         elif is_file_path(argval):
             return f"{op_code.name} {SpecialCases.STRING_FILE_PATH.value}"
 
-        # Cut strings when too long
-        if len(argval) <= STRING_MAX_LENGTH:
+        # Cut strings when too long - check this BEFORE other detections
+        # This preserves short identifiers like "Optional", "some_var" as-is
+        elif len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
-
-        if is_escaped_hex(argval):
-            prefix = SpecialCases.STRING_ESCAPED_HEX.value
+        elif is_bash_code(argval):
+            return f"{op_code.name} {SpecialCases.STRING_BASH.value}"
+        elif is_sql(argval):
+            return f"{op_code.name} {SpecialCases.STRING_SQL.value}"
+        elif is_code(argval):
+            return f"{op_code.name} {SpecialCases.STRING_CODE.value}"
         elif is_hex(argval):
-            prefix = SpecialCases.STRING_HEX.value
+            return f"{op_code.name} {SpecialCases.STRING_HEX.value}"
         elif is_base64(argval):
-            prefix = SpecialCases.STRING_BASE64.value
+            return f"{op_code.name} {SpecialCases.STRING_BASE64.value}"
 
-        # Generate length and entropy suffix for all the above cases
-        length_suffix = map_string_length_to_token(len(argval))
-        try:
-            entropy = calculate_shannon_entropy(argval.encode("utf-8", errors="ignore"))
-        except Exception:
-            entropy = 0.0
-        entropy_suffix = map_entropy_to_token(entropy)
-        return f"{op_code.name} {prefix}_{length_suffix}_{entropy_suffix}"
+        # Default case for long strings
+        return f"{op_code.name} {SpecialCases.STRING.value}"
 
     def to_string(self, mapped: bool, for_hashing: bool = False) -> str:
         if mapped and for_hashing:
@@ -1173,7 +1169,6 @@ class ASTCompiler:
             arg_count = 0
             kwarg_count = 0
             has_starargs = False
-            has_kwargs = False
             kw_names = []  # Collect keyword names for KW_NAMES
 
             if args_node:
@@ -1204,7 +1199,7 @@ class ASTCompiler:
                                         argument_node, source_code_bytes, file_path
                                     )
                                 )
-                                has_kwargs = True
+                                pass  # kwargs found
                         elif arg.type == "keyword_argument":
                             # Handle key=value - Python approach: load values only, names in KW_NAMES
                             name_node = arg.child_by_field_name("name")
@@ -1301,9 +1296,7 @@ class ASTCompiler:
                 "argument"
             ) or node.child_by_field_name("value")
 
-            # Check if this is "yield from" (Python) or just "yield"
-            yield_text = self._get_node_text(node, source_code_bytes)
-            is_yield_from = "yield from" in yield_text or "yield*" in yield_text
+            # Note: yield_from detection for potential future use
 
             if value_node:
                 bytecode.extend(
@@ -1966,14 +1959,13 @@ class ASTCompiler:
             # Process try/except/finally blocks with Python exception protocol
             body_node = node.child_by_field_name("body")
             except_clauses = []
-            finally_clause = None
 
             # Collect except and finally clauses
             for child in node.children:
                 if child.type in ["except_clause", "catch_clause"]:
                     except_clauses.append(child)
                 elif child.type == "finally_clause":
-                    finally_clause = child
+                    pass  # finally clause found
 
             # Add NOP for try block start (Python pattern)
             bytecode.append(emit(OpCode.NOP, None))
@@ -1988,7 +1980,6 @@ class ASTCompiler:
             bytecode.append(emit(OpCode.RETURN_CONST, None))
 
             # Exception handling starts here - PUSH_EXC_INFO
-            exc_handler_start = len(bytecode)
             bytecode.append(emit(OpCode.PUSH_EXC_INFO, None))
 
             # Generate except clauses
