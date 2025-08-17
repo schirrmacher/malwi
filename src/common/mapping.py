@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 
 import socket
 import urllib
@@ -49,6 +50,55 @@ IMPORT_MAPPING: Dict[str, Any] = read_json_from_file(
 )
 COMMON_TARGET_FILES: Dict[str, Set[str]] = read_json_from_file(
     SCRIPT_DIR / "syntax_mapping" / "target_files.json"
+)
+
+# Pre-compiled regex patterns for performance optimization
+# Bash detection patterns
+_BASH_SHEBANG = re.compile(r"^#!\s*/(usr/)?bin/(bash|sh|zsh)")
+_BASH_KEYWORDS = re.compile(
+    r"\b(ls|cd|echo|rm|grep|awk|sed|cat|curl|wget|sudo|chmod|chown|mkdir|touch|cp|mv|find|xargs|tar|gzip|gunzip|zip|unzip|ps|kill|pkill|top|df|du|mount|umount|export|source|alias|unset|set|eval|exec|if|then|else|elif|fi|for|while|do|done|case|esac|function|return|break|continue|true|false|test|exit|trap|wait|sleep|head|tail|sort|uniq|cut|paste|join|comm|diff|patch|tee|nc|ssh|scp|rsync|git|docker|kubectl|npm|pip|apt|yum|brew|systemctl|service|journalctl|cron|at)\b",
+    re.IGNORECASE,
+)
+_BASH_VARS = re.compile(r"\$[a-zA-Z_]|\$\{[^}]+\}")
+_BASH_COMMAND_SUB = re.compile(r"\$\([^)]+\)|`[^`]+`")
+_BASH_OPERATORS = re.compile(r"\||>>?|<|&&|\|\||;")
+_BASH_OPTIONS = re.compile(r"(^|\s)-[a-zA-Z]|\s--[a-zA-Z][a-zA-Z0-9-]*")
+_BASH_TEST_BRACKETS = re.compile(r"\[\s+.*\s+\]")
+_BASH_EXIT_STATUS = re.compile(r"\$\?")
+_BASH_COMMENTS = re.compile(r"^\s*#(?!#)", re.MULTILINE)
+_BASH_REDIRECTION = re.compile(r"2>&1|1>&2|&>|2>")
+_BASH_WILDCARDS = re.compile(r"[^\\][\*\?]")
+_BASH_PATHS = re.compile(r"~\/|\/home\/|\/usr\/|\/etc\/|\/var\/|\/tmp\/")
+
+# Code detection patterns
+_CODE_STRONG_PATTERNS = re.compile(
+    r"\b(def|function|class|struct|interface)\s+\w+\s*[\(\{]|\blambda\s+\w*\s*:|\b(if|while|for)\s*[\(\s].*[\)\s]*[\{\:]|[a-zA-Z_]\w*\s*[\[\(]\s*[^)]*\s*[\]\)]\s*[\{\=\;]|[a-zA-Z_]\w*\.\w+\s*\(|=>\s*[\{\w]|function\s*\(|</?[a-zA-Z][^>]*>|[\[\{]\s*[\"']?\w+[\"']?\s*:\s*[\"']?[^,}\]]+[\"']?|\b(import|from)\s+[\w\.]+(\s+import\s+|\s+as\s+)|[.#][\w-]+\s*\{[^}]*\}|[\w-]+\s*:\s*[^;]+;|^\s*\[[^\]]+\]\s*$|^\s*[\w-]+\s*=\s*[^=]+$|^\s*#(?!#)|^\s*//|/\*.*?\*/|\bprint\s*\(",
+    re.IGNORECASE | re.MULTILINE | re.DOTALL,
+)
+_CODE_KEYWORDS = re.compile(
+    r"\b(def|function|class|struct|interface|enum|if|else|elif|for|while|do|switch|case|return|yield|break|continue|try|catch|finally|throw|raise|import|from|include|require|const|let|var|public|private|protected|static|lambda|async|await|typeof|instanceof|extends|new|delete|this|self|super)\b",
+    re.IGNORECASE,
+)
+_CODE_SYNTAX = re.compile(
+    r"==|!=|<=|>=|\+=|-=|\*=|/=|&&|\|\||::|;[\s]*$|;[\s]*\n", re.MULTILINE
+)
+_CODE_NEGATIVE = re.compile(
+    r"\b(PASSED|FAILED|Starting|Finished|Test|Case|COMPLETED)\b|^[\-\=\*]{3,}.*[\-\=\*]{3,}$|^\d+\.\d+\.",
+    re.IGNORECASE | re.MULTILINE,
+)
+_CODE_NATURAL = re.compile(
+    r"\b(the|and|or|but|with|that|this|have|will|would|should|could|are|is|was|were)\b",
+    re.IGNORECASE,
+)
+
+# SQL detection patterns
+_SQL_MAIN_PATTERNS = re.compile(
+    r"\bselect\s+[\w\*,\s\.]+\s+from\s+[\w\.]+(\s+where|\s+group|\s+order|\s+limit|;|\s*--|\s*$)|\binsert\s+into\s+\w+\s*\([^)]*\)\s*values\s*\(|\bupdate\s+\w+\s+set\s+\w+\s*=|\bdelete\s+from\s+\w+|\b(create|alter|drop)\s+(table|database|view|index|procedure|function)\s+\w+|\b(grant|revoke)\s+\w+\s+on\s+\w+|\btruncate\s+table\s+\w+",
+    re.IGNORECASE,
+)
+_SQL_SECONDARY = re.compile(
+    r"\bwhere\s+\w+\s*[=<>!]|\bgroup\s+by\s+\w+|\border\s+by\s+\w+|\b(left|right|inner|outer|full)\s+join\s+\w+|\bon\s+\w+\.\w+\s*=\s*\w+\.\w+|\bhaving\s+\w+\s*[=<>!]|\bunion\s+(all\s+)?select|\blike\s+['\"][^'\"]*['\"]|\bin\s*\([^)]*\)|\bexists\s*\(|\b(count|max|min|avg|sum)\s*\(",
+    re.IGNORECASE,
 )
 
 
@@ -443,414 +493,170 @@ def map_tuple_arg(argval: tuple, original_argrepr: str) -> str:
     return " ".join(ordered)
 
 
-def is_bash_code(text: str, threshold: int = 3) -> bool:
+@lru_cache(maxsize=8192)
+def _is_bash_code_cached(text: str, threshold: int = 3) -> bool:
     """
-    Analyzes a string to determine if it's likely bash code.
-
-    This function uses a heuristic scoring model, checking for common bash
-    commands, control structures, and syntax. It returns a boolean value.
-
-    Args:
-        text (str): The input string to check.
-        threshold (int): The internal score needed to return True. A lower
-                         value increases sensitivity. Defaults to 3.
-
-    Returns:
-        bool: True if the string is likely bash code, False otherwise.
+    Internal cached function for bash code detection.
     """
-    if not isinstance(text, str) or not text.strip():
+    if not text or len(text) < 2:
         return False
 
     score = 0
 
-    # Heuristic 1: Shebang (strong indicator)
-    if re.search(r"^#!\s*/(usr/)?bin/(bash|sh|zsh)", text):
-        score += 10
+    # Quick shebang check (strong indicator)
+    if _BASH_SHEBANG.search(text):
+        return True  # Early exit for obvious bash
 
-    # Heuristic 2: Common commands and control structures
-    # Extended list of common bash/shell commands
-    keywords = [
-        "ls",
-        "cd",
-        "echo",
-        "rm",
-        "grep",
-        "awk",
-        "sed",
-        "cat",
-        "curl",
-        "wget",
-        "sudo",
-        "chmod",
-        "chown",
-        "mkdir",
-        "touch",
-        "cp",
-        "mv",
-        "find",
-        "xargs",
-        "tar",
-        "gzip",
-        "gunzip",
-        "zip",
-        "unzip",
-        "ps",
-        "kill",
-        "pkill",
-        "top",
-        "df",
-        "du",
-        "mount",
-        "umount",
-        "export",
-        "source",
-        "alias",
-        "unset",
-        "set",
-        "eval",
-        "exec",
-        "if",
-        "then",
-        "else",
-        "elif",
-        "fi",
-        "for",
-        "while",
-        "do",
-        "done",
-        "case",
-        "esac",
-        "function",
-        "return",
-        "break",
-        "continue",
-        "true",
-        "false",
-        "test",
-        "exit",
-        "trap",
-        "wait",
-        "sleep",
-        "head",
-        "tail",
-        "sort",
-        "uniq",
-        "cut",
-        "paste",
-        "join",
-        "comm",
-        "diff",
-        "patch",
-        "tee",
-        "nc",
-        "ssh",
-        "scp",
-        "rsync",
-        "git",
-        "docker",
-        "kubectl",
-        "npm",
-        "pip",
-        "apt",
-        "yum",
-        "brew",
-        "systemctl",
-        "service",
-        "journalctl",
-        "cron",
-        "at",
-    ]
-
-    # Count how many bash keywords appear
-    keyword_count = 0
-    for keyword in keywords:
-        if re.search(r"\b" + re.escape(keyword) + r"\b", text.lower()):
-            keyword_count += 1
-
-    # Award points based on keyword density
-    if keyword_count >= 3:
+    # Count bash keywords efficiently
+    keyword_matches = len(_BASH_KEYWORDS.findall(text.lower()))
+    if keyword_matches >= 3:
         score += 4
-    elif keyword_count >= 2:
+    elif keyword_matches >= 2:
         score += 3
-    elif keyword_count >= 1:
+    elif keyword_matches >= 1:
         score += 2
 
-    # Heuristic 3: Shell-specific syntax and operators
-    if re.search(r"\$[a-zA-Z_]|\$\{[^}]+\}", text):  # Variable expansion: $VAR, ${VAR}
+    # Early exit if we already have enough score
+    if score >= threshold:
+        return True
+
+    # Check bash-specific patterns
+    if _BASH_VARS.search(text):
         score += 2
-    if re.search(r"\$\([^)]+\)|`[^`]+`", text):  # Command substitution: $(...), `...`
+    if _BASH_COMMAND_SUB.search(text):
         score += 3
-    if re.search(r"\||>>?|<|&&|\|\||;", text):  # Piping, redirection, logical operators
+    if _BASH_OPERATORS.search(text):
         score += 1
-    if re.search(
-        r"(^|\s)-[a-zA-Z]|\s--[a-zA-Z][a-zA-Z0-9-]*", text
-    ):  # Command line options
+    if _BASH_OPTIONS.search(text):
+        score += 1
+    if _BASH_TEST_BRACKETS.search(text):
+        score += 2
+    if _BASH_EXIT_STATUS.search(text):
+        score += 1
+    if _BASH_COMMENTS.search(text):
+        score += 1
+    if _BASH_REDIRECTION.search(text):
+        score += 2
+    if _BASH_WILDCARDS.search(text):
+        score += 1
+    if _BASH_PATHS.search(text):
         score += 1
 
-    # Heuristic 4: Common bash patterns
-    if re.search(r"\[\s+.*\s+\]", text):  # Test brackets: [ condition ]
-        score += 2
-    if re.search(r"\$\?", text):  # Exit status variable
-        score += 1
-    if re.search(r"^\s*#(?!#)", text, re.MULTILINE):  # Shell comments (not shebang)
-        score += 1
-    if re.search(r"2>&1|1>&2|&>|2>", text):  # File descriptor redirection
-        score += 2
-    if re.search(r"[^\\][\*\?]", text):  # Wildcards (not escaped)
-        score += 1
-    if re.search(r"~\/|\/home\/|\/usr\/|\/etc\/|\/var\/|\/tmp\/", text):  # Common paths
-        score += 1
+    return score >= threshold
+
+
+def is_bash_code(text: str, threshold: int = 3) -> bool:
+    """
+    Optimized function to determine if text is likely bash code.
+    Uses pre-compiled regexes and caching for maximum performance.
+    """
+    if not isinstance(text, str):
+        return False
+    return _is_bash_code_cached(text, threshold)
+
+
+@lru_cache(maxsize=8192)
+def _is_code_cached(text: str, threshold: float = 0.3) -> bool:
+    """
+    Internal cached function for code detection.
+    """
+    if not text or len(text) < 3:
+        return False
+
+    # For very short strings, we need different scoring
+    if len(text) < 20:
+        score = 0.0
+        if _CODE_STRONG_PATTERNS.search(text):
+            score += 0.4
+        if _CODE_SYNTAX.search(text):
+            score += 0.3
+        # Check for keywords even in short strings
+        if _CODE_KEYWORDS.search(text):
+            score += 0.2
+        return score >= threshold
+
+    score = 0.0
+
+    # 1. Strong code patterns check (combined regex)
+    if _CODE_STRONG_PATTERNS.search(text):
+        score += 0.4
+
+    # Early exit if we already have strong evidence
+    if score >= threshold:
+        return True
+
+    # 2. Count programming keywords efficiently
+    keyword_matches = len(_CODE_KEYWORDS.findall(text))
+    if keyword_matches >= 3:
+        score += 0.3
+    elif keyword_matches >= 2:
+        score += 0.25
+    elif keyword_matches >= 1:
+        score += 0.15
+
+    # Early exit check
+    if score >= threshold:
+        return True
+
+    # 3. Code syntax patterns
+    if _CODE_SYNTAX.search(text):
+        score += 0.2
+
+    # 4. Indented multi-line code (quick check)
+    if "\n" in text and ("\n    " in text or "\n\t" in text):
+        score += 0.15
+
+    # 5. Negative patterns (only if score is borderline)
+    if score < 0.4:
+        if _CODE_NEGATIVE.search(text):
+            score -= 0.2
+
+        # Natural language penalty
+        natural_matches = len(_CODE_NATURAL.findall(text))
+        if natural_matches >= 3 and keyword_matches <= 1:
+            score -= 0.3
 
     return score >= threshold
 
 
 def is_code(text: str, threshold: float = 0.3) -> bool:
     """
-    Analyzes a string to determine if it likely contains code.
-
-    This function uses a heuristic model to detect actual programming code,
-    while avoiding false positives on natural language text with punctuation.
-
-    Args:
-        text (str): The input string to check.
-        threshold (float): A value between 0 and 1.0. A higher value requires
-                         more evidence before classifying text as code.
-                         Defaults to 0.3 (balanced).
-
-    Returns:
-        bool: True if the string is likely code, False otherwise.
+    Optimized function to determine if text likely contains code.
+    Uses pre-compiled regexes and caching for maximum performance.
     """
-    if not isinstance(text, str) or not text.strip():
+    if not isinstance(text, str):
+        return False
+    return _is_code_cached(text, threshold)
+
+
+@lru_cache(maxsize=8192)
+def _is_sql_cached(text: str) -> bool:
+    """
+    Internal cached function for SQL detection.
+    """
+    if not text.strip():
         return False
 
-    # Must have meaningful length for code detection
-    if len(text.strip()) < 3:
+    # Quick early exit for very short strings
+    if len(text) < 6:  # Minimum SQL would be "SELECT"
         return False
 
-    score = 0.0
+    # 1. Check high-confidence SQL patterns first (early exit)
+    if _SQL_MAIN_PATTERNS.search(text):
+        return True
 
-    # 1. --- Strong Code Indicators (High Weight) ---
-    # These are patterns that strongly suggest actual code
-    strong_patterns = [
-        r"\b(def|function|class|struct|interface)\s+\w+\s*[\(\{]",  # Function/class definitions
-        r"\blambda\s+\w*\s*:",  # Lambda functions
-        r"\b(if|while|for)\s*[\(\s].*[\)\s]*[\{\:]",  # Control structures with proper syntax
-        r"[a-zA-Z_]\w*\s*[\[\(]\s*[^)]*\s*[\]\)]\s*[\{\=\;]",  # Function calls/array access with syntax
-        r"[a-zA-Z_]\w*\.\w+\s*\(",  # Method calls like obj.method()
-        r"=>\s*[\{\w]|function\s*\(",  # Arrow functions or function expressions
-        r"</?[a-zA-Z][^>]*>",  # HTML/XML tags
-        r"[\[\{]\s*[\"']?\w+[\"']?\s*:\s*[\"']?[^,}\]]+[\"']?",  # JSON/object syntax
-        r"^\s*[a-zA-Z_]\w*\s*[=\+\-\*\/]\s*[^;]+;?\s*$",  # Assignment statements
-        r"\b(import|from)\s+[\w\.]+(\s+import\s+|\s+as\s+)",  # Import statements
-        r"[.#][\w-]+\s*\{[^}]*\}",  # CSS selectors with properties
-        r"[\w-]+\s*:\s*[^;]+;",  # CSS property declarations
-        r"^\s*\[[^\]]+\]\s*$",  # Configuration file sections like [section]
-        r"^\s*[\w-]+\s*=\s*[^=]+$",  # Configuration assignments like key=value
-        r"^\s*#(?!#)",  # Comments (including Python)
-        r"^\s*//",  # JavaScript/C++ comments
-        r"/\*.*?\*/",  # Multi-line comments
-        r"\bprint\s*\(",  # Print statements
-    ]
+    # 2. Check secondary patterns for partial/complex queries
+    secondary_matches = len(_SQL_SECONDARY.findall(text))
 
-    for pattern in strong_patterns:
-        if re.search(pattern, text, re.IGNORECASE | re.MULTILINE):
-            score += 0.35  # High weight for strong indicators
-
-    # 2. --- Programming Keywords (Medium Weight) ---
-    code_keywords = {
-        "def",
-        "function",
-        "class",
-        "struct",
-        "interface",
-        "enum",
-        "if",
-        "else",
-        "elif",
-        "for",
-        "while",
-        "do",
-        "switch",
-        "case",
-        "return",
-        "yield",
-        "break",
-        "continue",
-        "try",
-        "catch",
-        "finally",
-        "throw",
-        "raise",
-        "import",
-        "from",
-        "include",
-        "require",
-        "const",
-        "let",
-        "var",
-        "public",
-        "private",
-        "protected",
-        "static",
-        "lambda",
-        "async",
-        "await",
-        "typeof",
-        "instanceof",
-        "extends",
-        "new",
-        "delete",
-        "this",
-        "self",
-        "super",
-    }
-
-    found_keywords = {
-        word for word in re.findall(r"\b\w+\b", text.lower()) if word in code_keywords
-    }
-
-    # Award keyword points - more generous for imports and basic constructs
-    if len(found_keywords) >= 3:
-        score += 0.3
-    elif len(found_keywords) >= 2:
-        score += 0.25
-    elif len(found_keywords) >= 1:
-        score += 0.15
-
-    # 3. --- Code Syntax Patterns (Medium Weight) ---
-    syntax_patterns = [
-        r"==|!=|<=|>=|\+=|-=|\*=|/=|&&|\|\||::",  # Programming operators
-        r"[a-zA-Z_]\w*\[[\w\s\+\-\*\/\%]+\]",  # Array/object access with expressions
-        r"\{\s*[^}]+\s*\}",  # Code blocks or object literals
-        r";[\s]*$|;[\s]*\n",  # Semicolon line endings
-    ]
-
-    syntax_count = sum(1 for pattern in syntax_patterns if re.search(pattern, text))
-    if syntax_count >= 2:
-        score += 0.25
-    elif syntax_count >= 1:
-        score += 0.1
-
-    # 4. --- Indented Multi-line Code ---
-    lines = text.splitlines()
-    if len(lines) > 1:
-        indented_lines = sum(1 for line in lines[1:] if re.match(r"^\s{2,}|^\t", line))
-        if indented_lines >= 2:
-            score += 0.2
-        elif indented_lines >= 1:
-            score += 0.1
-
-    # 5. --- Negative Indicators (Reduce Score) ---
-    # These patterns suggest natural language, not code
-    # Only apply if we don't already have strong code indicators
-    if (
-        score < 0.3
-    ):  # Only apply negative patterns if we don't have strong code evidence
-        negative_patterns = [
-            r"\b(PASSED|FAILED|Starting|Finished|Test|Case|COMPLETED)\b",  # Test output
-            r"^[\-\=\*]{3,}.*[\-\=\*]{3,}$",  # Decorative lines
-            r"^\d+\.\d+\.",  # Numbered sections
-            r"^[A-Z][a-z]+.*[a-z]\s*$",  # Sentence-like capitalization
-        ]
-
-        for pattern in negative_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                score -= 0.2
-                break
-
-    # Check for natural language patterns - but be more careful
-    natural_language_words = [
-        "the",
-        "and",
-        "or",
-        "but",
-        "with",
-        "that",
-        "this",
-        "have",
-        "will",
-        "would",
-        "should",
-        "could",
-        "are",
-        "is",
-        "was",
-        "were",
-    ]
-    natural_word_count = sum(
-        1
-        for word in re.findall(r"\b\w+\b", text.lower())
-        if word in natural_language_words
-    )
-
-    # Only penalize if we have many natural language words, few code keywords, AND no strong code patterns
-    if natural_word_count >= 3 and len(found_keywords) <= 1 and score < 0.3:
-        score -= 0.3
-
-    return score >= threshold
+    # If we find at least two secondary patterns, likely SQL
+    return secondary_matches >= 2
 
 
 def is_sql(text: str) -> bool:
     """
-    Detects if a given string contains a SQL statement.
-
-    This function uses a set of regular expressions to find common SQL
-    keywords and query structures. It's case-insensitive.
-
-    Args:
-        text (str): The input string to check.
-
-    Returns:
-        bool: True if the string is likely a SQL statement, False otherwise.
+    Optimized function to determine if text contains SQL statements.
+    Uses pre-compiled regexes and caching for maximum performance.
     """
-    if not isinstance(text, str) or not text.strip():
+    if not isinstance(text, str):
         return False
-
-    # 1. High-confidence patterns for core SQL commands
-    # These patterns look for the basic structure of the most common queries.
-    sql_patterns = [
-        # More specific patterns to avoid false positives
-        r"\bselect\s+[\w\*,\s\.]+\s+from\s+[\w\.]+(\s+where|\s+group|\s+order|\s+limit|;|\s*--|\s*$)",  # SELECT ... FROM table with SQL context
-        r"\binsert\s+into\s+\w+\s*\([^)]*\)\s*values\s*\(",  # INSERT INTO table (...) VALUES (
-        r"\bupdate\s+\w+\s+set\s+\w+\s*=",  # UPDATE table SET column =
-        r"\bdelete\s+from\s+\w+",  # DELETE FROM table
-        r"\b(create|alter|drop)\s+(table|database|view|index|procedure|function)\s+\w+",  # DDL
-        r"\b(grant|revoke)\s+\w+\s+on\s+\w+",  # Permissions
-        r"\btruncate\s+table\s+\w+",  # TRUNCATE TABLE
-    ]
-
-    # Check for the primary, high-confidence patterns first
-    for pattern in sql_patterns:
-        if re.search(pattern, text, re.IGNORECASE):
-            return True
-
-    # 2. Fallback check for a combination of other common SQL keywords
-    # This can catch partial queries or less common statements.
-    secondary_keywords = [
-        r"\bwhere\s+\w+\s*[=<>!]",  # WHERE with condition
-        r"\bgroup\s+by\s+\w+",  # GROUP BY
-        r"\border\s+by\s+\w+",  # ORDER BY
-        r"\b(left|right|inner|outer|full)\s+join\s+\w+",  # JOINs
-        r"\bon\s+\w+\.\w+\s*=\s*\w+\.\w+",  # ON join condition
-        r"\bhaving\s+\w+\s*[=<>!]",  # HAVING with condition
-        r"\bunion\s+(all\s+)?select",  # UNION
-        r"\blike\s+['\"][^'\"]*['\"]",  # LIKE with pattern
-        r"\bin\s*\([^)]*\)",  # IN clause
-        r"\bexists\s*\(",  # EXISTS
-        r"\bcount\s*\(",  # COUNT function
-        r"\bmax\s*\(",  # MAX function
-        r"\bmin\s*\(",  # MIN function
-        r"\bavg\s*\(",  # AVG function
-        r"\bsum\s*\(",  # SUM function
-    ]
-
-    found_keywords = 0
-    for keyword_pattern in secondary_keywords:
-        if re.search(keyword_pattern, text, re.IGNORECASE):
-            found_keywords += 1
-
-    # If we find at least two of these secondary keywords, it's a strong sign.
-    if found_keywords >= 2:
-        return True
-
-    return False
+    return _is_sql_cached(text)
