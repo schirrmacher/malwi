@@ -9,8 +9,6 @@ import csv
 import logging
 import multiprocessing as mp
 import tempfile
-import signal
-import time
 from pathlib import Path
 from typing import List, Dict
 from concurrent.futures import ProcessPoolExecutor, as_completed, TimeoutError
@@ -169,6 +167,7 @@ def preprocess_data(
     num_processes: int = None,
     chunk_size: int = 100,
     use_parallel: bool = True,
+    timeout_minutes: int = 120,
 ) -> None:
     """
     Preprocess source files to generate malwicode tokens.
@@ -180,6 +179,7 @@ def preprocess_data(
         num_processes: Number of parallel processes
         chunk_size: Approximate files per chunk
         use_parallel: Whether to use parallel processing
+        timeout_minutes: Maximum time to wait for processing (default: 120 minutes for large datasets)
     """
     if extensions is None:
         extensions = [".py"]
@@ -202,7 +202,9 @@ def preprocess_data(
         _process_sequential(accepted_files, output_path)
     else:
         print("Using parallel processing...")
-        _process_parallel(accepted_files, output_path, num_processes, chunk_size)
+        _process_parallel(
+            accepted_files, output_path, num_processes, chunk_size, timeout_minutes
+        )
 
 
 def _process_sequential(files: List[Path], output_path: Path) -> None:
@@ -245,6 +247,7 @@ def _process_parallel(
     output_path: Path,
     num_processes: int = None,
     chunk_size: int = 100,
+    timeout_minutes: int = 120,
 ) -> None:
     """Process files in parallel."""
     if num_processes is None:
@@ -309,47 +312,127 @@ def _process_parallel(
                 for task in chunk_tasks
             }
 
-            # Collect results with progress bar and timeout
-            timeout_seconds = 300  # 5 minutes per chunk maximum
+            # Collect results with robust timeout handling for large datasets
+            total_timeout_seconds = timeout_minutes * 60  # Convert minutes to seconds
+
+            completed_futures = set()
+
             with tqdm(
                 total=len(chunk_tasks), desc="Processing chunks", unit="chunk"
             ) as pbar:
-                for future in as_completed(future_to_chunk, timeout=timeout_seconds):
-                    chunk_id = future_to_chunk[future]
-                    try:
-                        result = future.result(
-                            timeout=30
-                        )  # 30 second timeout for result retrieval
-                        chunk_results.append(result)
+                try:
+                    # Use as_completed with overall timeout but handle individual timeouts
+                    for future in as_completed(
+                        future_to_chunk, timeout=total_timeout_seconds
+                    ):
+                        chunk_id = future_to_chunk[future]
+                        completed_futures.add(future)
 
-                        if result["success"]:
-                            pbar.set_postfix(
-                                processed=result["processed_count"],
-                                chunk=result["chunk_id"],
-                            )
-                    except TimeoutError:
-                        # Handle timeout
-                        error_result = {
-                            "chunk_id": chunk_id,
-                            "success": False,
-                            "error": "Process timeout",
-                            "processed_count": 0,
-                        }
-                        chunk_results.append(error_result)
-                        pbar.set_postfix(chunk=chunk_id, status="TIMEOUT")
-                        future.cancel()
-                    except Exception as e:
-                        # Handle crashed processes
-                        error_result = {
-                            "chunk_id": chunk_id,
-                            "success": False,
-                            "error": f"Process crashed: {str(e)}",
-                            "processed_count": 0,
-                        }
-                        chunk_results.append(error_result)
-                        pbar.set_postfix(chunk=chunk_id, status="FAILED")
+                        try:
+                            result = future.result(
+                                timeout=180
+                            )  # 3 minute timeout for result retrieval (processing can take time)
+                            chunk_results.append(result)
 
-                    pbar.update(1)
+                            if result["success"]:
+                                pbar.set_postfix(
+                                    processed=result["processed_count"],
+                                    chunk=result["chunk_id"],
+                                    status="OK",
+                                )
+                            else:
+                                pbar.set_postfix(
+                                    chunk=result["chunk_id"], status="FAILED"
+                                )
+                        except TimeoutError:
+                            # Handle timeout
+                            error_result = {
+                                "chunk_id": chunk_id,
+                                "success": False,
+                                "error": "Process timeout (result retrieval)",
+                                "processed_count": 0,
+                            }
+                            chunk_results.append(error_result)
+                            pbar.set_postfix(chunk=chunk_id, status="TIMEOUT")
+                            try:
+                                future.cancel()
+                            except Exception:
+                                pass  # Future might already be done
+                        except Exception as e:
+                            # Handle crashed processes
+                            error_result = {
+                                "chunk_id": chunk_id,
+                                "success": False,
+                                "error": f"Process crashed: {str(e)}",
+                                "processed_count": 0,
+                            }
+                            chunk_results.append(error_result)
+                            pbar.set_postfix(chunk=chunk_id, status="CRASHED")
+
+                        pbar.update(1)
+
+                except TimeoutError:
+                    # Overall timeout reached - handle unfinished futures
+                    print(
+                        f"\n⚠️  Overall timeout reached after {total_timeout_seconds} seconds"
+                    )
+
+                # Handle any remaining unfinished futures
+                unfinished_futures = set(future_to_chunk.keys()) - completed_futures
+                if unfinished_futures:
+                    print(
+                        f"\n⚠️  Found {len(unfinished_futures)} unfinished futures - cleaning up..."
+                    )
+
+                    for future in unfinished_futures:
+                        chunk_id = future_to_chunk[future]
+
+                        # Try to cancel the future
+                        cancelled = future.cancel()
+
+                        if not cancelled:
+                            # Future is running or done - try to get result with short timeout
+                            try:
+                                result = future.result(timeout=5)
+                                chunk_results.append(result)
+                                print(
+                                    f"  ✅ Chunk {chunk_id}: Retrieved result from unfinished future"
+                                )
+                            except TimeoutError:
+                                # Give up on this chunk
+                                error_result = {
+                                    "chunk_id": chunk_id,
+                                    "success": False,
+                                    "error": "Overall timeout - chunk abandoned",
+                                    "processed_count": 0,
+                                }
+                                chunk_results.append(error_result)
+                                print(
+                                    f"  ❌ Chunk {chunk_id}: Abandoned due to timeout"
+                                )
+                            except Exception as e:
+                                error_result = {
+                                    "chunk_id": chunk_id,
+                                    "success": False,
+                                    "error": f"Failed to retrieve from unfinished future: {str(e)}",
+                                    "processed_count": 0,
+                                }
+                                chunk_results.append(error_result)
+                                print(
+                                    f"  ❌ Chunk {chunk_id}: Failed to retrieve result - {str(e)}"
+                                )
+                        else:
+                            # Successfully cancelled
+                            error_result = {
+                                "chunk_id": chunk_id,
+                                "success": False,
+                                "error": "Cancelled due to overall timeout",
+                                "processed_count": 0,
+                            }
+                            chunk_results.append(error_result)
+                            print(f"  🚫 Chunk {chunk_id}: Cancelled")
+
+                    pbar.update(len(unfinished_futures))
 
         # Combine results
         print("📋 Combining chunk results...")

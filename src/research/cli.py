@@ -436,6 +436,7 @@ Examples:
                     output_path=Path("benign.csv"),
                     extensions=[".py"],
                     use_parallel=True,
+                    timeout_minutes=240,  # 4 hours for 200k+ files
                 )
 
                 # Add false-positives from malwi-samples
@@ -444,6 +445,7 @@ Examples:
                     output_path=Path("benign.csv"),
                     extensions=[".py"],
                     use_parallel=True,
+                    timeout_minutes=90,  # Even malwi-samples can be large
                 )
 
                 info("   • Generating malicious Python AST data...")
@@ -453,6 +455,7 @@ Examples:
                     output_path=Path("malicious.csv"),
                     extensions=[".py"],
                     use_parallel=True,
+                    timeout_minutes=120,  # 2 hours for malicious samples
                 )
 
                 # Add suspicious findings for future training categories
@@ -461,6 +464,7 @@ Examples:
                     output_path=Path("malicious.csv"),
                     extensions=[".py"],
                     use_parallel=True,
+                    timeout_minutes=90,  # 1.5 hours for suspicious samples
                 )
 
             if args.language in [Language.JAVASCRIPT.value, Language.BOTH.value]:
