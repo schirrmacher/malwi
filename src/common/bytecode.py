@@ -23,9 +23,7 @@ from common.mapping import (
     is_file_path,
     contains_url,
     is_localhost,
-    is_bash_code,
-    is_code,
-    is_sql,
+    classify_string_type,
     SENSITIVE_PATHS,
 )
 
@@ -312,19 +310,20 @@ class Instruction:
         # This preserves short identifiers like "Optional", "some_var" as-is
         elif len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
-        elif is_bash_code(argval):
-            return f"{op_code.name} {SpecialCases.STRING_BASH.value}"
-        elif is_sql(argval):
-            return f"{op_code.name} {SpecialCases.STRING_SQL.value}"
-        elif is_code(argval):
-            return f"{op_code.name} {SpecialCases.STRING_CODE.value}"
-        elif is_hex(argval):
-            return f"{op_code.name} {SpecialCases.STRING_HEX.value}"
-        elif is_base64(argval):
-            return f"{op_code.name} {SpecialCases.STRING_BASE64.value}"
+        else:
+            # Fast single-pass classification for scalable preprocessing
+            string_type = classify_string_type(argval)
+            if string_type != "STRING":
+                return f"{op_code.name} {string_type}"
 
-        # Default case for long strings
-        return f"{op_code.name} {SpecialCases.STRING.value}"
+            # Check remaining specific patterns for long strings
+            elif is_hex(argval):
+                return f"{op_code.name} {SpecialCases.STRING_HEX.value}"
+            elif is_base64(argval):
+                return f"{op_code.name} {SpecialCases.STRING_BASE64.value}"
+            else:
+                # Default case for long strings
+                return f"{op_code.name} {SpecialCases.STRING.value}"
 
     def to_string(self, mapped: bool, for_hashing: bool = False) -> str:
         if mapped and for_hashing:

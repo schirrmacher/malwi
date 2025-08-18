@@ -52,54 +52,163 @@ COMMON_TARGET_FILES: Dict[str, Set[str]] = read_json_from_file(
     SCRIPT_DIR / "syntax_mapping" / "target_files.json"
 )
 
-# Pre-compiled regex patterns for performance optimization
-# Bash detection patterns
-_BASH_SHEBANG = re.compile(r"^#!\s*/(usr/)?bin/(bash|sh|zsh)")
-_BASH_KEYWORDS = re.compile(
-    r"\b(ls|cd|echo|rm|grep|awk|sed|cat|curl|wget|sudo|chmod|chown|mkdir|touch|cp|mv|find|xargs|tar|gzip|gunzip|zip|unzip|ps|kill|pkill|top|df|du|mount|umount|export|source|alias|unset|set|eval|exec|if|then|else|elif|fi|for|while|do|done|case|esac|function|return|break|continue|true|false|test|exit|trap|wait|sleep|head|tail|sort|uniq|cut|paste|join|comm|diff|patch|tee|nc|ssh|scp|rsync|git|docker|kubectl|npm|pip|apt|yum|brew|systemctl|service|journalctl|cron|at)\b",
-    re.IGNORECASE,
-)
-_BASH_VARS = re.compile(r"\$[a-zA-Z_]|\$\{[^}]+\}")
-_BASH_COMMAND_SUB = re.compile(r"\$\([^)]+\)|`[^`]+`")
-_BASH_OPERATORS = re.compile(r"\||>>?|<|&&|\|\||;")
-_BASH_OPTIONS = re.compile(r"(^|\s)-[a-zA-Z]|\s--[a-zA-Z][a-zA-Z0-9-]*")
-_BASH_TEST_BRACKETS = re.compile(r"\[\s+.*\s+\]")
-_BASH_EXIT_STATUS = re.compile(r"\$\?")
-_BASH_COMMENTS = re.compile(r"^\s*#(?!#)", re.MULTILINE)
-_BASH_REDIRECTION = re.compile(r"2>&1|1>&2|&>|2>")
-_BASH_WILDCARDS = re.compile(r"[^\\][\*\?]")
-_BASH_PATHS = re.compile(r"~\/|\/home\/|\/usr\/|\/etc\/|\/var\/|\/tmp\/")
+# Fast, lightweight patterns for scalable code detection
+# Priority: Speed over perfect accuracy for millions of files
 
-# Code detection patterns
-_CODE_STRONG_PATTERNS = re.compile(
-    r"\b(def|function|class|struct|interface)\s+\w+\s*[\(\{]|\blambda\s+\w*\s*:|\b(if|while|for)\s*[\(\s].*[\)\s]*[\{\:]|[a-zA-Z_]\w*\s*[\[\(]\s*[^)]*\s*[\]\)]\s*[\{\=\;]|[a-zA-Z_]\w*\.\w+\s*\(|=>\s*[\{\w]|function\s*\(|</?[a-zA-Z][^>]*>|[\[\{]\s*[\"']?\w+[\"']?\s*:\s*[\"']?[^,}\]]+[\"']?|\b(import|from)\s+[\w\.]+(\s+import\s+|\s+as\s+)|[.#][\w-]+\s*\{[^}]*\}|[\w-]+\s*:\s*[^;]+;|^\s*\[[^\]]+\]\s*$|^\s*[\w-]+\s*=\s*[^=]+$|^\s*#(?!#)|^\s*//|/\*.*?\*/|\bprint\s*\(",
-    re.IGNORECASE | re.MULTILINE | re.DOTALL,
-)
-_CODE_KEYWORDS = re.compile(
-    r"\b(def|function|class|struct|interface|enum|if|else|elif|for|while|do|switch|case|return|yield|break|continue|try|catch|finally|throw|raise|import|from|include|require|const|let|var|public|private|protected|static|lambda|async|await|typeof|instanceof|extends|new|delete|this|self|super)\b",
-    re.IGNORECASE,
-)
-_CODE_SYNTAX = re.compile(
-    r"==|!=|<=|>=|\+=|-=|\*=|/=|&&|\|\||::|;[\s]*$|;[\s]*\n", re.MULTILINE
-)
-_CODE_NEGATIVE = re.compile(
-    r"\b(PASSED|FAILED|Starting|Finished|Test|Case|COMPLETED)\b|^[\-\=\*]{3,}.*[\-\=\*]{3,}$|^\d+\.\d+\.",
+# Pre-filters - require code-like patterns but not too restrictive
+# Look for common syntactical elements that indicate code
+# fmt: off
+_CODE_SYNTACTICAL_ELEMENTS = frozenset({
+    # Basic syntax symbols
+    '(', ')', '{', '}', '[', ']', '=>', '->', '==', '!=', '&&', '||', ':', ';',
+    # Programming keywords
+    'return', 'import', 'function', 'def', 'class', 'print(', 'console.',
+    'if ', 'for ', 'while ', 'else', 'break', 'continue',
+    # HTML/XML tags
+    '<html', '<body', '<div', '<script', '</',
+    # Comments
+    '/*', '*/',
+    # Variable types
+    'int ', 'var ',
+})
+# fmt: on
+
+# Data exfiltration focused bash patterns for malware detection
+# fmt: off
+_BASH_SYNTACTICAL_ELEMENTS = frozenset({
+    # Core bash syntax
+    '#!/bin/', '$(' ,'${', '&&', '||', '2>&1', '|', '>>', '> ',
+    'if [', 'then', 'fi', 'do', 'done', 'bash', '.sh', '$PATH',
+    # Network exfiltration (primary threat)
+    'curl ', 'wget ', 'nc ', 'netcat', 'ssh ', 'scp ', 'rsync ',
+    # File operations for data theft  
+    'cp ', 'mv ', 'rm ', 'find ', 'locate ',
+    # Archive operations (compress stolen data)
+    'tar ', 'gzip ', 'zip ', 'unzip ',
+    # Text extraction from files
+    'grep ', 'sed ', 'awk ',
+    # Data encoding for obfuscation
+    'base64', 'openssl',
+    # Basic commands (keep for test compatibility)
+    'echo ', 'ls ', 'cd ', 'cat ', 'chmod', 'sudo', 'export ',
+})
+# fmt: on
+
+# SQL patterns - focus on what malware would use
+# fmt: off
+_SQL_SYNTACTICAL_PATTERNS = frozenset({
+    # Data extraction (most common in malware)
+    'SELECT ', 'FROM ', 'WHERE ',
+    # Data manipulation
+    'INSERT INTO', 'UPDATE ', 'SET ', 'DELETE FROM',
+    # Destructive operations
+    'DROP TABLE', 'DROP DATABASE', 'TRUNCATE TABLE',
+    # Query modifiers and injection patterns
+    'ORDER BY', 'UNION SELECT',
+})
+# fmt: on
+
+# Code detection - balanced patterns to avoid false positives while catching real code
+# Requires actual code structure, not just keywords
+CODE_PATTERN = re.compile(
+    r"("
+    # Python/JS function definitions
+    r"\bdef\s+\w+|\bfunction\s+\w+|\bclass\s+\w+|"
+    # Lambda/arrow functions
+    r"\blambda\s+.*:|\w+\s*=>|"
+    # Control flow
+    r"\bif\s+|\bfor\s+|\bwhile\s+|\breturn\s+|\bbreak\b|\bcontinue\b|"
+    # Import statements
+    r"\bimport\s+|\bfrom\s+.*\s+import|\brequire\s*\(|"
+    # Variable declarations (JavaScript and C-style)
+    r"\b(const|let|var|int|float|double|char|void)\s+\w+|\b(public|private)\s+|"
+    # Function calls
+    r"\bconsole\.\w+|\bprint\s*\(|"
+    # Programming operators and C-style comments
+    r"==|!=|&&|\|\||/\*[\s\S]*?\*/|//.*$|"
+    # HTML/XML tags
+    r"<(html|body|head|div|script|style|\?xml)[^>]*>|"
+    # JSON/Object literals
+    r'\{\s*["\w]+\s*:|\[\s*[\{"\d]|'
+    # CSS selectors with braces
+    r"\.[\w-]+\s*\{|#[\w-]+\s*\{|\w+\s*\{.*:\s*[\w#]"
+    r")",
     re.IGNORECASE | re.MULTILINE,
 )
-_CODE_NATURAL = re.compile(
-    r"\b(the|and|or|but|with|that|this|have|will|would|should|could|are|is|was|were)\b",
+
+# Bash detection - balanced patterns for actual bash syntax
+BASH_PATTERN = re.compile(
+    r"("
+    # Shebang lines
+    r"^#!/(usr/)?bin/(bash|sh|zsh)|"
+    # Data exfiltration and theft commands
+    r"\b(curl|wget|nc|netcat|ssh|scp|rsync|cp|mv|rm|find|locate|tar|gzip|zip|unzip|grep|sed|awk|base64|openssl|echo|ls|cd|cat|chmod|sudo|export)\s+|"
+    # Variable expansions including PATH
+    r"\$\{\w+|\$\(|\$PATH|\$HOME|\$USER|\$\w+|"
+    # Command chaining and pipes
+    r"&&|\|\||\||"
+    # Bash conditionals
+    r"if\s+\[|\];\s*then|\bdo\b|\bdone\b|\bfi\b"
+    r")",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+# SQL detection - focus on SQL that malware would actually use
+# Malware typically extracts data or drops tables, not complex DDL
+SQL_PATTERN = re.compile(
+    r"\b("
+    # Data extraction (most common in malware)
+    r"SELECT\s+.*\s+FROM\s+|"
+    # Data modification
+    r"INSERT\s+INTO\s+|"
+    r"UPDATE\s+\w+\s+SET\s+|"
+    r"DELETE\s+FROM\s+|"
+    # Destructive operations
+    r"DROP\s+(TABLE|DATABASE)\s+|"
+    r"TRUNCATE\s+TABLE\s+|"
+    # Common SQL clauses
+    r"WHERE\s+\w+\s*=|"
+    r"ORDER\s+BY\s+|"
+    r"UNION\s+SELECT"  # SQL injection pattern
+    r")\b",
     re.IGNORECASE,
 )
 
-# SQL detection patterns
-_SQL_MAIN_PATTERNS = re.compile(
-    r"\bselect\s+[\w\*,\s\.]+\s+from\s+[\w\.]+(\s+where|\s+group|\s+order|\s+limit|;|\s*--|\s*$)|\binsert\s+into\s+\w+\s*\([^)]*\)\s*values\s*\(|\bupdate\s+\w+\s+set\s+\w+\s*=|\bdelete\s+from\s+\w+|\b(create|alter|drop)\s+(table|database|view|index|procedure|function)\s+\w+|\b(grant|revoke)\s+\w+\s+on\s+\w+|\btruncate\s+table\s+\w+",
-    re.IGNORECASE,
-)
-_SQL_SECONDARY = re.compile(
-    r"\bwhere\s+\w+\s*[=<>!]|\bgroup\s+by\s+\w+|\border\s+by\s+\w+|\b(left|right|inner|outer|full)\s+join\s+\w+|\bon\s+\w+\.\w+\s*=\s*\w+\.\w+|\bhaving\s+\w+\s*[=<>!]|\bunion\s+(all\s+)?select|\blike\s+['\"][^'\"]*['\"]|\bin\s*\([^)]*\)|\bexists\s*\(|\b(count|max|min|avg|sum)\s*\(",
-    re.IGNORECASE,
-)
+
+@lru_cache(maxsize=16384)
+def classify_string_type(text: str) -> str:
+    """
+    Fast single-pass string classification for scalable preprocessing.
+    Returns the most likely string type to avoid multiple detection calls.
+
+    Uses ultra-fast buzzword pre-filters before expensive regex patterns.
+    Optimized for millions of files - speed over perfect accuracy.
+    """
+    if not isinstance(text, str) or not text or len(text) < 3:
+        return SpecialCases.STRING.value
+
+    # Ultra-fast pre-filters - require BOTH keywords and syntactical elements
+    text_lower = text.lower()
+
+    # Check for bash syntax (most common in malicious files)
+    if any(syntax in text for syntax in _BASH_SYNTACTICAL_ELEMENTS):
+        # Only run expensive regex if bash syntax found
+        if BASH_PATTERN.search(text):
+            return SpecialCases.STRING_BASH.value
+
+    # Check for SQL structure
+    if any(pattern.lower() in text_lower for pattern in _SQL_SYNTACTICAL_PATTERNS):
+        # Only run expensive regex if SQL patterns found
+        if SQL_PATTERN.search(text):
+            return SpecialCases.STRING_SQL.value
+
+    # Check for code - just need syntactical elements
+    if any(syntax in text for syntax in _CODE_SYNTACTICAL_ELEMENTS):
+        # Only run expensive regex if both syntax and keywords found
+        if CODE_PATTERN.search(text):
+            return SpecialCases.STRING_CODE.value
+
+    return SpecialCases.STRING.value
 
 
 def is_valid_ip(content: str) -> bool:
@@ -494,168 +603,84 @@ def map_tuple_arg(argval: tuple, original_argrepr: str) -> str:
 
 
 @lru_cache(maxsize=8192)
-def _is_bash_code_cached(text: str, threshold: int = 3) -> bool:
+def _is_bash_code_cached(text: str) -> bool:
     """
-    Internal cached function for bash code detection.
+    Fast bash code detection for high-volume processing.
+    Uses syntactical element pre-filter before expensive regex.
+    Trades accuracy for speed - optimized for millions of files.
     """
     if not text or len(text) < 2:
         return False
 
-    score = 0
+    # Check for bash syntactical elements
+    if not any(syntax in text for syntax in _BASH_SYNTACTICAL_ELEMENTS):
+        return False
 
-    # Quick shebang check (strong indicator)
-    if _BASH_SHEBANG.search(text):
-        return True  # Early exit for obvious bash
-
-    # Count bash keywords efficiently
-    keyword_matches = len(_BASH_KEYWORDS.findall(text.lower()))
-    if keyword_matches >= 3:
-        score += 4
-    elif keyword_matches >= 2:
-        score += 3
-    elif keyword_matches >= 1:
-        score += 2
-
-    # Early exit if we already have enough score
-    if score >= threshold:
-        return True
-
-    # Check bash-specific patterns
-    if _BASH_VARS.search(text):
-        score += 2
-    if _BASH_COMMAND_SUB.search(text):
-        score += 3
-    if _BASH_OPERATORS.search(text):
-        score += 1
-    if _BASH_OPTIONS.search(text):
-        score += 1
-    if _BASH_TEST_BRACKETS.search(text):
-        score += 2
-    if _BASH_EXIT_STATUS.search(text):
-        score += 1
-    if _BASH_COMMENTS.search(text):
-        score += 1
-    if _BASH_REDIRECTION.search(text):
-        score += 2
-    if _BASH_WILDCARDS.search(text):
-        score += 1
-    if _BASH_PATHS.search(text):
-        score += 1
-
-    return score >= threshold
+    # Only run expensive regex if bash syntax found
+    return bool(BASH_PATTERN.search(text))
 
 
 def is_bash_code(text: str, threshold: int = 3) -> bool:
     """
-    Optimized function to determine if text is likely bash code.
-    Uses pre-compiled regexes and caching for maximum performance.
+    Fast function to determine if text is likely bash code.
+    Simplified for scalable preprocessing of large datasets.
     """
     if not isinstance(text, str):
         return False
-    return _is_bash_code_cached(text, threshold)
+    return _is_bash_code_cached(text)
 
 
 @lru_cache(maxsize=8192)
-def _is_code_cached(text: str, threshold: float = 0.3) -> bool:
+def _is_code_cached(text: str) -> bool:
     """
-    Internal cached function for code detection.
+    Fast code detection for high-volume processing.
+    Requires BOTH keywords and syntactical elements.
+    Trades accuracy for speed - optimized for millions of files.
     """
     if not text or len(text) < 3:
         return False
 
-    # For very short strings, we need different scoring
-    if len(text) < 20:
-        score = 0.0
-        if _CODE_STRONG_PATTERNS.search(text):
-            score += 0.4
-        if _CODE_SYNTAX.search(text):
-            score += 0.3
-        # Check for keywords even in short strings
-        if _CODE_KEYWORDS.search(text):
-            score += 0.2
-        return score >= threshold
+    # Check for code syntactical elements
+    if not any(syntax in text for syntax in _CODE_SYNTACTICAL_ELEMENTS):
+        return False
 
-    score = 0.0
-
-    # 1. Strong code patterns check (combined regex)
-    if _CODE_STRONG_PATTERNS.search(text):
-        score += 0.4
-
-    # Early exit if we already have strong evidence
-    if score >= threshold:
-        return True
-
-    # 2. Count programming keywords efficiently
-    keyword_matches = len(_CODE_KEYWORDS.findall(text))
-    if keyword_matches >= 3:
-        score += 0.3
-    elif keyword_matches >= 2:
-        score += 0.25
-    elif keyword_matches >= 1:
-        score += 0.15
-
-    # Early exit check
-    if score >= threshold:
-        return True
-
-    # 3. Code syntax patterns
-    if _CODE_SYNTAX.search(text):
-        score += 0.2
-
-    # 4. Indented multi-line code (quick check)
-    if "\n" in text and ("\n    " in text or "\n\t" in text):
-        score += 0.15
-
-    # 5. Negative patterns (only if score is borderline)
-    if score < 0.4:
-        if _CODE_NEGATIVE.search(text):
-            score -= 0.2
-
-        # Natural language penalty
-        natural_matches = len(_CODE_NATURAL.findall(text))
-        if natural_matches >= 3 and keyword_matches <= 1:
-            score -= 0.3
-
-    return score >= threshold
+    # Only run expensive regex if both syntax and keywords found
+    return bool(CODE_PATTERN.search(text))
 
 
 def is_code(text: str, threshold: float = 0.3) -> bool:
     """
-    Optimized function to determine if text likely contains code.
-    Uses pre-compiled regexes and caching for maximum performance.
+    Fast function to determine if text likely contains code.
+    Simplified for scalable preprocessing of large datasets.
     """
     if not isinstance(text, str):
         return False
-    return _is_code_cached(text, threshold)
+    return _is_code_cached(text)
 
 
 @lru_cache(maxsize=8192)
 def _is_sql_cached(text: str) -> bool:
     """
-    Internal cached function for SQL detection.
+    Fast SQL detection for high-volume processing.
+    Uses SQL pattern pre-filter before expensive regex.
+    Trades accuracy for speed - optimized for millions of files.
     """
-    if not text.strip():
+    if not text or len(text) < 6:
         return False
 
-    # Quick early exit for very short strings
-    if len(text) < 6:  # Minimum SQL would be "SELECT"
+    # Check for SQL structural patterns
+    text_lower = text.lower()
+    if not any(pattern.lower() in text_lower for pattern in _SQL_SYNTACTICAL_PATTERNS):
         return False
 
-    # 1. Check high-confidence SQL patterns first (early exit)
-    if _SQL_MAIN_PATTERNS.search(text):
-        return True
-
-    # 2. Check secondary patterns for partial/complex queries
-    secondary_matches = len(_SQL_SECONDARY.findall(text))
-
-    # If we find at least two secondary patterns, likely SQL
-    return secondary_matches >= 2
+    # Only run expensive regex if SQL patterns found
+    return bool(SQL_PATTERN.search(text))
 
 
 def is_sql(text: str) -> bool:
     """
-    Optimized function to determine if text contains SQL statements.
-    Uses pre-compiled regexes and caching for maximum performance.
+    Fast function to determine if text contains SQL statements.
+    Simplified for scalable preprocessing of large datasets.
     """
     if not isinstance(text, str):
         return False
