@@ -10,20 +10,7 @@ from dataclasses import dataclass, field
 from common.malwi_report import MalwiReport
 
 
-@dataclass
-class MockCodeObject:
-    """Mock CodeObject for testing."""
-
-    def __init__(self, source_code: str = ""):
-        self.source_code = source_code
-
-    def get_tokens(self, mapped: bool = True):
-        """Mock get_tokens method."""
-        # Return tokens that include SYSTEM_INTERACTION for malicious objects
-        if "system" in self.source_code.lower():
-            return ["SYSTEM_INTERACTION", "FILESYSTEM_ACCESS"]
-        else:
-            return ["SAFE_TOKEN"]
+# Mock CodeObject no longer needed after merger
 
 
 @dataclass
@@ -37,36 +24,60 @@ class MockMalwiObject:
     _code_text: str = ""
     warnings: List[str] = field(default_factory=list)
     language: str = "python"
-    code_object = None  # Mock the code_object attribute
+    # Mock the merged MalwiObject properties
+    byte_code: List = None
+    source_code: str = ""
+    location: tuple = None
 
     def __post_init__(self):
-        # Create mock code_object with source_code if _code_text is provided
+        # Set source_code from _code_text if provided
         if self._code_text:
-            self.code_object = MockCodeObject(self._code_text)
+            self.source_code = self._code_text
+        # Mock bytecode with simple instruction for testing
+        from unittest.mock import MagicMock
 
-    def to_tokens(self) -> List[str]:
-        return [f"TOKEN_{self.name.upper()}", "SYSTEM_INTERACTION", "FILESYSTEM_ACCESS"]
+        mock_instruction = MagicMock()
+        mock_instruction.to_string.return_value = "LOAD_CONST test"
+        self.byte_code = [mock_instruction]
 
-    def to_token_string(self) -> str:
-        return f"TOKEN_{self.name.upper()}"
+    def to_tokens(self, map_special_tokens: bool = True) -> List[str]:
+        if "system" in self.source_code.lower():
+            return [
+                f"TOKEN_{self.name.upper()}",
+                "SYSTEM_INTERACTION",
+                "FILESYSTEM_ACCESS",
+            ]
+        else:
+            return [f"TOKEN_{self.name.upper()}", "SAFE_TOKEN"]
 
-    def to_string_hash(self) -> str:
+    def to_token_string(self, map_special_tokens: bool = True) -> str:
+        return " ".join(self.to_tokens(map_special_tokens))
+
+    def to_hash(self) -> str:
         return f"hash_for_{self.name}"
+
+    def to_string(
+        self, mapped: bool = True, one_line: bool = True, for_hashing: bool = False
+    ) -> str:
+        return f"bytecode_for_{self.name}"
+
+    @property
+    def embedding_count(self) -> int:
+        return 0
 
     def populate_source_code(self):
         """Simulate source code population."""
-        # This is now handled by the code property and __post_init__
+        # This is now handled by the merged properties and __post_init__
         pass
 
     def predict(self):
         pass
 
     def to_dict(self) -> dict:
-        # Get code from code_object like real MalwiObject
-        if self.code_object and hasattr(self.code_object, "source_code"):
-            code_display_value = self.code_object.source_code
-        else:
-            code_display_value = self._code_text or "<source not available>"
+        # Get code from merged properties like real MalwiObject
+        code_display_value = (
+            self.source_code or self._code_text or "<source not available>"
+        )
         if "\n" in code_display_value:
             final_code_value = code_display_value.strip()
         else:
@@ -81,6 +92,7 @@ class MockMalwiObject:
                     "code": final_code_value,
                     "tokens": f"TOKEN_{self.name.upper()}",
                     "hash": f"hash_for_{self.name}",
+                    "embedding_count": 0,  # Add missing field
                 }
             ],
         }

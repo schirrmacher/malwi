@@ -15,8 +15,9 @@ from common.mapping import (
     SpecialCases,
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
+    COMMON_TARGET_FILES,
 )
-from common.bytecode import ASTCompiler, CodeObject
+from common.bytecode import ASTCompiler
 from common.predict_distilbert import (
     get_node_text_prediction,
 )
@@ -67,8 +68,10 @@ def disassemble_file_ast(
                 language=language,
                 file_path=file_path,
                 file_source_code=source_code,
-                # Store the AST CodeObject for token extraction
-                code_object=code_obj,
+                # Use merged properties directly
+                byte_code=code_obj.byte_code,
+                source_code=code_obj.source_code,
+                location=code_obj.location,
             )
 
             all_objects.append(malwi_obj)
@@ -154,9 +157,10 @@ class MalwiObject:
     file_source_code: str
     language: str
     maliciousness: Optional[float] = None
-    code_object: Optional[CodeObject] = (
-        None  # Store AST CodeObject for token extraction and source code access
-    )
+    byte_code: Optional[List] = None  # List of Instructions from AST compilation
+    source_code: Optional[str] = None  # Specific source code for this object
+    location: Optional[Tuple[int, int]] = None  # Start and end line numbers
+    _embedding_count: Optional[int] = None  # Cached embedding count
 
     def __init__(
         self,
@@ -164,7 +168,9 @@ class MalwiObject:
         language: str,
         file_path: str,
         file_source_code: str,
-        code_object: Optional[CodeObject] = None,
+        byte_code: Optional[List] = None,
+        source_code: Optional[str] = None,
+        location: Optional[Tuple[int, int]] = None,
         warnings: List[str] = [],
     ):
         self.name = name
@@ -172,8 +178,11 @@ class MalwiObject:
         self.file_path = file_path
         self.warnings = list(warnings)
         self.maliciousness = None
-        self.code_object = code_object
         self.file_source_code = file_source_code
+        self._embedding_count = None
+        self.byte_code = byte_code
+        self.source_code = source_code
+        self.location = location
 
     @classmethod
     def all_tokens(cls, language: str = "python") -> List[str]:
@@ -185,6 +194,77 @@ class MalwiObject:
         unique = list(tokens)
         unique.sort()
         return unique
+
+    def to_tokens(self, map_special_tokens: bool = True) -> List[str]:
+        """Get list of tokens from the bytecode instructions."""
+        tokens = []
+
+        # Add warnings first
+        tokens.extend(self.warnings)
+
+        # Add file targeting warning if applicable
+        if self.file_path and Path(self.file_path).name in COMMON_TARGET_FILES.get(
+            self.language, []
+        ):
+            tokens.append(SpecialCases.TARGETED_FILE.value)
+
+        # Extract tokens from each instruction if we have bytecode
+        if self.byte_code:
+            for instruction in self.byte_code:
+                instruction_str = instruction.to_string(
+                    mapped=map_special_tokens, for_hashing=False
+                )
+                # Split instruction into opcode and argument tokens
+                parts = instruction_str.split(" ", 1)
+                tokens.append(
+                    parts[0].upper()
+                )  # Convert opcode to uppercase to match tokenizer vocabulary
+                if len(parts) > 1 and parts[1]:
+                    tokens.append(parts[1])
+        else:
+            # Fallback for error cases
+            tokens.append(SpecialCases.MALFORMED_FILE.value)
+
+        return tokens
+
+    def to_token_string(self, map_special_tokens: bool = True) -> str:
+        """Get space-separated token string."""
+        return " ".join(self.to_tokens(map_special_tokens))
+
+    def to_string(
+        self, mapped: bool = True, one_line: bool = True, for_hashing: bool = False
+    ) -> str:
+        """Get bytecode representation as string."""
+        if not self.byte_code:
+            return "<no bytecode available>"
+
+        instructions = []
+
+        # Add file targeting warning if applicable
+        if self.file_path and Path(self.file_path).name in COMMON_TARGET_FILES.get(
+            self.language, []
+        ):
+            instructions.append(SpecialCases.TARGETED_FILE.value)
+
+        for instruction in self.byte_code:
+            instructions.append(
+                instruction.to_string(mapped=mapped, for_hashing=for_hashing)
+            )
+
+        return (" " if one_line else "\n").join(instructions)
+
+    def to_hash(self) -> str:
+        """Generate SHA256 hash of the bytecode representation."""
+        if not self.byte_code:
+            # Generate hash from token string for consistency
+            token_string = self.to_token_string(map_special_tokens=True)
+        else:
+            token_string = self.to_string(mapped=True, for_hashing=True, one_line=True)
+
+        encoded_string = token_string.encode("utf-8", errors="replace")
+        sha256_hash = hashlib.sha256()
+        sha256_hash.update(encoded_string)
+        return sha256_hash.hexdigest()
 
     @property
     def embedding_count(self) -> int:
@@ -198,22 +278,42 @@ class MalwiObject:
         Returns:
             Number of tokens this object creates when tokenized for DistilBERT
         """
-        if self.code_object and hasattr(self.code_object, "embedding_count"):
-            return self.code_object.embedding_count
-        else:
-            # No AST CodeObject available - cannot calculate embedding count
+        if self._embedding_count is None:
+            self._embedding_count = self._calculate_embedding_count()
+        return self._embedding_count
+
+    def _calculate_embedding_count(self) -> int:
+        """Calculate embedding count by tokenizing the token string representation."""
+        if not self.byte_code:
+            return 0
+
+        try:
+            # Import here to avoid circular dependencies
+            from common.predict_distilbert import get_thread_tokenizer
+
+            # Get the token string (same format used for prediction)
+            token_string = self.to_token_string(map_special_tokens=True)
+
+            # Use the same tokenizer that DistilBERT uses
+            tokenizer = get_thread_tokenizer()
+
+            # Tokenize without padding to get actual token count
+            encoded = tokenizer(
+                token_string,
+                return_tensors="pt",
+                padding=False,
+                truncation=False,  # Don't truncate to see full size
+            )
+
+            # Return the number of tokens
+            return encoded["input_ids"].shape[1]
+        except (RuntimeError, ImportError, Exception):
+            # Tokenizer not available or other error - return 0
             return 0
 
     def predict(self) -> Optional[dict]:
-        # Get tokens from CodeObject, adding warnings for error cases
-        if self.code_object:
-            tokens = list(self.warnings)  # Include any warnings
-            tokens.extend(self.code_object.get_tokens(mapped=True))
-        else:
-            # Fallback for error cases
-            tokens = list(self.warnings) + [SpecialCases.MALFORMED_FILE.value]
-
-        token_string = " ".join(tokens)
+        # Use the merged to_token_string method which includes warnings and handles all cases
+        token_string = self.to_token_string(map_special_tokens=True)
         prediction = None
         if any(
             token in token_string
@@ -227,15 +327,13 @@ class MalwiObject:
         return prediction
 
     def to_dict(self) -> dict:
-        # Get code from code_object if available
+        # Get code from merged properties
         code_display_value = None
-        if self.code_object and hasattr(self.code_object, "source_code"):
-            code_display_value = self.code_object.source_code
-        elif self.code_object:
+        if self.source_code:
+            code_display_value = self.source_code
+        elif self.byte_code:
             # Use the bytecode representation as fallback
-            code_display_value = self.code_object.to_string(
-                mapped=False, one_line=False
-            )
+            code_display_value = self.to_string(mapped=False, one_line=False)
 
         if code_display_value is None:
             code_display_value = "<source not available>"
@@ -254,22 +352,9 @@ class MalwiObject:
         else:
             final_code_value = code_display_value
 
-        # Get tokens and hash from CodeObject or fallback
-        if self.code_object:
-            # Include warnings in token string for consistency with prediction
-            tokens = list(self.warnings)
-            tokens.extend(self.code_object.get_tokens(mapped=True))
-            token_string = " ".join(tokens)
-            content_hash = self.code_object.to_hash()
-        else:
-            # Fallback for error cases
-            tokens = list(self.warnings) + [SpecialCases.MALFORMED_FILE.value]
-            token_string = " ".join(tokens)
-            # Generate hash for error case
-            encoded_string = token_string.encode("utf-8", errors="replace")
-            sha256_hash = hashlib.sha256()
-            sha256_hash.update(encoded_string)
-            content_hash = sha256_hash.hexdigest()
+        # Get tokens and hash using merged methods
+        token_string = self.to_token_string(map_special_tokens=True)
+        content_hash = self.to_hash()
 
         return {
             "path": str(self.file_path),

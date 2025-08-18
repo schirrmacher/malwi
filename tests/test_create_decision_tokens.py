@@ -27,9 +27,9 @@ class TestCreateDecisionTokens:
             file_path="test.py",
             file_source_code="def test(): pass",
         )
-        # Use code_object if available
-        if obj.code_object:
-            tokens = obj.code_object.get_tokens()
+        # Use to_tokens() method if bytecode is available
+        if obj.byte_code:
+            tokens = obj.to_tokens()
             assert isinstance(tokens, list)
             assert len(tokens) >= 0
 
@@ -53,7 +53,7 @@ class TestCreateDecisionTokens:
             file_path="test.py",
             file_source_code="def test(): pass",
         )
-        # Use code_object if available
-        if obj.code_object:
-            token_string = " ".join(obj.code_object.get_tokens())
+        # Use to_token_string() method if bytecode is available
+        if obj.byte_code:
+            token_string = obj.to_token_string()
             assert isinstance(token_string, str)

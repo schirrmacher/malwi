@@ -8,61 +8,59 @@ from unittest.mock import patch, MagicMock
 
 from common.mapping import SpecialCases
 from common.malwi_object import MalwiObject, LiteralStr
-from common.bytecode import ASTCompiler, CodeObject
+from common.bytecode import ASTCompiler
 
 
 class TestMalwiObject:
     """Test suite for MalwiObject class."""
 
     @pytest.fixture
-    def sample_ast_code_object(self):
-        """Create a sample AST CodeObject for testing."""
-        return CodeObject(
-            name="test_function",
-            byte_code=[],
-            source_code="def test(): pass",
-            path=Path("test.py"),
-            location=(1, 1),
-            language="python",
-        )
+    def sample_bytecode(self):
+        """Create sample bytecode for testing."""
+        # Mock bytecode instructions for testing
+        from unittest.mock import MagicMock
+
+        mock_instruction = MagicMock()
+        mock_instruction.to_string.return_value = "LOAD_CONST test"
+        return [mock_instruction]
 
     @pytest.fixture
-    def malwi_obj(self, sample_ast_code_object):
+    def malwi_obj(self, sample_bytecode):
         """Create a MalwiObject instance for testing."""
         return MalwiObject(
             name="test_function",
             language="python",
             file_source_code="def test(): pass",
             file_path="test.py",
-            code_object=sample_ast_code_object,
+            byte_code=sample_bytecode,
+            source_code="def test(): pass",
+            location=(1, 1),
         )
 
     def test_to_tokens_and_string(self, malwi_obj):
-        """Test token extraction and string conversion via CodeObject."""
-        assert malwi_obj.code_object is not None
-        tokens = malwi_obj.code_object.get_tokens()
+        """Test token extraction and string conversion."""
+        tokens = malwi_obj.to_tokens()
         assert isinstance(tokens, list)
 
-        token_string = " ".join(tokens)
+        token_string = malwi_obj.to_token_string()
         assert isinstance(token_string, str)
 
     def test_source_code_population(self, malwi_obj):
-        """Test source code population from AST CodeObject."""
-        # Should have code from code_object
-        assert malwi_obj.code_object is not None
-        assert hasattr(malwi_obj.code_object, "source_code")
-        assert isinstance(malwi_obj.code_object.source_code, str)
+        """Test source code population."""
+        # Should have source code from merged properties
+        assert malwi_obj.source_code is not None
+        assert isinstance(malwi_obj.source_code, str)
 
     @patch("common.malwi_object.get_node_text_prediction")
     def test_predict(self, mock_predict, malwi_obj):
         """Test maliciousness prediction."""
         mock_predict.return_value = {"probabilities": [0.3, 0.7]}
 
-        # Mock the CodeObject to return tokens with special tokens so prediction is triggered
+        # Mock the to_tokens method to return special tokens so prediction is triggered
         with patch.object(
-            malwi_obj.code_object,
-            "get_tokens",
-            return_value=["DYNAMIC_CODE_EXECUTION", "test_function"],
+            malwi_obj,
+            "to_token_string",
+            return_value="DYNAMIC_CODE_EXECUTION test_function",
         ):
             result = malwi_obj.predict()
 
@@ -72,11 +70,11 @@ class TestMalwiObject:
 
     def test_predict_no_special_tokens(self, malwi_obj):
         """Test prediction when no special tokens are present."""
-        # Mock CodeObject to return tokens without special tokens
+        # Mock to_token_string to return tokens without special tokens
         with patch.object(
-            malwi_obj.code_object,
-            "get_tokens",
-            return_value=["normal_function", "call"],
+            malwi_obj,
+            "to_token_string",
+            return_value="normal_function call",
         ):
             result = malwi_obj.predict()
 
@@ -108,9 +106,8 @@ class TestMalwiObject:
         assert "test_function" in json_str
 
     def test_string_hash(self, malwi_obj):
-        """Test string hash generation via CodeObject."""
-        assert malwi_obj.code_object is not None
-        hash_val = malwi_obj.code_object.to_hash()
+        """Test string hash generation."""
+        hash_val = malwi_obj.to_hash()
         assert isinstance(hash_val, str)
         assert len(hash_val) == 64  # SHA256 hex digest
 
@@ -132,9 +129,9 @@ class TestMalwiObject:
         )
 
         # Test that warnings are handled in prediction
-        # Since there's no code_object, prediction should use warnings + MALFORMED_FILE
+        # Since there's no bytecode, prediction should use warnings + MALFORMED_FILE
         result = obj.predict()
-        # For objects without code_object and with warnings, maliciousness should be None
+        # For objects without bytecode and with warnings, maliciousness should be None
         # unless special tokens are detected
         assert obj.maliciousness is None
 
@@ -148,11 +145,11 @@ class TestMalwiObject:
         )
 
         assert obj.language == "javascript"
-        # Test via code_object if available
-        if obj.code_object:
-            tokens = obj.code_object.get_tokens()
+        # Test token extraction if bytecode is available
+        if obj.byte_code:
+            tokens = obj.to_tokens()
             assert isinstance(tokens, list)
-        # For JavaScript objects created manually, code_object may not be created
+        # For JavaScript objects created manually, bytecode may not be created
         # This is fine as the test is just checking the object creation
 
 
@@ -176,4 +173,4 @@ def test_malwi_object_creation_minimal():
     assert obj.language == "python"
     assert obj.file_path == "minimal.py"
     assert obj.maliciousness is None
-    assert obj.code_object is None
+    assert obj.byte_code is None

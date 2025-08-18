@@ -153,10 +153,7 @@ class MalwiReport:
                     # List activities for this object
                     if result == "malicious":
                         # Get tokens for this specific object
-                        if obj.code_object:
-                            obj_tokens = obj.code_object.get_tokens()
-                        else:
-                            obj_tokens = []
+                        obj_tokens = obj.to_tokens(map_special_tokens=True)
                         obj_activities = []
                         # Collect tokens from all languages represented in malicious objects
                         languages_in_objects = set(
@@ -280,12 +277,8 @@ class MalwiReport:
 
             for obj in objects_in_file:
                 # Add malwicode tokens
-                if obj.code_object:
-                    malwicode_tokens = obj.code_object.get_tokens()
-                    token_string = " ".join(malwicode_tokens)
-                else:
-                    malwicode_tokens = []
-                    token_string = ""
+                malwicode_tokens = obj.to_tokens(map_special_tokens=True)
+                token_string = obj.to_token_string(map_special_tokens=True)
 
                 # Get DistilBERT tokens and counts
                 try:
@@ -306,10 +299,9 @@ class MalwiReport:
 
                 # Add object name with location info if available
                 object_line = f"🏷️  Object: {obj.name}"
-                if hasattr(obj, "code_object") and obj.code_object:
-                    if hasattr(obj.code_object, "location"):
-                        start_line, end_line = obj.code_object.location
-                        object_line += f" 📍 Lines {start_line}-{end_line}"
+                if obj.location:
+                    start_line, end_line = obj.location
+                    object_line += f" 📍 Lines {start_line}-{end_line}"
                 lines.append(object_line)
 
                 lines.append(
@@ -324,14 +316,11 @@ class MalwiReport:
                 lines.append("📝 SOURCE CODE:")
                 lines.append("─" * 40)
 
-                # Try to get the specific source code for this CodeObject
+                # Try to get the specific source code for this object
                 source_to_display = None
-                if hasattr(obj, "code_object") and obj.code_object:
-                    if hasattr(obj.code_object, "source_code"):
-                        source_to_display = obj.code_object.source_code
-
-                # Fallback to file source code if CodeObject source not available
-                if source_to_display is None and hasattr(obj, "file_source_code"):
+                if obj.source_code:
+                    source_to_display = obj.source_code
+                elif hasattr(obj, "file_source_code"):
                     source_to_display = obj.file_source_code
 
                 if source_to_display:
@@ -339,9 +328,8 @@ class MalwiReport:
                     source_lines = source_to_display.split("\n")
                     # Get starting line number if we have location info
                     start_line_num = 1
-                    if hasattr(obj, "code_object") and obj.code_object:
-                        if hasattr(obj.code_object, "location"):
-                            start_line_num = obj.code_object.location[0]
+                    if obj.location:
+                        start_line_num = obj.location[0]
 
                     for i, line in enumerate(source_lines, start_line_num):
                         lines.append(f"  {i:4d} | {line}")
@@ -410,12 +398,12 @@ class MalwiReport:
 
             # Process each file's objects
             for obj in objects:
-                # Get code from code_object
+                # Get code from object
                 obj_code = None
-                if obj.code_object and hasattr(obj.code_object, "source_code"):
-                    obj_code = obj.code_object.source_code
-                elif obj.code_object:
-                    obj_code = obj.code_object.to_string(mapped=False, one_line=False)
+                if obj.source_code:
+                    obj_code = obj.source_code
+                elif obj.byte_code:
+                    obj_code = obj.to_string(mapped=False, one_line=False)
 
                 if obj_code and obj_code != "<source not available>":
                     # Add file path comment with embedding count info
@@ -598,11 +586,10 @@ class MalwiReport:
                 all_filter_values.update(FUNCTION_MAPPING.get(lang, {}).values())
 
             for obj in malicious_objects:
-                if obj.code_object:
-                    tokens = obj.code_object.get_tokens()
-                    function_tokens.update(
-                        token for token in tokens if token in all_filter_values
-                    )
+                tokens = obj.to_tokens(map_special_tokens=True)
+                function_tokens.update(
+                    token for token in tokens if token in all_filter_values
+                )
             activities = list(function_tokens)
 
         duration = time.time() - start_time

@@ -100,7 +100,7 @@ for obj in report.malicious_objects:
 
 ### Classes
 
-#### MalwiReport
+#### `MalwiReport`
 
 ```python
 MalwiReport.create(
@@ -112,58 +112,67 @@ MalwiReport.create(
 ) -> MalwiReport              # Returns: MalwiReport instance with scan results
 ```
 
-**Working with Reports:**
 ```python
 import malwi
 
 report = malwi.MalwiReport.create("suspicious_directory/")
 
-report.malicious              # bool
-report.confidence             # float
-report.duration               # float
-report.all_objects            # List[MalwiObject]
-report.malicious_objects      # List[MalwiObject]
+# Properties
+report.malicious              # bool: True if malicious objects detected
+report.confidence             # float: Overall confidence score (0.0-1.0)
+report.duration               # float: Scan duration in seconds
+report.all_objects            # List[MalwiObject]: All analyzed code objects
+report.malicious_objects      # List[MalwiObject]: Objects exceeding threshold
+report.threshold              # float: Maliciousness threshold used (0.0-1.0)
+report.all_files              # List[Path]: All files found in input path
+report.skipped_files          # List[Path]: Files skipped (wrong extension)
+report.processed_files        # int: Number of files successfully processed
+report.activities             # List[str]: Suspicious activities detected
+report.input                  # str: Original input path scanned
+report.start                  # str: ISO 8601 timestamp when scan started
+report.all_file_types         # List[str]: All file extensions found
+report.version                # str: Malwi version with model hash
 
-report.to_demo_text()         # Human-readable summary
-report.to_report_json()       # JSON export
-report.to_report_yaml()       # YAML export
-report.to_report_markdown()   # Markdown export
+# Methods
+report.to_demo_text()         # str: Human-readable tree summary
+report.to_report_json()       # str: JSON formatted report
+report.to_report_yaml()       # str: YAML formatted report
+report.to_report_markdown()   # str: Markdown formatted report
+
+# Pre-load models to avoid delay on first prediction
+malwi.MalwiReport.load_models_into_memory()
 ```
 
-#### MalwiObject
+#### `MalwiObject`
 ```python
 obj = report.all_objects[0]
 
-obj.name                # str: function/class name
-obj.file_path           # str: source file path
-obj.language            # str: 'python'/'javascript'
-obj.maliciousness       # float|None: 0.0-1.0
-obj.code_object         # CodeObject|None: AST representation
+# Core properties
+obj.name                # str: Function/class/module name
+obj.file_path           # str: Path to source file
+obj.language            # str: Programming language ('python'/'javascript')
+obj.maliciousness       # float|None: ML confidence score (0.0-1.0)
+obj.warnings            # List[str]: Compilation warnings/errors
 
-obj.predict()           # dict: run ML prediction
-# For bytecode analysis, use obj.code_object methods instead
-```
+# Source code and AST compilation
+obj.file_source_code    # str: Complete content of source file
+obj.source_code         # str|None: Extracted source for this specific object
+obj.byte_code           # List[Instruction]|None: Compiled AST bytecode
+obj.location            # Tuple[int,int]|None: Start and end line numbers
+obj.embedding_count     # int: Number of DistilBERT tokens (cached)
 
-#### CodeObject
-```python
-code = obj.code_object
+# Analysis methods
+obj.predict()           # dict: Run ML prediction and update maliciousness
+obj.to_tokens()         # List[str]: Extract tokens for analysis
+obj.to_token_string()   # str: Space-separated token string
+obj.to_string()         # str: Bytecode as readable string
+obj.to_hash()           # str: SHA256 hash of bytecode
+obj.to_dict()           # dict: Serializable representation
+obj.to_yaml()           # str: YAML formatted output
+obj.to_json()           # str: JSON formatted output
 
-code.name               # str: function/class name
-code.source_code        # str: original source code
-code.path               # Path: file location
-code.location           # Tuple[int, int]: line numbers
-code.language           # str: 'python'/'javascript'
-code.embedding_count    # int: DistilBERT tokens (cached)
-
-code.to_string()        # str: bytecode representation
-code.to_hash()          # str: SHA256 hash
-code.get_tokens()       # List[str]: token list
-```
-
-**Manual Pre-loading (Optional):**
-```python
-# Pre-load models to avoid delay on first prediction
-malwi.MalwiReport.load_models_into_memory()
+# Class methods
+MalwiObject.all_tokens(language="python")  # List[str]: All possible tokens
 ```
 
 ## Why malwi?

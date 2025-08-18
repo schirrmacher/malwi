@@ -407,12 +407,11 @@ class MaliciousClass:
 
                 # Test source code population for each MalwiObject
                 for obj in report.all_objects:
-                    # Code is now available via code_object.source_code
+                    # Code is now available via merged source_code property
                     # Verify source code is available
-                    assert obj.code_object is not None
-                    assert hasattr(obj.code_object, "source_code")
+                    assert obj.source_code is not None
 
-                    obj_code = obj.code_object.source_code
+                    obj_code = obj.source_code
 
                     # Test specific objects
                     if obj.name == "malicious_function":
@@ -668,16 +667,17 @@ class TestClass:
                 os.unlink(f.name)
 
     def test_embedding_count_without_ast_object(self):
-        """Test embedding_count behavior when no AST CodeObject is available."""
-        # Create a MalwiObject without an AST CodeObject
+        """Test embedding_count behavior when no bytecode is available."""
+        # Create a MalwiObject without bytecode
         malwi_obj = MalwiObject(
             name="test_object",
             language="python",
             file_path="/test/path.py",
             file_source_code="print('test')",
-            code_object=None,  # No AST object
+            byte_code=None,  # No bytecode
+            source_code=None,  # No source code
         )
 
-        # Should return 0 when no AST CodeObject is available
+        # Should return 0 when no bytecode is available
         count = malwi_obj.embedding_count
-        assert count == 0, f"Should return 0 when no AST object, got {count}"
+        assert count == 0, f"Should return 0 when no bytecode, got {count}"
