@@ -13,7 +13,11 @@ def __getattr__(name):
         from common.malwi_object import MalwiObject
 
         return MalwiObject
+    elif name == "disassemble_file_ast":
+        from common.malwi_object import disassemble_file_ast
+
+        return disassemble_file_ast
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
-__all__ = ["__version__", "MalwiReport", "MalwiObject"]
+__all__ = ["__version__", "MalwiReport", "MalwiObject", "disassemble_file_ast"]

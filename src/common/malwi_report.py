@@ -450,30 +450,36 @@ class MalwiReport:
     @classmethod
     def create(
         cls,
-        input_path: Path,
+        input_path,
         accepted_extensions: Optional[List[str]] = None,
         predict: bool = False,
         silent: bool = False,
         malicious_threshold: float = 0.7,
-        on_malicious_found: Optional[callable] = None,
+        on_finding: Optional[callable] = None,
     ) -> "MalwiReport":
         """
         Create a MalwiReport by processing files from the given input path.
 
         Args:
-            input_path: Path to file or directory to process
+            input_path: Path to file or directory to process (str or Path object)
             accepted_extensions: List of file extensions to accept (without dots)
             predict: Whether to run maliciousness prediction
             silent: If True, suppress progress messages
             malicious_threshold: Threshold for classifying objects as malicious
-            on_malicious_found: Optional callback function called when malicious objects are found
-                               Function signature: callback(file_path: Path, malicious_objects: List[MalwiObject])
+            on_finding: Optional callback function called when malicious objects are found
+                        Function signature: callback(file_path: Path, malicious_objects: List[MalwiObject])
 
         Returns:
             MalwiReport containing analysis results
         """
         # Import here to avoid circular imports
         from common.malwi_object import process_single_file
+
+        # Convert input_path to Path object if it's a string
+        if isinstance(input_path, str):
+            input_path = Path(input_path)
+        elif not isinstance(input_path, Path):
+            input_path = Path(str(input_path))
 
         # Track timing and timestamp
         start_time = time.time()
@@ -556,8 +562,8 @@ class MalwiReport:
                 files_processed_count += 1
 
                 # Call callback if malicious objects found and callback provided
-                if file_malicious_objects and on_malicious_found:
-                    on_malicious_found(file_path, file_malicious_objects)
+                if file_malicious_objects and on_finding:
+                    on_finding(file_path, file_malicious_objects)
 
             except Exception as e:
                 if not silent:
