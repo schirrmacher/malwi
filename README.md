@@ -83,6 +83,147 @@ malwi pypi requests
 => 🟢 good
 ```
 
+## Python API
+
+malwi provides a comprehensive Python API for integrating malware detection into your applications:
+
+### Quick Start
+
+```python
+import malwi
+
+# Scan a single file or directory
+report = malwi.MalwiReport.create(input_path="suspicious_file.py")
+
+print(f"Confidence: {report.confidence:.2f}")
+print(f"Found {len(report.malicious_objects)} malicious objects")
+
+# Access individual objects for detailed analysis
+for obj in report.malicious_objects:
+    print(f"Object: {obj.name} (score: {obj.maliciousness:.2f})")
+    print(f"File: {obj.file_path}")
+    if obj.code:
+        print(f"Code: {obj.code[:100]}...")  # Show first 100 chars
+```
+
+### Core Classes
+
+#### `MalwiReport` - Main Scanning Interface
+
+**Creating Reports:**
+```python
+MalwiReport.create(
+    input_path,                    # str or Path - file/directory to scan
+    accepted_extensions=None,      # List[str] - file extensions to scan (e.g., ['py', 'js'])
+    silent=False,                  # bool - suppress progress messages
+    malicious_threshold=0.7,       # float - threshold for malicious classification (0.0-1.0)
+    on_finding=None                # callable - callback when malicious objects found
+) -> MalwiReport                   # Returns: MalwiReport instance with scan results
+```
+
+**Report Methods:**
+- `.to_demo_text()` - Human-readable tree format with emojis
+- `.to_report_json()` - Detailed JSON report with all findings
+- `.to_report_yaml()` - YAML format report
+- `.to_report_markdown()` - Markdown report with code snippets
+
+**Report Properties:**
+- `report.malicious` - bool - whether malicious code was detected
+- `report.confidence` - float - confidence score (0.0-1.0)
+- `report.malicious_objects` - List[MalwiObject] - detected malicious objects
+- `report.all_objects` - List[MalwiObject] - all analyzed code objects
+- `report.threshold` - float - threshold used for classification
+- `report.input` - str - the target path that was scanned
+- `report.duration` - float - scan duration in seconds
+
+#### `MalwiObject` - Individual Code Object Analysis
+
+**Properties:**
+- `obj.name` - str - Object name (function/class name or module)
+- `obj.file_path` - str - Path to the source file
+- `obj.language` - str - Programming language ('python', 'javascript')
+- `obj.maliciousness` - float | None - Maliciousness score (0.0-1.0) after prediction
+- `obj.code` - str | None - Source code (when available)
+
+**Methods:**
+- `obj.predict()` - Run maliciousness prediction, returns dict with probabilities
+- `obj.to_tokens(map_special_tokens=True)` - Extract malwi bytecode tokens as list
+- `obj.to_token_string(map_special_tokens=True)` - Get space-separated token string
+- `obj.to_string_hash()` - Get SHA256 hash of token string (uses mapped tokens for consistency)
+
+**Token Mapping:**
+The `map_special_tokens` parameter controls token normalization for consistent pattern detection:
+- `True` (default): Maps specific tokens to generic ones (e.g., variable names → `IDENTIFIER`)
+- `False`: Preserves exact tokens including specific names and values
+
+This allows similar malicious patterns to generate the same hash even with different variable names:
+```python
+# These would have the same hash with map_special_tokens=True
+subprocess.run(user_cmd, shell=True)    # Maps to: LOAD_GLOBAL PROCESS_MANAGEMENT ...
+subprocess.run(evil_cmd, shell=True)    # Maps to: LOAD_GLOBAL PROCESS_MANAGEMENT ...
+```
+
+### Advanced Usage
+
+#### Custom Callbacks and Filtering
+
+```python
+# Custom callback for real-time alerts
+def alert_on_malicious(file_path, malicious_objects):
+    print(f"⚠️ ALERT: Found {len(malicious_objects)} threats in {file_path}")
+    for obj in malicious_objects:
+        print(f"  - {obj.name}: {obj.maliciousness:.2f}")
+
+# Scan with custom settings
+report = malwi.MalwiReport.create(
+    input_path="src/",
+    accepted_extensions=['py', 'js'],  # Only scan .py and .js files
+    malicious_threshold=0.5,  # Lower threshold for higher sensitivity
+    on_finding=alert_on_malicious,  # Real-time alerts
+    silent=False  # Show progress bar
+)
+
+# Export results in different formats
+if report.malicious:
+    # Save detailed JSON report
+    with open("scan_report.json", "w") as f:
+        f.write(report.to_report_json())
+    
+    # Print summary to console
+    print(report.to_demo_text())
+```
+
+#### Batch Processing
+
+```python
+# Scan multiple directories efficiently
+directories = ["src/", "lib/", "scripts/"]
+
+for directory in directories:
+    report = malwi.MalwiReport.create(
+        input_path=directory,
+        silent=True  # Suppress progress output
+    )
+    
+    if report.malicious:
+        print(f"⚠️ Malicious code found in {directory}")
+```
+
+#### Model Loading & Performance
+
+**Automatic Loading:**
+- Models are automatically loaded on first use during prediction
+- Models require ~250MB of memory once loaded
+- Thread-safe initialization ensures only one model is loaded
+
+**Manual Pre-loading (Optional):**
+```python
+# Pre-load models to avoid delay on first prediction
+malwi.MalwiReport.load_models_into_memory()
+
+# Useful for production servers and batch processing
+```
+
 ## Why malwi?
 
 Malicious actors are increasingly [targeting open-source projects](https://arxiv.org/pdf/2404.04991), introducing packages designed to compromise security.
@@ -175,206 +316,7 @@ Future iterations will cover malware scanning for more languages (JavaScript, Ru
 - Do you have access to malicious packages in Rust, Go, or other languages? [Contact via GitHub profile](https://github.com/schirrmacher).
 - Struggling with false-positive findings? [Create a Pull-Request](https://github.com/schirrmacher/malwi-samples/pulls).
 
-## Development
-
-### Python API
-
-malwi provides a Python API for integrating malware detection into your applications:
-
-```python
-import malwi
-
-report = malwi.MalwiReport.create(
-    input_path="suspicious_file.py"
-)
-
-print(f"Result: {report.confidence:.2f}")
-print(f"Found {len(report.malicious_objects)} malicious objects")
-
-# Access individual objects for detailed analysis
-for obj in report.malicious_objects:
-    print(f"Object: {obj.name} (score: {obj.maliciousness:.2f})")
-    print(f"Tokens: {obj.to_token_string()}")
-    print(f"Activities: {obj.to_tokens()}")
-```
-
-#### Core Classes
-
-**`MalwiReport`** - Main scanning interface
-
-`MalwiReport.create()` - Create a report by scanning files/directories
-```python
-MalwiReport.create(
-    input_path,                    # str or Path - file/directory to scan
-    accepted_extensions=None,      # List[str] - file extensions to scan (e.g., ['py', 'js'])
-    predict=False,                 # bool - run maliciousness prediction
-    silent=False,                  # bool - suppress progress messages
-    malicious_threshold=0.7,       # float - threshold for malicious classification (0.0-1.0)
-    on_finding=None                # callable - callback when malicious objects found
-)
-```
-
-**Report Methods:**
-- `.to_demo_text()` - Human-readable tree format with emojis
-- `.to_report_json()` - Detailed JSON report with all findings
-- `.to_report_yaml()` - YAML format report
-- `.to_report_markdown()` - Markdown report with code snippets
-- `.to_tokens_text()` - Debug output showing token transformation
-- `.to_code_text()` - Concatenated malicious code segments
-
-**Report Attributes:**
-- `report.malicious` - bool - whether malicious code was detected
-- `report.confidence` - float - confidence score (0.0-1.0)
-- `report.malicious_objects` - List[MalwiObject] - detected malicious objects
-- `report.all_objects` - List[MalwiObject] - all analyzed code objects
-- `report.all_files` - List[Path] - all files found in scan path
-- `report.skipped_files` - List[Path] - files skipped (wrong extension)
-- `report.processed_files` - int - number of files actually processed
-- `report.activities` - List[str] - security-relevant activities found
-- `report.threshold` - float - threshold used for classification
-- `report.input` - str - the target path that was scanned
-- `report.start` - str - ISO 8601 timestamp when scan started
-- `report.duration` - float - scan duration in seconds
-- `report.all_file_types` - List[str] - all file extensions found
-- `report.version` - str - malwi version with model hash
-
-**Class Methods:**
-- `MalwiReport.load_models_into_memory()` - Pre-load models for batch processing
-
-**`MalwiObject`** - Individual code object analysis
-
-**Attributes:**
-- `obj.name` - str - Object name (function/class name or module)
-- `obj.file_path` - str - Path to the source file
-- `obj.language` - str - Programming language ('python', 'javascript')
-- `obj.maliciousness` - float | None - Maliciousness score (0.0-1.0) after prediction
-- `obj.code` - str | None - Source code (populated from AST CodeObject when available)
-- `obj.warnings` - List[str] - Any warnings during processing
-- `obj.embedding_count` - int - Number of DistilBERT tokens (property)
-
-**Methods:**
-- `obj.predict()` - Run maliciousness prediction, returns dict with probabilities
-- `obj.to_tokens(map_special_tokens=True)` - Extract malwi bytecode tokens as list
-- `obj.to_token_string(map_special_tokens=True)` - Get space-separated token string
-- `obj.to_string_hash()` - Get SHA256 hash of token string
-- `obj.to_dict()` - Convert to dictionary representation
-- `obj.to_json()` - Export as JSON string
-- `obj.to_yaml()` - Export as YAML string
-
-**Class Methods:**
-- `MalwiObject.all_tokens(language='python')` - Get all possible tokens for a language
-
-#### Advanced Usage
-
-Using callback functions and filtering:
-
-```python
-# Custom callback for real-time alerts
-def alert_on_malicious(file_path, malicious_objects):
-    print(f"⚠️ ALERT: Found {len(malicious_objects)} threats in {file_path}")
-    for obj in malicious_objects:
-        print(f"  - {obj.name}: {obj.maliciousness:.2f}")
-
-# Scan only Python and JavaScript files
-report = malwi.MalwiReport.create(
-    input_path="src/",
-    accepted_extensions=['py', 'js'],  # Only scan .py and .js files
-    predict=True,
-    malicious_threshold=0.5,  # Lower threshold for higher sensitivity
-    on_finding=alert_on_malicious,  # Real-time alerts
-    silent=False  # Show progress bar
-)
-
-# Export results in different formats
-if report.malicious:
-    # Save detailed JSON report
-    with open("scan_report.json", "w") as f:
-        f.write(report.to_report_json())
-    
-    # Save human-readable markdown
-    with open("scan_report.md", "w") as f:
-        f.write(report.to_report_markdown())
-    
-    # Print summary to console
-    print(report.to_demo_text())
-```
-
-#### Batch Processing
-
-For scanning multiple files efficiently:
-
-```python
-# Scan multiple directories
-for directory in directories:
-    report = malwi.MalwiReport.create(
-        input_path=directory,  # Accepts string or Path
-        silent=True  # Suppress progress output
-    )
-    
-    if report.malicious:
-        print(f"⚠️ Malicious code found in {directory}")
-        # Export detailed report
-        with open(f"{directory}_report.json", "w") as f:
-            f.write(report.to_report_json())
-```
-
-#### Custom Analysis
-
-Access low-level analysis for custom workflows:
-
-```python
-# Process individual objects
-from malwi import MalwiObject, disassemble_file_ast
-
-# Create object from source code
-with open("script.py") as f:
-    source = f.read()
-
-objects = disassemble_file_ast(
-    source_code=source,
-    file_path="script.py", 
-    language="python"
-)
-
-for obj in objects:
-    # Get malwi bytecode representation
-    tokens = obj.to_tokens(map_special_tokens=True)
-    
-    # Run prediction
-    prediction = obj.predict()
-    
-    if obj.maliciousness and obj.maliciousness > 0.7:
-        print(f"Suspicious object: {obj.name}")
-        print(f"Embedding count: {obj.embedding_count}")
-        print(f"Hash: {obj.to_string_hash()}")
-```
-
-#### Model Loading Behavior
-
-malwi uses a singleton pattern for model loading to optimize performance:
-
-**Automatic Loading:**
-- Models are automatically loaded on first use when `predict=True`
-- The same model instance is reused across all predictions (singleton)
-- Thread-safe initialization ensures only one model is loaded even with concurrent requests
-
-**Manual Pre-loading (Optional):**
-```python
-# Pre-load models to avoid delay on first prediction
-malwi.MalwiReport.load_models_into_memory()
-
-# Useful for:
-# - Production servers to load models at startup
-# - Batch processing to ensure models are ready
-# - Reducing latency on first request
-```
-
-**Memory Considerations:**
-- Models require ~250MB of memory once loaded
-- Models remain in memory for the lifetime of the process
-- Use `predict=False` to scan without loading models (no maliciousness scoring)
-
-
+## Research & Development
 
 ### Prerequisites
 
