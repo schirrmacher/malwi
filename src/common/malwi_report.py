@@ -153,7 +153,10 @@ class MalwiReport:
                     # List activities for this object
                     if result == "malicious":
                         # Get tokens for this specific object
-                        obj_tokens = obj.to_tokens()
+                        if obj.code_object:
+                            obj_tokens = obj.code_object.get_tokens()
+                        else:
+                            obj_tokens = []
                         obj_activities = []
                         # Collect tokens from all languages represented in malicious objects
                         languages_in_objects = set(
@@ -277,8 +280,12 @@ class MalwiReport:
 
             for obj in objects_in_file:
                 # Add malwicode tokens
-                malwicode_tokens = obj.to_tokens()
-                token_string = obj.to_token_string()
+                if obj.code_object:
+                    malwicode_tokens = obj.code_object.get_tokens()
+                    token_string = " ".join(malwicode_tokens)
+                else:
+                    malwicode_tokens = []
+                    token_string = ""
 
                 # Get DistilBERT tokens and counts
                 try:
@@ -591,10 +598,11 @@ class MalwiReport:
                 all_filter_values.update(FUNCTION_MAPPING.get(lang, {}).values())
 
             for obj in malicious_objects:
-                tokens = obj.to_tokens()
-                function_tokens.update(
-                    token for token in tokens if token in all_filter_values
-                )
+                if obj.code_object:
+                    tokens = obj.code_object.get_tokens()
+                    function_tokens.update(
+                        token for token in tokens if token in all_filter_values
+                    )
             activities = list(function_tokens)
 
         duration = time.time() - start_time

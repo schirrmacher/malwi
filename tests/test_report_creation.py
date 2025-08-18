@@ -17,6 +17,14 @@ class MockCodeObject:
     def __init__(self, source_code: str = ""):
         self.source_code = source_code
 
+    def get_tokens(self, mapped: bool = True):
+        """Mock get_tokens method."""
+        # Return tokens that include SYSTEM_INTERACTION for malicious objects
+        if "system" in self.source_code.lower():
+            return ["SYSTEM_INTERACTION", "FILESYSTEM_ACCESS"]
+        else:
+            return ["SAFE_TOKEN"]
+
 
 @dataclass
 class MockMalwiObject:
@@ -71,8 +79,8 @@ class MockMalwiObject:
                     "name": self.name,
                     "score": self.maliciousness,
                     "code": final_code_value,
-                    "tokens": self.to_token_string(),
-                    "hash": self.to_string_hash(),
+                    "tokens": f"TOKEN_{self.name.upper()}",
+                    "hash": f"hash_for_{self.name}",
                 }
             ],
         }

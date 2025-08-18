@@ -186,31 +186,6 @@ class MalwiObject:
         unique.sort()
         return unique
 
-    def to_tokens(self, map_special_tokens: bool = True) -> List[str]:
-        """Extract tokens from the AST CodeObject."""
-        all_token_parts: List[str] = []
-        all_token_parts.extend(self.warnings)
-
-        if self.code_object:
-            # Use AST CodeObject's get_tokens method with language-aware mapping
-            ast_tokens = self.code_object.get_tokens(mapped=map_special_tokens)
-            all_token_parts.extend(ast_tokens)
-        else:
-            # Fallback for error cases
-            all_token_parts.append(SpecialCases.MALFORMED_FILE.value)
-
-        return all_token_parts
-
-    def to_token_string(self, map_special_tokens: bool = True) -> str:
-        return " ".join(self.to_tokens(map_special_tokens=map_special_tokens))
-
-    def to_string_hash(self) -> str:
-        tokens = self.to_token_string()
-        encoded_string = tokens.encode("utf-8", errors="replace")
-        sha256_hash = hashlib.sha256()
-        sha256_hash.update(encoded_string)
-        return sha256_hash.hexdigest()
-
     @property
     def embedding_count(self) -> int:
         """
@@ -230,7 +205,15 @@ class MalwiObject:
             return 0
 
     def predict(self) -> Optional[dict]:
-        token_string = self.to_token_string()
+        # Get tokens from CodeObject, adding warnings for error cases
+        if self.code_object:
+            tokens = list(self.warnings)  # Include any warnings
+            tokens.extend(self.code_object.get_tokens(mapped=True))
+        else:
+            # Fallback for error cases
+            tokens = list(self.warnings) + [SpecialCases.MALFORMED_FILE.value]
+
+        token_string = " ".join(tokens)
         prediction = None
         if any(
             token in token_string
@@ -271,6 +254,23 @@ class MalwiObject:
         else:
             final_code_value = code_display_value
 
+        # Get tokens and hash from CodeObject or fallback
+        if self.code_object:
+            # Include warnings in token string for consistency with prediction
+            tokens = list(self.warnings)
+            tokens.extend(self.code_object.get_tokens(mapped=True))
+            token_string = " ".join(tokens)
+            content_hash = self.code_object.to_hash()
+        else:
+            # Fallback for error cases
+            tokens = list(self.warnings) + [SpecialCases.MALFORMED_FILE.value]
+            token_string = " ".join(tokens)
+            # Generate hash for error case
+            encoded_string = token_string.encode("utf-8", errors="replace")
+            sha256_hash = hashlib.sha256()
+            sha256_hash.update(encoded_string)
+            content_hash = sha256_hash.hexdigest()
+
         return {
             "path": str(self.file_path),
             "contents": [
@@ -278,8 +278,8 @@ class MalwiObject:
                     "name": self.name,
                     "score": self.maliciousness,
                     "code": final_code_value,
-                    "tokens": self.to_token_string(),
-                    "hash": self.to_string_hash(),
+                    "tokens": token_string,
+                    "hash": content_hash,
                     "embedding_count": self.embedding_count,
                 }
             ],

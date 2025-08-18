@@ -138,12 +138,10 @@ obj.name                # str: function/class name
 obj.file_path           # str: source file path
 obj.language            # str: 'python'/'javascript'
 obj.maliciousness       # float|None: 0.0-1.0
-obj.code_object         # CodeObject|None: code information
+obj.code_object         # CodeObject|None: AST representation
 
 obj.predict()           # dict: run ML prediction
-obj.to_tokens()         # List[str]: bytecode tokens
-obj.to_token_string()   # str: space-separated tokens
-obj.to_string_hash()    # str: SHA256 hash for patterns
+# For bytecode analysis, use obj.code_object methods instead
 ```
 
 #### CodeObject
