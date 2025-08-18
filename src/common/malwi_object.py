@@ -9,7 +9,7 @@ import hashlib
 
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Tuple, Optional, Any, Dict
+from typing import List, Tuple, Optional, Dict
 
 from common.mapping import (
     SpecialCases,
@@ -153,7 +153,6 @@ class MalwiObject:
     warnings: List[str]
     file_source_code: str
     language: str
-    code: Optional[str] = None
     maliciousness: Optional[float] = None
     code_object: Optional[CodeObject] = (
         None  # Store AST CodeObject for token extraction and source code access
@@ -175,7 +174,6 @@ class MalwiObject:
         self.maliciousness = None
         self.code_object = code_object
         self.file_source_code = file_source_code
-        self.code = None
 
     @classmethod
     def all_tokens(cls, language: str = "python") -> List[str]:
@@ -246,7 +244,16 @@ class MalwiObject:
         return prediction
 
     def to_dict(self) -> dict:
-        code_display_value = self.code
+        # Get code from code_object if available
+        code_display_value = None
+        if self.code_object and hasattr(self.code_object, "source_code"):
+            code_display_value = self.code_object.source_code
+        elif self.code_object:
+            # Use the bytecode representation as fallback
+            code_display_value = self.code_object.to_string(
+                mapped=False, one_line=False
+            )
+
         if code_display_value is None:
             code_display_value = "<source not available>"
 

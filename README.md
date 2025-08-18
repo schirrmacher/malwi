@@ -102,8 +102,8 @@ print(f"Found {len(report.malicious_objects)} malicious objects")
 for obj in report.malicious_objects:
     print(f"Object: {obj.name} (score: {obj.maliciousness:.2f})")
     print(f"File: {obj.file_path}")
-    if obj.code:
-        print(f"Code: {obj.code[:100]}...")  # Show first 100 chars
+    if obj.code_object and obj.code_object.source_code:
+        print(f"Code: {obj.code_object.source_code[:100]}...")  # Show first 100 chars
 ```
 
 ### Core Classes
@@ -143,7 +143,8 @@ MalwiReport.create(
 - `obj.file_path` - str - Path to the source file
 - `obj.language` - str - Programming language ('python', 'javascript')
 - `obj.maliciousness` - float | None - Maliciousness score (0.0-1.0) after prediction
-- `obj.code` - str | None - Source code (when available)
+- `obj.code_object` - CodeObject | None - AST representation with source code access
+  - Access source code via `obj.code_object.source_code`
 
 **Methods:**
 - `obj.predict()` - Run maliciousness prediction, returns dict with probabilities

@@ -407,32 +407,27 @@ class MaliciousClass:
 
                 # Test source code population for each MalwiObject
                 for obj in report.all_objects:
-                    # Populate source code from AST CodeObject
-                    if obj.code_object and hasattr(obj.code_object, "source_code"):
-                        obj.code = obj.code_object.source_code
-                    elif obj.code_object:
-                        # Use the bytecode representation as fallback
-                        obj.code = obj.code_object.to_string(
-                            mapped=False, one_line=False
-                        )
+                    # Code is now available via code_object.source_code
+                    # Verify source code is available
+                    assert obj.code_object is not None
+                    assert hasattr(obj.code_object, "source_code")
 
-                    # Verify source code was populated
-                    assert obj.code is not None
+                    obj_code = obj.code_object.source_code
 
                     # Test specific objects
                     if obj.name == "malicious_function":
                         assert (
                             'def malicious_function(param1, param2="default"):'
-                            in obj.code
+                            in obj_code
                         )
-                        assert '"""A test function with docstring."""' in obj.code
-                        assert "subprocess.run(" in obj.code
+                        assert '"""A test function with docstring."""' in obj_code
+                        assert "subprocess.run(" in obj_code
 
                     elif obj.name == "MaliciousClass":
-                        assert "class MaliciousClass:" in obj.code
-                        assert '"""A test class."""' in obj.code
-                        assert "def __init__(self):" in obj.code
-                        assert "def method(self):" in obj.code
+                        assert "class MaliciousClass:" in obj_code
+                        assert '"""A test class."""' in obj_code
+                        assert "def __init__(self):" in obj_code
+                        assert "def method(self):" in obj_code
 
             finally:
                 os.unlink(f.name)

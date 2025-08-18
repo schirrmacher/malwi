@@ -77,12 +77,6 @@ class MalwiReport:
             )
 
             if is_malicious:
-                # Populate source code if available from AST CodeObject
-                if obj.code_object and hasattr(obj.code_object, "source_code"):
-                    obj.code = obj.code_object.source_code
-                elif obj.code_object:
-                    # Use the bytecode representation as fallback
-                    obj.code = obj.code_object.to_string(mapped=False, one_line=False)
                 report_data["details"].append(obj.to_dict())
 
         return report_data
@@ -409,17 +403,14 @@ class MalwiReport:
 
             # Process each file's objects
             for obj in objects:
-                # Populate source code if not already available
-                if not obj.code:
-                    if obj.code_object and hasattr(obj.code_object, "source_code"):
-                        obj.code = obj.code_object.source_code
-                    elif obj.code_object:
-                        # Use the bytecode representation as fallback
-                        obj.code = obj.code_object.to_string(
-                            mapped=False, one_line=False
-                        )
+                # Get code from code_object
+                obj_code = None
+                if obj.code_object and hasattr(obj.code_object, "source_code"):
+                    obj_code = obj.code_object.source_code
+                elif obj.code_object:
+                    obj_code = obj.code_object.to_string(mapped=False, one_line=False)
 
-                if obj.code and obj.code != "<source not available>":
+                if obj_code and obj_code != "<source not available>":
                     # Add file path comment with embedding count info
                     output_parts.append(f"{comment_prefix} {'=' * 70}")
                     output_parts.append(f"{comment_prefix} File: {obj.file_path}")
@@ -438,7 +429,7 @@ class MalwiReport:
                     output_parts.append("")
 
                     # Add the code
-                    output_parts.append(obj.code)
+                    output_parts.append(obj_code)
                     output_parts.append("")
                     output_parts.append("")
 

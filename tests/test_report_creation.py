@@ -11,6 +11,14 @@ from common.malwi_report import MalwiReport
 
 
 @dataclass
+class MockCodeObject:
+    """Mock CodeObject for testing."""
+
+    def __init__(self, source_code: str = ""):
+        self.source_code = source_code
+
+
+@dataclass
 class MockMalwiObject:
     """A simplified mock of the MalwiObject for testing purposes."""
 
@@ -18,10 +26,15 @@ class MockMalwiObject:
     file_path: str
     maliciousness: float
     file_source_code: str = ""
-    code: str = ""
+    _code_text: str = ""
     warnings: List[str] = field(default_factory=list)
     language: str = "python"
     code_object = None  # Mock the code_object attribute
+
+    def __post_init__(self):
+        # Create mock code_object with source_code if _code_text is provided
+        if self._code_text:
+            self.code_object = MockCodeObject(self._code_text)
 
     def to_tokens(self) -> List[str]:
         return [f"TOKEN_{self.name.upper()}", "SYSTEM_INTERACTION", "FILESYSTEM_ACCESS"]
@@ -34,14 +47,18 @@ class MockMalwiObject:
 
     def populate_source_code(self):
         """Simulate source code population."""
-        if not self.code:
-            self.code = f"def {self.name}():\n    pass"
+        # This is now handled by the code property and __post_init__
+        pass
 
     def predict(self):
         pass
 
     def to_dict(self) -> dict:
-        code_display_value = self.code or "<source not available>"
+        # Get code from code_object like real MalwiObject
+        if self.code_object and hasattr(self.code_object, "source_code"):
+            code_display_value = self.code_object.source_code
+        else:
+            code_display_value = self._code_text or "<source not available>"
         if "\n" in code_display_value:
             final_code_value = code_display_value.strip()
         else:
@@ -69,14 +86,14 @@ class TestMalwiReport(unittest.TestCase):
             file_path="/tmp/malware.py",
             maliciousness=0.95,
             file_source_code="import os; os.system('rm -rf /')",
-            code="os.system('rm -rf /')",
+            _code_text="os.system('rm -rf /')",
         )
         self.benign_obj = MockMalwiObject(
             name="safe_func",
             file_path="/tmp/script.py",
             maliciousness=0.10,
             file_source_code="print('hello')",
-            code="print('hello')",
+            _code_text="print('hello')",
         )
         self.all_objects = [self.malicious_obj, self.benign_obj]
 

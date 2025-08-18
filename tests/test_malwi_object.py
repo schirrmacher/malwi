@@ -48,13 +48,10 @@ class TestMalwiObject:
 
     def test_source_code_population(self, malwi_obj):
         """Test source code population from AST CodeObject."""
-        # Populate source code from AST CodeObject
-        if malwi_obj.code_object and hasattr(malwi_obj.code_object, "source_code"):
-            malwi_obj.code = malwi_obj.code_object.source_code
-
-        # Should have populated from code_object
-        assert malwi_obj.code is not None
-        assert isinstance(malwi_obj.code, str)
+        # Should have code from code_object
+        assert malwi_obj.code_object is not None
+        assert hasattr(malwi_obj.code_object, "source_code")
+        assert isinstance(malwi_obj.code_object.source_code, str)
 
     @patch("common.malwi_object.get_node_text_prediction")
     def test_predict(self, mock_predict, malwi_obj):
@@ -88,9 +85,7 @@ class TestMalwiObject:
     def test_to_dict_yaml_json(self, malwi_obj):
         """Test conversion to dict, YAML, and JSON."""
         malwi_obj.maliciousness = 0.8
-        # Populate source code from AST CodeObject
-        if malwi_obj.code_object and hasattr(malwi_obj.code_object, "source_code"):
-            malwi_obj.code = malwi_obj.code_object.source_code
+        # Code is now available via the property
 
         # Test to_dict
         data = malwi_obj.to_dict()
@@ -170,4 +165,4 @@ def test_malwi_object_creation_minimal():
     assert obj.language == "python"
     assert obj.file_path == "minimal.py"
     assert obj.maliciousness is None
-    assert obj.code is None
+    assert obj.code_object is None
