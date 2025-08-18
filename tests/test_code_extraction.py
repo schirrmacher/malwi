@@ -374,8 +374,8 @@ def safe_function():
                     len(code_output.strip()) == 0 or "safe_function" not in code_output
                 )
 
-    def test_source_code_retrieval_method(self):
-        """Test the retrieve_source_code method on MalwiObject specifically."""
+    def test_source_code_population_method(self):
+        """Test source code population from AST CodeObject on MalwiObject."""
         test_code = '''import subprocess
 
 def malicious_function(param1, param2="default"):
@@ -399,7 +399,7 @@ class MaliciousClass:
             f.flush()
 
             try:
-                # Create a MalwiReport to get MalwiObjects with the retrieve_source_code method
+                # Create a MalwiReport to get MalwiObjects
                 report = MalwiReport.create(
                     input_path=Path(f.name),
                     accepted_extensions=["py"],
@@ -408,13 +408,21 @@ class MaliciousClass:
                     malicious_threshold=0.001,  # Very low threshold to catch everything
                 )
 
-                # Test retrieve_source_code method for each MalwiObject
+                # Test source code population for each MalwiObject
                 for obj in report.all_objects:
-                    # Call retrieve_source_code method
-                    retrieved_code = obj.retrieve_source_code()
+                    # Populate source code from AST CodeObject
+                    if obj.ast_code_object and hasattr(
+                        obj.ast_code_object, "source_code"
+                    ):
+                        obj.code = obj.ast_code_object.source_code
+                    elif obj.ast_code_object:
+                        # Use the bytecode representation as fallback
+                        obj.code = obj.ast_code_object.to_string(
+                            mapped=False, one_line=False
+                        )
 
-                    # Verify it returns the same as the source_code property after calling it
-                    assert retrieved_code == obj.code
+                    # Verify source code was populated
+                    assert obj.code is not None
 
                     # Test specific objects
                     if obj.name == "malicious_function":

@@ -77,7 +77,12 @@ class MalwiReport:
             )
 
             if is_malicious:
-                obj.retrieve_source_code()
+                # Populate source code if available from AST CodeObject
+                if obj.code_object and hasattr(obj.code_object, "source_code"):
+                    obj.code = obj.code_object.source_code
+                elif obj.code_object:
+                    # Use the bytecode representation as fallback
+                    obj.code = obj.code_object.to_string(mapped=False, one_line=False)
                 report_data["details"].append(obj.to_dict())
 
         return report_data
@@ -300,9 +305,9 @@ class MalwiReport:
 
                 # Add object name with location info if available
                 object_line = f"🏷️  Object: {obj.name}"
-                if hasattr(obj, "ast_code_object") and obj.ast_code_object:
-                    if hasattr(obj.ast_code_object, "location"):
-                        start_line, end_line = obj.ast_code_object.location
+                if hasattr(obj, "code_object") and obj.code_object:
+                    if hasattr(obj.code_object, "location"):
+                        start_line, end_line = obj.code_object.location
                         object_line += f" 📍 Lines {start_line}-{end_line}"
                 lines.append(object_line)
 
@@ -320,9 +325,9 @@ class MalwiReport:
 
                 # Try to get the specific source code for this CodeObject
                 source_to_display = None
-                if hasattr(obj, "ast_code_object") and obj.ast_code_object:
-                    if hasattr(obj.ast_code_object, "source_code"):
-                        source_to_display = obj.ast_code_object.source_code
+                if hasattr(obj, "code_object") and obj.code_object:
+                    if hasattr(obj.code_object, "source_code"):
+                        source_to_display = obj.code_object.source_code
 
                 # Fallback to file source code if CodeObject source not available
                 if source_to_display is None and hasattr(obj, "file_source_code"):
@@ -333,9 +338,9 @@ class MalwiReport:
                     source_lines = source_to_display.split("\n")
                     # Get starting line number if we have location info
                     start_line_num = 1
-                    if hasattr(obj, "ast_code_object") and obj.ast_code_object:
-                        if hasattr(obj.ast_code_object, "location"):
-                            start_line_num = obj.ast_code_object.location[0]
+                    if hasattr(obj, "code_object") and obj.code_object:
+                        if hasattr(obj.code_object, "location"):
+                            start_line_num = obj.code_object.location[0]
 
                     for i, line in enumerate(source_lines, start_line_num):
                         lines.append(f"  {i:4d} | {line}")
@@ -404,9 +409,15 @@ class MalwiReport:
 
             # Process each file's objects
             for obj in objects:
-                # Retrieve source code if not already available
+                # Populate source code if not already available
                 if not obj.code:
-                    obj.retrieve_source_code()
+                    if obj.code_object and hasattr(obj.code_object, "source_code"):
+                        obj.code = obj.code_object.source_code
+                    elif obj.code_object:
+                        # Use the bytecode representation as fallback
+                        obj.code = obj.code_object.to_string(
+                            mapped=False, one_line=False
+                        )
 
                 if obj.code and obj.code != "<source not available>":
                     # Add file path comment with embedding count info

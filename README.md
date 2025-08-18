@@ -248,7 +248,7 @@ MalwiReport.create(
 - `obj.file_path` - str - Path to the source file
 - `obj.language` - str - Programming language ('python', 'javascript')
 - `obj.maliciousness` - float | None - Maliciousness score (0.0-1.0) after prediction
-- `obj.code` - str | None - Source code (available after `retrieve_source_code()`)
+- `obj.code` - str | None - Source code (populated from AST CodeObject when available)
 - `obj.warnings` - List[str] - Any warnings during processing
 - `obj.embedding_count` - int - Number of DistilBERT tokens (property)
 
@@ -257,7 +257,6 @@ MalwiReport.create(
 - `obj.to_tokens(map_special_tokens=True)` - Extract malwi bytecode tokens as list
 - `obj.to_token_string(map_special_tokens=True)` - Get space-separated token string
 - `obj.to_string_hash()` - Get SHA256 hash of token string
-- `obj.retrieve_source_code()` - Load source code into `obj.code` attribute
 - `obj.to_dict()` - Convert to dictionary representation
 - `obj.to_json()` - Export as JSON string
 - `obj.to_yaml()` - Export as YAML string

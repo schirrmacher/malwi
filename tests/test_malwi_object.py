@@ -46,12 +46,17 @@ class TestMalwiObject:
         assert isinstance(token_string, str)
         assert token_string == " ".join(tokens)
 
-    def test_retrieve_source_code(self, malwi_obj):
-        """Test source code retrieval."""
-        source = malwi_obj.retrieve_source_code()
-        # Should retrieve from ast_code_object if available
-        assert source is not None
-        assert isinstance(source, str)
+    def test_source_code_population(self, malwi_obj):
+        """Test source code population from AST CodeObject."""
+        # Populate source code from AST CodeObject
+        if malwi_obj.ast_code_object and hasattr(
+            malwi_obj.ast_code_object, "source_code"
+        ):
+            malwi_obj.code = malwi_obj.ast_code_object.source_code
+
+        # Should have populated from ast_code_object
+        assert malwi_obj.code is not None
+        assert isinstance(malwi_obj.code, str)
 
     @patch("common.malwi_object.get_node_text_prediction")
     def test_predict(self, mock_predict, malwi_obj):
@@ -85,7 +90,11 @@ class TestMalwiObject:
     def test_to_dict_yaml_json(self, malwi_obj):
         """Test conversion to dict, YAML, and JSON."""
         malwi_obj.maliciousness = 0.8
-        malwi_obj.retrieve_source_code()
+        # Populate source code from AST CodeObject
+        if malwi_obj.ast_code_object and hasattr(
+            malwi_obj.ast_code_object, "source_code"
+        ):
+            malwi_obj.code = malwi_obj.ast_code_object.source_code
 
         # Test to_dict
         data = malwi_obj.to_dict()

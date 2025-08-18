@@ -31,7 +31,8 @@ class MockMalwiObject:
     def to_string_hash(self) -> str:
         return f"hash_for_{self.name}"
 
-    def retrieve_source_code(self):
+    def populate_source_code(self):
+        """Simulate source code population."""
         if not self.code:
             self.code = f"def {self.name}():\n    pass"
 

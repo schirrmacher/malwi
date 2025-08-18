@@ -16,7 +16,7 @@ from common.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
 )
-from common.bytecode import ASTCompiler
+from common.bytecode import ASTCompiler, CodeObject
 from common.predict_distilbert import (
     get_node_text_prediction,
 )
@@ -68,7 +68,7 @@ def disassemble_file_ast(
                 file_path=file_path,
                 file_source_code=source_code,
                 # Store the AST CodeObject for token extraction
-                ast_code_object=code_obj,
+                code_object=code_obj,
             )
 
             all_objects.append(malwi_obj)
@@ -157,8 +157,8 @@ class MalwiObject:
     language: str
     code: Optional[str] = None
     maliciousness: Optional[float] = None
-    ast_code_object: Optional[object] = (
-        None  # Store AST CodeObject instead of Python CodeType
+    code_object: Optional[CodeObject] = (
+        None  # Store AST CodeObject for token extraction and source code access
     )
 
     def __init__(
@@ -167,7 +167,7 @@ class MalwiObject:
         language: str,
         file_path: str,
         file_source_code: str,
-        ast_code_object: Optional[object] = None,
+        code_object: Optional[CodeObject] = None,
         warnings: List[str] = [],
     ):
         self.name = name
@@ -175,7 +175,7 @@ class MalwiObject:
         self.file_path = file_path
         self.warnings = list(warnings)
         self.maliciousness = None
-        self.ast_code_object = ast_code_object
+        self.code_object = code_object
         self.file_source_code = file_source_code
         self.code = None
 
@@ -195,9 +195,9 @@ class MalwiObject:
         all_token_parts: List[str] = []
         all_token_parts.extend(self.warnings)
 
-        if self.ast_code_object:
+        if self.code_object:
             # Use AST CodeObject's get_tokens method with language-aware mapping
-            ast_tokens = self.ast_code_object.get_tokens(mapped=map_special_tokens)
+            ast_tokens = self.code_object.get_tokens(mapped=map_special_tokens)
             all_token_parts.extend(ast_tokens)
         else:
             # Fallback for error cases
@@ -215,17 +215,6 @@ class MalwiObject:
         sha256_hash.update(encoded_string)
         return sha256_hash.hexdigest()
 
-    def retrieve_source_code(self) -> Optional[str]:
-        """Get source code from AST CodeObject."""
-        if self.ast_code_object and hasattr(self.ast_code_object, "source_code"):
-            self.code = self.ast_code_object.source_code
-            return self.code
-        elif self.ast_code_object:
-            # Use the bytecode representation as fallback
-            self.code = self.ast_code_object.to_string(mapped=False, one_line=False)
-            return self.code
-        return None
-
     @property
     def embedding_count(self) -> int:
         """
@@ -238,8 +227,8 @@ class MalwiObject:
         Returns:
             Number of tokens this object creates when tokenized for DistilBERT
         """
-        if self.ast_code_object and hasattr(self.ast_code_object, "embedding_count"):
-            return self.ast_code_object.embedding_count
+        if self.code_object and hasattr(self.code_object, "embedding_count"):
+            return self.code_object.embedding_count
         else:
             # No AST CodeObject available - cannot calculate embedding count
             return 0
