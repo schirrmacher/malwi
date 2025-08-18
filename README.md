@@ -3,7 +3,7 @@
 <img src="malwi-logo.png" alt="Logo">
 <a href='https://huggingface.co/schirrmacher/malwi'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HF-Model-blue'></a>&ensp; 
 
-malwi specializes in finding **zero-day vulnerabilities**.
+## malwi specializes in finding malware
 
 ### Key Features
 
@@ -90,7 +90,7 @@ malwi pypi requests
 
 ## Python API
 
-malwi provides a comprehensive Python API for integrating malware detection into your applications:
+malwi provides a comprehensive Python API for integrating malware detection into your applications.
 
 ### Quick Start
 
@@ -103,9 +103,7 @@ for obj in report.malicious_objects:
     print(f"File: {obj.file_path}")
 ```
 
-### Classes
-
-#### `MalwiReport`
+### `MalwiReport`
 
 ```python
 MalwiReport.create(
@@ -133,8 +131,8 @@ report.all_files              # List[Path]: All files found in input path
 report.skipped_files          # List[Path]: Files skipped (wrong extension)
 report.processed_files        # int: Number of files successfully processed
 report.activities             # List[str]: Suspicious activities detected
-report.input                  # str: Original input path scanned
-report.start                  # str: ISO 8601 timestamp when scan started
+report.input_path             # str: Original input path scanned
+report.start_time             # str: ISO 8601 timestamp when scan started
 report.all_file_types         # List[str]: All file extensions found
 report.version                # str: Malwi version with model hash
 
@@ -148,7 +146,7 @@ report.to_markdown()          # str: Markdown formatted report
 malwi.MalwiReport.load_models_into_memory()
 ```
 
-#### `MalwiObject`
+### `MalwiObject`
 ```python
 obj = report.all_objects[0]
 

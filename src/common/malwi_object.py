@@ -21,14 +21,7 @@ from common.bytecode import ASTCompiler
 from common.predict_distilbert import (
     get_node_text_prediction,
 )
-from common.messaging import (
-    file_error,
-)
-
 from common.files import read_json_from_file
-from common.config import (
-    EXTENSION_TO_LANGUAGE,
-)
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -99,43 +92,6 @@ def disassemble_file_ast(
         )
 
     return all_objects
-
-
-def process_single_file(
-    file_path: Path,
-    maliciousness_threshold: Optional[float] = None,
-) -> Optional[Tuple[List["MalwiObject"], List["MalwiObject"]]]:
-    try:
-        source_code = file_path.read_text(encoding="utf-8", errors="replace")
-
-        # Detect language based on file extension
-        file_extension = file_path.suffix.lower()
-        language = EXTENSION_TO_LANGUAGE.get(
-            file_extension, "python"
-        )  # Default to Python
-
-        objects: List[MalwiObject] = disassemble_file_ast(
-            source_code, file_path=str(file_path), language=language
-        )
-
-        all_objects = []
-        malicious_objects = []
-
-        for obj in objects:
-            all_objects.append(obj)
-            obj.predict()
-            if (
-                maliciousness_threshold
-                and obj.maliciousness
-                and obj.maliciousness > maliciousness_threshold
-            ):
-                malicious_objects.append(obj)
-
-        return all_objects, malicious_objects
-
-    except Exception as e:
-        file_error(file_path, e, "processing")
-        return [], []
 
 
 class LiteralStr(str):

@@ -15,9 +15,56 @@ from common.mapping import FUNCTION_MAPPING
 from common.predict_distilbert import get_model_version_string
 from common.messaging import get_message_manager, file_error
 from common.files import collect_files_by_extension
-from common.config import EXTENSION_COMMENT_PREFIX
-from common.malwi_object import MalwiObject
+from common.config import EXTENSION_COMMENT_PREFIX, EXTENSION_TO_LANGUAGE
+from common.malwi_object import MalwiObject, disassemble_file_ast
 from malwi._version import __version__
+
+
+def process_single_file(
+    file_path: Path,
+    maliciousness_threshold: Optional[float] = None,
+) -> tuple[List[MalwiObject], List[MalwiObject]]:
+    """
+    Process a single file and return all objects and malicious objects.
+
+    Args:
+        file_path: Path to the file to process
+        maliciousness_threshold: Threshold for classifying objects as malicious
+
+    Returns:
+        Tuple of (all_objects, malicious_objects)
+    """
+    try:
+        source_code = file_path.read_text(encoding="utf-8", errors="replace")
+
+        # Detect language based on file extension
+        file_extension = file_path.suffix.lower()
+        language = EXTENSION_TO_LANGUAGE.get(
+            file_extension, "python"
+        )  # Default to Python
+
+        objects: List[MalwiObject] = disassemble_file_ast(
+            source_code, file_path=str(file_path), language=language
+        )
+
+        all_objects = []
+        malicious_objects = []
+
+        for obj in objects:
+            all_objects.append(obj)
+            obj.predict()
+            if (
+                maliciousness_threshold
+                and obj.maliciousness
+                and obj.maliciousness > maliciousness_threshold
+            ):
+                malicious_objects.append(obj)
+
+        return all_objects, malicious_objects
+
+    except Exception as e:
+        file_error(file_path, e, "processing")
+        return [], []
 
 
 @dataclass
@@ -465,9 +512,6 @@ class MalwiReport:
         Returns:
             MalwiReport containing analysis results
         """
-        # Import here to avoid circular imports
-        from common.malwi_object import process_single_file
-
         # Convert input_path to Path object if it's a string
         if isinstance(input_path, str):
             input_path = Path(input_path)
