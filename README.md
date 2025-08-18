@@ -164,6 +164,41 @@ subprocess.run(user_cmd, shell=True)    # Maps to: LOAD_GLOBAL PROCESS_MANAGEMEN
 subprocess.run(evil_cmd, shell=True)    # Maps to: LOAD_GLOBAL PROCESS_MANAGEMENT ...
 ```
 
+#### `CodeObject` - AST Representation & Source Code
+
+The `CodeObject` class provides access to the parsed AST representation and original source code:
+
+**Properties:**
+- `code_obj.name` - str - Object name (function/class name)
+- `code_obj.source_code` - str - Original source code for this specific object
+- `code_obj.path` - Path - File path where the code is located
+- `code_obj.location` - Tuple[int, int] - Start and end line numbers in the file
+- `code_obj.language` - str - Programming language ('python', 'javascript')
+- `code_obj.embedding_count` - int - Number of DistilBERT tokens (cached property)
+
+**Methods:**
+- `code_obj.to_string(mapped=True, one_line=True)` - Get bytecode representation as string
+- `code_obj.to_hash()` - Get SHA256 hash of the bytecode representation  
+- `code_obj.get_tokens(mapped=True)` - Get list of bytecode tokens
+
+**Example Usage:**
+```python
+import malwi
+
+report = malwi.MalwiReport.create("suspicious_file.py")
+
+for obj in report.all_objects:
+    if obj.code_object:
+        print(f"Function: {obj.code_object.name}")
+        print(f"Source: {obj.code_object.source_code}")
+        print(f"Location: Lines {obj.code_object.location[0]}-{obj.code_object.location[1]}")
+        print(f"Token count: {obj.code_object.embedding_count}")
+        
+        # Check if it would exceed DistilBERT's context window
+        if obj.code_object.embedding_count > 512:
+            print("⚠️ Would trigger DistilBERT windowing")
+```
+
 ### Advanced Usage
 
 #### Custom Callbacks and Filtering
