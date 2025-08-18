@@ -95,11 +95,11 @@ def run_batch_scan(child_folder: Path, args) -> dict:
 
         # Generate output based on format
         if args.format == "yaml":
-            output = report.to_report_yaml()
+            output = report.to_yaml()
         elif args.format == "json":
-            output = report.to_report_json()
+            output = report.to_json()
         elif args.format == "markdown":
-            output = report.to_report_markdown()
+            output = report.to_markdown()
         elif args.format == "tokens":
             output = report.to_tokens_text()
         elif args.format == "code":
@@ -287,11 +287,11 @@ def scan_command(args):
     output = ""
 
     if args.format == "yaml":
-        output = report.to_report_yaml()
+        output = report.to_yaml()
     elif args.format == "json":
-        output = report.to_report_json()
+        output = report.to_json()
     elif args.format == "markdown":
-        output = report.to_report_markdown()
+        output = report.to_markdown()
     elif args.format == "tokens":
         output = report.to_tokens_text()
     elif args.format == "code":

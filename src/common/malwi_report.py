@@ -33,8 +33,8 @@ class MalwiReport:
     malicious: bool
     confidence: float
     activities: List[str]
-    input: str  # The targeted folder/file path
-    start: str  # ISO 8601 timestamp when scan started
+    input_path: str  # The targeted folder/file path
+    start_time: str  # ISO 8601 timestamp when scan started
     duration: float  # Duration in seconds
     all_file_types: List[str]  # All file extensions found in the scanned package
     version: str = field(
@@ -50,7 +50,7 @@ class MalwiReport:
             "processed_files": len(self.all_files) - len(self.skipped_files),
             "processed_objects": processed_objects_count,
             "malicious_objects": len(self.malicious_objects),
-            "start": self.start,
+            "start": self.start_time,
             "duration": self.duration,
             "file_types": self.all_file_types,
         }
@@ -65,7 +65,7 @@ class MalwiReport:
 
         report_data = {
             "version": self.version,
-            "input": self.input,
+            "input": self.input_path,
             "result": result,
             "statistics": summary_statistics,
             "details": [],
@@ -81,11 +81,11 @@ class MalwiReport:
 
         return report_data
 
-    def to_report_json(self) -> str:
+    def to_json(self) -> str:
         report_data = self._generate_report_data()
         return json.dumps(report_data, indent=4)
 
-    def to_report_yaml(self) -> str:
+    def to_yaml(self) -> str:
         report_data = self._generate_report_data()
         return yaml.dump(
             report_data, sort_keys=False, width=float("inf"), default_flow_style=False
@@ -196,9 +196,7 @@ class MalwiReport:
 
         return txt
 
-    def to_report_markdown(
-        self,
-    ) -> str:
+    def to_markdown(self) -> str:
         report_data = self._generate_report_data()
 
         stats = report_data["statistics"]
@@ -519,8 +517,8 @@ class MalwiReport:
                 malicious=False,
                 confidence=1.0,
                 activities=[],
-                input=str(input_path),
-                start=start_timestamp,
+                input_path=str(input_path),
+                start_time=start_timestamp,
                 duration=duration,
                 all_file_types=all_file_types,
             )
@@ -603,8 +601,8 @@ class MalwiReport:
             malicious=malicious,
             confidence=confidence,
             activities=activities,
-            input=str(input_path),
-            start=start_timestamp,
+            input_path=str(input_path),
+            start_time=start_timestamp,
             duration=duration,
             all_file_types=all_file_types,
         )

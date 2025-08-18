@@ -52,11 +52,11 @@ def triage_scan_command(args):
     # Generate and display output
     format_type = getattr(args, "format", "demo")
     if format_type == "yaml":
-        output = report.to_report_yaml()
+        output = report.to_yaml()
     elif format_type == "json":
-        output = report.to_report_json()
+        output = report.to_json()
     elif format_type == "markdown":
-        output = report.to_report_markdown()
+        output = report.to_markdown()
     elif format_type == "tokens":
         output = report.to_tokens_text()
     elif format_type == "code":
@@ -210,11 +210,11 @@ def triage_pypi_command(args):
         # Generate output for this report
         format_type = getattr(args, "format", "demo")
         if format_type == "yaml":
-            output = report.to_report_yaml()
+            output = report.to_yaml()
         elif format_type == "json":
-            output = report.to_report_json()
+            output = report.to_json()
         elif format_type == "markdown":
-            output = report.to_report_markdown()
+            output = report.to_markdown()
         elif format_type == "tokens":
             output = report.to_tokens_text()
         elif format_type == "code":

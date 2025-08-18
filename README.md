@@ -3,14 +3,19 @@
 <img src="malwi-logo.png" alt="Logo">
 <a href='https://huggingface.co/schirrmacher/malwi'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20HF-Model-blue'></a>&ensp; 
 
-## **malwi** detects Python malware using AI.
-
-It specializes in finding **zero-day vulnerabilities** and can classify code as malicious or benign without requiring internet access.
+malwi specializes in finding **zero-day vulnerabilities**.
 
 ### Key Features
-- 🇪🇺 Open-source project built on open research and data
-- 🔒 Runs completely offline - no data leaves your machine
-- ⚡ Fast scanning of entire codebases
+
+- 🛡️ **AI-Powered Python Malware Detection**: Leverages advanced AI to identify malicious code in Python projects with high accuracy.
+
+- ⚡ **Lightning-Fast Codebase Scanning**: Scans entire repositories in seconds, so you can focus on development—not security worries.
+
+- 🔒 **100% Offline & Private**: Your code never leaves your machine. Full control, zero data exposure.
+
+- 💰 **Free & Open-Source**: No hidden costs. Built on transparent research and openly available data.
+
+- 🇪🇺 **Developed in the EU**: Committed to open-source principles and European data standards.
 
 ### 1) Install
 ```
@@ -135,9 +140,9 @@ report.version                # str: Malwi version with model hash
 
 # Methods
 report.to_demo_text()         # str: Human-readable tree summary
-report.to_report_json()       # str: JSON formatted report
-report.to_report_yaml()       # str: YAML formatted report
-report.to_report_markdown()   # str: Markdown formatted report
+report.to_json()              # str: JSON formatted report
+report.to_yaml()              # str: YAML formatted report
+report.to_markdown()          # str: Markdown formatted report
 
 # Pre-load models to avoid delay on first prediction
 malwi.MalwiReport.load_models_into_memory()
@@ -251,23 +256,13 @@ eval_steps_per_second: 110.7200
 epoch: 3.0000
 ```
 
-## Limitations
-
-The malicious dataset includes some boilerplate functions, such as setup functions, which can also appear in benign code. These cause false positives during scans. The goal is to triage and reduce such false positives to improve malwi's accuracy.
-
-## What's next?
-
-The first iteration focuses on **maliciousness of Python source code**.
-
-Future iterations will cover malware scanning for more languages (JavaScript, Rust, Go) and more formats (binaries, logs).
-
 ## Contributing & Support
 
 - Found a bug or have a feature request? [Open an issue](https://github.com/schirrmacher/malwi/issues).
 - Do you have access to malicious packages in Rust, Go, or other languages? [Contact via GitHub profile](https://github.com/schirrmacher).
 - Struggling with false-positive findings? [Create a Pull-Request](https://github.com/schirrmacher/malwi-samples/pulls).
 
-## Research & Development
+## Research
 
 ### Prerequisites
 
@@ -287,19 +282,6 @@ uv run pytest tests
 ./research download preprocess train
 ```
 
-### Research CLI
-
-The research CLI (`./research`) provides a streamlined interface for the entire training pipeline:
-
-#### Complete Pipeline
-```bash
-# Full pipeline: Download data → Preprocess → Train models
-./research download preprocess train --language python
-
-# Default pipeline (preprocess + train, assumes data exists)
-./research --language python
-```
-
 #### Individual Pipeline Steps
 ```bash
 # 1. Download training data (clones malwi-samples + downloads repositories)
@@ -311,3 +293,14 @@ The research CLI (`./research`) provides a streamlined interface for the entire 
 # 3. Model training only (tokenizer + DistilBERT, ~40 minutes on NVIDIA RTX 4090)
 ./research train
 ```
+
+## Limitations
+
+The malicious dataset includes some boilerplate functions, such as setup functions, which can also appear in benign code. These cause false positives during scans. The goal is to triage and reduce such false positives to improve malwi's accuracy.
+
+## What's next?
+
+The first iteration focuses on **maliciousness of Python source code**.
+
+Future iterations will cover malware scanning for more languages (JavaScript, Rust, Go) and more formats (binaries, logs).
+

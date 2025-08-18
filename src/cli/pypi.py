@@ -342,11 +342,11 @@ def pypi_command(args):
 
         # Generate output based on format
         if args.format == "yaml":
-            output = main_report.to_report_yaml()
+            output = main_report.to_yaml()
         elif args.format == "json":
-            output = main_report.to_report_json()
+            output = main_report.to_json()
         elif args.format == "markdown":
-            output = main_report.to_report_markdown()
+            output = main_report.to_markdown()
         elif args.format == "tokens":
             output = main_report.to_tokens_text()
         elif args.format == "code":

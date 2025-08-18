@@ -54,16 +54,16 @@ def test_malwi_report_exports():
         malicious=False,
         confidence=1.0,
         activities=[],
-        input="/test/path",
-        start="2024-01-01T12:00:00",
+        input_path="/test/path",
+        start_time="2024-01-01T12:00:00",
         duration=1.5,
         all_file_types=[],
     )
 
     # Test export methods - version should contain base version
-    json_output = report.to_report_json()
-    yaml_output = report.to_report_yaml()
-    markdown_output = report.to_report_markdown()
+    json_output = report.to_json()
+    yaml_output = report.to_yaml()
+    markdown_output = report.to_markdown()
 
     assert '"version":' in json_output
     assert __version__ in json_output

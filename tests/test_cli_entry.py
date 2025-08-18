@@ -121,9 +121,9 @@ class TestCLIEntry:
         # Mock report with all format methods
         mock_report = MagicMock()
         mock_report.to_demo_text.return_value = "Demo"
-        mock_report.to_report_markdown.return_value = "Markdown"
-        mock_report.to_report_json.return_value = "JSON"
-        mock_report.to_report_yaml.return_value = "YAML"
+        mock_report.to_markdown.return_value = "Markdown"
+        mock_report.to_json.return_value = "JSON"
+        mock_report.to_yaml.return_value = "YAML"
         mock_report.to_tokens_text.return_value = "Tokens"
         mock_create.return_value = mock_report
 
@@ -361,7 +361,7 @@ class TestBatchMode:
 
         # Mock the process_files function and report
         mock_report = MagicMock()
-        mock_report.to_report_json.return_value = '{"test": "data"}'
+        mock_report.to_json.return_value = '{"test": "data"}'
 
         with patch(
             "cli.scan.MalwiReport.create", return_value=mock_report
@@ -416,9 +416,9 @@ class TestBatchMode:
         test_folder.mkdir()
 
         format_extensions = [
-            ("json", ".json", "to_report_json"),
-            ("yaml", ".yaml", "to_report_yaml"),
-            ("markdown", ".md", "to_report_markdown"),
+            ("json", ".json", "to_json"),
+            ("yaml", ".yaml", "to_yaml"),
+            ("markdown", ".md", "to_markdown"),
             ("demo", ".txt", "to_demo_text"),
             ("tokens", ".txt", "to_tokens_text"),
         ]
@@ -692,9 +692,9 @@ class TestPyPICommand:
 
         # Test different formats
         formats_to_test = [
-            ("json", "to_report_json", '{"result": "test"}'),
-            ("yaml", "to_report_yaml", "result: test"),
-            ("markdown", "to_report_markdown", "# Test Result"),
+            ("json", "to_json", '{"result": "test"}'),
+            ("yaml", "to_yaml", "result: test"),
+            ("markdown", "to_markdown", "# Test Result"),
             ("tokens", "to_tokens_text", "tokens output"),
             ("code", "to_code_text", "code output"),
         ]
@@ -724,7 +724,7 @@ class TestPyPICommand:
         mock_scan_pypi.return_value = (tmp_path, [extracted_dir])
 
         mock_report = MagicMock()
-        mock_report.to_report_json.return_value = '{"saved": "output"}'
+        mock_report.to_json.return_value = '{"saved": "output"}'
         mock_create.return_value = mock_report
 
         with patch.object(

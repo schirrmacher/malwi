@@ -20,8 +20,8 @@ class TestReportResultField:
             malicious=False,
             confidence=1.0,
             activities=[],
-            input="/test",
-            start="2024-01-01T12:00:00",
+            input_path="/test",
+            start_time="2024-01-01T12:00:00",
             duration=1.5,
             all_file_types=[],
         )
@@ -49,8 +49,8 @@ class TestReportResultField:
             malicious=False,  # Not flagged as malicious overall
             confidence=0.6,
             activities=[],
-            input="test.py",
-            start="2024-01-01T12:00:00",
+            input_path="test.py",
+            start_time="2024-01-01T12:00:00",
             duration=1.5,
             all_file_types=[".py"],
         )
@@ -78,8 +78,8 @@ class TestReportResultField:
             malicious=True,  # Flagged as malicious
             confidence=0.95,
             activities=["FILESYSTEM_ACCESS", "NETWORK_HTTP_REQUEST"],
-            input="test.py",
-            start="2024-01-01T12:00:00",
+            input_path="test.py",
+            start_time="2024-01-01T12:00:00",
             duration=1.5,
             all_file_types=[".py"],
         )
@@ -99,13 +99,13 @@ class TestReportResultField:
             malicious=False,
             confidence=1.0,
             activities=[],
-            input="/test",
-            start="2024-01-01T12:00:00",
+            input_path="/test",
+            start_time="2024-01-01T12:00:00",
             duration=1.5,
             all_file_types=[],
         )
 
-        json_output = report.to_report_json()
+        json_output = report.to_json()
         assert '"result": "good"' in json_output
 
     def test_result_in_yaml_output(self):
@@ -120,13 +120,13 @@ class TestReportResultField:
             malicious=False,
             confidence=1.0,
             activities=[],
-            input="/test",
-            start="2024-01-01T12:00:00",
+            input_path="/test",
+            start_time="2024-01-01T12:00:00",
             duration=1.5,
             all_file_types=[],
         )
 
-        yaml_output = report.to_report_yaml()
+        yaml_output = report.to_yaml()
         assert "result: good" in yaml_output
 
     def test_result_in_markdown_output(self):
@@ -142,12 +142,12 @@ class TestReportResultField:
             malicious=False,
             confidence=1.0,
             activities=[],
-            input="/test",
-            start="2024-01-01T12:00:00",
+            input_path="/test",
+            start_time="2024-01-01T12:00:00",
             duration=1.5,
             all_file_types=[],
         )
-        markdown = good_report.to_report_markdown()
+        markdown = good_report.to_markdown()
         assert "> 🟢 **Good**:" in markdown
 
         # Test suspicious result
@@ -169,12 +169,12 @@ class TestReportResultField:
             malicious=False,
             confidence=0.6,
             activities=[],
-            input="test.py",
-            start="2024-01-01T12:00:00",
+            input_path="test.py",
+            start_time="2024-01-01T12:00:00",
             duration=1.5,
             all_file_types=[".py"],
         )
-        markdown = suspicious_report.to_report_markdown()
+        markdown = suspicious_report.to_markdown()
         assert "> ⚠️  **Suspicious**:" in markdown
         assert (
             "Found 1 malicious objects but overall classification is not malicious"
@@ -192,10 +192,10 @@ class TestReportResultField:
             malicious=True,
             confidence=0.95,
             activities=[],
-            input="test.py",
-            start="2024-01-01T12:00:00",
+            input_path="test.py",
+            start_time="2024-01-01T12:00:00",
             duration=1.5,
             all_file_types=[".py"],
         )
-        markdown = malicious_report.to_report_markdown()
+        markdown = malicious_report.to_markdown()
         assert "> 👹 **Malicious**:" in markdown

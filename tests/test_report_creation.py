@@ -127,8 +127,8 @@ class TestMalwiReport(unittest.TestCase):
             malicious=True,
             confidence=0.88,
             activities=["SYSTEM_CALL", "FILE_OPERATION"],
-            input="/tmp",
-            start="2024-01-01T12:00:00",
+            input_path="/tmp",
+            start_time="2024-01-01T12:00:00",
             duration=2.5,
             all_file_types=[".py"],
         )
@@ -143,8 +143,8 @@ class TestMalwiReport(unittest.TestCase):
             malicious=False,
             confidence=0.99,
             activities=[],
-            input="/tmp/script.py",
-            start="2024-01-01T12:00:00",
+            input_path="/tmp/script.py",
+            start_time="2024-01-01T12:00:00",
             duration=1.0,
             all_file_types=[".py"],
         )
@@ -174,18 +174,18 @@ class TestMalwiReport(unittest.TestCase):
         # CSV generation has been removed in favor of other formats
         assert not hasattr(self.malicious_report, "to_report_csv")
 
-    def test_to_report_json(self):
+    def test_to_json(self):
         """Test JSON report generation."""
-        json_str = self.malicious_report.to_report_json()
+        json_str = self.malicious_report.to_json()
         data = json.loads(json_str)
 
         self.assertEqual(data["statistics"]["malicious_objects"], 1)
         self.assertEqual(len(data["details"]), 1)
         self.assertEqual(data["details"][0]["contents"][0]["name"], "evil_func")
 
-    def test_to_report_yaml(self):
+    def test_to_yaml(self):
         """Test YAML report generation."""
-        yaml_str = self.malicious_report.to_report_yaml()
+        yaml_str = self.malicious_report.to_yaml()
         data = yaml.safe_load(yaml_str)
 
         self.assertEqual(data["statistics"]["malicious_objects"], 1)
@@ -207,9 +207,9 @@ class TestMalwiReport(unittest.TestCase):
         self.assertIn("- files: 1", text)
         self.assertIn("=> 🟢 good", text)
 
-    def test_to_report_markdown(self):
+    def test_to_markdown(self):
         """Test Markdown report generation."""
-        md = self.malicious_report.to_report_markdown()
+        md = self.malicious_report.to_markdown()
 
         self.assertIn("# Malwi Report", md)
         self.assertIn("> 👹 **Malicious**: `0.88`", md)

