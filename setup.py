@@ -3,7 +3,7 @@ import os
 import sys
 
 # Add src to path to import version
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 from malwi._version import __version__
 
 setup(

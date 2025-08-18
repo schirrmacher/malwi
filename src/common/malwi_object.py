@@ -100,7 +100,6 @@ def disassemble_file_ast(
 
 def process_single_file(
     file_path: Path,
-    predict: bool = True,
     maliciousness_threshold: Optional[float] = None,
 ) -> Optional[Tuple[List["MalwiObject"], List["MalwiObject"]]]:
     try:
@@ -121,14 +120,13 @@ def process_single_file(
 
         for obj in objects:
             all_objects.append(obj)
-            if predict:
-                obj.predict()
-                if (
-                    maliciousness_threshold
-                    and obj.maliciousness
-                    and obj.maliciousness > maliciousness_threshold
-                ):
-                    malicious_objects.append(obj)
+            obj.predict()
+            if (
+                maliciousness_threshold
+                and obj.maliciousness
+                and obj.maliciousness > maliciousness_threshold
+            ):
+                malicious_objects.append(obj)
 
         return all_objects, malicious_objects
 

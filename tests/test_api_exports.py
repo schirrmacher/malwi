@@ -27,7 +27,6 @@ def test_malwi_report_create_api(tmp_path):
     result = MalwiReport.create(
         input_path=test_file,
         accepted_extensions=["py"],
-        predict=False,  # Disable ML to avoid model dependencies
         silent=True,
     )
 

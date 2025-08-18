@@ -373,7 +373,6 @@ class TestBatchMode:
                 mock_process.assert_called_once_with(
                     input_path=test_folder,
                     accepted_extensions=["py"],
-                    predict=True,
                     silent=True,
                     malicious_threshold=0.7,
                 )
@@ -627,7 +626,6 @@ class TestPyPICommand:
                 mock_create.assert_called_once_with(
                     input_path=extracted_dir,
                     accepted_extensions=[".py"],
-                    predict=True,
                     silent=True,
                     malicious_threshold=0.7,
                     on_malicious_found=None,
@@ -786,7 +784,6 @@ class TestPyPICommand:
                 mock_create.assert_called_once_with(
                     input_path=extracted_dir,
                     accepted_extensions=[".py"],
-                    predict=True,
                     silent=True,
                     malicious_threshold=0.9,
                     on_malicious_found=None,

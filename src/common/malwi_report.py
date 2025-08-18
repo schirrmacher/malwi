@@ -463,7 +463,6 @@ class MalwiReport:
         cls,
         input_path,
         accepted_extensions: Optional[List[str]] = None,
-        predict: bool = False,
         silent: bool = False,
         malicious_threshold: float = 0.7,
         on_finding: Optional[callable] = None,
@@ -474,7 +473,6 @@ class MalwiReport:
         Args:
             input_path: Path to file or directory to process (str or Path object)
             accepted_extensions: List of file extensions to accept (without dots)
-            predict: Whether to run maliciousness prediction
             silent: If True, suppress progress messages
             malicious_threshold: Threshold for classifying objects as malicious
             on_finding: Optional callback function called when malicious objects are found
@@ -565,7 +563,6 @@ class MalwiReport:
             try:
                 file_all_objects, file_malicious_objects = process_single_file(
                     file_path,
-                    predict=predict,
                     maliciousness_threshold=malicious_threshold,
                 )
                 all_objects.extend(file_all_objects)

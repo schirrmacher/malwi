@@ -34,7 +34,7 @@ class TestMalwiObject:
             language="python",
             file_source_code="def test(): pass",
             file_path="test.py",
-            ast_code_object=sample_ast_code_object,
+            code_object=sample_ast_code_object,
         )
 
     def test_to_tokens_and_string(self, malwi_obj):
@@ -49,12 +49,10 @@ class TestMalwiObject:
     def test_source_code_population(self, malwi_obj):
         """Test source code population from AST CodeObject."""
         # Populate source code from AST CodeObject
-        if malwi_obj.ast_code_object and hasattr(
-            malwi_obj.ast_code_object, "source_code"
-        ):
-            malwi_obj.code = malwi_obj.ast_code_object.source_code
+        if malwi_obj.code_object and hasattr(malwi_obj.code_object, "source_code"):
+            malwi_obj.code = malwi_obj.code_object.source_code
 
-        # Should have populated from ast_code_object
+        # Should have populated from code_object
         assert malwi_obj.code is not None
         assert isinstance(malwi_obj.code, str)
 
@@ -91,10 +89,8 @@ class TestMalwiObject:
         """Test conversion to dict, YAML, and JSON."""
         malwi_obj.maliciousness = 0.8
         # Populate source code from AST CodeObject
-        if malwi_obj.ast_code_object and hasattr(
-            malwi_obj.ast_code_object, "source_code"
-        ):
-            malwi_obj.code = malwi_obj.ast_code_object.source_code
+        if malwi_obj.code_object and hasattr(malwi_obj.code_object, "source_code"):
+            malwi_obj.code = malwi_obj.code_object.source_code
 
         # Test to_dict
         data = malwi_obj.to_dict()

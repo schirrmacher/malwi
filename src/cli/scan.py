@@ -89,7 +89,6 @@ def run_batch_scan(child_folder: Path, args) -> dict:
         report: MalwiReport = MalwiReport.create(
             input_path=child_folder,
             accepted_extensions=args.extensions,
-            predict=True,
             silent=True,  # Silent for individual folder processing in batch mode
             malicious_threshold=args.threshold,
         )
@@ -276,7 +275,6 @@ def scan_command(args):
     report: MalwiReport = MalwiReport.create(
         input_path=input_path,
         accepted_extensions=args.extensions,
-        predict=True,  # Enable prediction for malwi scanner
         silent=args.quiet,
         malicious_threshold=args.threshold,
         on_finding=combined_callback,

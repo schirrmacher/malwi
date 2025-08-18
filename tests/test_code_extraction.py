@@ -304,7 +304,6 @@ class MaliciousClass:
             report = MalwiReport.create(
                 input_path=tmpdir_path,
                 accepted_extensions=["py"],
-                predict=True,
                 silent=True,
                 malicious_threshold=0.001,  # Very low threshold to catch all objects
             )
@@ -359,7 +358,6 @@ def safe_function():
             report = MalwiReport.create(
                 input_path=tmpdir_path,
                 accepted_extensions=["py"],
-                predict=True,
                 silent=True,
                 malicious_threshold=0.7,  # Default threshold
             )
@@ -403,7 +401,6 @@ class MaliciousClass:
                 report = MalwiReport.create(
                     input_path=Path(f.name),
                     accepted_extensions=["py"],
-                    predict=True,
                     silent=True,
                     malicious_threshold=0.001,  # Very low threshold to catch everything
                 )
@@ -411,13 +408,11 @@ class MaliciousClass:
                 # Test source code population for each MalwiObject
                 for obj in report.all_objects:
                     # Populate source code from AST CodeObject
-                    if obj.ast_code_object and hasattr(
-                        obj.ast_code_object, "source_code"
-                    ):
-                        obj.code = obj.ast_code_object.source_code
-                    elif obj.ast_code_object:
+                    if obj.code_object and hasattr(obj.code_object, "source_code"):
+                        obj.code = obj.code_object.source_code
+                    elif obj.code_object:
                         # Use the bytecode representation as fallback
-                        obj.code = obj.ast_code_object.to_string(
+                        obj.code = obj.code_object.to_string(
                             mapped=False, one_line=False
                         )
 
@@ -428,16 +423,16 @@ class MaliciousClass:
                     if obj.name == "malicious_function":
                         assert (
                             'def malicious_function(param1, param2="default"):'
-                            in retrieved_code
+                            in obj.code
                         )
-                        assert '"""A test function with docstring."""' in retrieved_code
-                        assert "subprocess.run(" in retrieved_code
+                        assert '"""A test function with docstring."""' in obj.code
+                        assert "subprocess.run(" in obj.code
 
                     elif obj.name == "MaliciousClass":
-                        assert "class MaliciousClass:" in retrieved_code
-                        assert '"""A test class."""' in retrieved_code
-                        assert "def __init__(self):" in retrieved_code
-                        assert "def method(self):" in retrieved_code
+                        assert "class MaliciousClass:" in obj.code
+                        assert '"""A test class."""' in obj.code
+                        assert "def __init__(self):" in obj.code
+                        assert "def method(self):" in obj.code
 
             finally:
                 os.unlink(f.name)
@@ -582,7 +577,6 @@ class TestClass:
                     report = MalwiReport.create(
                         input_path=Path(f.name),
                         accepted_extensions=["py"],
-                        predict=False,  # Don't need prediction for this test
                         silent=True,
                         malicious_threshold=0.7,
                     )
@@ -686,7 +680,7 @@ class TestClass:
             language="python",
             file_path="/test/path.py",
             file_source_code="print('test')",
-            ast_code_object=None,  # No AST object
+            code_object=None,  # No AST object
         )
 
         # Should return 0 when no AST CodeObject is available

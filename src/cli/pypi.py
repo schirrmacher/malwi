@@ -329,7 +329,6 @@ def pypi_command(args):
         report: MalwiReport = MalwiReport.create(
             input_path=extracted_dir,
             accepted_extensions=[".py"],  # Focus on Python files for PyPI packages
-            predict=True,
             silent=args.quiet,
             malicious_threshold=args.threshold,
             on_malicious_found=file_copy_callback,

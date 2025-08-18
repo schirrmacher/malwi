@@ -21,6 +21,7 @@ class MockMalwiObject:
     code: str = ""
     warnings: List[str] = field(default_factory=list)
     language: str = "python"
+    code_object = None  # Mock the code_object attribute
 
     def to_tokens(self) -> List[str]:
         return [f"TOKEN_{self.name.upper()}", "SYSTEM_INTERACTION", "FILESYSTEM_ACCESS"]
