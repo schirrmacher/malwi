@@ -118,15 +118,6 @@ class TestMalwiObject:
         assert len(tokens) > 0
         assert all(isinstance(token, str) for token in tokens)
 
-    def test_load_models_into_memory(self):
-        """Test model loading method."""
-        # This should not raise an exception
-        try:
-            MalwiObject.load_models_into_memory()
-        except Exception:
-            # It's okay if models can't be loaded in test environment
-            pass
-
     def test_malwi_object_with_warnings(self):
         """Test MalwiObject creation with warnings."""
         obj = MalwiObject(

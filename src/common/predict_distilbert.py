@@ -53,17 +53,30 @@ USE_MULTI_GPU = False
 # Thread-local storage for tokenizers to avoid "Already borrowed" errors
 _thread_local = threading.local()
 
+# Singleton lock for model initialization
+_model_init_lock = threading.Lock()
+_models_initialized = False
+
 # Higher == Faster
 WINDOW_STRIDE = 384
+
+
+def _ensure_models_initialized():
+    """Ensure models are initialized exactly once (singleton pattern)."""
+    global _models_initialized
+    if not _models_initialized:
+        with _model_init_lock:
+            # Double-check after acquiring lock
+            if not _models_initialized:
+                initialize_models()
+                _models_initialized = True
 
 
 def get_thread_tokenizer():
     """Get a thread-local tokenizer instance to avoid 'Already borrowed' errors."""
     if not hasattr(_thread_local, "tokenizer"):
-        if HF_TOKENIZER_INSTANCE is None:
-            raise RuntimeError(
-                "Models not initialized. Call initialize_models() first."
-            )
+        # Ensure models are initialized (thread-safe singleton)
+        _ensure_models_initialized()
 
         # Create a new tokenizer instance for this thread
         actual_tokenizer_path = getattr(
@@ -86,7 +99,8 @@ def initialize_models(
         HF_MODEL_NAME, \
         HF_TOKENIZER_NAME, \
         HF_DEVICE_IDS, \
-        USE_MULTI_GPU
+        USE_MULTI_GPU, \
+        _models_initialized
 
     if HF_MODEL_INSTANCE is not None:
         return
@@ -134,9 +148,13 @@ def initialize_models(
 
         HF_MODEL_INSTANCE.to(HF_DEVICE_INSTANCE)
         HF_MODEL_INSTANCE.eval()
+
+        # Mark models as successfully initialized
+        _models_initialized = True
     except Exception as e:
         logging.error(f"Failed to load HF model/tokenizer: {e}")
         HF_TOKENIZER_INSTANCE = HF_MODEL_INSTANCE = HF_DEVICE_INSTANCE = None
+        _models_initialized = False
 
 
 def _get_windowed_predictions(
@@ -220,6 +238,9 @@ def get_node_text_prediction(text_input: str) -> Dict[str, Any]:
             "message": "Input_Error_Invalid_Text_Input_Type",
             "prediction_debug": prediction_debug_info,
         }
+
+    # Ensure models are initialized (singleton pattern)
+    _ensure_models_initialized()
 
     if (
         HF_MODEL_INSTANCE is None

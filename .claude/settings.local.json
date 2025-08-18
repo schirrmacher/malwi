@@ -16,7 +16,9 @@
       "Bash(unzip:*)",
       "Bash(timeout 10s uv run:*)",
       "Bash(find:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(./cli scan:*)",
+      "Bash(python -c \"import tests.test_cli_entry\")"
     ]
   },
   "enableAllProjectMcpServers": false

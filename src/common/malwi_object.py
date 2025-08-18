@@ -19,7 +19,6 @@ from common.mapping import (
 from common.bytecode import ASTCompiler
 from common.predict_distilbert import (
     get_node_text_prediction,
-    initialize_models as initialize_distilbert_models,
 )
 from common.messaging import (
     file_error,
@@ -179,16 +178,6 @@ class MalwiObject:
         self.ast_code_object = ast_code_object
         self.file_source_code = file_source_code
         self.code = None
-
-    @classmethod
-    def load_models_into_memory(
-        cls,
-        distilbert_model_path: Optional[str] = None,
-        tokenizer_path: Optional[str] = None,
-    ) -> None:
-        initialize_distilbert_models(
-            model_path=distilbert_model_path, tokenizer_path=tokenizer_path
-        )
 
     @classmethod
     def all_tokens(cls, language: str = "python") -> List[str]:

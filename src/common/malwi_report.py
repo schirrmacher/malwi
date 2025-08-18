@@ -440,10 +440,10 @@ class MalwiReport:
         tokenizer_path: Optional[str] = None,
     ) -> None:
         """Load ML models into memory for batch processing."""
-        from common.malwi_object import MalwiObject
+        from common.predict_distilbert import initialize_models
 
-        MalwiObject.load_models_into_memory(
-            distilbert_model_path=distilbert_model_path,
+        initialize_models(
+            model_path=distilbert_model_path,
             tokenizer_path=tokenizer_path,
         )
 

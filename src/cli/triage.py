@@ -6,7 +6,6 @@ Triage functionality for malwi CLI with subcommands.
 def triage_scan_command(args):
     """Execute triage scan and move malicious files to suspicious folder."""
     from pathlib import Path
-    from common.malwi_object import MalwiObject
     from common.malwi_report import MalwiReport
     from common.files import copy_file, concatenate_files
     from common.config import SUPPORTED_EXTENSIONS
@@ -35,7 +34,7 @@ def triage_scan_command(args):
 
     # Load ML models
     try:
-        MalwiObject.load_models_into_memory(
+        MalwiReport.load_models_into_memory(
             distilbert_model_path=getattr(args, "model_path", None),
             tokenizer_path=getattr(args, "tokenizer_path", None),
         )
@@ -158,7 +157,6 @@ def triage_scan_command(args):
 def triage_pypi_command(args):
     """Execute triage pypi scan and move malicious files to suspicious folder."""
     from pathlib import Path
-    from common.malwi_object import MalwiObject
     from common.malwi_report import MalwiReport
     from common.messaging import (
         configure_messaging,
@@ -191,7 +189,7 @@ def triage_pypi_command(args):
 
     # Load ML models for scanning
     try:
-        MalwiObject.load_models_into_memory(
+        MalwiReport.load_models_into_memory(
             distilbert_model_path=getattr(args, "model_path", None),
             tokenizer_path=getattr(args, "tokenizer_path", None),
         )

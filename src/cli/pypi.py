@@ -15,7 +15,6 @@ import urllib.request
 import urllib.error
 from tqdm import tqdm
 
-from common.malwi_object import MalwiObject
 from common.malwi_report import MalwiReport
 from common.files import copy_file
 from common.messaging import (
@@ -304,7 +303,7 @@ def pypi_command(args):
 
     # Load ML models for scanning
     try:
-        MalwiObject.load_models_into_memory(
+        MalwiReport.load_models_into_memory(
             distilbert_model_path=args.model_path,
             tokenizer_path=args.tokenizer_path,
         )

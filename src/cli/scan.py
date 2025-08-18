@@ -8,7 +8,6 @@ from pathlib import Path
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from common.malwi_object import MalwiObject
 from common.malwi_report import MalwiReport
 from common.files import copy_file
 from common.config import SUPPORTED_EXTENSIONS
@@ -139,7 +138,7 @@ def process_batch_mode(input_path: Path, args) -> None:
 
     # Load ML models once for batch processing
     try:
-        MalwiObject.load_models_into_memory(
+        MalwiReport.load_models_into_memory(
             distilbert_model_path=args.model_path,
             tokenizer_path=args.tokenizer_path,
         )
@@ -235,7 +234,7 @@ def scan_command(args):
 
     # Load ML models (only for non-batch mode)
     try:
-        MalwiObject.load_models_into_memory(
+        MalwiReport.load_models_into_memory(
             distilbert_model_path=args.model_path,
             tokenizer_path=args.tokenizer_path,
         )
@@ -280,7 +279,7 @@ def scan_command(args):
         predict=True,  # Enable prediction for malwi scanner
         silent=args.quiet,
         malicious_threshold=args.threshold,
-        on_malicious_found=combined_callback,
+        on_finding=combined_callback,
     )
 
     # Clean up the real-time display

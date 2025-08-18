@@ -184,11 +184,8 @@ malwi provides a Python API for integrating malware detection into your applicat
 ```python
 import malwi
 
-# Scan a single file (accepts string or Path)
 report = malwi.MalwiReport.create(
-    input_path="suspicious_file.py",
-    predict=True,
-    malicious_threshold=0.7
+    input_path="suspicious_file.py"
 )
 
 print(f"Result: {report.confidence:.2f}")
@@ -266,7 +263,6 @@ MalwiReport.create(
 - `obj.to_yaml()` - Export as YAML string
 
 **Class Methods:**
-- `MalwiObject.load_models_into_memory()` - Pre-load ML models
 - `MalwiObject.all_tokens(language='python')` - Get all possible tokens for a language
 
 #### Advanced Usage
@@ -309,9 +305,6 @@ if report.malicious:
 For scanning multiple files efficiently:
 
 ```python
-# Load models once for better performance
-malwi.MalwiReport.load_models_into_memory()
-
 # Scan multiple directories
 for directory in directories:
     report = malwi.MalwiReport.create(
@@ -335,9 +328,6 @@ Access low-level analysis for custom workflows:
 # Process individual objects
 from malwi import MalwiObject, disassemble_file_ast
 
-# Load models first
-MalwiObject.load_models_into_memory()
-
 # Create object from source code
 with open("script.py") as f:
     source = f.read()
@@ -360,6 +350,31 @@ for obj in objects:
         print(f"Embedding count: {obj.embedding_count}")
         print(f"Hash: {obj.to_string_hash()}")
 ```
+
+#### Model Loading Behavior
+
+malwi uses a singleton pattern for model loading to optimize performance:
+
+**Automatic Loading:**
+- Models are automatically loaded on first use when `predict=True`
+- The same model instance is reused across all predictions (singleton)
+- Thread-safe initialization ensures only one model is loaded even with concurrent requests
+
+**Manual Pre-loading (Optional):**
+```python
+# Pre-load models to avoid delay on first prediction
+malwi.MalwiReport.load_models_into_memory()
+
+# Useful for:
+# - Production servers to load models at startup
+# - Batch processing to ensure models are ready
+# - Reducing latency on first request
+```
+
+**Memory Considerations:**
+- Models require ~250MB of memory once loaded
+- Models remain in memory for the lifetime of the process
+- Use `predict=False` to scan without loading models (no maliciousness scoring)
 
 
 
