@@ -15,28 +15,36 @@ from common.files import read_json_from_file
 
 
 class SpecialCases(Enum):
-    STRING_SENSITIVE_FILE_PATH = "STRING_SENSITIVE_FILE_PATH"
-    STRING_URL = "STRING_URL"
-    STRING_CONTAINS_URL = "STRING_CONTAINS_URL"
-    STRING_VERSION = "STRING_VERSION"
-    STRING_ENCODING = "STRING_ENCODING"
-    STRING_LOCALHOST = "STRING_LOCALHOST"
-    STRING_FILE_PATH = "STRING_FILE_PATH"
-    STRING_IP = "STRING_IP"
-    STRING_BASE64 = "STRING_BASE64"
-    STRING_HEX = "STRING_HEX"
-    STRING_BASH = "STRING_BASH"
-    STRING_SQL = "STRING_SQL"
-    STRING_CODE = "STRING_CODE"
-    STRING_LARGE_PAYLOAD = "STRING_LARGE_PAYLOAD"
-    STRING = "STRING"
-    MALFORMED_FILE = "MALFORMED_FILE"
-    MALFORMED_SYNTAX = "MALFORMED_SYNTAX"
-    TARGETED_FILE = "TARGETED_FILE"
-    BOOLEAN = "BOOLEAN"
-    INTEGER = "INTEGER"
-    FLOAT = "FLOAT"
-    OBJECT = "OBJECT"
+    # String content classifications
+    STRING_SENSITIVE_FILE_PATH = (
+        "STRING_SENSITIVE_FILE_PATH"  # Paths to sensitive locations (/etc, /sys, etc.)
+    )
+    STRING_URL = "STRING_URL"  # Valid HTTP/HTTPS URLs
+    STRING_CONTAINS_URL = "STRING_CONTAINS_URL"  # Text containing URLs
+    STRING_VERSION = "STRING_VERSION"  # Version strings (1.2.3, v2.0, etc.)
+    STRING_ENCODING = "STRING_ENCODING"  # Character encoding names (utf-8, ascii, etc.)
+    STRING_LOCALHOST = "STRING_LOCALHOST"  # Localhost references (127.0.0.1, localhost)
+    STRING_FILE_PATH = "STRING_FILE_PATH"  # Generic file paths
+    STRING_IP = "STRING_IP"  # IP addresses
+    STRING_BASE64 = "STRING_BASE64"  # Base64 encoded content
+    STRING_HEX = "STRING_HEX"  # Hexadecimal encoded content
+    STRING_BASH = "STRING_BASH"  # Shell/bash command strings
+    STRING_SQL = "STRING_SQL"  # SQL query strings
+    STRING_CODE = "STRING_CODE"  # Code-like strings (function calls, imports)
+    STRING_LARGE_PAYLOAD = "STRING_LARGE_PAYLOAD"  # Abnormally long strings (>5KB, often obfuscated malware)
+    STRING = "STRING"  # Generic string fallback
+
+    # File-level classifications
+    MALFORMED_FILE = "MALFORMED_FILE"  # Files with parsing/syntax errors
+    MALFORMED_SYNTAX = "MALFORMED_SYNTAX"  # Files with syntax errors
+    LARGE_FILE = "LARGE_FILE"  # Files exceeding size thresholds (>500KB)
+    TARGETED_FILE = "TARGETED_FILE"  # Files matching specific targeting criteria
+
+    # Data type classifications
+    BOOLEAN = "BOOLEAN"  # Boolean values (True/False)
+    INTEGER = "INTEGER"  # Integer numbers
+    FLOAT = "FLOAT"  # Floating point numbers
+    OBJECT = "OBJECT"  # Complex objects
 
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent

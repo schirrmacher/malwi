@@ -158,6 +158,12 @@ class MalwiObject:
         # Add warnings first
         tokens.extend(self.warnings)
 
+        # Add large file warning if applicable
+        if self.file_path and Path(self.file_path).exists():
+            file_size = Path(self.file_path).stat().st_size
+            if file_size > 500 * 1024:  # Files larger than 500KB
+                tokens.append(SpecialCases.LARGE_FILE.value)
+
         # Add file targeting warning if applicable
         if self.file_path and Path(self.file_path).name in COMMON_TARGET_FILES.get(
             self.language, []

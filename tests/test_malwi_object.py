@@ -152,6 +152,72 @@ class TestMalwiObject:
         # For JavaScript objects created manually, bytecode may not be created
         # This is fine as the test is just checking the object creation
 
+    def test_large_file_warning(self):
+        """Test that LARGE_FILE warning is added for files >500KB."""
+        # Create a large temporary file for testing
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            # Write 600KB of content (bigger than 500KB threshold)
+            large_content = 'x = "' + "A" * (600 * 1024) + '"'
+            f.write(large_content)
+            large_file_path = f.name
+
+        try:
+            # Create MalwiObject with the large file
+            obj = MalwiObject(
+                name="large_file_test",
+                language="python",
+                file_path=large_file_path,
+                file_source_code=large_content,
+            )
+
+            # Get tokens and check for LARGE_FILE warning
+            tokens = obj.to_tokens()
+            assert SpecialCases.LARGE_FILE.value in tokens
+            # LARGE_FILE should be one of the first tokens (warnings come first)
+            assert tokens.index(SpecialCases.LARGE_FILE.value) < 5
+
+        finally:
+            # Clean up the temporary file
+            Path(large_file_path).unlink()
+
+    def test_small_file_no_warning(self):
+        """Test that small files do not get LARGE_FILE warning."""
+        # Create a small temporary file for testing
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            small_content = 'x = "small content"'
+            f.write(small_content)
+            small_file_path = f.name
+
+        try:
+            # Create MalwiObject with the small file
+            obj = MalwiObject(
+                name="small_file_test",
+                language="python",
+                file_path=small_file_path,
+                file_source_code=small_content,
+            )
+
+            # Get tokens and check that LARGE_FILE warning is NOT present
+            tokens = obj.to_tokens()
+            assert SpecialCases.LARGE_FILE.value not in tokens
+
+        finally:
+            # Clean up the temporary file
+            Path(small_file_path).unlink()
+
+    def test_nonexistent_file_no_warning(self):
+        """Test that nonexistent files don't cause errors and don't get LARGE_FILE warning."""
+        obj = MalwiObject(
+            name="nonexistent_file_test",
+            language="python",
+            file_path="/nonexistent/path/file.py",
+            file_source_code="pass",
+        )
+
+        # Should not raise an error and should not have LARGE_FILE warning
+        tokens = obj.to_tokens()
+        assert SpecialCases.LARGE_FILE.value not in tokens
+
 
 def test_literal_str():
     """Test LiteralStr class."""
