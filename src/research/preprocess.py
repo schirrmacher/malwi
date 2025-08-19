@@ -1,96 +1,165 @@
 #!/usr/bin/env python3
 """
-Data preprocessing script for malwi training pipeline.
-Processes Python/JavaScript files to generate AST-based malwicode tokens in parallel.
+Parallel preprocessing with proper resource management and error handling.
+Fixed serialization, resource leak, and timeout issues for reliable multiprocessing.
 """
 
 import argparse
 import csv
+import gc
 import logging
 import multiprocessing as mp
+import os
+import signal
 import tempfile
+import time
+from concurrent.futures import ProcessPoolExecutor, TimeoutError, as_completed
 from pathlib import Path
-from typing import List, Dict
-from concurrent.futures import ProcessPoolExecutor, as_completed, TimeoutError
-from tqdm import tqdm
+from typing import Dict, List
 
-from common.bytecode import ASTCompiler
-from common.files import collect_files_by_extension
+import tqdm
+
+from common.messaging import (
+    info,
+    success,
+    warning,
+    error,
+    progress,
+    configure_messaging,
+)
+
+
+def _process_single_file_with_timeout(
+    file_path: Path, language: str, timeout: int = 30
+) -> Dict:
+    """
+    Process a single file with timeout protection.
+    Returns serializable result dictionary.
+    """
+    result = {
+        "file_path": str(file_path),
+        "success": False,
+        "error": None,
+        "code_objects": [],
+    }
+
+    def timeout_handler(signum, frame):
+        raise TimeoutError(f"File processing timeout after {timeout}s")
+
+    # Set up timeout signal (Unix only)
+    if hasattr(signal, "SIGALRM"):
+        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(timeout)
+
+    try:
+        # Import inside worker to avoid serialization issues
+        from common.bytecode import ASTCompiler
+
+        # Create fresh compiler instance in this process
+        compiler = ASTCompiler(language)
+
+        # Process the file
+        code_objects = compiler.process_file(file_path)
+
+        # Convert to serializable format immediately
+        serializable_objects = []
+        for obj in code_objects:
+            try:
+                obj_data = {
+                    "tokens": obj.to_string(one_line=True),
+                    "hash": obj.to_hash(),
+                    "language": obj.language,
+                    "filepath": str(obj.path),
+                }
+                serializable_objects.append(obj_data)
+            except Exception as e:
+                logging.warning(f"Failed to serialize object from {file_path}: {e}")
+                continue
+
+        result["success"] = True
+        result["code_objects"] = serializable_objects
+
+        # Explicit cleanup
+        del compiler
+        del code_objects
+        gc.collect()
+
+    except TimeoutError as e:
+        result["error"] = str(e)
+    except Exception as e:
+        result["error"] = f"Processing error: {str(e)}"
+    finally:
+        # Clean up timeout signal
+        if hasattr(signal, "SIGALRM"):
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
+
+    return result
 
 
 def process_file_chunk(chunk_data: Dict) -> Dict:
     """
-    Process a chunk of files in a separate process.
-
+    Process a chunk of files in a separate process with proper resource management.
     Args:
         chunk_data: Dictionary containing:
-            - files: List of file paths to process
-            - language: Language type (python/javascript)
+            - files: List of file path strings (serializable)
+            - language: Language type string
             - chunk_id: Identifier for this chunk
-            - temp_dir: Temporary directory for output
-
+            - temp_dir: Temporary directory path string
     Returns:
-        Dictionary with processing results and output file path
+        Dictionary with processing results
     """
     try:
-        files = chunk_data["files"]
+        # Extract data (all should be serializable strings/primitives)
+        file_paths = [Path(fp) for fp in chunk_data["files"]]
         language = chunk_data["language"]
         chunk_id = chunk_data["chunk_id"]
         temp_dir = Path(chunk_data["temp_dir"])
 
-        # Initialize compiler for this process
-        try:
-            compiler = ASTCompiler(language)
-        except ValueError as e:
-            return {
-                "chunk_id": chunk_id,
-                "success": False,
-                "error": str(e),
-                "processed_count": 0,
-            }
-    except Exception as e:
-        return {
-            "chunk_id": chunk_data.get("chunk_id", "unknown"),
-            "success": False,
-            "error": f"Initialization failed: {str(e)}",
-            "processed_count": 0,
-        }
+        # Create output file
+        chunk_output = temp_dir / f"chunk_{chunk_id}.csv"
+        processed_count = 0
+        total_code_objects = 0
 
-    # Create temporary output file for this chunk
-    chunk_output = temp_dir / f"chunk_{chunk_id}.csv"
-
-    processed_count = 0
-
-    try:
+        # Use context manager for file handling
         with open(chunk_output, "w", encoding="utf-8", newline="") as f:
-            # Use proper CSV writer to handle escaping
             writer = csv.writer(f)
             writer.writerow(["tokens", "hash", "language", "filepath"])
 
-            total_code_objects = 0
-            for file_path in files:
+            # Process each file with individual timeout protection
+            for file_path in file_paths:
                 try:
-                    code_objects = compiler.process_file(file_path)
+                    file_result = _process_single_file_with_timeout(
+                        file_path, language, timeout=30
+                    )
 
-                    for obj in code_objects:
-                        # Write CSV row with proper escaping
-                        writer.writerow(
-                            [
-                                obj.to_string(one_line=True),
-                                obj.to_hash(),
-                                obj.language,
-                                str(obj.path),
-                            ]
+                    if file_result["success"]:
+                        # Write code objects to CSV
+                        for obj_data in file_result["code_objects"]:
+                            writer.writerow(
+                                [
+                                    obj_data["tokens"],
+                                    obj_data["hash"],
+                                    obj_data["language"],
+                                    obj_data["filepath"],
+                                ]
+                            )
+                            total_code_objects += 1
+                        processed_count += 1
+                    else:
+                        logging.warning(
+                            f"Chunk {chunk_id}: Failed to process {file_path.name}: {file_result['error']}"
                         )
-                        total_code_objects += 1
-
-                    processed_count += 1
 
                 except Exception as e:
                     logging.warning(
-                        f"Failed to process {file_path} in chunk {chunk_id}: {e}"
+                        f"Chunk {chunk_id}: Unexpected error processing {file_path.name}: {e}"
                     )
                     continue
+
+                # Periodic cleanup to prevent memory buildup
+                if processed_count % 50 == 0:
+                    gc.collect()
 
         return {
             "chunk_id": chunk_id,
@@ -98,64 +167,63 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
             "output_file": str(chunk_output),
             "processed_count": processed_count,
             "code_objects_count": total_code_objects,
+            "total_files": len(file_paths),
         }
 
     except Exception as e:
         return {
-            "chunk_id": chunk_id,
+            "chunk_id": chunk_data.get("chunk_id", "unknown"),
             "success": False,
-            "error": str(e),
-            "processed_count": processed_count,
+            "error": f"Chunk processing failed: {str(e)}",
+            "processed_count": 0,
+            "code_objects_count": 0,
+            "total_files": len(chunk_data.get("files", [])),
         }
 
 
-def split_files_into_chunks(files: List[Path], num_chunks: int) -> List[List[Path]]:
-    """Split files into approximately equal chunks for parallel processing."""
+def split_files_into_chunks(files: List[Path], chunk_size: int) -> List[List[str]]:
+    """
+    Split files into chunks for parallel processing.
+    Returns chunks as lists of string paths (serializable).
+    """
     if not files:
         return []
 
-    chunk_size = len(files) // num_chunks
-    remainder = len(files) % num_chunks
-
     chunks = []
-    start = 0
+    for i in range(0, len(files), chunk_size):
+        chunk = files[i : i + chunk_size]
+        # Convert to strings for serialization
+        chunk_strings = [str(f) for f in chunk]
+        chunks.append(chunk_strings)
 
-    for i in range(num_chunks):
-        # Add one extra file to the first 'remainder' chunks
-        current_chunk_size = chunk_size + (1 if i < remainder else 0)
-        end = start + current_chunk_size
-
-        if start < len(files):
-            chunks.append(files[start:end])
-
-        start = end
-
-    # Remove empty chunks
-    chunks = [chunk for chunk in chunks if chunk]
     return chunks
 
 
 def combine_csv_chunks(chunk_files: List[str], output_path: Path) -> int:
-    """
-    Combine multiple CSV chunk files into a single output file.
-
-    Returns:
-        Total number of rows processed
-    """
+    """Combine multiple CSV chunk files into a single output file."""
     total_rows = 0
 
-    with open(output_path, "w", encoding="utf-8") as output_file:
+    with open(output_path, "w", encoding="utf-8", newline="") as output_file:
+        writer = csv.writer(output_file)
         # Write header
-        output_file.write("tokens,hash,language,filepath\n")
+        writer.writerow(["tokens", "hash", "language", "filepath"])
 
         for chunk_file in chunk_files:
-            if Path(chunk_file).exists():
-                with open(chunk_file, "r", encoding="utf-8") as f:
-                    # Skip header line
-                    next(f, None)
-                    for line in f:
-                        output_file.write(line)
+            chunk_path = Path(chunk_file)
+            if not chunk_path.exists():
+                logging.warning(f"Chunk file missing: {chunk_file}")
+                continue
+
+            try:
+                with open(chunk_path, "r", encoding="utf-8") as f:
+                    reader = csv.reader(f)
+                    next(reader)  # Skip header
+                    for row in reader:
+                        writer.writerow(row)
                         total_rows += 1
+            except Exception as e:
+                logging.warning(f"Failed to read chunk file {chunk_file}: {e}")
+                continue
 
     return total_rows
 
@@ -163,101 +231,39 @@ def combine_csv_chunks(chunk_files: List[str], output_path: Path) -> int:
 def preprocess_data(
     input_path: Path,
     output_path: Path,
-    extensions: List[str] = None,
+    extensions: List[str] = [".py"],
     num_processes: int = None,
     chunk_size: int = 100,
     use_parallel: bool = True,
     timeout_minutes: int = 120,
 ) -> None:
     """
-    Preprocess source files to generate malwicode tokens.
-
-    Args:
-        input_path: Directory containing source files
-        output_path: Path to save CSV output
-        extensions: List of file extensions to process
-        num_processes: Number of parallel processes
-        chunk_size: Approximate files per chunk
-        use_parallel: Whether to use parallel processing
-        timeout_minutes: Maximum time to wait for processing (default: 120 minutes for large datasets)
+    Preprocess source files for malwi training pipeline with proper resource management.
     """
-    if extensions is None:
-        extensions = [".py"]
-
     # Collect files
-    print(f"🔍 Collecting files from {input_path}...")
-    accepted_files, skipped_files = collect_files_by_extension(
-        input_path=input_path, accepted_extensions=extensions, silent=False
-    )
+    info(f"🔍 Collecting files from {input_path}...")
+    files = []
+    for ext in extensions:
+        files.extend(input_path.rglob(f"*{ext}"))
 
-    if not accepted_files:
-        print(f"No files with extensions {extensions} found in {input_path}")
+    if not files:
+        info("No files found to process")
         return
 
-    print(f"Found {len(accepted_files)} files to process")
+    info(f"Found {len(files)} files to process")
 
-    # Decide whether to use parallel processing
-    if not use_parallel or len(accepted_files) <= 10:
-        print("Using sequential processing...")
-        _process_sequential(accepted_files, output_path)
-    else:
-        print("Using parallel processing...")
-        _process_parallel(
-            accepted_files, output_path, num_processes, chunk_size, timeout_minutes
-        )
+    # Check if we should use parallel processing
+    if not use_parallel or len(files) <= 10:
+        info("Using sequential processing...")
+        _process_sequential(files, output_path)
+        return
 
-
-def _process_sequential(files: List[Path], output_path: Path) -> None:
-    """Process files sequentially."""
-    from research.csv_writer import CSVWriter
-
-    # Create compilers
-    compilers = {}
-    if any(f.suffix == ".py" for f in files):
-        compilers["python"] = ASTCompiler("python")
-    if any(f.suffix == ".js" for f in files):
-        compilers["javascript"] = ASTCompiler("javascript")
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    csv_writer = CSVWriter(output_path)
-
-    try:
-        for file_path in tqdm(files, desc="Processing files", unit="file"):
-            if file_path.suffix == ".py":
-                compiler = compilers.get("python")
-            elif file_path.suffix == ".js":
-                compiler = compilers.get("javascript")
-            else:
-                continue
-
-            if compiler:
-                code_objects = compiler.process_file(file_path)
-                csv_writer.write_code_objects(code_objects)
-
-        csv_writer.close()
-        print(f"✅ Output saved to: {output_path.resolve()}")
-
-    except Exception as e:
-        csv_writer.close()
-        raise e
-
-
-def _process_parallel(
-    files: List[Path],
-    output_path: Path,
-    num_processes: int = None,
-    chunk_size: int = 100,
-    timeout_minutes: int = 120,
-) -> None:
-    """Process files in parallel."""
+    # Use smaller worker count to reduce resource pressure
     if num_processes is None:
-        num_processes = mp.cpu_count()
+        num_processes = min(mp.cpu_count(), 4)  # Cap at 4 workers
 
-    # Calculate chunks
-    num_chunks = max(1, len(files) // chunk_size)
-    num_chunks = min(num_chunks, num_processes * 2)  # Don't create too many chunks
-
-    print(f"Using {num_processes} processes with {num_chunks} chunks")
+    info(f"Using parallel processing...")
+    info(f"Using {num_processes} processes with {chunk_size} chunk size")
 
     # Group files by language
     files_by_language = {}
@@ -273,222 +279,181 @@ def _process_parallel(
             files_by_language[lang] = []
         files_by_language[lang].append(file_path)
 
-    # Create temporary directory for chunk outputs
+    # Create small chunks for better fault tolerance
+    all_chunk_tasks = []
+    chunk_id = 0
+
+    for language, lang_files in files_by_language.items():
+        file_chunks = split_files_into_chunks(lang_files, chunk_size)
+
+        for chunk_files in file_chunks:
+            if chunk_files:
+                all_chunk_tasks.append(
+                    {
+                        "files": chunk_files,  # Already converted to strings
+                        "language": language,
+                        "chunk_id": chunk_id,
+                    }
+                )
+                chunk_id += 1
+
+    if not all_chunk_tasks:
+        print("No valid chunks to process")
+        return
+
+    info(f"Created {len(all_chunk_tasks)} processing tasks")
+    total_input_files = sum(len(task["files"]) for task in all_chunk_tasks)
+    info(f"Total files to process: {total_input_files}")
+
+    # Process chunks with robust error handling
     with tempfile.TemporaryDirectory() as temp_dir:
-        chunk_tasks = []
-        chunk_id = 0
+        # Add temp_dir to each task
+        for task in all_chunk_tasks:
+            task["temp_dir"] = temp_dir
 
-        # Create chunk tasks for each language
-        for language, lang_files in files_by_language.items():
-            file_chunks = split_files_into_chunks(lang_files, num_chunks)
-
-            for chunk_files in file_chunks:
-                if chunk_files:
-                    chunk_tasks.append(
-                        {
-                            "files": chunk_files,
-                            "language": language,
-                            "chunk_id": chunk_id,
-                            "temp_dir": temp_dir,
-                        }
-                    )
-                    chunk_id += 1
-
-        if not chunk_tasks:
-            print("No valid files to process")
-            return
-
-        print(f"Created {len(chunk_tasks)} processing tasks")
-        total_input_files = sum(len(task["files"]) for task in chunk_tasks)
-        print(f"Total files to process: {total_input_files}")
-
-        # Process chunks in parallel
-        chunk_results = []
+        successful_results = []
+        failed_results = []
 
         with ProcessPoolExecutor(max_workers=num_processes) as executor:
             # Submit all tasks
             future_to_chunk = {
                 executor.submit(process_file_chunk, task): task["chunk_id"]
-                for task in chunk_tasks
+                for task in all_chunk_tasks
             }
 
-            # Collect results with robust timeout handling for large datasets
-            total_timeout_seconds = timeout_minutes * 60  # Convert minutes to seconds
+            progress("Processing chunks...")
 
-            completed_futures = set()
+            # Collect results with timeout
+            timeout_seconds = timeout_minutes * 60
 
-            with tqdm(
-                total=len(chunk_tasks), desc="Processing chunks", unit="chunk"
+            with tqdm.tqdm(
+                total=len(all_chunk_tasks), desc="Processing chunks"
             ) as pbar:
                 try:
-                    # Use as_completed with overall timeout but handle individual timeouts
                     for future in as_completed(
-                        future_to_chunk, timeout=total_timeout_seconds
+                        future_to_chunk, timeout=timeout_seconds
                     ):
                         chunk_id = future_to_chunk[future]
-                        completed_futures.add(future)
 
                         try:
-                            result = future.result(
-                                timeout=180
-                            )  # 3 minute timeout for result retrieval (processing can take time)
-                            chunk_results.append(result)
+                            result = future.result(timeout=60)  # 1 minute to get result
 
                             if result["success"]:
+                                successful_results.append(result)
                                 pbar.set_postfix(
                                     processed=result["processed_count"],
-                                    chunk=result["chunk_id"],
+                                    chunk=chunk_id,
                                     status="OK",
                                 )
                             else:
-                                pbar.set_postfix(
-                                    chunk=result["chunk_id"], status="FAILED"
-                                )
+                                failed_results.append(result)
+                                pbar.set_postfix(chunk=chunk_id, status="FAILED")
+
                         except TimeoutError:
-                            # Handle timeout
-                            error_result = {
-                                "chunk_id": chunk_id,
-                                "success": False,
-                                "error": "Process timeout (result retrieval)",
-                                "processed_count": 0,
-                            }
-                            chunk_results.append(error_result)
+                            failed_results.append(
+                                {
+                                    "chunk_id": chunk_id,
+                                    "success": False,
+                                    "error": "Result retrieval timeout",
+                                    "processed_count": 0,
+                                }
+                            )
                             pbar.set_postfix(chunk=chunk_id, status="TIMEOUT")
-                            try:
-                                future.cancel()
-                            except Exception:
-                                pass  # Future might already be done
+
                         except Exception as e:
-                            # Handle crashed processes
-                            error_result = {
-                                "chunk_id": chunk_id,
-                                "success": False,
-                                "error": f"Process crashed: {str(e)}",
-                                "processed_count": 0,
-                            }
-                            chunk_results.append(error_result)
-                            pbar.set_postfix(chunk=chunk_id, status="CRASHED")
+                            failed_results.append(
+                                {
+                                    "chunk_id": chunk_id,
+                                    "success": False,
+                                    "error": f"Future exception: {str(e)}",
+                                    "processed_count": 0,
+                                }
+                            )
+                            pbar.set_postfix(chunk=chunk_id, status="ERROR")
 
                         pbar.update(1)
 
                 except TimeoutError:
-                    # Overall timeout reached - handle unfinished futures
-                    print(
-                        f"\n⚠️  Overall timeout reached after {total_timeout_seconds} seconds"
-                    )
+                    warning(f"Overall timeout reached after {timeout_minutes} minutes")
 
-                # Handle any remaining unfinished futures
-                unfinished_futures = set(future_to_chunk.keys()) - completed_futures
-                if unfinished_futures:
-                    print(
-                        f"\n⚠️  Found {len(unfinished_futures)} unfinished futures - cleaning up..."
-                    )
+        # Report results
+        total_processed = sum(r["processed_count"] for r in successful_results)
+        total_code_objects = sum(
+            r.get("code_objects_count", 0) for r in successful_results
+        )
 
-                    for future in unfinished_futures:
-                        chunk_id = future_to_chunk[future]
+        info(f"\n📊 Processing Summary:")
+        info(f"   Successful chunks: {len(successful_results)}")
+        info(f"   Failed chunks: {len(failed_results)}")
+        info(f"   Files processed: {total_processed}")
+        info(f"   Code objects: {total_code_objects}")
 
-                        # Try to cancel the future
-                        cancelled = future.cancel()
-
-                        if not cancelled:
-                            # Future is running or done - try to get result with short timeout
-                            try:
-                                result = future.result(timeout=5)
-                                chunk_results.append(result)
-                                print(
-                                    f"  ✅ Chunk {chunk_id}: Retrieved result from unfinished future"
-                                )
-                            except TimeoutError:
-                                # Give up on this chunk
-                                error_result = {
-                                    "chunk_id": chunk_id,
-                                    "success": False,
-                                    "error": "Overall timeout - chunk abandoned",
-                                    "processed_count": 0,
-                                }
-                                chunk_results.append(error_result)
-                                print(
-                                    f"  ❌ Chunk {chunk_id}: Abandoned due to timeout"
-                                )
-                            except Exception as e:
-                                error_result = {
-                                    "chunk_id": chunk_id,
-                                    "success": False,
-                                    "error": f"Failed to retrieve from unfinished future: {str(e)}",
-                                    "processed_count": 0,
-                                }
-                                chunk_results.append(error_result)
-                                print(
-                                    f"  ❌ Chunk {chunk_id}: Failed to retrieve result - {str(e)}"
-                                )
-                        else:
-                            # Successfully cancelled
-                            error_result = {
-                                "chunk_id": chunk_id,
-                                "success": False,
-                                "error": "Cancelled due to overall timeout",
-                                "processed_count": 0,
-                            }
-                            chunk_results.append(error_result)
-                            print(f"  🚫 Chunk {chunk_id}: Cancelled")
-
-                    pbar.update(len(unfinished_futures))
-
-        # Combine results
-        print("📋 Combining chunk results...")
-        successful_chunks = [r for r in chunk_results if r["success"]]
-        failed_chunks = [r for r in chunk_results if not r["success"]]
-
-        if failed_chunks:
-            print(f"⚠️  {len(failed_chunks)} chunks failed")
-            # Calculate lost files by finding the corresponding chunk task
-            failed_files_count = 0
-            for failed in failed_chunks:
-                chunk_id = failed["chunk_id"]
-                # Find the task with matching chunk_id
-                matching_task = next(
-                    (task for task in chunk_tasks if task["chunk_id"] == chunk_id), None
-                )
-                if matching_task:
-                    failed_files_count += len(matching_task["files"])
-
-            print(f"📊 Lost data: ~{failed_files_count} files from failed chunks")
-            for failed in failed_chunks:
-                logging.warning(
-                    f"Chunk {failed['chunk_id']}: {failed.get('error', 'Unknown error')}"
+        if failed_results:
+            warning(f"Failed chunks details:")
+            for failed in failed_results[:5]:  # Show first 5 failures
+                info(
+                    f"   Chunk {failed['chunk_id']}: {failed.get('error', 'Unknown error')}"
                 )
 
-        if successful_chunks:
-            chunk_files = [r["output_file"] for r in successful_chunks]
+        # Combine successful results
+        if successful_results:
+            chunk_files = [r["output_file"] for r in successful_results]
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Debug: Check chunk file sizes before combining
-            print("📋 Chunk file analysis:")
-            for i, chunk_file in enumerate(chunk_files):
-                if Path(chunk_file).exists():
-                    with open(chunk_file, "r") as f:
-                        lines = sum(1 for line in f) - 1  # Subtract header
-                    print(f"  Chunk {i}: {lines} rows")
-                else:
-                    print(f"  Chunk {i}: FILE MISSING")
-
             total_rows = combine_csv_chunks(chunk_files, output_path)
-            total_processed = sum(r["processed_count"] for r in successful_chunks)
-            total_code_objects = sum(
-                r.get("code_objects_count", 0) for r in successful_chunks
-            )
-
-            print(f"✅ Successfully processed {total_processed} files")
-            print(f"📊 Generated {total_code_objects} code objects")
-            print(f"📊 CSV rows written: {total_rows}")
-            print(f"💾 Output saved to: {output_path.resolve()}")
+            success(f"Output saved to: {output_path.resolve()}")
+            info(f"📊 Generated {total_code_objects} code objects")
+            info(f"📊 CSV rows written: {total_rows}")
 
             if total_code_objects != total_rows:
-                print(
-                    f"⚠️  WARNING: Code objects ({total_code_objects}) != CSV rows ({total_rows})"
+                warning(
+                    f"Code objects ({total_code_objects}) != CSV rows ({total_rows})"
                 )
         else:
-            raise RuntimeError("All chunks failed - no output generated")
+            error("No successful chunks - no output generated")
+
+
+def _process_sequential(files: List[Path], output_path: Path) -> None:
+    """Process files sequentially."""
+    from research.csv_writer import CSVWriter
+
+    # Create compilers
+    compilers = {}
+    if any(f.suffix == ".py" for f in files):
+        from common.bytecode import ASTCompiler
+
+        compilers["python"] = ASTCompiler("python")
+    if any(f.suffix == ".js" for f in files):
+        from common.bytecode import ASTCompiler
+
+        compilers["javascript"] = ASTCompiler("javascript")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    csv_writer = CSVWriter(output_path)
+
+    try:
+        for file_path in tqdm.tqdm(files, desc="Processing files", unit="file"):
+            if file_path.suffix == ".py":
+                compiler = compilers.get("python")
+            elif file_path.suffix == ".js":
+                compiler = compilers.get("javascript")
+            else:
+                continue
+
+            if compiler:
+                try:
+                    code_objects = compiler.process_file(file_path)
+                    csv_writer.write_code_objects(code_objects)
+                except Exception as e:
+                    logging.warning(f"Failed to process {file_path}: {e}")
+                    continue
+
+        csv_writer.close()
+        success(f"Output saved to: {output_path.resolve()}")
+
+    except Exception as e:
+        csv_writer.close()
+        raise e
 
 
 def main():
@@ -497,14 +462,11 @@ def main():
         description="Preprocess source files for malwi training pipeline"
     )
     parser.add_argument(
-        "input_path", type=Path, help="Directory containing source files to process"
+        "input_path", type=Path, help="Directory containing source files"
     )
     parser.add_argument("output_path", type=Path, help="Path to save CSV output file")
     parser.add_argument(
-        "--extensions",
-        nargs="+",
-        default=[".py"],
-        help="File extensions to process (default: .py)",
+        "--extensions", nargs="+", default=[".py"], help="File extensions to process"
     )
     parser.add_argument(
         "--num-processes",
@@ -527,14 +489,24 @@ def main():
     # Set up logging
     logging.basicConfig(level=logging.WARNING)
 
-    preprocess_data(
-        input_path=args.input_path,
-        output_path=args.output_path,
-        extensions=args.extensions,
-        num_processes=args.num_processes,
-        chunk_size=args.chunk_size,
-        use_parallel=not args.no_parallel,
-    )
+    # Configure messaging
+    configure_messaging(quiet=False)
+
+    try:
+        preprocess_data(
+            input_path=args.input_path,
+            output_path=args.output_path,
+            extensions=args.extensions,
+            num_processes=args.num_processes,
+            chunk_size=args.chunk_size,
+            use_parallel=not args.no_parallel,
+        )
+
+    except KeyboardInterrupt:
+        warning("Processing interrupted by user")
+    except Exception as e:
+        error(f"Fatal error: {e}")
+        raise
 
 
 if __name__ == "__main__":
