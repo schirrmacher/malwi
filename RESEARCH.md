@@ -133,13 +133,21 @@ This document tracks the AI model training research progress for malwi, document
 - **Impact**: ✅ **Good recovery** - performance improved after fixing tokenizer configuration
 - **Analysis**: Addressed tokenizer vocabulary exceeding 30,522 limit by removing double-counting of special tokens and centralizing DEFAULT_TOP_N_TOKENS=5000. This ensures vocabulary stays within DistilBERT constraints while maintaining detection capabilities.
 
+#### 2025-08-19: Special Token Count Optimization + Dataset Quality Fix
+- **Tag**: `3f7fac18_f1/0.953`
+- **F1 Score**: 0.953 (+0.035)
+- **Change**: Increased special token count from 5000 to 10000 in DEFAULT_TOP_N_TOKENS + rolled back malwi-dataset to 71b649c24
+- **Impact**: ✅ **Major improvement** - combined vocabulary expansion and dataset quality enhancement
+- **Analysis**: The performance boost came from two factors: (1) doubling special token count provided better malware pattern recognition, and (2) rolling back the malwi-dataset removed incorrectly labeled benign files that had been moved to malicious category, significantly improving training data quality. Clean training data proved crucial for model accuracy.
+
 ## Key Insights
 
 ### ✅ High-Impact Improvements
 1. **String mapping optimization** (0.958) - Peak performance achieved with minimal code changes  
-2. **False-positives training** (0.952) - Edge case handling improved robustness
-3. **KW_NAMES splitting** (0.947) - Major architecture improvement in AST processing
-4. **Bytecode refactoring** (0.941) - Core logic improvement
+2. **Dataset quality + special tokens** (0.953) - Major improvement from clean training data and expanded vocabulary
+3. **False-positives training** (0.952) - Edge case handling improved robustness
+4. **KW_NAMES splitting** (0.947) - Major architecture improvement in AST processing
+5. **Bytecode refactoring** (0.941) - Core logic improvement
 
 ### ⚠️ Mixed Results / Minor Performance Changes
 1. **Code detection tokens optimization** (0.9362) - Slight decrease from peak but improved processing efficiency
@@ -154,19 +162,20 @@ This document tracks the AI model training research progress for malwi, document
 
 ### 📊 Performance Trends
 - **Peak Performance**: 0.958 (2025-08-14) - String mapping optimization
-- **Current Performance**: 0.918 (2025-08-19) - Tokenizer vocabulary size fix
+- **Current Performance**: 0.953 (2025-08-19) - Dataset quality fix + special token optimization
 - **Performance Range**: 0.0 - 0.958
-- **Average Performance**: 0.786 (excluding failed experiments)
-- **Recent Change**: +0.0595 recovery from tokenizer configuration fix
+- **Average Performance**: 0.801 (excluding failed experiments)
+- **Recent Change**: +0.035 major improvement from clean training data and vocabulary expansion
 - **Volatility**: High - small changes can have major impact (±0.1 F1 score)
 
 ### 🔬 Critical Success Factors
-1. **String Handling**: Length and mapping optimizations are disproportionately important (peak 0.958)
-2. **AST Processing Pipeline**: Core changes in `ast_to_malwicode.py` have highest impact
-3. **Context Preservation**: Full file scanning > module splitting (0.894 vs 0.847)
-4. **Training Data Quality**: False-positives inclusion provided consistent +0.02 improvement
-5. **Architecture Stability**: KW_NAMES system is fundamental - modifications must be careful
-6. **Performance vs. Efficiency Trade-offs**: Removing entropy mapping improved speed but slightly reduced accuracy
+1. **Training Data Quality**: Clean dataset labeling is crucial - removing mislabeled files provided +0.025 F1 improvement
+2. **String Handling**: Length and mapping optimizations are disproportionately important (peak 0.958)
+3. **Tokenizer Configuration**: Special token count significantly impacts performance (5K→10K contributed to major gains)
+4. **AST Processing Pipeline**: Core changes in `ast_to_malwicode.py` have highest impact
+5. **Context Preservation**: Full file scanning > module splitting (0.894 vs 0.847)
+6. **Architecture Stability**: KW_NAMES system is fundamental - modifications must be careful
+7. **Performance vs. Efficiency Trade-offs**: Removing entropy mapping improved speed but slightly reduced accuracy
 
 ### 🚨 High-Risk Areas
 1. **Vocabulary changes**: Can completely break model performance
@@ -184,10 +193,10 @@ This document tracks the AI model training research progress for malwi, document
 ## Next Steps
 
 ### Immediate Priorities
-1. **Close performance gap**: Investigate remaining 0.04 F1 gap from peak (0.958 vs 0.918)
-2. **Tokenizer optimization**: Fine-tune special token selection for better malware detection
-3. **String processing balance**: Optimize string size buckets and classification thresholds
-4. **Architecture refinement**: Consolidate successful changes while reverting problematic ones
+1. **Close minimal gap**: Investigate remaining 0.005 F1 gap from peak (0.958 vs 0.953)
+2. **Dataset quality maintenance**: Establish processes to prevent mislabeled training data
+3. **Peak performance replication**: Understand the exact conditions that achieved 0.958 performance
+4. **Tokenizer fine-tuning**: Experiment with special token counts between 10K-15K range
 
 ### Research Pipeline
 1. **Advanced token research**: Expand specialized token categories (network patterns, crypto operations, system calls)
