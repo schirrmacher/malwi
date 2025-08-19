@@ -29,11 +29,11 @@ from common.messaging import (
 )
 
 
-def _process_single_file_with_timeout(
-    file_path: Path, language: str, timeout: int = 30
+def _process_single_file_with_compiler(
+    file_path: Path, compiler, timeout: int = 30
 ) -> Dict:
     """
-    Process a single file with timeout protection.
+    Process a single file with an existing compiler and timeout protection.
     Returns serializable result dictionary.
     """
     result = {
@@ -52,13 +52,12 @@ def _process_single_file_with_timeout(
         signal.alarm(timeout)
 
     try:
-        # Import inside worker to avoid serialization issues
-        from common.bytecode import ASTCompiler
+        # Safety check: ensure we're processing a file, not a directory
+        if not file_path.is_file():
+            result["error"] = f"Path is not a file: {file_path}"
+            return result
 
-        # Create fresh compiler instance in this process
-        compiler = ASTCompiler(language)
-
-        # Process the file
+        # Process the file with existing compiler
         code_objects = compiler.process_file(file_path)
 
         # Convert to serializable format immediately
@@ -78,11 +77,6 @@ def _process_single_file_with_timeout(
 
         result["success"] = True
         result["code_objects"] = serializable_objects
-
-        # Explicit cleanup
-        del compiler
-        del code_objects
-        gc.collect()
 
     except TimeoutError as e:
         result["error"] = str(e)
@@ -116,6 +110,22 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
         chunk_id = chunk_data["chunk_id"]
         temp_dir = Path(chunk_data["temp_dir"])
 
+        # Create ONE compiler instance per chunk (not per file!)
+        # Import inside worker to avoid serialization issues
+        from common.bytecode import ASTCompiler
+
+        try:
+            compiler = ASTCompiler(language)
+        except ValueError as e:
+            return {
+                "chunk_id": chunk_id,
+                "success": False,
+                "error": f"Compiler initialization failed: {str(e)}",
+                "processed_count": 0,
+                "code_objects_count": 0,
+                "total_files": len(file_paths),
+            }
+
         # Create output file
         chunk_output = temp_dir / f"chunk_{chunk_id}.csv"
         processed_count = 0
@@ -126,11 +136,11 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
             writer = csv.writer(f)
             writer.writerow(["tokens", "hash", "language", "filepath"])
 
-            # Process each file with individual timeout protection
+            # Process each file with shared compiler and individual timeout protection
             for file_path in file_paths:
                 try:
-                    file_result = _process_single_file_with_timeout(
-                        file_path, language, timeout=30
+                    file_result = _process_single_file_with_compiler(
+                        file_path, compiler, timeout=30
                     )
 
                     if file_result["success"]:
@@ -160,6 +170,10 @@ def process_file_chunk(chunk_data: Dict) -> Dict:
                 # Periodic cleanup to prevent memory buildup
                 if processed_count % 50 == 0:
                     gc.collect()
+
+        # Explicit cleanup
+        del compiler
+        gc.collect()
 
         return {
             "chunk_id": chunk_id,
@@ -244,7 +258,9 @@ def preprocess_data(
     info(f"🔍 Collecting files from {input_path}...")
     files = []
     for ext in extensions:
-        files.extend(input_path.rglob(f"*{ext}"))
+        # Filter to only include actual files, not directories
+        pattern_matches = input_path.rglob(f"*{ext}")
+        files.extend([p for p in pattern_matches if p.is_file()])
 
     if not files:
         info("No files found to process")
@@ -258,9 +274,9 @@ def preprocess_data(
         _process_sequential(files, output_path)
         return
 
-    # Use smaller worker count to reduce resource pressure
+    # Use all available CPUs by default
     if num_processes is None:
-        num_processes = min(mp.cpu_count(), 4)  # Cap at 4 workers
+        num_processes = mp.cpu_count()
 
     info(f"Using parallel processing...")
     info(f"Using {num_processes} processes with {chunk_size} chunk size")
@@ -433,6 +449,11 @@ def _process_sequential(files: List[Path], output_path: Path) -> None:
 
     try:
         for file_path in tqdm.tqdm(files, desc="Processing files", unit="file"):
+            # Safety check: ensure we're processing a file, not a directory
+            if not file_path.is_file():
+                logging.warning(f"Skipping non-file path: {file_path}")
+                continue
+
             if file_path.suffix == ".py":
                 compiler = compilers.get("python")
             elif file_path.suffix == ".js":
