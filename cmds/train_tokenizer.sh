@@ -19,6 +19,8 @@ echo "✅ Processed data files found"
 echo
 
 # Set configurable parameters
+# Import the default from Python to keep it consistent
+# Default is 5000 as defined in src/research/train_tokenizer.py
 TOTAL_TOKENS=${TOTAL_TOKENS:-5000}
 
 # Train custom tokenizer

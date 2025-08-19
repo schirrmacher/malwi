@@ -22,6 +22,7 @@ from common.mapping import SpecialCases
 DEFAULT_TOKENIZER_OUTPUT_PATH = Path("malwi_models")
 DEFAULT_MAX_LENGTH = 512
 DEFAULT_VOCAB_SIZE = 30522
+DEFAULT_TOP_N_TOKENS = 5000
 DEFAULT_FUNCTION_MAPPING_PATH = Path("src/common/syntax_mapping/function_mapping.json")
 
 
@@ -119,7 +120,9 @@ def compute_tokens_from_texts(texts: list[str]) -> Set[str]:
 
 
 def create_special_tokens_from_data(
-    all_texts: list[str], top_n_tokens: int = 5000, base_tokens: Set[str] = None
+    all_texts: list[str],
+    top_n_tokens: int = DEFAULT_TOP_N_TOKENS,
+    base_tokens: Set[str] = None,
 ) -> Set[str]:
     """
     Create special tokens from the most frequent tokens in the input data.
@@ -128,7 +131,7 @@ def create_special_tokens_from_data(
 
     Args:
         all_texts: List of all training texts
-        top_n_tokens: Maximum number of tokens to include as special tokens (default: 5000)
+        top_n_tokens: Maximum number of tokens to include as special tokens
         base_tokens: Set of base tokens to always include (from function mapping)
 
     Returns:
@@ -452,8 +455,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--top-n-tokens",
         type=int,
-        default=5000,
-        help="Number of most frequent tokens to use as special tokens (default: 5000)",
+        default=DEFAULT_TOP_N_TOKENS,
+        help=f"Number of most frequent tokens to use as special tokens (default: {DEFAULT_TOP_N_TOKENS})",
     )
     parser.add_argument(
         "--save-computed-tokens",

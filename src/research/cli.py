@@ -21,6 +21,9 @@ from common.messaging import (
     progress,
 )
 
+# Import the default constant for function signatures
+from research.train_tokenizer import DEFAULT_TOP_N_TOKENS
+
 # We'll import these functions dynamically when needed to avoid import errors
 
 
@@ -44,7 +47,7 @@ def train_tokenizer_api(
     benign_csv: str,
     malicious_csv: str,
     output_path: str = "malwi_models",
-    top_n_tokens: int = 15000,
+    top_n_tokens: int = DEFAULT_TOP_N_TOKENS,
     force_retrain: bool = True,
 ) -> bool:
     """
@@ -530,14 +533,14 @@ Examples:
             # Step 2: Train tokenizer first
             progress("Step 1: Training custom tokenizer...")
             info("   • Training on: benign_processed.csv, malicious_processed.csv")
-            info("   • Total tokens: 15000 (default)")
+            info(f"   • Total tokens: {DEFAULT_TOP_N_TOKENS} (default)")
             info("   • Output directory: malwi_models/")
 
             if not train_tokenizer_api(
                 benign_csv="benign_processed.csv",
                 malicious_csv="malicious_processed.csv",
                 output_path="malwi_models",
-                top_n_tokens=15000,
+                top_n_tokens=DEFAULT_TOP_N_TOKENS,
                 force_retrain=True,
             ):
                 return False
@@ -590,7 +593,9 @@ Examples:
             # Final summary
             success("Complete model training pipeline finished successfully!")
             info("📁 All outputs are in malwi_models/:")
-            info("   • Tokenizer (trained on your data's top 15000 tokens)")
+            info(
+                f"   • Tokenizer (trained on your data's top {DEFAULT_TOP_N_TOKENS} tokens)"
+            )
             info(f"   • Trained DistilBERT model ({hidden_size} hidden dimensions)")
             info("   • Training metrics and logs")
             info("💡 Tip: For different configurations, set environment variables:")
