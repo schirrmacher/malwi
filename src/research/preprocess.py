@@ -217,6 +217,9 @@ def combine_csv_chunks(chunk_files: List[str], output_path: Path) -> int:
     """Combine multiple CSV chunk files into a single output file."""
     total_rows = 0
 
+    # Increase CSV field size limit to handle very large token strings
+    csv.field_size_limit(10 * 1024 * 1024)  # 10MB limit instead of default 131KB
+
     with open(output_path, "w", encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file)
         # Write header
