@@ -119,6 +119,13 @@ This document tracks the AI model training research progress for malwi, document
 - **Impact**: ⚠️ **Slight performance decrease** - minor reduction from peak performance
 - **Analysis**: While new code detection tokens and removal of entropy-based mapping improved processing efficiency, it resulted in a small accuracy trade-off. The approach may have removed some useful signal in the mapping process.
 
+#### 2025-08-19: Configuration Centralization and String Size Buckets
+- **Tag**: `a000a816_f1/0.8585`
+- **F1 Score**: 0.8585 (-0.0777)
+- **Change**: Fixed CodeObject embedding bug, centralized configuration constants, implemented string size buckets (S/M/L), added conservative string classification limits
+- **Impact**: ❌ **Significant performance decrease** - accuracy drop from architectural changes
+- **Analysis**: Performance decrease likely stems from replacing STRING_LARGE_PAYLOAD with granular size buckets and implementing conservative string classification logic with 50KB regex limits. The more restrictive approach to large string processing may have reduced detection signal quality.
+
 ## Key Insights
 
 ### ✅ High-Impact Improvements
@@ -139,10 +146,10 @@ This document tracks the AI model training research progress for malwi, document
 
 ### 📊 Performance Trends
 - **Peak Performance**: 0.958 (2025-08-14) - String mapping optimization
-- **Current Performance**: 0.9362 (2025-08-19) - Code detection tokens
+- **Current Performance**: 0.8585 (2025-08-19) - Configuration centralization and string size buckets
 - **Performance Range**: 0.0 - 0.958
-- **Average Performance**: 0.789 (excluding failed experiments)
-- **Recent Change**: -0.0218 from entropy removal trade-off
+- **Average Performance**: 0.782 (excluding failed experiments)
+- **Recent Change**: -0.0777 from conservative string processing and architectural changes
 - **Volatility**: High - small changes can have major impact (±0.1 F1 score)
 
 ### 🔬 Critical Success Factors
@@ -169,10 +176,10 @@ This document tracks the AI model training research progress for malwi, document
 ## Next Steps
 
 ### Immediate Priorities
-1. **Return to peak performance**: Revert to commit `2b4abcab` (0.958) or investigate accuracy loss in `ae143225`
-2. **Entropy mapping analysis**: Understand what useful signal was lost when removing entropy-based mapping
-3. **Hybrid approach**: Combine processing efficiency gains with peak accuracy methods
-4. **Performance vs. accuracy balance**: Find optimal trade-off between speed and detection quality
+1. **Investigate accuracy loss**: Analyze why string size buckets and conservative classification reduced F1 from 0.9362 to 0.8585
+2. **String classification optimization**: Find optimal balance in string processing approach  
+3. **Feature impact analysis**: Determine if CodeObject fix, string buckets, or conservative regex limits caused the performance drop
+4. **Recovery strategy**: Restore detection accuracy while maintaining architectural improvements
 
 ### Research Pipeline
 1. **Advanced token research**: Expand specialized token categories (network patterns, crypto operations, system calls)
