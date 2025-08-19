@@ -112,13 +112,25 @@ This document tracks the AI model training research progress for malwi, document
 - **Change**: Disabled new string cases due to performance
 - **Impact**: Performance prioritization over feature completeness
 
+#### 2025-08-19: Code Detection Tokens and String Mapping Optimization
+- **Tag**: `ae143225_f1/0.9362`
+- **F1 Score**: 0.9362 (-0.0218)
+- **Change**: Applied new code detection tokens and removed old entropy-based string mapping
+- **Impact**: ⚠️ **Slight performance decrease** - minor reduction from peak performance
+- **Analysis**: While new code detection tokens and removal of entropy-based mapping improved processing efficiency, it resulted in a small accuracy trade-off. The approach may have removed some useful signal in the mapping process.
+
 ## Key Insights
 
 ### ✅ High-Impact Improvements
-1. **String mapping optimization** (0.958) - Peak performance achieved with minimal code changes
-2. **KW_NAMES splitting** (0.947) - Major architecture improvement in AST processing
-3. **False-positives training** (0.952) - Edge case handling improved robustness
+1. **String mapping optimization** (0.958) - Peak performance achieved with minimal code changes  
+2. **False-positives training** (0.952) - Edge case handling improved robustness
+3. **KW_NAMES splitting** (0.947) - Major architecture improvement in AST processing
 4. **Bytecode refactoring** (0.941) - Core logic improvement
+
+### ⚠️ Mixed Results / Minor Performance Changes
+1. **Code detection tokens optimization** (0.9362) - Slight decrease from peak but improved processing efficiency
+2. **Full file scanning** (0.894) - Partial recovery from module splitting issues
+3. **DistilBERT 256 reintroduction** (0.944) - Minor decrease, larger model not always better
 
 ### ❌ Failed Experiments
 1. **Vocabulary size increase** (0.0) - Complete model failure, suggests architecture limitations
@@ -126,18 +138,20 @@ This document tracks the AI model training research progress for malwi, document
 3. **Module code splitting** (0.847) - Lost contextual information critical for detection
 
 ### 📊 Performance Trends
-- **Peak Performance**: 0.958 (2025-08-14)
-- **Current Performance**: 0.842 (2025-08-17)
+- **Peak Performance**: 0.958 (2025-08-14) - String mapping optimization
+- **Current Performance**: 0.9362 (2025-08-19) - Code detection tokens
 - **Performance Range**: 0.0 - 0.958
-- **Average Performance**: 0.770 (excluding failed experiments)
+- **Average Performance**: 0.789 (excluding failed experiments)
+- **Recent Change**: -0.0218 from entropy removal trade-off
 - **Volatility**: High - small changes can have major impact (±0.1 F1 score)
 
 ### 🔬 Critical Success Factors
-1. **AST Processing Pipeline**: Core changes in `ast_to_malwicode.py` have highest impact
-2. **String Handling**: Length and mapping optimizations are disproportionately important  
+1. **String Handling**: Length and mapping optimizations are disproportionately important (peak 0.958)
+2. **AST Processing Pipeline**: Core changes in `ast_to_malwicode.py` have highest impact
 3. **Context Preservation**: Full file scanning > module splitting (0.894 vs 0.847)
 4. **Training Data Quality**: False-positives inclusion provided consistent +0.02 improvement
 5. **Architecture Stability**: KW_NAMES system is fundamental - modifications must be careful
+6. **Performance vs. Efficiency Trade-offs**: Removing entropy mapping improved speed but slightly reduced accuracy
 
 ### 🚨 High-Risk Areas
 1. **Vocabulary changes**: Can completely break model performance
@@ -155,15 +169,17 @@ This document tracks the AI model training research progress for malwi, document
 ## Next Steps
 
 ### Immediate Priorities
-1. **Return to peak performance**: Revert to commit `2b4abcab` (0.958) as baseline
-2. **String mapping deep dive**: Analyze exactly what made the length optimization so effective
-3. **Incremental testing**: Make one small change at a time from the 0.958 baseline
+1. **Return to peak performance**: Revert to commit `2b4abcab` (0.958) or investigate accuracy loss in `ae143225`
+2. **Entropy mapping analysis**: Understand what useful signal was lost when removing entropy-based mapping
+3. **Hybrid approach**: Combine processing efficiency gains with peak accuracy methods
+4. **Performance vs. accuracy balance**: Find optimal trade-off between speed and detection quality
 
 ### Research Pipeline
-1. **Combine proven techniques**: String mapping + false-positives + KW_NAMES split
-2. **Context preservation studies**: Find ways to maintain full-file context efficiently  
-3. **Training data quality**: Systematic false-positive identification and curation
-4. **Feature ablation**: Understand which components contribute most to performance
+1. **Advanced token research**: Expand specialized token categories (network patterns, crypto operations, system calls)
+2. **Preprocessing optimization**: Balance detection accuracy with processing speed for large-scale deployment
+3. **Training data enhancement**: Integrate large file detection signals into training pipeline
+4. **Feature ablation**: Determine contribution of each token category to overall performance
+5. **Context preservation**: Maintain full-file analysis while optimizing processing efficiency
 
 ### Risk Management
 - Always tag experiments before major changes
