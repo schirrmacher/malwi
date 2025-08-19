@@ -22,7 +22,7 @@ from common.mapping import SpecialCases
 DEFAULT_TOKENIZER_OUTPUT_PATH = Path("malwi_models")
 DEFAULT_MAX_LENGTH = 512
 DEFAULT_VOCAB_SIZE = 30522
-DEFAULT_TOP_N_TOKENS = 5000
+DEFAULT_TOP_N_TOKENS = 10000
 DEFAULT_FUNCTION_MAPPING_PATH = Path("src/common/syntax_mapping/function_mapping.json")
 
 
