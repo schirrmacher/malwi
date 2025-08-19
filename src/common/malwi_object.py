@@ -164,6 +164,11 @@ class MalwiObject:
             if file_size > 500 * 1024:  # Files larger than 500KB
                 tokens.append(SpecialCases.LARGE_FILE.value)
 
+            # Add pathological file warning for extremely large files (>1MB)
+            # These often contain obfuscated payloads that cause processing timeouts
+            if file_size > 1024 * 1024:  # Files larger than 1MB
+                tokens.append(SpecialCases.PATHOLOGICAL_FILE.value)
+
         # Add file targeting warning if applicable
         if self.file_path and Path(self.file_path).name in COMMON_TARGET_FILES.get(
             self.language, []

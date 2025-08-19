@@ -40,6 +40,7 @@ class SpecialCases(Enum):
     MALFORMED_FILE = "MALFORMED_FILE"  # Files with parsing/syntax errors
     MALFORMED_SYNTAX = "MALFORMED_SYNTAX"  # Files with syntax errors
     LARGE_FILE = "LARGE_FILE"  # Files exceeding size thresholds (>500KB)
+    PATHOLOGICAL_FILE = "PATHOLOGICAL_FILE"  # Extremely large files (>1MB) with likely obfuscated payloads
     TARGETED_FILE = "TARGETED_FILE"  # Files matching specific targeting criteria
 
     # Data type classifications
@@ -587,6 +588,11 @@ def _is_bash_code_cached(text: str) -> bool:
     if not text or len(text) < 2:
         return False
 
+    # Skip pathologically large strings that cause regex timeouts
+    # These are typically obfuscated payloads, not legitimate bash code
+    if len(text) > 50000:  # 50KB limit for regex processing
+        return False
+
     # Check for bash syntactical elements
     if not any(syntax in text for syntax in _BASH_SYNTACTICAL_ELEMENTS):
         return False
@@ -615,6 +621,11 @@ def _is_code_cached(text: str) -> bool:
     if not text or len(text) < 3:
         return False
 
+    # Skip pathologically large strings that cause regex timeouts
+    # These are typically obfuscated payloads, not legitimate code
+    if len(text) > 50000:  # 50KB limit for regex processing
+        return False
+
     # Check for code syntactical elements
     if not any(syntax in text for syntax in _CODE_SYNTACTICAL_ELEMENTS):
         return False
@@ -641,6 +652,11 @@ def _is_sql_cached(text: str) -> bool:
     Trades accuracy for speed - optimized for millions of files.
     """
     if not text or len(text) < 6:
+        return False
+
+    # Skip pathologically large strings that cause regex timeouts
+    # These are typically obfuscated payloads, not legitimate SQL
+    if len(text) > 50000:  # 50KB limit for regex processing
         return False
 
     # Check for SQL structural patterns
