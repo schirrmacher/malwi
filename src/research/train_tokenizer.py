@@ -119,7 +119,7 @@ def compute_tokens_from_texts(texts: list[str]) -> Set[str]:
 
 
 def create_special_tokens_from_data(
-    all_texts: list[str], top_n_tokens: int = 15000, base_tokens: Set[str] = None
+    all_texts: list[str], top_n_tokens: int = 5000, base_tokens: Set[str] = None
 ) -> Set[str]:
     """
     Create special tokens from the most frequent tokens in the input data.
@@ -128,7 +128,7 @@ def create_special_tokens_from_data(
 
     Args:
         all_texts: List of all training texts
-        top_n_tokens: Maximum number of tokens to include as special tokens
+        top_n_tokens: Maximum number of tokens to include as special tokens (default: 5000)
         base_tokens: Set of base tokens to always include (from function mapping)
 
     Returns:
@@ -304,12 +304,11 @@ def create_or_load_tokenizer(
             if token not in ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
         ]
 
-        if additional_special_tokens:
-            # This ensures these tokens are never split by the tokenizer
-            final_tokenizer.add_special_tokens(
-                {"additional_special_tokens": additional_special_tokens}
-            )
-            info(f"Added {len(additional_special_tokens)} additional special tokens")
+        # Note: Special tokens are already included in the BPE vocabulary during training
+        # Adding them again with add_special_tokens() would expand vocabulary beyond the limit
+        info(
+            f"Special tokens already included in BPE vocabulary: {len(additional_special_tokens)}"
+        )
 
         # Save the final tokenizer
         final_tokenizer.save_pretrained(str(tokenizer_output_path))
@@ -453,8 +452,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--top-n-tokens",
         type=int,
-        default=15000,
-        help="Number of most frequent tokens to use as special tokens (default: 15000)",
+        default=5000,
+        help="Number of most frequent tokens to use as special tokens (default: 5000)",
     )
     parser.add_argument(
         "--save-computed-tokens",

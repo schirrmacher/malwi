@@ -19,7 +19,7 @@ echo "✅ Processed data files found"
 echo
 
 # Set configurable parameters
-TOTAL_TOKENS=${TOTAL_TOKENS:-15000}
+TOTAL_TOKENS=${TOTAL_TOKENS:-5000}
 
 # Train custom tokenizer
 echo "🚀 Training custom tokenizer..."
