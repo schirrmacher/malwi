@@ -175,42 +175,6 @@ SQL_PATTERN = re.compile(
 )
 
 
-@lru_cache(maxsize=16384)
-def classify_string_type(text: str) -> str:
-    """
-    Fast single-pass string classification for scalable preprocessing.
-    Returns the most likely string type to avoid multiple detection calls.
-
-    Uses ultra-fast buzzword pre-filters before expensive regex patterns.
-    Optimized for millions of files - speed over perfect accuracy.
-    """
-    if not isinstance(text, str) or not text or len(text) < 3:
-        return SpecialCases.STRING.value
-
-    # Ultra-fast pre-filters - require BOTH keywords and syntactical elements
-    text_lower = text.lower()
-
-    # Check for bash syntax (most common in malicious files)
-    if any(syntax in text for syntax in _BASH_SYNTACTICAL_ELEMENTS):
-        # Only run expensive regex if bash syntax found
-        if BASH_PATTERN.search(text):
-            return SpecialCases.STRING_BASH.value
-
-    # Check for SQL structure
-    if any(pattern.lower() in text_lower for pattern in _SQL_SYNTACTICAL_PATTERNS):
-        # Only run expensive regex if SQL patterns found
-        if SQL_PATTERN.search(text):
-            return SpecialCases.STRING_SQL.value
-
-    # Check for code - just need syntactical elements
-    if any(syntax in text for syntax in _CODE_SYNTACTICAL_ELEMENTS):
-        # Only run expensive regex if both syntax and keywords found
-        if CODE_PATTERN.search(text):
-            return SpecialCases.STRING_CODE.value
-
-    return SpecialCases.STRING.value
-
-
 def is_valid_ip(content: str) -> bool:
     if not content or "%" in content:
         return False
