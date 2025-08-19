@@ -20,8 +20,12 @@ def get_model_config_for_version(version: str) -> Dict[str, str]:
             "repo": "schirrmacher/malwi",
             "revision": "21f808cda19f6a465bbdd568960f6b0291321cdf",  # Pinned: 2025-08-14
         },
+        "0.0.23": {
+            "repo": "schirrmacher/malwi",
+            "revision": "fcc6037664c00c9b1b1890b733b5898042e945c6",  # Pinned: 2025-08-19, F1=0.953
+        },
         # Future versions will be added here as they are released
-        # "0.0.22": {
+        # "0.0.24": {
         #     "repo": "schirrmacher/malwi",
         #     "revision": "COMMIT_HASH"  # Pin when releasing
         # },
