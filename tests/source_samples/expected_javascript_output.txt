@@ -2,7 +2,7 @@ RESUME 0
 LOAD_CONST 'test-export'
 STORE_NAME exportedConst
 EXPORT_NAMED exportedFunction
-LOAD_CONST CodeObject(name=exportedFunction, path=tests/source_samples/javascript.js, location=(61, 61))
+LOAD_CONST CodeObject(name='exportedFunction', byte_code=[Instruction(LOAD_CONST, 'exported'), Instruction(RETURN_VALUE, None)], source_code="function exportedFunction() { return 'exported'; }", path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(61, 61), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME exportedFunction
 LOAD_CONST True
@@ -449,7 +449,7 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 4. Functions and Scopes ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=greet, path=tests/source_samples/javascript.js, location=(252, 254))
+LOAD_CONST CodeObject(name='greet', byte_code=[Instruction(BINARY_OPERATION, None), Instruction(RETURN_VALUE, None)], source_code='function greet(name) {\n    return `Hello, ${name}!`;\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(252, 254), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME greet
 PUSH_NULL None
@@ -473,7 +473,7 @@ LOAD_NAME square
 LOAD_CONST 4.0
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=paramsTest, path=tests/source_samples/javascript.js, location=(268, 270))
+LOAD_CONST CodeObject(name='paramsTest', byte_code=[Instruction(LOAD_PARAM, a), Instruction(LOAD_GLOBAL, b), Instruction(LOAD_GLOBAL, rest), Instruction(BUILD_LIST, 3), Instruction(RETURN_VALUE, None)], source_code='function paramsTest(a, b = 10, ...rest) {\n    return [a, b, rest];\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(268, 270), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME paramsTest
 PUSH_NULL None
@@ -485,7 +485,7 @@ LOAD_CONST 4.0
 LOAD_CONST 5.0
 CALL 5
 POP_TOP None
-LOAD_CONST CodeObject(name=makeCounter, path=tests/source_samples/javascript.js, location=(274, 280))
+LOAD_CONST CodeObject(name='makeCounter', byte_code=[Instruction(LOAD_CONST, 0.0), Instruction(STORE_GLOBAL, count), Instruction(LOAD_GLOBAL, count), Instruction(LOAD_CONST, 1.0), Instruction(BINARY_ADD, None), Instruction(STORE_GLOBAL, count), Instruction(POP_TOP, None), Instruction(LOAD_GLOBAL, count), Instruction(RETURN_VALUE, None), Instruction(RETURN_VALUE, None)], source_code='function makeCounter() {\n    let count = 0;\n    return function() {\n        count++;\n        return count;\n    };\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(274, 280), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME makeCounter
 PUSH_NULL None
@@ -512,7 +512,7 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 5. Object-Oriented Programming ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=Car, path=tests/source_samples/javascript.js, location=(293, 296))
+LOAD_CONST CodeObject(name='Car', byte_code=[Instruction(LOAD_PARAM, make), Instruction(STORE_ATTR, make), Instruction(LOAD_PARAM, model), Instruction(STORE_ATTR, model), Instruction(RETURN_VALUE, None)], source_code='function Car(make, model) {\n    this.make = make;\n    this.model = model;\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(293, 296), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME Car
 BINARY_OPERATION None
@@ -538,14 +538,14 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Vehicle, path=tests/source_samples/javascript.js, location=(305, 312))
+LOAD_CONST CodeObject(name='Vehicle', byte_code=[Instruction(LOAD_NAME, name), Instruction(LOAD_NAME, name), Instruction(STORE_ATTR, name), Instruction(BINARY_OPERATION, None), Instruction(RETURN_VALUE, None)], source_code='class Vehicle {\n    constructor(name) {\n        this.name = name;\n    }\n    move() {\n        return `${this.name} is moving.`;\n    }\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(305, 312), language='javascript')
 MAKE_FUNCTION 0
 LOAD_CONST Vehicle
 CALL 2
 STORE_NAME Vehicle
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Motorcycle, path=tests/source_samples/javascript.js, location=(314, 323))
+LOAD_CONST CodeObject(name='Motorcycle', byte_code=[Instruction(LOAD_NAME, name), Instruction(LOAD_NAME, brand), Instruction(PUSH_NULL, None), Instruction(LOAD_NAME, name), Instruction(CALL, 1), Instruction(POP_TOP, None), Instruction(LOAD_NAME, brand), Instruction(STORE_ATTR, brand), Instruction(BINARY_OPERATION, None), Instruction(RETURN_VALUE, None)], source_code='class Motorcycle extends Vehicle {\n    constructor(name, brand) {\n        super(name); // Call parent constructor\n        this.brand = brand;\n    }\n    // Override method\n    move() {\n        return `${this.brand} ${this.name} is riding.`;\n    }\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(314, 323), language='javascript')
 MAKE_FUNCTION 0
 LOAD_CONST Motorcycle
 CALL 2
@@ -568,7 +568,7 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Rectangle, path=tests/source_samples/javascript.js, location=(329, 343))
+LOAD_CONST CodeObject(name='Rectangle', byte_code=[Instruction(LOAD_NAME, width), Instruction(LOAD_NAME, height), Instruction(LOAD_NAME, width), Instruction(STORE_ATTR, _width), Instruction(LOAD_NAME, height), Instruction(STORE_ATTR, _height), Instruction(LOAD_ATTR, _width), Instruction(LOAD_ATTR, _height), Instruction(BINARY_OP, 5), Instruction(RETURN_VALUE, None), Instruction(LOAD_NAME, value), Instruction(LOAD_NAME, value), Instruction(STORE_ATTR, _width), Instruction(LOAD_NAME, size), Instruction(LOAD_NAME, Rectangle), Instruction(LOAD_NAME, size), Instruction(LOAD_NAME, size), Instruction(CALL, 2), Instruction(RETURN_VALUE, None)], source_code='class Rectangle {\n    constructor(width, height) {\n        this._width = width;\n        this._height = height;\n    }\n    get area() {\n        return this._width * this._height;\n    }\n    set width(value) {\n        this._width = value;\n    }\n    static createSquare(size) {\n        return new Rectangle(size, size);\n    }\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(329, 343), language='javascript')
 MAKE_FUNCTION 0
 LOAD_CONST Rectangle
 CALL 2
@@ -602,10 +602,10 @@ LOAD_ATTR log
 LOAD_CONST "\n--- 6. Advanced Features (ES6+) ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=delay, path=tests/source_samples/javascript.js, location=(357, 359))
+LOAD_CONST CodeObject(name='delay', byte_code=[Instruction(LOAD_GLOBAL, Promise), Instruction(MAKE_FUNCTION, lambda), Instruction(CALL, 1), Instruction(RETURN_VALUE, None)], source_code='function delay(ms) {\n    return new Promise(resolve => setTimeout(resolve, ms));\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(357, 359), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME delay
-LOAD_CONST CodeObject(name=myAsyncFunction, path=tests/source_samples/javascript.js, location=(361, 364))
+LOAD_CONST CodeObject(name='myAsyncFunction', byte_code=[Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, delay), Instruction(LOAD_CONST, 50.0), Instruction(CALL, 1), Instruction(AWAIT_EXPRESSION, None), Instruction(POP_TOP, None), Instruction(LOAD_CONST, "Async work done"), Instruction(RETURN_VALUE, None)], source_code='async function myAsyncFunction() {\n    await delay(50);\n    return "Async work done";\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(361, 364), language='javascript')
 ASYNC_FUNCTION 0
 STORE_NAME myAsyncFunction
 PUSH_NULL None
@@ -616,7 +616,7 @@ LOAD_ATTR then
 MAKE_FUNCTION lambda
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name=idGenerator, path=tests/source_samples/javascript.js, location=(370, 375))
+LOAD_CONST CodeObject(name='idGenerator', byte_code=[Instruction(LOAD_CONST, 1.0), Instruction(STORE_GLOBAL, id), Instruction(LOAD_CONST, True), Instruction(POP_JUMP_IF_FALSE, 4), Instruction(LOAD_CONST, None), Instruction(YIELD_VALUE, None), Instruction(POP_TOP, None), Instruction(JUMP_BACKWARD, 6), Instruction(RETURN_VALUE, None)], source_code='function* idGenerator() {\n    let id = 1;\n    while (true) {\n        yield id++;\n    }\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(370, 375), language='javascript')
 GENERATOR_FUNCTION 0
 STORE_NAME idGenerator
 PUSH_NULL None
@@ -947,14 +947,14 @@ CALL 1
 STORE_NAME regexTest
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Parent, path=tests/source_samples/javascript.js, location=(538, 546))
+LOAD_CONST CodeObject(name='Parent', byte_code=[Instruction(LOAD_NAME, name), Instruction(LOAD_NAME, name), Instruction(STORE_ATTR, name), Instruction(BINARY_OPERATION, None), Instruction(RETURN_VALUE, None)], source_code='class Parent {\n    constructor(name) {\n        this.name = name;\n    }\n    \n    greet() {\n        return `Hello from ${this.name}`;\n    }\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(538, 546), language='javascript')
 MAKE_FUNCTION 0
 LOAD_CONST Parent
 CALL 2
 STORE_NAME Parent
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=Child, path=tests/source_samples/javascript.js, location=(548, 557))
+LOAD_CONST CodeObject(name='Child', byte_code=[Instruction(LOAD_NAME, name), Instruction(LOAD_NAME, age), Instruction(PUSH_NULL, None), Instruction(LOAD_NAME, name), Instruction(CALL, 1), Instruction(POP_TOP, None), Instruction(LOAD_NAME, age), Instruction(STORE_ATTR, age), Instruction(BINARY_OPERATION, None), Instruction(RETURN_VALUE, None)], source_code='class Child extends Parent {\n    constructor(name, age) {\n        super(name);\n        this.age = age;\n    }\n    \n    greetWithAge() {\n        return `${super.greet()}, age ${this.age}`;\n    }\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(548, 557), language='javascript')
 MAKE_FUNCTION 0
 LOAD_CONST Child
 CALL 2
@@ -964,7 +964,7 @@ LOAD_CONST "Test"
 LOAD_CONST 25.0
 CALL 2
 STORE_NAME childInstance
-LOAD_CONST CodeObject(name=asyncFunc, path=tests/source_samples/javascript.js, location=(562, 566))
+LOAD_CONST CodeObject(name='asyncFunc', byte_code=[Instruction(LOAD_GLOBAL, Promise), Instruction(MAKE_FUNCTION, lambda), Instruction(CALL, 1), Instruction(STORE_GLOBAL, promise), Instruction(LOAD_GLOBAL, promise), Instruction(AWAIT_EXPRESSION, None), Instruction(STORE_GLOBAL, result), Instruction(LOAD_GLOBAL, result), Instruction(RETURN_VALUE, None)], source_code='async function asyncFunc() {\n    const promise = new Promise(resolve => setTimeout(() => resolve("done"), 1));\n    const result = await promise;\n    return result;\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(562, 566), language='javascript')
 ASYNC_FUNCTION 0
 STORE_NAME asyncFunc
 LOAD_NAME obj
@@ -975,7 +975,7 @@ LOAD_NAME nullVal
 LOAD_CONST "default"
 BINARY_NULLISH_COALESCING None
 STORE_NAME nullish
-LOAD_CONST CodeObject(name=testThrow, path=tests/source_samples/javascript.js, location=(577, 579))
+LOAD_CONST CodeObject(name='testThrow', byte_code=[Instruction(LOAD_GLOBAL, Error), Instruction(LOAD_CONST, "Test error"), Instruction(CALL, 1), Instruction(BINARY_OPERATION, None), Instruction(RETURN_VALUE, None)], source_code='function testThrow() {\n    throw new Error("Test error");\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(577, 579), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME testThrow
 LOAD_CONST 0xFF
@@ -1386,7 +1386,7 @@ LOAD_NAME storeNested
 LOAD_ATTR inner
 LOAD_CONST "mixed"
 STORE_SUBSCR None
-LOAD_CONST CodeObject(name=getStoreKey, path=tests/source_samples/javascript.js, location=(723, 723))
+LOAD_CONST CodeObject(name='getStoreKey', byte_code=[Instruction(LOAD_CONST, "funcKey"), Instruction(RETURN_VALUE, None)], source_code='function getStoreKey() { return "funcKey"; }', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(723, 723), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME getStoreKey
 LOAD_CONST "from function"
@@ -1434,13 +1434,13 @@ STORE_NAME implicitGlobal
 LOAD_CONST "I am explicitly on global object"
 LOAD_NAME global
 STORE_ATTR explicitGlobal
-LOAD_CONST CodeObject(name=modifyGlobals, path=tests/source_samples/javascript.js, location=(753, 767))
+LOAD_CONST CodeObject(name='modifyGlobals', byte_code=[Instruction(LOAD_CONST, "modified var"), Instruction(STORE_GLOBAL, globalVar), Instruction(LOAD_CONST, "modified let"), Instruction(STORE_GLOBAL, globalLet), Instruction(LOAD_CONST, "modified implicit"), Instruction(STORE_GLOBAL, implicitGlobal), Instruction(LOAD_CONST, "created from function"), Instruction(STORE_GLOBAL, newImplicitGlobal), Instruction(LOAD_CONST, "modified explicit"), Instruction(LOAD_GLOBAL, global), Instruction(STORE_ATTR, explicitGlobal), Instruction(RETURN_VALUE, None)], source_code='function modifyGlobals() {\n    // Access top-level globals\n    globalVar = "modified var";\n    globalLet = "modified let";\n    // globalConst = "cannot modify"; // Would throw error\n    \n    // Modify implicit global\n    implicitGlobal = "modified implicit";\n    \n    // Create new implicit global from function\n    newImplicitGlobal = "created from function";\n    \n    // Access via global object\n    global.explicitGlobal = "modified explicit";\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(753, 767), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME modifyGlobals
-LOAD_CONST CodeObject(name=outerFunction, path=tests/source_samples/javascript.js, location=(770, 788))
+LOAD_CONST CodeObject(name='outerFunction', byte_code=[Instruction(LOAD_CONST, "local to outer"), Instruction(STORE_GLOBAL, localVar), Instruction(MAKE_FUNCTION, innerFunction), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, console), Instruction(LOAD_ATTR, log), Instruction(LOAD_GLOBAL, globalVar), Instruction(CALL, 1), Instruction(POP_TOP, None), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, console), Instruction(LOAD_ATTR, log), Instruction(LOAD_GLOBAL, localVar), Instruction(CALL, 1), Instruction(POP_TOP, None), Instruction(LOAD_CONST, "modified by inner"), Instruction(STORE_GLOBAL, implicitGlobal), Instruction(LOAD_CONST, "created from nested function"), Instruction(STORE_GLOBAL, deepGlobal), Instruction(RETURN_VALUE, None), Instruction(STORE_GLOBAL, innerFunction), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, innerFunction), Instruction(CALL, 0), Instruction(POP_TOP, None), Instruction(RETURN_VALUE, None)], source_code='function outerFunction() {\n    let localVar = "local to outer";\n    \n    function innerFunction() {\n        // Access module global\n        console.log(globalVar);\n        \n        // Access outer function\'s local\n        console.log(localVar);\n        \n        // Modify implicit global\n        implicitGlobal = "modified by inner";\n        \n        // Create new global from nested function\n        deepGlobal = "created from nested function";\n    }\n    \n    innerFunction();\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(770, 788), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME outerFunction
-LOAD_CONST CodeObject(name=globalFunction, path=tests/source_samples/javascript.js, location=(791, 793))
+LOAD_CONST CodeObject(name='globalFunction', byte_code=[Instruction(LOAD_CONST, "I am a global function"), Instruction(RETURN_VALUE, None)], source_code='function globalFunction() {\n    return "I am a global function";\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(791, 793), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME globalFunction
 LOAD_CONST "I am a property of a global object"
@@ -1452,12 +1452,12 @@ MAKE_FUNCTION lambda
 STORE_NAME globalArrow
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name=GlobalClass, path=tests/source_samples/javascript.js, location=(806, 810))
+LOAD_CONST CodeObject(name='GlobalClass', byte_code=[Instruction(LOAD_CONST, "I am a global class instance property"), Instruction(STORE_ATTR, property)], source_code='class GlobalClass {\n    constructor() {\n        this.property = "I am a global class instance property";\n    }\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(806, 810), language='javascript')
 MAKE_FUNCTION 0
 LOAD_CONST GlobalClass
 CALL 2
 STORE_NAME GlobalClass
-LOAD_CONST CodeObject(name=testGlobalContexts, path=tests/source_samples/javascript.js, location=(813, 836))
+LOAD_CONST CodeObject(name='testGlobalContexts', byte_code=[Instruction(LOAD_GLOBAL, globalVar), Instruction(STORE_GLOBAL, var1), Instruction(LOAD_GLOBAL, globalLet), Instruction(STORE_GLOBAL, let1), Instruction(LOAD_GLOBAL, globalConst), Instruction(STORE_GLOBAL, const1), Instruction(LOAD_GLOBAL, implicitGlobal), Instruction(STORE_GLOBAL, implicit1), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, globalFunction), Instruction(CALL, 0), Instruction(STORE_GLOBAL, funcResult), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, globalArrow), Instruction(CALL, 0), Instruction(STORE_GLOBAL, arrowResult), Instruction(LOAD_GLOBAL, globalObject), Instruction(LOAD_ATTR, property), Instruction(STORE_GLOBAL, objProp), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, globalObject), Instruction(LOAD_ATTR, method), Instruction(CALL, 0), Instruction(STORE_GLOBAL, objMethod), Instruction(LOAD_GLOBAL, GlobalClass), Instruction(CALL, 0), Instruction(STORE_GLOBAL, instance), Instruction(LOAD_CONST, "modified in test"), Instruction(STORE_GLOBAL, globalVar), Instruction(LOAD_CONST, "also modified in test"), Instruction(STORE_GLOBAL, implicitGlobal), Instruction(BUILD_MAP, 0), Instruction(RETURN_VALUE, None)], source_code='function testGlobalContexts() {\n    // Access various global types\n    const var1 = globalVar;\n    const let1 = globalLet;\n    const const1 = globalConst;\n    const implicit1 = implicitGlobal;\n    \n    // Call global functions\n    const funcResult = globalFunction();\n    const arrowResult = globalArrow();\n    \n    // Use global objects\n    const objProp = globalObject.property;\n    const objMethod = globalObject.method();\n    \n    // Instantiate global class\n    const instance = new GlobalClass();\n    \n    // Modify globals\n    globalVar = "modified in test";\n    implicitGlobal = "also modified in test";\n    \n    return { var1, let1, const1, implicit1, funcResult, arrowResult, objProp, objMethod, instance };\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(813, 836), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME testGlobalContexts
 PUSH_NULL None
@@ -1472,13 +1472,13 @@ CALL 0
 POP_TOP None
 LOAD_CONST "global shadow"
 STORE_NAME shadowVar
-LOAD_CONST CodeObject(name=shadowTest, path=tests/source_samples/javascript.js, location=(853, 870))
+LOAD_CONST CodeObject(name='shadowTest', byte_code=[Instruction(LOAD_CONST, "local shadow"), Instruction(STORE_GLOBAL, shadowVar), Instruction(MAKE_FUNCTION, accessGlobalShadow), Instruction(LOAD_GLOBAL, shadowVar), Instruction(RETURN_VALUE, None), Instruction(STORE_GLOBAL, accessGlobalShadow), Instruction(MAKE_FUNCTION, modifyGlobalDirectly), Instruction(LOAD_CONST, "modified via global object"), Instruction(LOAD_GLOBAL, global), Instruction(STORE_ATTR, shadowVar), Instruction(RETURN_VALUE, None), Instruction(STORE_GLOBAL, modifyGlobalDirectly), Instruction(LOAD_GLOBAL, shadowVar), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, accessGlobalShadow), Instruction(CALL, 0), Instruction(BUILD_MAP, 2), Instruction(RETURN_VALUE, None)], source_code='function shadowTest() {\n    // This creates a local variable that shadows the global\n    let shadowVar = "local shadow";\n    \n    function accessGlobalShadow() {\n        // In JavaScript, we can\'t explicitly say "use the global one"\n        // like Python\'s \'global\' keyword\n        // This will access the outer function\'s shadowVar\n        return shadowVar;\n    }\n    \n    function modifyGlobalDirectly() {\n        // Access global via global object (Node.js)\n        global.shadowVar = "modified via global object";\n    }\n    \n    return { local: shadowVar, fromInner: accessGlobalShadow() };\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(853, 870), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME shadowTest
 LOAD_CONST "I am on globalThis"
 LOAD_NAME globalThis
 STORE_ATTR modernGlobal
-LOAD_CONST CodeObject(name=testGlobalThis, path=tests/source_samples/javascript.js, location=(875, 886))
+LOAD_CONST CodeObject(name='testGlobalThis', byte_code=[Instruction(LOAD_GLOBAL, globalThis), Instruction(LOAD_ATTR, modernGlobal), Instruction(STORE_GLOBAL, value), Instruction(LOAD_CONST, "modified via globalThis"), Instruction(LOAD_GLOBAL, globalThis), Instruction(STORE_ATTR, modernGlobal), Instruction(LOAD_CONST, "created via globalThis"), Instruction(LOAD_GLOBAL, globalThis), Instruction(STORE_ATTR, newModernGlobal), Instruction(LOAD_GLOBAL, value), Instruction(RETURN_VALUE, None)], source_code='function testGlobalThis() {\n    // Access via globalThis\n    const value = globalThis.modernGlobal;\n    \n    // Modify via globalThis  \n    globalThis.modernGlobal = "modified via globalThis";\n    \n    // Create new property on globalThis\n    globalThis.newModernGlobal = "created via globalThis";\n    \n    return value;\n}', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/javascript.js'), location=(875, 886), language='javascript')
 MAKE_FUNCTION 0
 STORE_NAME testGlobalThis
 PUSH_NULL None

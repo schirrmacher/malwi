@@ -5,8 +5,6 @@ import socket
 import urllib
 import codecs
 import pathlib
-import base64
-import binascii
 from enum import Enum
 from packaging.version import Version, InvalidVersion
 from typing import Any, Dict, Set
@@ -31,8 +29,12 @@ class SpecialCases(Enum):
     STRING_BASH = "STRING_BASH"  # Shell/bash command strings
     STRING_SQL = "STRING_SQL"  # SQL query strings
     STRING_CODE = "STRING_CODE"  # Code-like strings (function calls, imports)
-    STRING_LARGE_PAYLOAD = "STRING_LARGE_PAYLOAD"  # Abnormally long strings (>5KB, often obfuscated malware)
     STRING = "STRING"  # Generic string fallback
+
+    # String size bucket tokens (for strings >20 chars)
+    STRING_SIZE_S = "STRING_SIZE_S"  # Small: 21-100 characters
+    STRING_SIZE_M = "STRING_SIZE_M"  # Medium: 101-1000 characters
+    STRING_SIZE_L = "STRING_SIZE_L"  # Large: >1000 characters
 
     # File-level classifications
     MALFORMED_FILE = "MALFORMED_FILE"  # Files with parsing/syntax errors
@@ -668,6 +670,28 @@ def _is_large_payload_cached(text: str) -> bool:
     """
     # If the string is longer than 5KB, it's likely an obfuscated payload
     return len(text) > 5000
+
+
+def get_string_size_bucket(text: str) -> str:
+    """
+    Get the appropriate size bucket token for strings longer than 20 characters.
+    Returns empty string if text is 20 characters or less.
+
+    Size buckets:
+    - S (Small): 21-100 characters
+    - M (Medium): 101-1000 characters
+    - L (Large): >1000 characters
+    """
+    if not isinstance(text, str) or len(text) <= 20:
+        return ""
+
+    length = len(text)
+    if length <= 100:
+        return SpecialCases.STRING_SIZE_S.value
+    elif length <= 1000:
+        return SpecialCases.STRING_SIZE_M.value
+    else:
+        return SpecialCases.STRING_SIZE_L.value
 
 
 def is_large_payload(text: str) -> bool:
