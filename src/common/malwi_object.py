@@ -17,6 +17,7 @@ from common.mapping import (
     IMPORT_MAPPING,
     COMMON_TARGET_FILES,
 )
+from common.config import FILE_LARGE_THRESHOLD, FILE_PATHOLOGICAL_THRESHOLD
 from common.bytecode import ASTCompiler
 from common.predict_distilbert import (
     get_node_text_prediction,
@@ -161,12 +162,12 @@ class MalwiObject:
         # Add large file warning if applicable
         if self.file_path and Path(self.file_path).exists():
             file_size = Path(self.file_path).stat().st_size
-            if file_size > 500 * 1024:  # Files larger than 500KB
+            if file_size > FILE_LARGE_THRESHOLD:
                 tokens.append(SpecialCases.LARGE_FILE.value)
 
-            # Add pathological file warning for extremely large files (>1MB)
+            # Add pathological file warning for extremely large files
             # These often contain obfuscated payloads that cause processing timeouts
-            if file_size > 1024 * 1024:  # Files larger than 1MB
+            if file_size > FILE_PATHOLOGICAL_THRESHOLD:
                 tokens.append(SpecialCases.PATHOLOGICAL_FILE.value)
 
         # Add file targeting warning if applicable

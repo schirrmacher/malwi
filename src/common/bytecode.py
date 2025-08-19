@@ -33,6 +33,7 @@ from common.mapping import (
     get_string_size_bucket,
     SENSITIVE_PATHS,
 )
+from common.config import STRING_MAX_LENGTH
 
 # CodeObject has been merged into MalwiObject
 
@@ -304,7 +305,6 @@ class Instruction:
         - Consistent hash generation across different variable names/values
         """
 
-        STRING_MAX_LENGTH = 20
         function_mapping = FUNCTION_MAPPING.get(language, {})
         import_mapping = IMPORT_MAPPING.get(language, {})
 

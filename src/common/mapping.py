@@ -10,6 +10,13 @@ from packaging.version import Version, InvalidVersion
 from typing import Any, Dict, Set
 
 from common.files import read_json_from_file
+from common.config import (
+    STRING_MAX_LENGTH,
+    STRING_REGEX_SIZE_LIMIT,
+    STRING_LARGE_PAYLOAD_THRESHOLD,
+    STRING_SIZE_BUCKET_SMALL_MAX,
+    STRING_SIZE_BUCKET_MEDIUM_MAX,
+)
 
 
 class SpecialCases(Enum):
@@ -590,7 +597,7 @@ def _is_bash_code_cached(text: str) -> bool:
 
     # Skip pathologically large strings that cause regex timeouts
     # These are typically obfuscated payloads, not legitimate bash code
-    if len(text) > 50000:  # 50KB limit for regex processing
+    if len(text) > STRING_REGEX_SIZE_LIMIT:
         return False
 
     # Check for bash syntactical elements
@@ -623,7 +630,7 @@ def _is_code_cached(text: str) -> bool:
 
     # Skip pathologically large strings that cause regex timeouts
     # These are typically obfuscated payloads, not legitimate code
-    if len(text) > 50000:  # 50KB limit for regex processing
+    if len(text) > STRING_REGEX_SIZE_LIMIT:
         return False
 
     # Check for code syntactical elements
@@ -656,7 +663,7 @@ def _is_sql_cached(text: str) -> bool:
 
     # Skip pathologically large strings that cause regex timeouts
     # These are typically obfuscated payloads, not legitimate SQL
-    if len(text) > 50000:  # 50KB limit for regex processing
+    if len(text) > STRING_REGEX_SIZE_LIMIT:
         return False
 
     # Check for SQL structural patterns
@@ -684,8 +691,8 @@ def _is_large_payload_cached(text: str) -> bool:
     Cached function to detect large payloads.
     Simply checks if the string is abnormally long.
     """
-    # If the string is longer than 5KB, it's likely an obfuscated payload
-    return len(text) > 5000
+    # If the string is longer than threshold, it's likely an obfuscated payload
+    return len(text) > STRING_LARGE_PAYLOAD_THRESHOLD
 
 
 def get_string_size_bucket(text: str) -> str:
@@ -698,13 +705,13 @@ def get_string_size_bucket(text: str) -> str:
     - M (Medium): 101-1000 characters
     - L (Large): >1000 characters
     """
-    if not isinstance(text, str) or len(text) <= 20:
+    if not isinstance(text, str) or len(text) <= STRING_MAX_LENGTH:
         return ""
 
     length = len(text)
-    if length <= 100:
+    if length <= STRING_SIZE_BUCKET_SMALL_MAX:
         return SpecialCases.STRING_SIZE_S.value
-    elif length <= 1000:
+    elif length <= STRING_SIZE_BUCKET_MEDIUM_MAX:
         return SpecialCases.STRING_SIZE_M.value
     else:
         return SpecialCases.STRING_SIZE_L.value
