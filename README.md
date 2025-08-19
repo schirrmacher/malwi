@@ -88,6 +88,55 @@ malwi pypi requests
 => 🟢 good
 ```
 
+## Why malwi?
+
+Malicious actors are increasingly [targeting open-source projects](https://arxiv.org/pdf/2404.04991), introducing packages designed to compromise security.
+
+Common malicious behaviors include:
+
+- **Data exfiltration**: Theft of sensitive information such as credentials, API keys, or user data.
+- **Backdoors**: Unauthorized remote access to systems, enabling attackers to exploit vulnerabilities.
+- **Destructive actions**: Deliberate sabotage, including file deletion, database corruption, or application disruption.
+
+## How does it work?
+
+malwi is based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1).
+
+Imagine there is a function like:
+
+```python
+def runcommand(value):
+    output = subprocess.run(value, shell=True, capture_output=True)
+    return [output.stdout, output.stderr]
+```
+
+### 1. Files are compiled to create an Abstract Syntax Tree with [Tree-sitter](https://tree-sitter.github.io/tree-sitter/index.html)
+
+```
+module [0, 0] - [3, 0]
+  function_definition [0, 0] - [2, 41]
+    name: identifier [0, 4] - [0, 14]
+    parameters: parameters [0, 14] - [0, 21]
+      identifier [0, 15] - [0, 20]
+...
+```
+
+### 2. The AST is transpiled to dummy bytecode
+
+The bytecode is enhanced with security related instructions.
+
+```
+TARGETED_FILE PUSH_NULL LOAD_GLOBAL PROCESS_MANAGEMENT LOAD_ATTR run LOAD_PARAM value LOAD_CONST BOOLEAN LOAD_CONST BOOLEAN KW_NAMES shell capture_output CALL STRING_VERSION STORE_GLOBAL output LOAD_GLOBAL output LOAD_ATTR stdout LOAD_GLOBAL output LOAD_ATTR stderr BUILD_LIST STRING_VERSION RETURN_VALUE
+```
+
+### 3. The bytecode is fed into a pre-trained [DistilBERT](https://huggingface.co/docs/transformers/model_doc/distilbert)
+
+A DistilBERT model trained on [malware-samples](https://github.com/schirrmacher/malwi-samples) is used to identify suspicious code patterns.
+
+```
+=> Maliciousness: 0.98
+```
+
 ## Python API
 
 malwi provides a comprehensive Python API for integrating malware detection into your applications.
@@ -176,55 +225,6 @@ obj.to_json()           # str: JSON formatted output
 
 # Class methods
 MalwiObject.all_tokens(language="python")  # List[str]: All possible tokens
-```
-
-## Why malwi?
-
-Malicious actors are increasingly [targeting open-source projects](https://arxiv.org/pdf/2404.04991), introducing packages designed to compromise security.
-
-Common malicious behaviors include:
-
-- **Data exfiltration**: Theft of sensitive information such as credentials, API keys, or user data.
-- **Backdoors**: Unauthorized remote access to systems, enabling attackers to exploit vulnerabilities.
-- **Destructive actions**: Deliberate sabotage, including file deletion, database corruption, or application disruption.
-
-## How does it work?
-
-malwi is based on the design of [_Zero Day Malware Detection with Alpha: Fast DBI with Transformer Models for Real World Application_ (2025)](https://arxiv.org/pdf/2504.14886v1).
-
-Imagine there is a function like:
-
-```python
-def runcommand(value):
-    output = subprocess.run(value, shell=True, capture_output=True)
-    return [output.stdout, output.stderr]
-```
-
-### 1. Files are compiled to create an Abstract Syntax Tree with [Tree-sitter](https://tree-sitter.github.io/tree-sitter/index.html)
-
-```
-module [0, 0] - [3, 0]
-  function_definition [0, 0] - [2, 41]
-    name: identifier [0, 4] - [0, 14]
-    parameters: parameters [0, 14] - [0, 21]
-      identifier [0, 15] - [0, 20]
-...
-```
-
-### 2. The AST is transpiled to dummy bytecode
-
-The bytecode is enhanced with security related instructions.
-
-```
-TARGETED_FILE PUSH_NULL LOAD_GLOBAL PROCESS_MANAGEMENT LOAD_ATTR run LOAD_PARAM value LOAD_CONST BOOLEAN LOAD_CONST BOOLEAN KW_NAMES shell capture_output CALL STRING_VERSION STORE_GLOBAL output LOAD_GLOBAL output LOAD_ATTR stdout LOAD_GLOBAL output LOAD_ATTR stderr BUILD_LIST STRING_VERSION RETURN_VALUE
-```
-
-### 3. The bytecode is fed into a pre-trained [DistilBERT](https://huggingface.co/docs/transformers/model_doc/distilbert)
-
-A DistilBERT model trained on [malware-samples](https://github.com/schirrmacher/malwi-samples) is used to identify suspicious code patterns.
-
-```
-=> Maliciousness: 0.98
 ```
 
 ## Benchmarks?
