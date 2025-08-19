@@ -126,6 +126,13 @@ This document tracks the AI model training research progress for malwi, document
 - **Impact**: ❌ **Significant performance decrease** - accuracy drop from architectural changes
 - **Analysis**: Performance decrease likely stems from replacing STRING_LARGE_PAYLOAD with granular size buckets and implementing conservative string classification logic with 50KB regex limits. The more restrictive approach to large string processing may have reduced detection signal quality.
 
+#### 2025-08-19: Tokenizer Vocabulary Size Fix
+- **Tag**: `2a22e8f1_f1/0.918`
+- **F1 Score**: 0.918 (+0.0595)
+- **Change**: Fixed tokenizer vocabulary overflow, centralized token count configuration, removed hardcoded 15000 values
+- **Impact**: ✅ **Good recovery** - performance improved after fixing tokenizer configuration
+- **Analysis**: Addressed tokenizer vocabulary exceeding 30,522 limit by removing double-counting of special tokens and centralizing DEFAULT_TOP_N_TOKENS=5000. This ensures vocabulary stays within DistilBERT constraints while maintaining detection capabilities.
+
 ## Key Insights
 
 ### ✅ High-Impact Improvements
@@ -136,8 +143,9 @@ This document tracks the AI model training research progress for malwi, document
 
 ### ⚠️ Mixed Results / Minor Performance Changes
 1. **Code detection tokens optimization** (0.9362) - Slight decrease from peak but improved processing efficiency
-2. **Full file scanning** (0.894) - Partial recovery from module splitting issues
-3. **DistilBERT 256 reintroduction** (0.944) - Minor decrease, larger model not always better
+2. **Tokenizer vocabulary fix** (0.918) - Good recovery after configuration issues
+3. **Full file scanning** (0.894) - Partial recovery from module splitting issues
+4. **DistilBERT 256 reintroduction** (0.944) - Minor decrease, larger model not always better
 
 ### ❌ Failed Experiments
 1. **Vocabulary size increase** (0.0) - Complete model failure, suggests architecture limitations
@@ -146,10 +154,10 @@ This document tracks the AI model training research progress for malwi, document
 
 ### 📊 Performance Trends
 - **Peak Performance**: 0.958 (2025-08-14) - String mapping optimization
-- **Current Performance**: 0.8585 (2025-08-19) - Configuration centralization and string size buckets
+- **Current Performance**: 0.918 (2025-08-19) - Tokenizer vocabulary size fix
 - **Performance Range**: 0.0 - 0.958
-- **Average Performance**: 0.782 (excluding failed experiments)
-- **Recent Change**: -0.0777 from conservative string processing and architectural changes
+- **Average Performance**: 0.786 (excluding failed experiments)
+- **Recent Change**: +0.0595 recovery from tokenizer configuration fix
 - **Volatility**: High - small changes can have major impact (±0.1 F1 score)
 
 ### 🔬 Critical Success Factors
@@ -176,10 +184,10 @@ This document tracks the AI model training research progress for malwi, document
 ## Next Steps
 
 ### Immediate Priorities
-1. **Investigate accuracy loss**: Analyze why string size buckets and conservative classification reduced F1 from 0.9362 to 0.8585
-2. **String classification optimization**: Find optimal balance in string processing approach  
-3. **Feature impact analysis**: Determine if CodeObject fix, string buckets, or conservative regex limits caused the performance drop
-4. **Recovery strategy**: Restore detection accuracy while maintaining architectural improvements
+1. **Close performance gap**: Investigate remaining 0.04 F1 gap from peak (0.958 vs 0.918)
+2. **Tokenizer optimization**: Fine-tune special token selection for better malware detection
+3. **String processing balance**: Optimize string size buckets and classification thresholds
+4. **Architecture refinement**: Consolidate successful changes while reverting problematic ones
 
 ### Research Pipeline
 1. **Advanced token research**: Expand specialized token categories (network patterns, crypto operations, system calls)
