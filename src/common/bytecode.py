@@ -2422,8 +2422,8 @@ class ASTCompiler:
                     )
                     self.code_objects.append(func_code_obj)
 
-                    # Load function code object and make function
-                    bytecode.append(emit(OpCode.LOAD_CONST, func_code_obj))
+                    # Load function name as reference instead of full CodeObject
+                    bytecode.append(emit(OpCode.LOAD_CONST, func_name))
                     bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))
 
                     # Apply decorator(s) - CALL with 0 args (function is on stack)
@@ -2508,8 +2508,8 @@ class ASTCompiler:
                 self.code_objects.append(func_code_obj)
 
                 # Python-like structure: LOAD_CONST -> MAKE_FUNCTION -> STORE_NAME
-                # Load the code object as a constant (similar to Python's approach)
-                bytecode.append(emit(OpCode.LOAD_CONST, func_code_obj))
+                # Load the function name as reference instead of full CodeObject
+                bytecode.append(emit(OpCode.LOAD_CONST, func_name))
 
                 # Use appropriate opcode based on function type with arg=0 (no defaults)
                 if is_async and is_generator:
@@ -2575,8 +2575,8 @@ class ASTCompiler:
                 bytecode.append(emit(OpCode.PUSH_NULL, None))
                 bytecode.append(emit(OpCode.LOAD_BUILD_CLASS, None))
                 bytecode.append(
-                    emit(OpCode.LOAD_CONST, class_code_obj)
-                )  # Class code object
+                    emit(OpCode.LOAD_CONST, class_name)
+                )  # Class name instead of full CodeObject
                 bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))  # No defaults
                 bytecode.append(emit(OpCode.LOAD_CONST, class_name))  # Class name
                 bytecode.append(emit(OpCode.CALL, 2))  # Call build class with 2 args

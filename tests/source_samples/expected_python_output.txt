@@ -475,7 +475,7 @@ RERAISE 0
 COPY 3
 POP_EXCEPT None
 RERAISE 1
-LOAD_CONST CodeObject(name='dynamic_import_test', byte_code=[Instruction(LOAD_CONST, "os"), Instruction(STORE_GLOBAL, module_name), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, __import__), Instruction(LOAD_GLOBAL, module_name), Instruction(CALL, 1), Instruction(STORE_GLOBAL, imported_os), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, getattr), Instruction(LOAD_GLOBAL, imported_os), Instruction(LOAD_CONST, "system"), Instruction(CALL, 2), Instruction(STORE_GLOBAL, getattr_call), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, getattr), Instruction(LOAD_GLOBAL, __builtins__), Instruction(LOAD_CONST, "exec"), Instruction(CALL, 2), Instruction(STORE_GLOBAL, exec_func), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, getattr), Instruction(LOAD_GLOBAL, __builtins__), Instruction(LOAD_CONST, "eval"), Instruction(CALL, 2), Instruction(STORE_GLOBAL, eval_func), Instruction(RETURN_VALUE, None)], source_code='def dynamic_import_test():\n    # These patterns are commonly used to evade static analysis\n    module_name = "os"\n    imported_os = __import__(module_name)\n\n    getattr_call = getattr(imported_os, "system")\n    exec_func = getattr(__builtins__, "exec")\n    eval_func = getattr(__builtins__, "eval")', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(119, 126), language='python')
+LOAD_CONST dynamic_import_test
 MAKE_FUNCTION 0
 STORE_NAME dynamic_import_test
 PUSH_NULL None
@@ -1075,7 +1075,7 @@ POP_EXCEPT None
 RERAISE 1
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='MyContext', byte_code=[Instruction(MAKE_FUNCTION, __enter__), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, print), Instruction(LOAD_CONST, "Entering context"), Instruction(CALL, 1), Instruction(POP_TOP, None), Instruction(LOAD_CONST, "Hello from with"), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __enter__), Instruction(MAKE_FUNCTION, __exit__), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, print), Instruction(LOAD_CONST, "Exiting context"), Instruction(CALL, 1), Instruction(POP_TOP, None), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __exit__)], source_code='class MyContext:\n    def __enter__(self):\n        print("Entering context")\n        return "Hello from with"\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        print("Exiting context")', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(326, 332), language='python')
+LOAD_CONST MyContext
 MAKE_FUNCTION 0
 LOAD_CONST MyContext
 CALL 2
@@ -1112,7 +1112,7 @@ LOAD_NAME print
 LOAD_CONST "\n--- 4. Functions and Scopes ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name='greet', byte_code=[Instruction(LOAD_CONST, Hello, ), Instruction(LOAD_PARAM, name), Instruction(FORMAT_VALUE, None), Instruction(LOAD_CONST, !), Instruction(BUILD_STRING, 3), Instruction(RETURN_VALUE, None)], source_code='def greet(name):\n    return f"Hello, {name}!"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(348, 349), language='python')
+LOAD_CONST greet
 MAKE_FUNCTION 0
 STORE_NAME greet
 PUSH_NULL None
@@ -1120,7 +1120,7 @@ LOAD_NAME greet
 LOAD_CONST "World"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name='func_with_args', byte_code=[Instruction(LOAD_PARAM, a), Instruction(LOAD_PARAM, b), Instruction(BINARY_OP, 0), Instruction(LOAD_PARAM, c), Instruction(BINARY_OP, 0), Instruction(RETURN_VALUE, None)], source_code='def func_with_args(a, b, c=10):\n    return a + b + c', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(356, 357), language='python')
+LOAD_CONST func_with_args
 MAKE_FUNCTION 0
 STORE_NAME func_with_args
 PUSH_NULL None
@@ -1151,7 +1151,7 @@ LOAD_CONST 3.0
 KW_NAMES ('c', 'b', 'a')
 CALL 3
 POP_TOP None
-LOAD_CONST CodeObject(name='func_with_arbitrary_args', byte_code=[Instruction(LOAD_PARAM, args), Instruction(LOAD_PARAM, kwargs), Instruction(RETURN_VALUE, None)], source_code='def func_with_arbitrary_args(*args, **kwargs):\n    return args, kwargs', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(367, 368), language='python')
+LOAD_CONST func_with_arbitrary_args
 MAKE_FUNCTION 0
 STORE_NAME func_with_arbitrary_args
 PUSH_NULL None
@@ -1275,7 +1275,7 @@ CALL 2
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='TestClass', byte_code=[Instruction(MAKE_FUNCTION, __init__), Instruction(LOAD_PARAM, param1), Instruction(LOAD_PARAM, self), Instruction(STORE_ATTR, param1), Instruction(LOAD_PARAM, param2), Instruction(LOAD_PARAM, self), Instruction(STORE_ATTR, param2), Instruction(LOAD_PARAM, param3), Instruction(LOAD_PARAM, self), Instruction(STORE_ATTR, param3), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __init__)], source_code='class TestClass:\n    def __init__(self, param1, param2=None, param3=False):\n        self.param1 = param1\n        self.param2 = param2\n        self.param3 = param3', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(392, 396), language='python')
+LOAD_CONST TestClass
 MAKE_FUNCTION 0
 LOAD_CONST TestClass
 CALL 2
@@ -1338,7 +1338,7 @@ LOAD_CONST 3.0
 LOAD_CONST 4.0
 CALL 2
 POP_TOP None
-LOAD_CONST CodeObject(name='outer_func', byte_code=[Instruction(LOAD_CONST, 10.0), Instruction(STORE_GLOBAL, x), Instruction(MAKE_FUNCTION, inner_func), Instruction(LOAD_DEREF, x), Instruction(LOAD_CONST, 1.0), Instruction(BINARY_OP, None), Instruction(STORE_DEREF, x), Instruction(LOAD_DEREF, x), Instruction(RETURN_VALUE, None), Instruction(STORE_GLOBAL, inner_func), Instruction(LOAD_GLOBAL, inner_func), Instruction(RETURN_VALUE, None)], source_code='def outer_func():\n    x = 10\n\n    def inner_func():\n        nonlocal x\n        x += 1\n        return x\n\n    return inner_func', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(420, 428), language='python')
+LOAD_CONST outer_func
 MAKE_FUNCTION 0
 STORE_NAME outer_func
 PUSH_NULL None
@@ -1355,7 +1355,7 @@ CALL 0
 POP_TOP None
 LOAD_CONST 100.0
 STORE_GLOBAL global_var
-LOAD_CONST CodeObject(name='modify_global', byte_code=[Instruction(LOAD_CONST, 200.0), Instruction(STORE_GLOBAL, global_var), Instruction(RETURN_VALUE, None)], source_code='def modify_global():\n    global global_var\n    global_var = 200', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(439, 441), language='python')
+LOAD_CONST modify_global
 MAKE_FUNCTION 0
 STORE_NAME modify_global
 PUSH_NULL None
@@ -1374,7 +1374,7 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='MyClass', byte_code=[Instruction(LOAD_CONST, 10.0), Instruction(STORE_NAME, class_variable), Instruction(MAKE_FUNCTION, __init__), Instruction(LOAD_PARAM, instance_variable), Instruction(LOAD_PARAM, self), Instruction(STORE_ATTR, instance_variable), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __init__), Instruction(MAKE_FUNCTION, instance_method), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, instance_variable), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, instance_method), Instruction(LOAD_NAME, classmethod), Instruction(LOAD_CONST, CodeObject(name='class_method', byte_code=[Instruction(LOAD_PARAM, cls), Instruction(LOAD_ATTR, class_variable), Instruction(RETURN_VALUE, None)], source_code='def class_method(cls):\n        return cls.class_variable', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(465, 466), language='python')), Instruction(MAKE_FUNCTION, 0), Instruction(CALL, 0), Instruction(STORE_NAME, class_method), Instruction(LOAD_NAME, staticmethod), Instruction(LOAD_CONST, CodeObject(name='static_method', byte_code=[Instruction(LOAD_CONST, "static"), Instruction(RETURN_VALUE, None)], source_code='def static_method():\n        return "static"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(469, 470), language='python')), Instruction(MAKE_FUNCTION, 0), Instruction(CALL, 0), Instruction(STORE_NAME, static_method)], source_code='class MyClass:\n    class_variable = 10\n\n    def __init__(self, instance_variable):\n        self.instance_variable = instance_variable\n\n    def instance_method(self):\n        return self.instance_variable\n\n    @classmethod\n    def class_method(cls):\n        return cls.class_variable\n\n    @staticmethod\n    def static_method():\n        return "static"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(455, 470), language='python')
+LOAD_CONST MyClass
 MAKE_FUNCTION 0
 LOAD_CONST MyClass
 CALL 2
@@ -1412,21 +1412,21 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='ParentA', byte_code=[Instruction(MAKE_FUNCTION, method_a), Instruction(LOAD_CONST, "A"), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, method_a)], source_code='class ParentA:\n    def method_a(self):\n        return "A"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(483, 485), language='python')
+LOAD_CONST ParentA
 MAKE_FUNCTION 0
 LOAD_CONST ParentA
 CALL 2
 STORE_NAME ParentA
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='ParentB', byte_code=[Instruction(MAKE_FUNCTION, method_b), Instruction(LOAD_CONST, "B"), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, method_b)], source_code='class ParentB:\n    def method_b(self):\n        return "B"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(488, 490), language='python')
+LOAD_CONST ParentB
 MAKE_FUNCTION 0
 LOAD_CONST ParentB
 CALL 2
 STORE_NAME ParentB
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='Child', byte_code=[Instruction(MAKE_FUNCTION, method_c), Instruction(LOAD_CONST, "C"), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, method_c)], source_code='class Child(ParentA, ParentB):\n    def method_c(self):\n        return "C"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(493, 495), language='python')
+LOAD_CONST Child
 MAKE_FUNCTION 0
 LOAD_CONST Child
 CALL 2
@@ -1457,7 +1457,7 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='Vector', byte_code=[Instruction(MAKE_FUNCTION, __init__), Instruction(LOAD_DEREF, x), Instruction(LOAD_PARAM, self), Instruction(STORE_ATTR, x), Instruction(LOAD_PARAM, y), Instruction(LOAD_PARAM, self), Instruction(STORE_ATTR, y), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __init__), Instruction(MAKE_FUNCTION, __add__), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, Vector), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, x), Instruction(LOAD_PARAM, other), Instruction(LOAD_ATTR, x), Instruction(BINARY_OP, 0), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, y), Instruction(LOAD_PARAM, other), Instruction(LOAD_ATTR, y), Instruction(BINARY_OP, 0), Instruction(CALL, 2), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __add__), Instruction(MAKE_FUNCTION, __repr__), Instruction(LOAD_CONST, Vector(), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, x), Instruction(FORMAT_VALUE, None), Instruction(LOAD_CONST, , ), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, y), Instruction(FORMAT_VALUE, None), Instruction(LOAD_CONST, )), Instruction(BUILD_STRING, 5), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __repr__), Instruction(MAKE_FUNCTION, __len__), Instruction(LOAD_CONST, 2.0), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __len__), Instruction(MAKE_FUNCTION, __getitem__), Instruction(LOAD_PARAM, index), Instruction(LOAD_CONST, 0.0), Instruction(COMPARE_OP, None), Instruction(POP_JUMP_IF_FALSE, 7), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, x), Instruction(RETURN_VALUE, None), Instruction(LOAD_PARAM, index), Instruction(LOAD_CONST, 1.0), Instruction(COMPARE_OP, None), Instruction(POP_JUMP_IF_FALSE, 7), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, y), Instruction(RETURN_VALUE, None), Instruction(LOAD_GLOBAL, IndexError), Instruction(BINARY_OPERATION, None), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __getitem__)], source_code='class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def __add__(self, other):\n        return Vector(self.x + other.x, self.y + other.y)\n\n    def __repr__(self):\n        return f"Vector({self.x}, {self.y})"\n\n    def __len__(self):\n        return 2\n\n    def __getitem__(self, index):\n        if index == 0:\n            return self.x\n        if index == 1:\n            return self.y\n        raise IndexError', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(506, 525), language='python')
+LOAD_CONST Vector
 MAKE_FUNCTION 0
 LOAD_CONST Vector
 CALL 2
@@ -1499,7 +1499,7 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='Circle', byte_code=[Instruction(MAKE_FUNCTION, __init__), Instruction(LOAD_PARAM, radius), Instruction(LOAD_PARAM, self), Instruction(STORE_ATTR, _radius), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __init__), Instruction(LOAD_NAME, property), Instruction(LOAD_CONST, CodeObject(name='radius', byte_code=[Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, _radius), Instruction(RETURN_VALUE, None)], source_code='def radius(self):\n        return self._radius', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(543, 544), language='python')), Instruction(MAKE_FUNCTION, 0), Instruction(CALL, 0), Instruction(STORE_NAME, radius), Instruction(LOAD_NAME, property), Instruction(LOAD_CONST, CodeObject(name='area', byte_code=[Instruction(LOAD_CONST, 3.14), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, _radius), Instruction(LOAD_CONST, 2.0), Instruction(BINARY_OP, 8), Instruction(BINARY_OP, 5), Instruction(RETURN_VALUE, None)], source_code='def area(self):\n        return 3.14 * self._radius**2', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(553, 554), language='python')), Instruction(MAKE_FUNCTION, 0), Instruction(CALL, 0), Instruction(STORE_NAME, area)], source_code='class Circle:\n    def __init__(self, radius):\n        self._radius = radius\n\n    @property\n    def radius(self):\n        return self._radius\n\n    @radius.setter\n    def radius(self, value):\n        if value < 0:\n            raise ValueError("Radius cannot be negative")\n        self._radius = value\n\n    @property\n    def area(self):\n        return 3.14 * self._radius**2', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(538, 554), language='python')
+LOAD_CONST Circle
 MAKE_FUNCTION 0
 LOAD_CONST Circle
 CALL 2
@@ -1548,11 +1548,11 @@ LOAD_NAME print
 LOAD_CONST "\n--- 6. Advanced Features ---"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name='my_decorator', byte_code=[Instruction(LOAD_GLOBAL, wrapper), Instruction(RETURN_VALUE, None)], source_code='def my_decorator(func):\n    @wraps(func)\n    def wrapper(*args, **kwargs):\n        print("Something is happening before the function is called.")\n        result = func(*args, **kwargs)\n        print("Something is happening after the function is called.")\n        return result\n\n    return wrapper', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(575, 583), language='python')
+LOAD_CONST my_decorator
 MAKE_FUNCTION 0
 STORE_NAME my_decorator
 LOAD_NAME my_decorator
-LOAD_CONST CodeObject(name='say_whee', byte_code=[Instruction(LOAD_CONST, "Whee!"), Instruction(RETURN_VALUE, None)], source_code='def say_whee():\n    return "Whee!"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(587, 588), language='python')
+LOAD_CONST say_whee
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME say_whee
@@ -1565,7 +1565,7 @@ LOAD_NAME print
 LOAD_CONST "6.1. Decorators: PASSED"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name='my_generator', byte_code=[Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, range), Instruction(LOAD_PARAM, n), Instruction(CALL, 1), Instruction(GET_ITER, None), Instruction(FOR_ITER, 5), Instruction(STORE_NAME, i), Instruction(LOAD_CONST, None), Instruction(YIELD_VALUE, None), Instruction(POP_TOP, None), Instruction(JUMP_BACKWARD, 6), Instruction(END_FOR, None), Instruction(RETURN_VALUE, None)], source_code='def my_generator(n):\n    for i in range(n):\n        yield i', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(596, 598), language='python')
+LOAD_CONST my_generator
 GENERATOR_FUNCTION 0
 STORE_NAME my_generator
 PUSH_NULL None
@@ -1611,10 +1611,10 @@ RERAISE 0
 COPY 3
 POP_EXCEPT None
 RERAISE 1
-LOAD_CONST CodeObject(name='my_coroutine', byte_code=[Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, asyncio), Instruction(LOAD_ATTR, sleep), Instruction(LOAD_CONST, 0.01), Instruction(CALL, 1), Instruction(AWAIT_EXPRESSION, None), Instruction(POP_TOP, None), Instruction(LOAD_CONST, "Coroutine finished"), Instruction(RETURN_VALUE, None)], source_code='async def my_coroutine():\n    await asyncio.sleep(0.01)\n    return "Coroutine finished"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(612, 614), language='python')
+LOAD_CONST my_coroutine
 ASYNC_FUNCTION 0
 STORE_NAME my_coroutine
-LOAD_CONST CodeObject(name='main_async', byte_code=[Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, my_coroutine), Instruction(CALL, 0), Instruction(AWAIT_EXPRESSION, None), Instruction(STORE_GLOBAL, result), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, print), Instruction(LOAD_CONST, "6.3. Coroutines (async/await): PASSED"), Instruction(CALL, 1), Instruction(POP_TOP, None), Instruction(RETURN_VALUE, None)], source_code='async def main_async():\n    result = await my_coroutine()\n    print("6.3. Coroutines (async/await): PASSED")', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(617, 619), language='python')
+LOAD_CONST main_async
 ASYNC_FUNCTION 0
 STORE_NAME main_async
 PUSH_NULL None
@@ -1627,14 +1627,14 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='MyMeta', byte_code=[Instruction(MAKE_FUNCTION, __new__), Instruction(LOAD_CONST, "Hello from metaclass"), Instruction(LOAD_PARAM, dct), Instruction(LOAD_CONST, "new_attribute"), Instruction(STORE_SUBSCR, None), Instruction(PUSH_NULL, None), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, super), Instruction(CALL, 0), Instruction(LOAD_ATTR, __new__), Instruction(LOAD_PARAM, cls), Instruction(LOAD_PARAM, name), Instruction(LOAD_PARAM, bases), Instruction(LOAD_PARAM, dct), Instruction(CALL, 4), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __new__)], source_code='class MyMeta(type):\n    def __new__(cls, name, bases, dct):\n        dct["new_attribute"] = "Hello from metaclass"\n        return super().__new__(cls, name, bases, dct)', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(626, 629), language='python')
+LOAD_CONST MyMeta
 MAKE_FUNCTION 0
 LOAD_CONST MyMeta
 CALL 2
 STORE_NAME MyMeta
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='MyClassWithMeta', byte_code=[], source_code='class MyClassWithMeta(metaclass=MyMeta):\n    pass', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(632, 633), language='python')
+LOAD_CONST MyClassWithMeta
 MAKE_FUNCTION 0
 LOAD_CONST MyClassWithMeta
 CALL 2
@@ -1653,7 +1653,7 @@ LOAD_NAME print
 LOAD_CONST "6.4. Metaclasses: PASSED"
 CALL 1
 POP_TOP None
-LOAD_CONST CodeObject(name='hinted_function', byte_code=[Instruction(LOAD_PARAM, name), Instruction(FORMAT_VALUE, None), Instruction(LOAD_CONST,  is ), Instruction(LOAD_PARAM, age), Instruction(FORMAT_VALUE, None), Instruction(LOAD_CONST,  years old.), Instruction(BUILD_STRING, 4), Instruction(RETURN_VALUE, None)], source_code='def hinted_function(name: str, age: int) -> str:\n    return f"{name} is {age} years old."', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(642, 643), language='python')
+LOAD_CONST hinted_function
 MAKE_FUNCTION 0
 STORE_NAME hinted_function
 PUSH_NULL None
@@ -1830,7 +1830,7 @@ CALL 1
 POP_TOP None
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='DynamicClass', byte_code=[], source_code='class DynamicClass:\n    pass', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(701, 702), language='python')
+LOAD_CONST DynamicClass
 MAKE_FUNCTION 0
 LOAD_CONST DynamicClass
 CALL 2
@@ -1937,7 +1937,7 @@ LOAD_CONST None
 STORE_NAME none_val
 LOAD_CONST ...
 STORE_NAME ellipsis_val
-LOAD_CONST CodeObject(name='function_with_ellipsis', byte_code=[Instruction(LOAD_CONST, ...), Instruction(RETURN_VALUE, None)], source_code='def function_with_ellipsis(*args, **kwargs) -> ...:\n    return ...', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(742, 743), language='python')
+LOAD_CONST function_with_ellipsis
 MAKE_FUNCTION 0
 STORE_NAME function_with_ellipsis
 LOAD_CONST 42.0
@@ -2116,7 +2116,7 @@ STORE_NAME count
 JUMP_BACKWARD 9
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='SimpleContext', byte_code=[Instruction(MAKE_FUNCTION, __enter__), Instruction(LOAD_CONST, "context_value"), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __enter__), Instruction(MAKE_FUNCTION, __exit__), Instruction(LOAD_CONST, False), Instruction(RETURN_VALUE, None), Instruction(STORE_NAME, __exit__)], source_code='class SimpleContext:\n    def __enter__(self):\n        return "context_value"\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        return False', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(808, 813), language='python')
+LOAD_CONST SimpleContext
 MAKE_FUNCTION 0
 LOAD_CONST SimpleContext
 CALL 2
@@ -2180,7 +2180,7 @@ LOAD_CONST 1.0
 LOAD_CONST 1.0
 COMPARE_OP None
 BINARY_OPERATION None
-LOAD_CONST CodeObject(name='empty_func', byte_code=[Instruction(RETURN_VALUE, None)], source_code='def empty_func():\n    pass', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(828, 829), language='python')
+LOAD_CONST empty_func
 MAKE_FUNCTION 0
 STORE_NAME empty_func
 PUSH_NULL None
@@ -2202,7 +2202,7 @@ POP_JUMP_IF_FALSE 5
 BINARY_OPERATION None
 JUMP_BACKWARD 13
 END_FOR None
-LOAD_CONST CodeObject(name='test_raise', byte_code=[Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, ValueError), Instruction(LOAD_CONST, "Test error"), Instruction(CALL, 1), Instruction(BINARY_OPERATION, None), Instruction(RETURN_VALUE, None)], source_code='def test_raise():\n    raise ValueError("Test error")', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(840, 841), language='python')
+LOAD_CONST test_raise
 MAKE_FUNCTION 0
 STORE_NAME test_raise
 LOAD_CONST 0
@@ -2217,18 +2217,18 @@ IMPORT_NAME sys
 STORE_NAME system
 LOAD_CONST "global"
 STORE_GLOBAL global_var
-LOAD_CONST CodeObject(name='test_global', byte_code=[Instruction(LOAD_CONST, "modified"), Instruction(STORE_GLOBAL, global_var), Instruction(RETURN_VALUE, None)], source_code='def test_global():\n    global global_var\n    global_var = "modified"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(852, 854), language='python')
+LOAD_CONST test_global
 MAKE_FUNCTION 0
 STORE_NAME test_global
-LOAD_CONST CodeObject(name='outer', byte_code=[Instruction(LOAD_CONST, "outer"), Instruction(STORE_GLOBAL, nonlocal_var), Instruction(MAKE_FUNCTION, inner), Instruction(LOAD_CONST, "inner"), Instruction(STORE_DEREF, nonlocal_var), Instruction(RETURN_VALUE, None), Instruction(STORE_GLOBAL, inner), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, inner), Instruction(CALL, 0), Instruction(POP_TOP, None), Instruction(LOAD_DEREF, nonlocal_var), Instruction(RETURN_VALUE, None)], source_code='def outer():\n    nonlocal_var = "outer"\n\n    def inner():\n        nonlocal nonlocal_var\n        nonlocal_var = "inner"\n\n    inner()\n    return nonlocal_var', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(857, 865), language='python')
+LOAD_CONST outer
 MAKE_FUNCTION 0
 STORE_NAME outer
 LOAD_CONST 42.0
 STORE_GLOBAL simple_global
-LOAD_CONST CodeObject(name='read_simple_global', byte_code=[Instruction(LOAD_GLOBAL, simple_global), Instruction(RETURN_VALUE, None)], source_code='def read_simple_global():\n    # This should generate LOAD_NAME (not declared as global)\n    return simple_global', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(875, 877), language='python')
+LOAD_CONST read_simple_global
 MAKE_FUNCTION 0
 STORE_NAME read_simple_global
-LOAD_CONST CodeObject(name='modify_simple_global', byte_code=[Instruction(LOAD_GLOBAL, simple_global), Instruction(LOAD_CONST, 1.0), Instruction(BINARY_OP, 0), Instruction(STORE_GLOBAL, simple_global), Instruction(LOAD_CONST, 100.0), Instruction(STORE_GLOBAL, simple_global), Instruction(RETURN_VALUE, None)], source_code='def modify_simple_global():\n    global simple_global\n    # This should generate LOAD_GLOBAL and STORE_GLOBAL\n    simple_global = simple_global + 1\n    simple_global = 100', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(880, 884), language='python')
+LOAD_CONST modify_simple_global
 MAKE_FUNCTION 0
 STORE_NAME modify_simple_global
 LOAD_CONST 10.0
@@ -2237,37 +2237,37 @@ LOAD_CONST 20.0
 STORE_GLOBAL global_y
 LOAD_CONST 30.0
 STORE_GLOBAL global_z
-LOAD_CONST CodeObject(name='multiple_globals', byte_code=[Instruction(LOAD_GLOBAL, global_x), Instruction(LOAD_CONST, 2.0), Instruction(BINARY_OP, 5), Instruction(STORE_GLOBAL, global_x), Instruction(LOAD_GLOBAL, global_y), Instruction(LOAD_GLOBAL, global_x), Instruction(BINARY_OP, 0), Instruction(STORE_GLOBAL, global_y), Instruction(LOAD_GLOBAL, global_x), Instruction(LOAD_GLOBAL, global_y), Instruction(BINARY_OP, 0), Instruction(LOAD_GLOBAL, global_z), Instruction(BINARY_OP, 0), Instruction(STORE_GLOBAL, global_z), Instruction(LOAD_GLOBAL, global_x), Instruction(LOAD_GLOBAL, global_y), Instruction(LOAD_GLOBAL, global_z), Instruction(RETURN_VALUE, None)], source_code='def multiple_globals():\n    global global_x, global_y, global_z\n    # All of these should generate LOAD_GLOBAL/STORE_GLOBAL\n    global_x = global_x * 2\n    global_y = global_y + global_x\n    global_z = global_x + global_y + global_z\n    return global_x, global_y, global_z', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(893, 899), language='python')
+LOAD_CONST multiple_globals
 MAKE_FUNCTION 0
 STORE_NAME multiple_globals
 LOAD_CONST "I am global"
 STORE_GLOBAL mixed_var
-LOAD_CONST CodeObject(name='mixed_scope', byte_code=[Instruction(LOAD_CONST, "I am local"), Instruction(STORE_GLOBAL, local_var), Instruction(LOAD_GLOBAL, local_var), Instruction(STORE_GLOBAL, temp), Instruction(LOAD_GLOBAL, mixed_var), Instruction(STORE_GLOBAL, global_temp), Instruction(LOAD_CONST, "Modified by function"), Instruction(STORE_GLOBAL, mixed_var), Instruction(LOAD_CONST, "Modified locally"), Instruction(STORE_GLOBAL, local_var), Instruction(LOAD_GLOBAL, local_var), Instruction(LOAD_GLOBAL, mixed_var), Instruction(RETURN_VALUE, None)], source_code='def mixed_scope():\n    local_var = "I am local"\n    global mixed_var\n\n    # This should generate LOAD_NAME for local_var\n    temp = local_var\n\n    # This should generate LOAD_GLOBAL for mixed_var\n    global_temp = mixed_var\n\n    # This should generate STORE_GLOBAL\n    mixed_var = "Modified by function"\n\n    # This should generate STORE_NAME\n    local_var = "Modified locally"\n\n    return local_var, mixed_var', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(906, 922), language='python')
+LOAD_CONST mixed_scope
 MAKE_FUNCTION 0
 STORE_NAME mixed_scope
 LOAD_CONST "key"
 LOAD_CONST "value"
 BUILD_MAP 1
 STORE_GLOBAL context_global
-LOAD_CONST CodeObject(name='global_in_expressions', byte_code=[Instruction(LOAD_GLOBAL, context_global), Instruction(LOAD_CONST, "key"), Instruction(BINARY_SUBSCR, None), Instruction(STORE_GLOBAL, value), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, context_global), Instruction(LOAD_ATTR, keys), Instruction(CALL, 0), Instruction(STORE_GLOBAL, keys), Instruction(LOAD_CONST, "new_key"), Instruction(LOAD_CONST, "new_value"), Instruction(LOAD_CONST, "count"), Instruction(LOAD_CONST, 42.0), Instruction(BUILD_MAP, 2), Instruction(STORE_GLOBAL, context_global), Instruction(LOAD_GLOBAL, context_global), Instruction(POP_JUMP_IF_FALSE, 10), Instruction(LOAD_GLOBAL, context_global), Instruction(LOAD_CONST, "count"), Instruction(BINARY_SUBSCR, None), Instruction(LOAD_CONST, 1.0), Instruction(BINARY_OP, 0), Instruction(LOAD_GLOBAL, context_global), Instruction(LOAD_CONST, "count"), Instruction(STORE_SUBSCR, None), Instruction(RETURN_VALUE, None)], source_code='def global_in_expressions():\n    global context_global\n\n    # LOAD_GLOBAL in subscript context\n    value = context_global["key"]\n\n    # LOAD_GLOBAL in method call\n    keys = context_global.keys()\n\n    # STORE_GLOBAL with complex value\n    context_global = {"new_key": "new_value", "count": 42}\n\n    # LOAD_GLOBAL in conditional\n    if context_global:\n        # LOAD_GLOBAL in augmented assignment\n        context_global["count"] = context_global["count"] + 1', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(929, 944), language='python')
+LOAD_CONST global_in_expressions
 MAKE_FUNCTION 0
 STORE_NAME global_in_expressions
-LOAD_CONST CodeObject(name='global_function', byte_code=[Instruction(LOAD_CONST, "I am a global function"), Instruction(RETURN_VALUE, None)], source_code='def global_function():\n    return "I am a global function"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(948, 949), language='python')
+LOAD_CONST global_function
 MAKE_FUNCTION 0
 STORE_NAME global_function
 PUSH_NULL None
 LOAD_BUILD_CLASS None
-LOAD_CONST CodeObject(name='GlobalClass', byte_code=[], source_code='class GlobalClass:\n    pass', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(952, 953), language='python')
+LOAD_CONST GlobalClass
 MAKE_FUNCTION 0
 LOAD_CONST GlobalClass
 CALL 2
 STORE_NAME GlobalClass
-LOAD_CONST CodeObject(name='test_global_callables', byte_code=[Instruction(LOAD_GLOBAL, global_function), Instruction(STORE_GLOBAL, func_ref), Instruction(LOAD_GLOBAL, GlobalClass), Instruction(STORE_GLOBAL, class_ref), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, global_function), Instruction(CALL, 0), Instruction(STORE_GLOBAL, result), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, GlobalClass), Instruction(CALL, 0), Instruction(STORE_GLOBAL, instance), Instruction(LOAD_GLOBAL, func_ref), Instruction(LOAD_GLOBAL, class_ref), Instruction(LOAD_GLOBAL, result), Instruction(LOAD_GLOBAL, instance), Instruction(RETURN_VALUE, None)], source_code='def test_global_callables():\n    # These should generate LOAD_NAME, not LOAD_GLOBAL (no global declaration)\n    func_ref = global_function\n    class_ref = GlobalClass\n\n    # Calling them\n    result = global_function()\n    instance = GlobalClass()\n\n    return func_ref, class_ref, result, instance', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(956, 965), language='python')
+LOAD_CONST test_global_callables
 MAKE_FUNCTION 0
 STORE_NAME test_global_callables
 LOAD_CONST "outer"
 STORE_GLOBAL outer_global
-LOAD_CONST CodeObject(name='outer_with_global', byte_code=[Instruction(LOAD_CONST, "inner"), Instruction(STORE_GLOBAL, inner_var), Instruction(MAKE_FUNCTION, inner_with_global), Instruction(LOAD_GLOBAL, outer_global), Instruction(STORE_GLOBAL, temp1), Instruction(LOAD_DEREF, inner_var), Instruction(STORE_GLOBAL, temp2), Instruction(LOAD_CONST, "modified by inner"), Instruction(STORE_GLOBAL, outer_global), Instruction(LOAD_CONST, "modified by inner"), Instruction(STORE_DEREF, inner_var), Instruction(RETURN_VALUE, None), Instruction(STORE_GLOBAL, inner_with_global), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, inner_with_global), Instruction(CALL, 0), Instruction(POP_TOP, None), Instruction(LOAD_DEREF, inner_var), Instruction(LOAD_GLOBAL, outer_global), Instruction(RETURN_VALUE, None)], source_code='def outer_with_global():\n    inner_var = "inner"\n\n    def inner_with_global():\n        global outer_global\n        nonlocal inner_var\n\n        # LOAD_GLOBAL for outer_global\n        temp1 = outer_global\n\n        # LOAD_NAME for inner_var (nonlocal, not global)\n        temp2 = inner_var\n\n        # STORE_GLOBAL for outer_global\n        outer_global = "modified by inner"\n\n        # STORE_NAME for inner_var\n        inner_var = "modified by inner"\n\n    inner_with_global()\n    return inner_var, outer_global', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(972, 992), language='python')
+LOAD_CONST outer_with_global
 MAKE_FUNCTION 0
 STORE_NAME outer_with_global
 LOAD_CONST 1.0
@@ -2277,17 +2277,17 @@ LOAD_CONST 4.0
 LOAD_CONST 5.0
 BUILD_LIST 5
 STORE_GLOBAL comp_global
-LOAD_CONST CodeObject(name='global_in_comprehensions', byte_code=[Instruction(BUILD_LIST, 0), Instruction(LOAD_GLOBAL, comp_global), Instruction(GET_ITER, None), Instruction(FOR_ITER, 10), Instruction(STORE_FAST, x), Instruction(LOAD_FAST, x), Instruction(LOAD_CONST, 2.0), Instruction(BINARY_OP, 5), Instruction(LIST_APPEND, 1), Instruction(JUMP_FORWARD, 3), Instruction(STORE_GLOBAL, doubled), Instruction(LOAD_GLOBAL, comp_global), Instruction(GET_ITER, None), Instruction(FOR_ITER, 8), Instruction(STORE_FAST, x), Instruction(LOAD_FAST, x), Instruction(LOAD_CONST, 2.0), Instruction(BINARY_OP, 8), Instruction(JUMP_FORWARD, 2), Instruction(STORE_GLOBAL, gen), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, list), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, range), Instruction(LOAD_CONST, 10.0), Instruction(CALL, 1), Instruction(CALL, 1), Instruction(STORE_GLOBAL, comp_global), Instruction(LOAD_GLOBAL, doubled), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, list), Instruction(LOAD_GLOBAL, gen), Instruction(CALL, 1), Instruction(RETURN_VALUE, None)], source_code='def global_in_comprehensions():\n    global comp_global\n\n    # LOAD_GLOBAL in list comprehension\n    doubled = [x * 2 for x in comp_global]\n\n    # LOAD_GLOBAL in generator expression\n    gen = (x**2 for x in comp_global)\n\n    # STORE_GLOBAL\n    comp_global = list(range(10))\n\n    return doubled, list(gen)', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(999, 1011), language='python')
+LOAD_CONST global_in_comprehensions
 MAKE_FUNCTION 0
 STORE_NAME global_in_comprehensions
 LOAD_CONST "global shadow"
 STORE_GLOBAL shadow_var
-LOAD_CONST CodeObject(name='shadow_test', byte_code=[Instruction(LOAD_CONST, "local shadow"), Instruction(STORE_GLOBAL, shadow_var), Instruction(MAKE_FUNCTION, inner_shadow), Instruction(LOAD_CONST, "modified local"), Instruction(STORE_DEREF, shadow_var), Instruction(RETURN_VALUE, None), Instruction(STORE_GLOBAL, inner_shadow), Instruction(MAKE_FUNCTION, inner_global_shadow), Instruction(LOAD_CONST, "modified global"), Instruction(STORE_DEREF, shadow_var), Instruction(RETURN_VALUE, None), Instruction(STORE_GLOBAL, inner_global_shadow), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, inner_shadow), Instruction(CALL, 0), Instruction(POP_TOP, None), Instruction(LOAD_DEREF, shadow_var), Instruction(STORE_GLOBAL, local_result), Instruction(PUSH_NULL, None), Instruction(LOAD_GLOBAL, inner_global_shadow), Instruction(CALL, 0), Instruction(POP_TOP, None), Instruction(LOAD_GLOBAL, local_result), Instruction(RETURN_VALUE, None)], source_code='def shadow_test():\n    # This creates a local variable, should use LOAD_NAME/STORE_NAME\n    shadow_var = "local shadow"\n\n    def inner_shadow():\n        # This accesses the local from outer function\n        nonlocal shadow_var\n        shadow_var = "modified local"\n\n    def inner_global_shadow():\n        # This accesses the global, should use LOAD_GLOBAL/STORE_GLOBAL\n        global shadow_var\n        shadow_var = "modified global"\n\n    inner_shadow()\n    local_result = shadow_var\n\n    inner_global_shadow()\n\n    return local_result', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(1018, 1037), language='python')
+LOAD_CONST shadow_test
 MAKE_FUNCTION 0
 STORE_NAME shadow_test
 LOAD_CONST "my custom type"
 STORE_GLOBAL type
-LOAD_CONST CodeObject(name='global_shadowing_builtin', byte_code=[Instruction(LOAD_GLOBAL, type), Instruction(STORE_GLOBAL, current), Instruction(LOAD_CONST, "modified type"), Instruction(STORE_GLOBAL, type), Instruction(LOAD_GLOBAL, __builtins__), Instruction(LOAD_ATTR, type), Instruction(STORE_GLOBAL, actual_type), Instruction(LOAD_GLOBAL, current), Instruction(LOAD_GLOBAL, actual_type), Instruction(RETURN_VALUE, None)], source_code='def global_shadowing_builtin():\n    global type\n\n    # LOAD_GLOBAL for our global \'type\'\n    current = type\n\n    # STORE_GLOBAL\n    type = "modified type"\n\n    # Using the actual builtin (should be different)\n    actual_type = __builtins__.type\n\n    return current, actual_type', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(1044, 1056), language='python')
+LOAD_CONST global_shadowing_builtin
 MAKE_FUNCTION 0
 STORE_NAME global_shadowing_builtin
 LOAD_CONST 42.0
@@ -2786,7 +2786,7 @@ LOAD_CONST "inner"
 BINARY_SUBSCR None
 LOAD_CONST "deep"
 STORE_SUBSCR None
-LOAD_CONST CodeObject(name='get_store_key', byte_code=[Instruction(LOAD_CONST, "funcKey"), Instruction(RETURN_VALUE, None)], source_code='def get_store_key():\n    return "funcKey"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(1220, 1221), language='python')
+LOAD_CONST get_store_key
 MAKE_FUNCTION 0
 STORE_NAME get_store_key
 LOAD_CONST "from function"
@@ -2976,12 +2976,12 @@ LOAD_ATTR instance_variable
 RETURN_VALUE None
 STORE_NAME instance_method
 LOAD_NAME classmethod
-LOAD_CONST CodeObject(name='class_method', byte_code=[Instruction(LOAD_PARAM, cls), Instruction(LOAD_ATTR, class_variable), Instruction(RETURN_VALUE, None)], source_code='def class_method(cls):\n        return cls.class_variable', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(465, 466), language='python')
+LOAD_CONST class_method
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME class_method
 LOAD_NAME staticmethod
-LOAD_CONST CodeObject(name='static_method', byte_code=[Instruction(LOAD_CONST, "static"), Instruction(RETURN_VALUE, None)], source_code='def static_method():\n        return "static"', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(469, 470), language='python')
+LOAD_CONST static_method
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME static_method
@@ -3075,12 +3075,12 @@ STORE_ATTR _radius
 RETURN_VALUE None
 STORE_NAME __init__
 LOAD_NAME property
-LOAD_CONST CodeObject(name='radius', byte_code=[Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, _radius), Instruction(RETURN_VALUE, None)], source_code='def radius(self):\n        return self._radius', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(543, 544), language='python')
+LOAD_CONST radius
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME radius
 LOAD_NAME property
-LOAD_CONST CodeObject(name='area', byte_code=[Instruction(LOAD_CONST, 3.14), Instruction(LOAD_PARAM, self), Instruction(LOAD_ATTR, _radius), Instruction(LOAD_CONST, 2.0), Instruction(BINARY_OP, 8), Instruction(BINARY_OP, 5), Instruction(RETURN_VALUE, None)], source_code='def area(self):\n        return 3.14 * self._radius**2', path=PosixPath('/Users/mav/dev/malwi/tests/source_samples/python.py'), location=(553, 554), language='python')
+LOAD_CONST area
 MAKE_FUNCTION 0
 CALL 0
 STORE_NAME area
