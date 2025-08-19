@@ -28,6 +28,7 @@ class SpecialCases(Enum):
     STRING_BASH = "STRING_BASH"
     STRING_SQL = "STRING_SQL"
     STRING_CODE = "STRING_CODE"
+    STRING_LARGE_PAYLOAD = "STRING_LARGE_PAYLOAD"
     STRING = "STRING"
     MALFORMED_FILE = "MALFORMED_FILE"
     MALFORMED_SYNTAX = "MALFORMED_SYNTAX"
@@ -649,3 +650,23 @@ def is_sql(text: str) -> bool:
     if not isinstance(text, str):
         return False
     return _is_sql_cached(text)
+
+
+@lru_cache(maxsize=8192)
+def _is_large_payload_cached(text: str) -> bool:
+    """
+    Cached function to detect large payloads.
+    Simply checks if the string is abnormally long.
+    """
+    # If the string is longer than 5KB, it's likely an obfuscated payload
+    return len(text) > 5000
+
+
+def is_large_payload(text: str) -> bool:
+    """
+    Fast function to detect large payloads commonly found in malware.
+    Simply checks string length - abnormally long strings are suspicious.
+    """
+    if not isinstance(text, str):
+        return False
+    return _is_large_payload_cached(text)

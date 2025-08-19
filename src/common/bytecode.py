@@ -30,6 +30,7 @@ from common.mapping import (
     is_bash_code,
     is_sql,
     is_code,
+    is_large_payload,
     SENSITIVE_PATHS,
 )
 
@@ -397,6 +398,9 @@ class Instruction:
         elif len(argval) <= STRING_MAX_LENGTH:
             return f"{op_code.name} {argval}"
         # Long strings - check for specific patterns with early exit
+        # Check for large obfuscated payloads first (high priority for malware detection)
+        elif is_large_payload(argval):
+            return f"{op_code.name} {SpecialCases.STRING_LARGE_PAYLOAD.value}"
         elif is_bash_code(argval):
             return f"{op_code.name} {SpecialCases.STRING_BASH.value}"
         elif is_sql(argval):
