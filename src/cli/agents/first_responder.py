@@ -9,7 +9,7 @@ from typing import Literal
 from pydantic import Field
 from autogen_agentchat.agents import AssistantAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
-from autogen_agentchat.ui import Console
+from autogen_core.models import ModelInfo, ModelFamily
 from pydantic import BaseModel
 
 from common.messaging import warning, error
@@ -58,9 +58,6 @@ class FirstResponder:
 - malicious: Contains clear malicious behavior"""
 
         try:
-            # Create model client following the cookbook example
-            from autogen_core.models import ModelInfo, ModelFamily
-
             model_client = OpenAIChatCompletionClient(
                 model=model,
                 api_key=api_key,
@@ -72,6 +69,8 @@ class FirstResponder:
                     vision=False,
                     structured_output=True,
                 ),
+                # Add Mistral-specific JSON mode parameters
+                create_args={"response_format": {"type": "json_object"}},
             )
 
             # Create AssistantAgent with structured output following cookbook
@@ -133,16 +132,43 @@ class FirstResponder:
             )
 
         try:
-            # Follow cookbook example exactly - use Console and run_stream
+            # Send analysis request using structured output without console output
             message = f"Analyze these files:\n\n{llm_content}"
-            result = await Console(self.agent.run_stream(task=message))
+            stream = self.agent.run_stream(task=message)
+            result = None
+            async for chunk in stream:
+                result = chunk
 
             # Extract the structured response from the last message
             if result and result.messages:
                 structured_result = result.messages[-1].content
-                # With response_format=TriageDecision, this should be a TriageDecision object
+                # With structured output, this should be a TriageDecision object
                 if isinstance(structured_result, TriageDecision):
                     return structured_result
+                # If it's a string, try to parse it
+                elif isinstance(structured_result, str):
+                    try:
+                        import json
+
+                        data = json.loads(structured_result)
+                        return TriageDecision.model_validate(data)
+                    except Exception:
+                        # JSON parsing failed, return a safe fallback decision based on content
+                        if "malicious" in structured_result.lower():
+                            return TriageDecision(
+                                decision="malicious",
+                                reasoning="Malicious behavior detected (JSON parsing fallback)",
+                            )
+                        elif "benign" in structured_result.lower():
+                            return TriageDecision(
+                                decision="benign",
+                                reasoning="No malicious behavior detected (JSON parsing fallback)",
+                            )
+                        else:
+                            return TriageDecision(
+                                decision="suspicious",
+                                reasoning="Potential issues detected (JSON parsing fallback)",
+                            )
 
             return TriageDecision(
                 decision="suspicious", reasoning="No structured response received"
@@ -177,7 +203,7 @@ class FirstResponder:
 - suspicious: Some files have concerning patterns but not definitively malicious
 - malicious: Contains clear malicious behavior
 
-For suspicious or malicious decisions, extract ONLY the malicious code parts from each file (removing benign code) to create clean training data for ML. The extracted code must be syntactically correct and compilable (include necessary imports, proper indentation, complete function definitions)."""
+Leave the file_extracts field empty - file extraction will be handled separately."""
 
             # Create smart agent following cookbook example
             from autogen_core.models import ModelInfo, ModelFamily
@@ -193,6 +219,8 @@ For suspicious or malicious decisions, extract ONLY the malicious code parts fro
                     vision=False,
                     structured_output=True,
                 ),
+                # Add Mistral-specific JSON mode parameters
+                create_args={"response_format": {"type": "json_object"}},
             )
 
             smart_agent = AssistantAgent(
@@ -202,16 +230,43 @@ For suspicious or malicious decisions, extract ONLY the malicious code parts fro
                 output_content_type=TriageDecision,
             )
 
-            # Follow cookbook example exactly - use Console and run_stream
+            # Send analysis request using structured output without console output
             message = f"Analyze these files:\n\n{llm_content}"
-            result = await Console(smart_agent.run_stream(task=message))
+            stream = smart_agent.run_stream(task=message)
+            result = None
+            async for chunk in stream:
+                result = chunk
 
             # Extract the structured response from the last message
             if result and result.messages:
                 structured_result = result.messages[-1].content
-                # With response_format=TriageDecision, this should be a TriageDecision object
+                # With structured output, this should be a TriageDecision object
                 if isinstance(structured_result, TriageDecision):
                     return structured_result
+                # If it's a string, try to parse it
+                elif isinstance(structured_result, str):
+                    try:
+                        import json
+
+                        data = json.loads(structured_result)
+                        return TriageDecision.model_validate(data)
+                    except Exception:
+                        # JSON parsing failed, return a safe fallback decision based on content
+                        if "malicious" in structured_result.lower():
+                            return TriageDecision(
+                                decision="malicious",
+                                reasoning="Malicious behavior detected (JSON parsing fallback)",
+                            )
+                        elif "benign" in structured_result.lower():
+                            return TriageDecision(
+                                decision="benign",
+                                reasoning="No malicious behavior detected (JSON parsing fallback)",
+                            )
+                        else:
+                            return TriageDecision(
+                                decision="suspicious",
+                                reasoning="Potential issues detected (JSON parsing fallback)",
+                            )
 
             return TriageDecision(
                 decision="suspicious", reasoning="No structured response received"

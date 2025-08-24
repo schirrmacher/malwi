@@ -4,7 +4,6 @@ PyPI package scanner for malwi.
 Downloads and scans PyPI packages for malicious content.
 """
 
-import re
 import json
 import tempfile
 import tarfile

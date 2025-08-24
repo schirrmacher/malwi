@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-from common.messaging import configure_messaging, info, error
+from common.messaging import configure_messaging, error
 from common.triage import run_triage
 
 
@@ -31,8 +31,6 @@ def triage_command(args):
 
     # Get base URL from args or environment variable
     base_url = getattr(args, "llm_base_url", None) or os.environ.get("LLM_BASE_URL")
-
-    info(f"🔍 Triaging {args.input} with {args.llm}")
 
     try:
         # Run triage - will organize files into folders
