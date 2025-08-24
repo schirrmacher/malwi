@@ -15,6 +15,7 @@ def run_triage(
     llm_model: str,
     api_key: str,
     base_url: str = None,
+    output_dir: str = "triaged",
     benign_folder: str = "benign",
     suspicious_folder: str = "suspicious",
     malicious_folder: str = "malicious",
@@ -29,6 +30,7 @@ def run_triage(
         llm_model: LLM model to use for analysis
         api_key: API key for the LLM service
         base_url: Base URL for the LLM API (auto-derived if None)
+        output_dir: Output directory name for triage results
         benign_folder: Name of folder for benign files
         suspicious_folder: Name of folder for suspicious files
         malicious_folder: Name of folder for malicious files
@@ -44,23 +46,21 @@ def run_triage(
     # Initialize FirstResponder agent
     first_responder = FirstResponder(api_key, llm_model, base_url)
 
-    # Create output folders
-    output_base = path / "triage_results"
-    benign_folder = output_base / benign_folder
-    suspicious_folder = output_base / suspicious_folder
-    malicious_folder = output_base / malicious_folder
+    # Create output folders - independent from input directory
+    output_base = Path(output_dir).resolve()
+    benign_path = output_base / benign_folder
+    suspicious_path = output_base / suspicious_folder
+    malicious_path = output_base / malicious_folder
 
     # Clean and create folders
     if output_base.exists():
         shutil.rmtree(output_base)
-    benign_folder.mkdir(parents=True, exist_ok=True)
-    suspicious_folder.mkdir(parents=True, exist_ok=True)
-    malicious_folder.mkdir(parents=True, exist_ok=True)
+    benign_path.mkdir(parents=True, exist_ok=True)
+    suspicious_path.mkdir(parents=True, exist_ok=True)
+    malicious_path.mkdir(parents=True, exist_ok=True)
 
     # Get immediate child directories
-    child_dirs = [
-        d for d in path.iterdir() if d.is_dir() and d.name != "triage_results"
-    ]
+    child_dirs = [d for d in path.iterdir() if d.is_dir()]
 
     if not child_dirs:
         info("No subdirectories found - analyzing files in root directory")
@@ -115,17 +115,17 @@ def run_triage(
             # Determine target folder based on decision
             decision_lower = decision.decision.lower()
             if decision_lower == "benign":
-                target_folder = benign_folder
+                target_folder = benign_path
                 total_stats["benign"] += 1
                 info(f"  ✓ BENIGN folder: {child_dir.name}")
                 info(f"    Reasoning: {decision.reasoning}")
             elif decision_lower == "malicious":
-                target_folder = malicious_folder
+                target_folder = malicious_path
                 total_stats["malicious"] += 1
                 error(f"  ⚠ MALICIOUS folder: {child_dir.name}")
                 error(f"    Reasoning: {decision.reasoning}")
             else:  # suspicious
-                target_folder = suspicious_folder
+                target_folder = suspicious_path
                 total_stats["suspicious"] += 1
                 warning(f"  ? SUSPICIOUS folder: {child_dir.name}")
                 warning(f"    Reasoning: {decision.reasoning}")
@@ -143,15 +143,15 @@ def run_triage(
     success(f"\n{'=' * 50}")
     success(f"Triage Complete - Folders organized in: {output_base}")
     success(f"{'=' * 50}")
-    info(f"  Benign folders:     {total_stats['benign']} → {benign_folder.name}/")
+    info(f"  Benign folders:     {total_stats['benign']} → {benign_path.name}/")
     warning(
-        f"  Suspicious folders: {total_stats['suspicious']} → {suspicious_folder.name}/"
+        f"  Suspicious folders: {total_stats['suspicious']} → {suspicious_path.name}/"
     )
     if total_stats["malicious"] > 0:
         error(
-            f"  Malicious folders:  {total_stats['malicious']} → {malicious_folder.name}/"
+            f"  Malicious folders:  {total_stats['malicious']} → {malicious_path.name}/"
         )
     else:
         info(
-            f"  Malicious folders:  {total_stats['malicious']} → {malicious_folder.name}/"
+            f"  Malicious folders:  {total_stats['malicious']} → {malicious_path.name}/"
         )

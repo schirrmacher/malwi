@@ -38,6 +38,7 @@ def triage_command(args):
             llm_model=args.llm,
             api_key=api_key,
             base_url=getattr(args, "base_url", None),
+            output_dir=args.output,
             benign_folder=args.benign,
             suspicious_folder=args.suspicious,
             malicious_folder=args.malicious,
@@ -91,6 +92,12 @@ def setup_triage_parser(subparsers):
         "--malicious",
         default="malicious",
         help="Folder name for malicious files (default: malicious)",
+    )
+
+    parser.add_argument(
+        "--output",
+        default="triaged",
+        help="Output directory path for triage results (default: triaged)",
     )
 
     parser.add_argument(

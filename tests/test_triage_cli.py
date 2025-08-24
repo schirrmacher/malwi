@@ -168,6 +168,18 @@ class TestTriageCLIArguments:
         args = self.parser.parse_args(["triage", "/test/path"])
         assert getattr(args, "llm_api_key", None) is None
 
+    def test_default_output_directory(self):
+        """Test that default output directory is 'triaged'."""
+        args = self.parser.parse_args(["triage", "/test/path"])
+        assert args.output == "triaged"
+
+    def test_custom_output_directory(self):
+        """Test that custom output directory can be specified."""
+        args = self.parser.parse_args(
+            ["triage", "/test/path", "--output", "my-results"]
+        )
+        assert args.output == "my-results"
+
 
 class TestTriageCommand:
     """Test the triage command execution."""
@@ -205,6 +217,7 @@ class TestTriageCommand:
         args.llm = "mistral-large-2411"
         args.llm_api_key = None  # Not provided via CLI
         args.base_url = None
+        args.output = "triaged"
         args.benign = "benign"
         args.suspicious = "suspicious"
         args.malicious = "malicious"
@@ -232,6 +245,7 @@ class TestTriageCommand:
             args.llm = "mistral-large-2411"
             args.llm_api_key = "cli-key"  # Provided via CLI
             args.base_url = None
+            args.output = "triaged"
             args.benign = "benign"
             args.suspicious = "suspicious"
             args.malicious = "malicious"
@@ -261,6 +275,7 @@ class TestTriageCommand:
         args.llm = "test-model"
         args.llm_api_key = "test-key"
         args.base_url = "https://test.api.com/v1"
+        args.output = "triaged"
         args.benign = "clean_files"
         args.suspicious = "questionable_files"
         args.malicious = "dangerous_files"
@@ -273,6 +288,7 @@ class TestTriageCommand:
             llm_model="test-model",
             api_key="test-key",
             base_url="https://test.api.com/v1",
+            output_dir="triaged",
             benign_folder="clean_files",
             suspicious_folder="questionable_files",
             malicious_folder="dangerous_files",
@@ -300,6 +316,11 @@ class TestRunTriageFunction:
     def teardown_method(self):
         """Clean up test environment."""
         shutil.rmtree(self.test_dir)
+        # Clean up any output directories created during tests
+        for output_dir in ["triaged", "custom_output", "custom_results"]:
+            output_path = Path(output_dir).resolve()
+            if output_path.exists():
+                shutil.rmtree(output_path)
 
     @patch("common.triage.FirstResponder")
     def test_folders_created_with_custom_names(self, mock_first_responder):
@@ -316,13 +337,14 @@ class TestRunTriageFunction:
             llm_model="test-model",
             api_key="test-key",
             base_url="https://test.api.com/v1",
+            output_dir="custom_output",
             benign_folder="safe_files",
             suspicious_folder="maybe_files",
             malicious_folder="bad_files",
         )
 
-        # Check that folders were created with custom names
-        results_dir = self.test_input / "triage_results"
+        # Check that folders were created with custom names - independent directory
+        results_dir = Path("custom_output").resolve()
         assert (results_dir / "safe_files").exists()
         assert (results_dir / "maybe_files").exists()
         assert (results_dir / "bad_files").exists()
@@ -341,7 +363,7 @@ class TestRunTriageFunction:
             input_path=str(self.test_input), llm_model="test-model", api_key="test-key"
         )
 
-        results_dir = self.test_input / "triage_results"
+        results_dir = Path("triaged").resolve()
 
         # Check benign folder was moved correctly
         assert (results_dir / "benign" / "benign_folder" / "safe.py").exists()
@@ -371,6 +393,29 @@ class TestRunTriageFunction:
             run_triage(
                 input_path=str(test_file), llm_model="test-model", api_key="test-key"
             )
+
+    @patch("common.triage.FirstResponder")
+    def test_custom_output_directory(self, mock_first_responder):
+        """Test that custom output directory is used."""
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync.return_value = TriageDecision(
+            decision="benign", reasoning="Safe code"
+        )
+
+        run_triage(
+            input_path=str(self.test_input),
+            llm_model="test-model",
+            api_key="test-key",
+            output_dir="custom_results",
+        )
+
+        # Check that custom output directory was created - independent directory
+        results_dir = Path("custom_results").resolve()
+        assert results_dir.exists()
+        assert (results_dir / "benign").exists()
+        assert (results_dir / "suspicious").exists()
+        assert (results_dir / "malicious").exists()
 
 
 class TestIntegrationScenarios:
@@ -408,6 +453,11 @@ class TestIntegrationScenarios:
     def teardown_method(self):
         """Clean up test environment."""
         shutil.rmtree(self.test_dir)
+        # Clean up any output directories created during tests
+        for output_dir in ["triaged"]:
+            output_path = Path(output_dir).resolve()
+            if output_path.exists():
+                shutil.rmtree(output_path)
 
     @patch("common.triage.FirstResponder")
     def test_realistic_triage_scenario(self, mock_first_responder):
@@ -445,7 +495,7 @@ class TestIntegrationScenarios:
             malicious_folder="quarantine",
         )
 
-        results_dir = self.test_input / "triage_results"
+        results_dir = Path("triaged").resolve()
 
         # Verify correct categorization
         assert (results_dir / "clean" / "legitimate_app").exists()
@@ -480,7 +530,7 @@ class TestIntegrationScenarios:
             )
 
             # Should analyze the root directory itself
-            results_dir = empty_dir / "triage_results"
+            results_dir = Path("triaged").resolve()
             assert results_dir.exists()
 
 
