@@ -1,33 +1,28 @@
 """
-First Responder Agent for initial malware triage decisions.
+First Responder Agent for initial malware triage decisions using AutoGen.
 """
 
 import json
-import os
-import warnings
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List
 from dataclasses import dataclass
 
-import autogen
-from autogen import ConversableAgent
+from autogen import AssistantAgent
 
-from common.messaging import info, success, warning, error
+from common.messaging import warning, error
 
 
 @dataclass
 class TriageDecision:
-    """Represents a triage decision for a file."""
+    """Represents a triage decision for a folder."""
 
-    file_path: str
     decision: str  # "benign", "suspicious", "malicious"
     reasoning: str
 
 
 class FirstResponder:
     """
-    First Responder Agent that analyzes concatenated malicious files
-    and makes initial triage decisions using AG2 with Mistral.
+    First Responder Agent that analyzes files using AutoGen AssistantAgent with Mistral.
     """
 
     def __init__(self, api_key: str, model: str = "mistral-medium-2508"):
@@ -40,156 +35,133 @@ class FirstResponder:
         """
         self.api_key = api_key
         self.model = model
-        self.agent = None
 
-        if not api_key or api_key == "demo":
+        if not api_key:
             error("Valid API key required for triage analysis")
+            self.agent = None
             return
 
-        # Set up AG2 configuration for Mistral
-        os.environ["MISTRAL_API_KEY"] = api_key
+        # Configure Mistral for AutoGen
+        config_list = [
+            {
+                "model": model,
+                "api_key": api_key,
+                "base_url": "https://api.mistral.ai/v1",
+            }
+        ]
+
+        system_message = """You are a malware analysis expert. Analyze ALL the provided code files together and give a single decision for the entire folder:
+- benign: All files appear safe, likely false positives
+- suspicious: Some files have concerning patterns but not definitively malicious
+- malicious: Contains clear malicious behavior
+
+Respond with JSON only: {"decision": "malicious", "reasoning": "brief reason for the entire folder"}
+
+Example response:
+{"decision": "malicious", "reasoning": "Contains base64 encoded payload and remote execution commands"}
+
+Do not include any other text, explanations, or markdown formatting. Only JSON."""
 
         try:
-            # Suppress AG2 warnings during initialization
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                from autogen import LLMConfig
-
-                llm_config = LLMConfig(
-                    api_type="mistral",
-                    model=model,
-                    api_key=api_key,
-                    temperature=0.1,
-                    max_tokens=4000,
-                )
-
-                self.agent = ConversableAgent(
-                    name="MalwareAnalyst",
-                    system_message="""You are a malware analysis expert specializing in Python code triage. 
-Your task is to analyze potentially malicious Python files and categorize each one as:
-
-- benign: Code appears safe, likely false positive from scanner
-- suspicious: Code has concerning patterns but may not be definitively malicious  
-- malicious: Code contains clear malicious behavior (data exfiltration, backdoors, etc.)
-
-For each file, provide:
-1. Decision (benign/suspicious/malicious)
-2. Brief reasoning (2-3 sentences explaining why)
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "decisions": [
-    {
-      "file_path": "path/to/file",
-      "decision": "malicious",
-      "reasoning": "Contains clear backdoor with command execution and data exfiltration to remote server."
-    }
-  ]
-}""",
-                    llm_config=llm_config,
-                    human_input_mode="NEVER",
-                    max_consecutive_auto_reply=1,
-                )
-            pass  # Agent initialized successfully
+            # Create AutoGen AssistantAgent
+            self.agent = AssistantAgent(
+                name="MalwareAnalyst",
+                system_message=system_message,
+                llm_config={
+                    "config_list": config_list,
+                    "temperature": 0.1,
+                    "max_tokens": 500,
+                    "timeout": 30,
+                },
+                human_input_mode="NEVER",
+            )
         except Exception as e:
+            error(f"Failed to initialize AutoGen agent: {e}")
             self.agent = None
 
-    def analyze_files(self, llm_content: str) -> List[TriageDecision]:
+    def analyze_files_sync(self, llm_content: str) -> TriageDecision:
         """
-        Analyze the concatenated file content and make triage decisions.
+        Analyze the concatenated file content and make a triage decision.
 
         Args:
-            llm_content: Concatenated content from malicious files
+            llm_content: Concatenated content from files
 
         Returns:
-            List of triage decisions for each file
+            Single triage decision for the folder
         """
         if not self.agent:
-            return self._fallback_analysis(llm_content)
-
-        # Create analysis prompt
-        user_prompt = f"""Analyze these Python files that were flagged as malicious by malwi scanner:
-
-{llm_content}
-
-Provide your triage decisions in the specified JSON format."""
+            error("Agent not initialized - API key required")
+            return TriageDecision(
+                decision="suspicious", reasoning="No API key provided"
+            )
 
         try:
-            # Use AG2 to analyze the content
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                response = self.agent.generate_reply(
-                    messages=[{"role": "user", "content": user_prompt}]
+            # Create a simple user proxy to send the message
+            from autogen import UserProxyAgent
+
+            user_proxy = UserProxyAgent(
+                name="User",
+                human_input_mode="NEVER",
+                max_consecutive_auto_reply=1,
+                is_termination_msg=lambda x: True,  # Always terminate after one response
+                code_execution_config=False,  # Disable code execution
+            )
+
+            # Send analysis request
+            message = f"Analyze these files:\n\n{llm_content}"
+
+            # Initiate chat
+            result = user_proxy.initiate_chat(
+                self.agent, message=message, max_turns=1, silent=True
+            )
+
+            # Extract response from chat history
+            if result and hasattr(result, "chat_history") and result.chat_history:
+                last_message = result.chat_history[-1]
+                content = last_message.get("content", "")
+            elif result and hasattr(result, "summary"):
+                content = result.summary
+            else:
+                # Fallback: get last message from agent's chat history
+                if hasattr(self.agent, "_oai_messages") and self.agent._oai_messages:
+                    content = self.agent._oai_messages[-1].get("content", "")
+                else:
+                    content = ""
+
+            if not content:
+                error("No response content from agent")
+                return TriageDecision(
+                    decision="suspicious", reasoning="No response from agent"
                 )
 
-            if not response:
-                info("No response from LLM - using fallback")
-                return self._fallback_analysis(llm_content)
+            # Extract JSON from response
+            json_start = content.find("{")
+            json_end = content.rfind("}") + 1
 
-            # Parse response
-            try:
-                # Handle different response formats
-                if hasattr(response, "content"):
-                    response_text = response.content
-                elif isinstance(response, dict) and "content" in response:
-                    response_text = response["content"]
-                else:
-                    response_text = str(response)
+            if json_start >= 0 and json_end > 0:
+                json_text = content[json_start:json_end]
+                result_data = json.loads(json_text)
 
-                # Debug logging removed for cleaner output
+                return TriageDecision(
+                    decision=result_data.get("decision", "suspicious"),
+                    reasoning=result_data.get("reasoning", "Unable to determine"),
+                )
+            else:
+                error(f"No valid JSON found in response: {content[:100]}...")
+                return TriageDecision(
+                    decision="suspicious", reasoning="Invalid response format"
+                )
 
-                # Handle markdown code blocks
-                if "```json" in response_text:
-                    json_start = response_text.find("```json") + 7
-                    json_end = response_text.find("```", json_start)
-                    if json_end != -1:
-                        json_text = response_text[json_start:json_end].strip()
-                    else:
-                        info("Malformed JSON markdown block - using fallback")
-                        return self._fallback_analysis(llm_content)
-                else:
-                    # Fallback to finding raw JSON
-                    json_start = response_text.find("{")
-                    json_end = response_text.rfind("}") + 1
-
-                    if json_start == -1 or json_end == 0:
-                        info("No JSON found in LLM response - using fallback")
-                        return self._fallback_analysis(llm_content)
-
-                    json_text = response_text[json_start:json_end]
-                response_data = json.loads(json_text)
-
-                decisions = []
-                for decision_data in response_data.get("decisions", []):
-                    decision = TriageDecision(
-                        file_path=decision_data["file_path"],
-                        decision=decision_data["decision"].upper(),
-                        reasoning=decision_data["reasoning"],
-                    )
-                    decisions.append(decision)
-
-                info(f"LLM provided {len(decisions)} triage decisions")
-                return decisions
-
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                info(f"Failed to parse LLM response: {e} - using fallback")
-                return self._fallback_analysis(llm_content)
-
-        except Exception:
-            return self._fallback_analysis(llm_content)
-
-    def _fallback_analysis(self, llm_content: str) -> List[TriageDecision]:
-        """
-        Fallback analysis when LLM analysis fails.
-
-        Args:
-            llm_content: Concatenated file content
-
-        Returns:
-            Empty list since we require LLM for proper analysis
-        """
-        error("LLM analysis failed - cannot perform triage without AI reasoning")
-        return []
+        except json.JSONDecodeError as e:
+            error(f"Failed to parse JSON response: {e}")
+            return TriageDecision(
+                decision="suspicious", reasoning=f"JSON parse error: {str(e)}"
+            )
+        except Exception as e:
+            error(f"Error during analysis: {e}")
+            return TriageDecision(
+                decision="suspicious", reasoning=f"Analysis error: {str(e)}"
+            )
 
     def process_triage_decisions(
         self,
@@ -221,33 +193,28 @@ Provide your triage decisions in the specified JSON format."""
         suspicious_folder.mkdir(parents=True, exist_ok=True)
         malicious_folder.mkdir(parents=True, exist_ok=True)
 
-        # Create decision lookup by file path
-        decision_map = {d.file_path: d for d in decisions}
-
         moved_files = {"benign": [], "suspicious": [], "malicious": []}
 
-        for source_file in source_files:
-            source_str = str(source_file)
-            decision = decision_map.get(source_str)
-
-            if not decision:
-                warning(
-                    f"No decision found for {source_file}, defaulting to suspicious"
+        for i, source_file in enumerate(source_files):
+            if i < len(decisions):
+                decision = decisions[i]
+            else:
+                warning(f"No decision for {source_file}, defaulting to suspicious")
+                decision = TriageDecision(
+                    decision="suspicious", reasoning="No decision available"
                 )
+
+            # Map decision to folder
+            decision_lower = decision.decision.lower()
+            if decision_lower == "benign":
+                target_folder = benign_folder
+                category = "benign"
+            elif decision_lower == "malicious":
+                target_folder = malicious_folder
+                category = "malicious"
+            else:  # suspicious
                 target_folder = suspicious_folder
                 category = "suspicious"
-            else:
-                # Map decision to folder (case insensitive)
-                decision_lower = decision.decision.lower()
-                if decision_lower == "benign":
-                    target_folder = benign_folder
-                    category = "benign"
-                elif decision_lower == "malicious":
-                    target_folder = malicious_folder
-                    category = "malicious"
-                else:  # suspicious
-                    target_folder = suspicious_folder
-                    category = "suspicious"
 
             try:
                 # Calculate relative path and copy file
@@ -255,7 +222,6 @@ Provide your triage decisions in the specified JSON format."""
                 dest_file = target_folder / rel_path
                 dest_file.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source_file, dest_file)
-
                 moved_files[category].append(str(source_file))
 
             except Exception as e:
