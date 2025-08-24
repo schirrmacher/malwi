@@ -103,9 +103,9 @@ def setup_triage_parser(subparsers):
 
     parser.add_argument(
         "--strategy",
-        choices=["concat", "single"],
+        choices=["concat", "single", "smart"],
         default="concat",
-        help="Triage strategy: 'concat' sends all files in a folder together (default), 'single' analyzes each file individually",
+        help="Triage strategy: 'concat' sends all files in a folder together (default), 'single' analyzes each file individually, 'smart' like concat but only saves extracted malicious code (no folder copying)",
     )
 
     parser.add_argument(

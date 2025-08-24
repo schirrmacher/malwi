@@ -92,8 +92,12 @@ def run_triage(
             decision = _analyze_folder_concat(
                 first_responder, child_dir, files_to_analyze
             )
-        else:  # single
+        elif strategy == "single":
             decision = _analyze_folder_single(
+                first_responder, child_dir, files_to_analyze
+            )
+        else:  # smart
+            decision = _analyze_folder_smart(
                 first_responder, child_dir, files_to_analyze
             )
 
@@ -115,14 +119,64 @@ def run_triage(
             warning(f"  ? SUSPICIOUS folder: {child_dir.name}")
             warning(f"    Reasoning: {decision.reasoning}")
 
-        # Copy entire folder to target location
-        try:
-            dest_folder = target_folder / child_dir.name
-            if dest_folder.exists():
-                shutil.rmtree(dest_folder)
-            shutil.copytree(child_dir, dest_folder)
-        except Exception as e:
-            error(f"  Failed to copy folder {child_dir.name}: {e}")
+        # Handle folder copying based on strategy
+        if strategy == "smart":
+            # Smart strategy: Create only individual malicious code files
+            if decision_lower in ["suspicious", "malicious"] and decision.file_extracts:
+                # Ensure target folder exists
+                target_folder.mkdir(parents=True, exist_ok=True)
+
+                # Create individual files with only malicious code for ML training
+                for filename, malicious_code in decision.file_extracts.items():
+                    try:
+                        # Create file with original name and extension
+                        dest_file = target_folder / filename
+
+                        # If file exists, add folder prefix to avoid conflicts
+                        if dest_file.exists():
+                            file_path = Path(filename)
+                            stem = file_path.stem
+                            suffix = file_path.suffix
+                            dest_file = (
+                                target_folder / f"{child_dir.name}_{stem}{suffix}"
+                            )
+
+                        # Create parent directories if they don't exist
+                        dest_file.parent.mkdir(parents=True, exist_ok=True)
+
+                        # Write only the malicious code parts
+                        with open(dest_file, "w", encoding="utf-8") as f:
+                            # Convert \n escape sequences to actual line breaks
+                            formatted_code = malicious_code.replace(
+                                "\\n", "\n"
+                            ).replace("\\t", "\t")
+                            f.write(formatted_code)
+
+                        info(f"    📄 Created malicious code file: {dest_file.name}")
+                    except Exception as e:
+                        error(f"  Failed to create malicious code file {filename}: {e}")
+            else:
+                # Log why no file was created
+                if decision_lower == "benign":
+                    info(f"    ✅ Skipped {child_dir.name} (classified as benign)")
+                elif not decision.file_extracts:
+                    warning(
+                        f"    ⚠️  Skipped {child_dir.name} (no malicious code extracted - possible LLM error)"
+                    )
+                    warning(f"        Reasoning: {decision.reasoning}")
+                else:
+                    info(
+                        f"    ℹ️  Skipped {child_dir.name} (no malicious code extracted)"
+                    )
+        else:
+            # Other strategies: Copy entire folder to target location
+            try:
+                dest_folder = target_folder / child_dir.name
+                if dest_folder.exists():
+                    shutil.rmtree(dest_folder)
+                shutil.copytree(child_dir, dest_folder)
+            except Exception as e:
+                error(f"  Failed to copy folder {child_dir.name}: {e}")
 
     # Print summary
     success(f"\n{'=' * 50}")
@@ -260,3 +314,48 @@ def _analyze_folder_single(first_responder, child_dir, files_to_analyze):
     else:
         reasoning = f"All {len(benign_files)} files appear benign"
         return TriageDecision(decision="benign", reasoning=reasoning)
+
+
+def _analyze_folder_smart(first_responder, child_dir, files_to_analyze):
+    """
+    Analyze a folder by concatenating all files and sending them together to the LLM
+    with smart extraction of malicious code parts.
+
+    Args:
+        first_responder: FirstResponder agent instance
+        child_dir: Path object for the directory being analyzed
+        files_to_analyze: List of file paths to analyze
+
+    Returns:
+        TriageDecision object with the folder decision and extracted malicious code
+    """
+    # Read and concatenate file contents (same as concat strategy)
+    concatenated_content = ""
+    file_map = {}  # Map file content markers to actual paths
+
+    for file_path in files_to_analyze:
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+                # Clean content of control characters that can break JSON
+                import re
+
+                content = re.sub(r"[\x00-\x1f\x7f]", "", content)
+                # Use relative path from child_dir for cleaner output
+                rel_path = file_path.relative_to(child_dir)
+                file_marker = f"{child_dir.name}/{rel_path}"
+                concatenated_content += f"\n### FILE: {file_marker}\n{content}\n"
+                file_map[file_marker] = file_path
+        except Exception as e:
+            error(f"  Error reading {file_path}: {e}")
+            continue
+
+    if concatenated_content:
+        # Analyze folder with FirstResponder using smart analysis
+        return first_responder.analyze_files_sync_smart(concatenated_content)
+    else:
+        from cli.agents.first_responder import TriageDecision
+
+        return TriageDecision(
+            decision="suspicious", reasoning="No readable files found"
+        )

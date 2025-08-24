@@ -6,7 +6,7 @@ import os
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 
 from cli.agents.first_responder import FirstResponder, TriageDecision
@@ -186,12 +186,15 @@ class TestTriageCLIArguments:
         assert args.strategy == "concat"
 
     def test_strategy_choices_accepted(self):
-        """Test that both concat and single strategies are accepted."""
+        """Test that concat, single, and smart strategies are accepted."""
         args = self.parser.parse_args(["triage", "/test/path", "--strategy", "concat"])
         assert args.strategy == "concat"
 
         args = self.parser.parse_args(["triage", "/test/path", "--strategy", "single"])
         assert args.strategy == "single"
+
+        args = self.parser.parse_args(["triage", "/test/path", "--strategy", "smart"])
+        assert args.strategy == "smart"
 
     def test_invalid_strategy_rejected(self):
         """Test that invalid strategy choices are rejected."""
@@ -596,6 +599,192 @@ class TestRunTriageFunction:
 
         # Folder should be classified as benign when all files are benign
         assert (results_dir / "benign" / "clean_folder").exists()
+
+    @patch("common.triage.FirstResponder")
+    def test_smart_strategy_calls_analyze_files_sync_smart(self, mock_first_responder):
+        """Test that smart strategy calls analyze_files_sync_smart method."""
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync_smart.return_value = TriageDecision(
+            decision="malicious",
+            reasoning="Contains malicious code",
+            file_extracts={"test.py": "exec('rm -rf /')"},
+        )
+
+        run_triage(
+            input_path=str(self.test_input),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="smart",
+        )
+
+        # Should be called once for each folder (benign_folder and malicious_folder)
+        assert mock_agent.analyze_files_sync_smart.call_count == 2
+
+        # Verify normal analyze_files_sync is not called
+        assert mock_agent.analyze_files_sync.call_count == 0
+
+    @patch("common.triage.FirstResponder")
+    def test_smart_strategy_creates_malicious_code_file_for_malicious(
+        self, mock_first_responder
+    ):
+        """Test that smart strategy creates malicious code analysis file for malicious folders."""
+        # Create a fresh test directory
+        test_dir = Path(self.test_dir) / "test_smart_malicious"
+        test_dir.mkdir()
+
+        # Create test folder
+        test_folder = test_dir / "malicious_folder"
+        test_folder.mkdir()
+        (test_folder / "bad.py").write_text("exec('malicious')")
+
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync_smart.return_value = TriageDecision(
+            decision="malicious",
+            reasoning="Contains destructive commands",
+            file_extracts={"malicious.py": "exec('rm -rf /')"},
+        )
+
+        run_triage(
+            input_path=str(test_dir),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="smart",
+        )
+
+        results_dir = Path("triaged").resolve()
+
+        # Smart strategy: Check that malicious code file was created
+        malicious_file = results_dir / "malicious" / "malicious.py"
+        assert malicious_file.exists()
+
+        # Smart strategy: Check that the original folder was NOT copied
+        malicious_folder = results_dir / "malicious" / "malicious_folder"
+        assert not malicious_folder.exists()
+
+        # Check file content contains only malicious code
+        content = malicious_file.read_text()
+        assert "exec('rm -rf /')" in content
+
+    @patch("common.triage.FirstResponder")
+    def test_smart_strategy_creates_malicious_code_file_for_suspicious(
+        self, mock_first_responder
+    ):
+        """Test that smart strategy creates malicious code analysis file for suspicious folders."""
+        # Create a fresh test directory
+        test_dir = Path(self.test_dir) / "test_smart_suspicious"
+        test_dir.mkdir()
+
+        # Create test folder
+        test_folder = test_dir / "suspicious_folder"
+        test_folder.mkdir()
+        (test_folder / "questionable.py").write_text("import subprocess")
+
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync_smart.return_value = TriageDecision(
+            decision="suspicious",
+            reasoning="Uses subprocess calls",
+            file_extracts={"questionable.py": "subprocess.call(['ls', '-la'])"},
+        )
+
+        run_triage(
+            input_path=str(test_dir),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="smart",
+        )
+
+        results_dir = Path("triaged").resolve()
+
+        # Smart strategy: Check that malicious code file was created
+        suspicious_file = results_dir / "suspicious" / "questionable.py"
+        assert suspicious_file.exists()
+
+        # Smart strategy: Check that the original folder was NOT copied
+        suspicious_folder = results_dir / "suspicious" / "suspicious_folder"
+        assert not suspicious_folder.exists()
+
+        # Check file content contains only malicious code
+        content = suspicious_file.read_text()
+        assert "subprocess.call(['ls', '-la'])" in content
+
+    @patch("common.triage.FirstResponder")
+    def test_smart_strategy_no_file_for_benign(self, mock_first_responder):
+        """Test that smart strategy does not create malicious code file for benign folders."""
+        # Create a fresh test directory
+        test_dir = Path(self.test_dir) / "test_smart_benign"
+        test_dir.mkdir()
+
+        # Create test folder
+        test_folder = test_dir / "benign_folder"
+        test_folder.mkdir()
+        (test_folder / "safe.py").write_text("print('hello')")
+
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync_smart.return_value = TriageDecision(
+            decision="benign",
+            reasoning="Safe code",
+            file_extracts={},  # No malicious code
+        )
+
+        run_triage(
+            input_path=str(test_dir),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="smart",
+        )
+
+        results_dir = Path("triaged").resolve()
+
+        # Smart strategy: For benign folders, no files should be created at all
+        benign_folder = results_dir / "benign" / "benign_folder"
+        assert not benign_folder.exists()
+
+        # Check that no malicious code files were created for benign folder
+        benign_files = list(results_dir.glob("benign/**/*.py"))
+        assert len(benign_files) == 0
+
+    @patch("common.triage.FirstResponder")
+    def test_smart_strategy_no_file_when_empty_file_extracts(
+        self, mock_first_responder
+    ):
+        """Test that smart strategy does not create file when file_extracts is empty."""
+        # Create a fresh test directory
+        test_dir = Path(self.test_dir) / "test_smart_empty"
+        test_dir.mkdir()
+
+        # Create test folder
+        test_folder = test_dir / "suspicious_folder"
+        test_folder.mkdir()
+        (test_folder / "questionable.py").write_text("import os")
+
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync_smart.return_value = TriageDecision(
+            decision="suspicious",
+            reasoning="Uses os module",
+            file_extracts={},  # Empty file extracts
+        )
+
+        run_triage(
+            input_path=str(test_dir),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="smart",
+        )
+
+        results_dir = Path("triaged").resolve()
+
+        # Smart strategy: When file_extracts is empty, no files should be created
+        suspicious_folder = results_dir / "suspicious" / "suspicious_folder"
+        assert not suspicious_folder.exists()
+
+        # Check that no malicious code files were created due to empty file_extracts
+        suspicious_files = list(results_dir.glob("suspicious/**/*.py"))
+        assert len(suspicious_files) == 0
 
 
 class TestIntegrationScenarios:
