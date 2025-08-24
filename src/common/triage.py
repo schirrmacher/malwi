@@ -5,6 +5,8 @@ Triage functionality for analyzing files with LLM models and organizing them.
 import shutil
 from pathlib import Path
 
+from tqdm import tqdm
+from tabulate import tabulate
 from common.messaging import info, warning, error, success
 from cli.agents.first_responder import FirstResponder
 
@@ -64,17 +66,13 @@ def run_triage(
     child_dirs = [d for d in path.iterdir() if d.is_dir()]
 
     if not child_dirs:
-        info("No subdirectories found - analyzing files in root directory")
         child_dirs = [path]
 
-    info(f"Processing {len(child_dirs)} directories")
-
     total_stats = {"benign": 0, "suspicious": 0, "malicious": 0}
+    files_created = {"suspicious": 0, "malicious": 0}
 
-    # Process each child directory
-    for child_dir in child_dirs:
-        info(f"\nAnalyzing folder: {child_dir.name}")
-
+    # Process each child directory with progress bar
+    for child_dir in tqdm(child_dirs, desc="Analyzing directories"):
         # Collect Python and JavaScript files
         files_to_analyze = []
         extensions = [".py", ".js", ".mjs", ".cjs"]
@@ -83,10 +81,7 @@ def run_triage(
             files_to_analyze.extend(list(child_dir.rglob(f"*{ext}")))
 
         if not files_to_analyze:
-            info(f"  No files to analyze in {child_dir.name}")
             continue
-
-        info(f"  Found {len(files_to_analyze)} files")
 
         if strategy == "concat":
             decision = _analyze_folder_concat(
@@ -106,18 +101,12 @@ def run_triage(
         if decision_lower == "benign":
             target_folder = benign_path
             total_stats["benign"] += 1
-            info(f"  ✓ BENIGN folder: {child_dir.name}")
-            info(f"    Reasoning: {decision.reasoning}")
         elif decision_lower == "malicious":
             target_folder = malicious_path
             total_stats["malicious"] += 1
-            error(f"  ⚠ MALICIOUS folder: {child_dir.name}")
-            error(f"    Reasoning: {decision.reasoning}")
         else:  # suspicious
             target_folder = suspicious_path
             total_stats["suspicious"] += 1
-            warning(f"  ? SUSPICIOUS folder: {child_dir.name}")
-            warning(f"    Reasoning: {decision.reasoning}")
 
         # Handle folder copying based on strategy
         if strategy == "smart":
@@ -152,22 +141,10 @@ def run_triage(
                             ).replace("\\t", "\t")
                             f.write(formatted_code)
 
-                        info(f"    📄 Created malicious code file: {dest_file.name}")
+                        files_created[decision_lower] += 1
                     except Exception as e:
                         error(f"  Failed to create malicious code file {filename}: {e}")
-            else:
-                # Log why no file was created
-                if decision_lower == "benign":
-                    info(f"    ✅ Skipped {child_dir.name} (classified as benign)")
-                elif not decision.file_extracts:
-                    warning(
-                        f"    ⚠️  Skipped {child_dir.name} (no malicious code extracted - possible LLM error)"
-                    )
-                    warning(f"        Reasoning: {decision.reasoning}")
-                else:
-                    info(
-                        f"    ℹ️  Skipped {child_dir.name} (no malicious code extracted)"
-                    )
+            # Skip logging for non-extracted files to reduce noise
         else:
             # Other strategies: Copy entire folder to target location
             try:
@@ -178,22 +155,28 @@ def run_triage(
             except Exception as e:
                 error(f"  Failed to copy folder {child_dir.name}: {e}")
 
-    # Print summary
-    success(f"\n{'=' * 50}")
-    success(f"Triage Complete - Folders organized in: {output_base}")
-    success(f"{'=' * 50}")
-    info(f"  Benign folders:     {total_stats['benign']} → {benign_path.name}/")
-    warning(
-        f"  Suspicious folders: {total_stats['suspicious']} → {suspicious_path.name}/"
-    )
-    if total_stats["malicious"] > 0:
-        error(
-            f"  Malicious folders:  {total_stats['malicious']} → {malicious_path.name}/"
+    # Print summary table
+    print(f"\nTriage Complete: {output_base}")
+
+    # Prepare data for table
+    table_data = [
+        ["Benign", total_stats["benign"]],
+        ["Suspicious", total_stats["suspicious"]],
+        ["Malicious", total_stats["malicious"]],
+    ]
+
+    if strategy == "smart":
+        total_files = files_created["suspicious"] + files_created["malicious"]
+        table_data.extend(
+            [
+                ["", ""],  # Empty row separator
+                ["Files Created", total_files],
+                ["  - Suspicious", files_created["suspicious"]],
+                ["  - Malicious", files_created["malicious"]],
+            ]
         )
-    else:
-        info(
-            f"  Malicious folders:  {total_stats['malicious']} → {malicious_path.name}/"
-        )
+
+    print(tabulate(table_data, headers=["Category", "Count"], tablefmt="simple"))
 
 
 def _analyze_folder_concat(first_responder, child_dir, files_to_analyze):

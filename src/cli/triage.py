@@ -32,7 +32,7 @@ def triage_command(args):
     # Get base URL from args or environment variable
     base_url = getattr(args, "llm_base_url", None) or os.environ.get("LLM_BASE_URL")
 
-    info(f"Starting triage of {args.input} using {args.llm} model")
+    info(f"🔍 Triaging {args.input} with {args.llm}")
 
     try:
         # Run triage - will organize files into folders
