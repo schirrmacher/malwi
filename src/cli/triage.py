@@ -42,6 +42,7 @@ def triage_command(args):
             benign_folder=args.benign,
             suspicious_folder=args.suspicious,
             malicious_folder=args.malicious,
+            strategy=args.strategy,
         )
 
     except Exception as e:
@@ -98,6 +99,13 @@ def setup_triage_parser(subparsers):
         "--output",
         default="triaged",
         help="Output directory path for triage results (default: triaged)",
+    )
+
+    parser.add_argument(
+        "--strategy",
+        choices=["concat", "single"],
+        default="concat",
+        help="Triage strategy: 'concat' sends all files in a folder together (default), 'single' analyzes each file individually",
     )
 
     parser.add_argument(

@@ -4,7 +4,6 @@ Triage functionality for analyzing files with LLM models and organizing them.
 
 import shutil
 from pathlib import Path
-from typing import Dict
 
 from common.messaging import info, warning, error, success
 from cli.agents.first_responder import FirstResponder
@@ -19,6 +18,7 @@ def run_triage(
     benign_folder: str = "benign",
     suspicious_folder: str = "suspicious",
     malicious_folder: str = "malicious",
+    strategy: str = "concat",
 ) -> None:
     """
     Run triage on the specified input path using FirstResponder agent.
@@ -34,6 +34,7 @@ def run_triage(
         benign_folder: Name of folder for benign files
         suspicious_folder: Name of folder for suspicious files
         malicious_folder: Name of folder for malicious files
+        strategy: Triage strategy - 'concat' or 'single'
     """
     path = Path(input_path)
 
@@ -87,57 +88,41 @@ def run_triage(
 
         info(f"  Found {len(files_to_analyze)} files")
 
-        # Read and concatenate file contents
-        concatenated_content = ""
-        file_map = {}  # Map file content markers to actual paths
+        if strategy == "concat":
+            decision = _analyze_folder_concat(
+                first_responder, child_dir, files_to_analyze
+            )
+        else:  # single
+            decision = _analyze_folder_single(
+                first_responder, child_dir, files_to_analyze
+            )
 
-        for file_path in files_to_analyze:
-            try:
-                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                    content = f.read()
-                    # Clean content of control characters that can break JSON
-                    import re
+        # Determine target folder based on decision
+        decision_lower = decision.decision.lower()
+        if decision_lower == "benign":
+            target_folder = benign_path
+            total_stats["benign"] += 1
+            info(f"  ✓ BENIGN folder: {child_dir.name}")
+            info(f"    Reasoning: {decision.reasoning}")
+        elif decision_lower == "malicious":
+            target_folder = malicious_path
+            total_stats["malicious"] += 1
+            error(f"  ⚠ MALICIOUS folder: {child_dir.name}")
+            error(f"    Reasoning: {decision.reasoning}")
+        else:  # suspicious
+            target_folder = suspicious_path
+            total_stats["suspicious"] += 1
+            warning(f"  ? SUSPICIOUS folder: {child_dir.name}")
+            warning(f"    Reasoning: {decision.reasoning}")
 
-                    content = re.sub(r"[\x00-\x1f\x7f]", "", content)
-                    # Use relative path from child_dir for cleaner output
-                    rel_path = file_path.relative_to(child_dir)
-                    file_marker = f"{child_dir.name}/{rel_path}"
-                    concatenated_content += f"\n### FILE: {file_marker}\n{content}\n"
-                    file_map[file_marker] = file_path
-            except Exception as e:
-                error(f"  Error reading {file_path}: {e}")
-                continue
-
-        if concatenated_content:
-            # Analyze folder with FirstResponder - gets single decision for entire folder
-            decision = first_responder.analyze_files_sync(concatenated_content)
-
-            # Determine target folder based on decision
-            decision_lower = decision.decision.lower()
-            if decision_lower == "benign":
-                target_folder = benign_path
-                total_stats["benign"] += 1
-                info(f"  ✓ BENIGN folder: {child_dir.name}")
-                info(f"    Reasoning: {decision.reasoning}")
-            elif decision_lower == "malicious":
-                target_folder = malicious_path
-                total_stats["malicious"] += 1
-                error(f"  ⚠ MALICIOUS folder: {child_dir.name}")
-                error(f"    Reasoning: {decision.reasoning}")
-            else:  # suspicious
-                target_folder = suspicious_path
-                total_stats["suspicious"] += 1
-                warning(f"  ? SUSPICIOUS folder: {child_dir.name}")
-                warning(f"    Reasoning: {decision.reasoning}")
-
-            # Copy entire folder to target location
-            try:
-                dest_folder = target_folder / child_dir.name
-                if dest_folder.exists():
-                    shutil.rmtree(dest_folder)
-                shutil.copytree(child_dir, dest_folder)
-            except Exception as e:
-                error(f"  Failed to copy folder {child_dir.name}: {e}")
+        # Copy entire folder to target location
+        try:
+            dest_folder = target_folder / child_dir.name
+            if dest_folder.exists():
+                shutil.rmtree(dest_folder)
+            shutil.copytree(child_dir, dest_folder)
+        except Exception as e:
+            error(f"  Failed to copy folder {child_dir.name}: {e}")
 
     # Print summary
     success(f"\n{'=' * 50}")
@@ -155,3 +140,123 @@ def run_triage(
         info(
             f"  Malicious folders:  {total_stats['malicious']} → {malicious_path.name}/"
         )
+
+
+def _analyze_folder_concat(first_responder, child_dir, files_to_analyze):
+    """
+    Analyze a folder by concatenating all files and sending them together to the LLM.
+
+    Args:
+        first_responder: FirstResponder agent instance
+        child_dir: Path object for the directory being analyzed
+        files_to_analyze: List of file paths to analyze
+
+    Returns:
+        TriageDecision object with the folder decision
+    """
+    # Read and concatenate file contents
+    concatenated_content = ""
+    file_map = {}  # Map file content markers to actual paths
+
+    for file_path in files_to_analyze:
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+                # Clean content of control characters that can break JSON
+                import re
+
+                content = re.sub(r"[\x00-\x1f\x7f]", "", content)
+                # Use relative path from child_dir for cleaner output
+                rel_path = file_path.relative_to(child_dir)
+                file_marker = f"{child_dir.name}/{rel_path}"
+                concatenated_content += f"\n### FILE: {file_marker}\n{content}\n"
+                file_map[file_marker] = file_path
+        except Exception as e:
+            error(f"  Error reading {file_path}: {e}")
+            continue
+
+    if concatenated_content:
+        # Analyze folder with FirstResponder - gets single decision for entire folder
+        return first_responder.analyze_files_sync(concatenated_content)
+    else:
+        from cli.agents.first_responder import TriageDecision
+
+        return TriageDecision(
+            decision="suspicious", reasoning="No readable files found"
+        )
+
+
+def _analyze_folder_single(first_responder, child_dir, files_to_analyze):
+    """
+    Analyze a folder by sending each file individually to the LLM and aggregating decisions.
+
+    Args:
+        first_responder: FirstResponder agent instance
+        child_dir: Path object for the directory being analyzed
+        files_to_analyze: List of file paths to analyze
+
+    Returns:
+        TriageDecision object with the aggregated folder decision
+    """
+    from cli.agents.first_responder import TriageDecision
+
+    decisions = []
+    malicious_files = []
+    suspicious_files = []
+    benign_files = []
+
+    info(f"  Analyzing {len(files_to_analyze)} files individually...")
+
+    for i, file_path in enumerate(files_to_analyze, 1):
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+                # Clean content of control characters that can break JSON
+                import re
+
+                content = re.sub(r"[\x00-\x1f\x7f]", "", content)
+
+                # Use relative path for cleaner output
+                rel_path = file_path.relative_to(child_dir)
+                file_marker = f"{child_dir.name}/{rel_path}"
+                file_content = f"### FILE: {file_marker}\n{content}\n"
+
+                info(f"    [{i}/{len(files_to_analyze)}] {rel_path}")
+
+                # Analyze single file
+                decision = first_responder.analyze_files_sync(file_content)
+                decisions.append(decision)
+
+                # Categorize decision
+                decision_lower = decision.decision.lower()
+                if decision_lower == "malicious":
+                    malicious_files.append(rel_path)
+                elif decision_lower == "suspicious":
+                    suspicious_files.append(rel_path)
+                else:
+                    benign_files.append(rel_path)
+
+        except Exception as e:
+            error(f"  Error reading {file_path}: {e}")
+            # Treat unreadable files as suspicious
+            suspicious_files.append(file_path.relative_to(child_dir))
+            continue
+
+    # Aggregate decisions using a simple priority system:
+    # If any file is malicious -> folder is malicious
+    # If no malicious but some suspicious -> folder is suspicious
+    # If all benign -> folder is benign
+
+    if malicious_files:
+        reasoning = f"Contains {len(malicious_files)} malicious file(s): {', '.join(str(f) for f in malicious_files[:3])}"
+        if len(malicious_files) > 3:
+            reasoning += f" and {len(malicious_files) - 3} more"
+        return TriageDecision(decision="malicious", reasoning=reasoning)
+    elif suspicious_files:
+        reasoning = f"Contains {len(suspicious_files)} suspicious file(s): {', '.join(str(f) for f in suspicious_files[:3])}"
+        if len(suspicious_files) > 3:
+            reasoning += f" and {len(suspicious_files) - 3} more"
+        return TriageDecision(decision="suspicious", reasoning=reasoning)
+    else:
+        reasoning = f"All {len(benign_files)} files appear benign"
+        return TriageDecision(decision="benign", reasoning=reasoning)

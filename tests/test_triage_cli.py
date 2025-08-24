@@ -180,6 +180,24 @@ class TestTriageCLIArguments:
         )
         assert args.output == "my-results"
 
+    def test_default_strategy_is_concat(self):
+        """Test that default strategy is concat."""
+        args = self.parser.parse_args(["triage", "/test/path"])
+        assert args.strategy == "concat"
+
+    def test_strategy_choices_accepted(self):
+        """Test that both concat and single strategies are accepted."""
+        args = self.parser.parse_args(["triage", "/test/path", "--strategy", "concat"])
+        assert args.strategy == "concat"
+
+        args = self.parser.parse_args(["triage", "/test/path", "--strategy", "single"])
+        assert args.strategy == "single"
+
+    def test_invalid_strategy_rejected(self):
+        """Test that invalid strategy choices are rejected."""
+        with pytest.raises(SystemExit):
+            self.parser.parse_args(["triage", "/test/path", "--strategy", "invalid"])
+
 
 class TestTriageCommand:
     """Test the triage command execution."""
@@ -221,6 +239,7 @@ class TestTriageCommand:
         args.benign = "benign"
         args.suspicious = "suspicious"
         args.malicious = "malicious"
+        args.strategy = "concat"
         args.quiet = False
 
         triage_command(args)
@@ -249,6 +268,7 @@ class TestTriageCommand:
             args.benign = "benign"
             args.suspicious = "suspicious"
             args.malicious = "malicious"
+            args.strategy = "concat"
             args.quiet = False
 
             triage_command(args)
@@ -279,6 +299,7 @@ class TestTriageCommand:
         args.benign = "clean_files"
         args.suspicious = "questionable_files"
         args.malicious = "dangerous_files"
+        args.strategy = "concat"
         args.quiet = True
 
         triage_command(args)
@@ -292,6 +313,7 @@ class TestTriageCommand:
             benign_folder="clean_files",
             suspicious_folder="questionable_files",
             malicious_folder="dangerous_files",
+            strategy="concat",
         )
 
 
@@ -416,6 +438,164 @@ class TestRunTriageFunction:
         assert (results_dir / "benign").exists()
         assert (results_dir / "suspicious").exists()
         assert (results_dir / "malicious").exists()
+
+    @patch("common.triage.FirstResponder")
+    def test_concat_strategy_calls_analyze_once_per_folder(self, mock_first_responder):
+        """Test that concat strategy calls analyze_files_sync once per folder."""
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync.return_value = TriageDecision(
+            decision="benign", reasoning="Safe code"
+        )
+
+        run_triage(
+            input_path=str(self.test_input),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="concat",
+        )
+
+        # Should be called once for each folder (benign_folder and malicious_folder)
+        assert mock_agent.analyze_files_sync.call_count == 2
+
+        # Check that concatenated content is passed
+        calls = mock_agent.analyze_files_sync.call_args_list
+        for call in calls:
+            content = call[0][0]  # First argument
+            assert "### FILE:" in content  # Concatenated format
+
+    @patch("common.triage.FirstResponder")
+    def test_single_strategy_calls_analyze_per_file(self, mock_first_responder):
+        """Test that single strategy calls analyze_files_sync once per file."""
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync.return_value = TriageDecision(
+            decision="benign", reasoning="Safe file"
+        )
+
+        run_triage(
+            input_path=str(self.test_input),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="single",
+        )
+
+        # Should be called once for each file (safe.py and bad.py)
+        assert mock_agent.analyze_files_sync.call_count == 2
+
+        # Check that individual file content is passed
+        calls = mock_agent.analyze_files_sync.call_args_list
+        for call in calls:
+            content = call[0][0]  # First argument
+            assert "### FILE:" in content  # Individual file format
+            # Should not contain multiple FILE markers in single mode
+            assert content.count("### FILE:") == 1
+
+    @patch("common.triage.FirstResponder")
+    def test_single_strategy_aggregates_decisions_malicious_priority(
+        self, mock_first_responder
+    ):
+        """Test that single strategy prioritizes malicious decisions correctly."""
+        # Create a fresh test directory with only the mixed folder
+        test_dir = Path(self.test_dir) / "test_mixed"
+        test_dir.mkdir()
+
+        # Create test folder with 2 files
+        test_folder = test_dir / "mixed_folder"
+        test_folder.mkdir()
+        (test_folder / "safe.py").write_text("print('safe')")
+        (test_folder / "bad.py").write_text("exec('malicious')")
+
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+
+        # Mock decisions: first file benign, second file malicious
+        mock_agent.analyze_files_sync.side_effect = [
+            TriageDecision(decision="benign", reasoning="Safe file"),
+            TriageDecision(decision="malicious", reasoning="Dangerous file"),
+        ]
+
+        run_triage(
+            input_path=str(test_dir),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="single",
+        )
+
+        results_dir = Path("triaged").resolve()
+
+        # Folder should be classified as malicious due to one malicious file
+        assert (results_dir / "malicious" / "mixed_folder").exists()
+
+    @patch("common.triage.FirstResponder")
+    def test_single_strategy_aggregates_decisions_suspicious_fallback(
+        self, mock_first_responder
+    ):
+        """Test that single strategy falls back to suspicious when no malicious files."""
+        # Create a fresh test directory with only the suspicious folder
+        test_dir = Path(self.test_dir) / "test_suspicious"
+        test_dir.mkdir()
+
+        # Create test folder with 2 files
+        test_folder = test_dir / "mixed_folder"
+        test_folder.mkdir()
+        (test_folder / "safe.py").write_text("print('safe')")
+        (test_folder / "questionable.py").write_text("import subprocess")
+
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+
+        # Mock decisions: first file benign, second file suspicious
+        mock_agent.analyze_files_sync.side_effect = [
+            TriageDecision(decision="benign", reasoning="Safe file"),
+            TriageDecision(decision="suspicious", reasoning="Questionable file"),
+        ]
+
+        run_triage(
+            input_path=str(test_dir),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="single",
+        )
+
+        results_dir = Path("triaged").resolve()
+
+        # Folder should be classified as suspicious due to one suspicious file
+        assert (results_dir / "suspicious" / "mixed_folder").exists()
+
+    @patch("common.triage.FirstResponder")
+    def test_single_strategy_all_benign_classification(self, mock_first_responder):
+        """Test that single strategy classifies folder as benign when all files are benign."""
+        # Create a fresh test directory with only the benign folder
+        test_dir = Path(self.test_dir) / "test_benign"
+        test_dir.mkdir()
+
+        # Create test folder with 2 benign files
+        test_folder = test_dir / "clean_folder"
+        test_folder.mkdir()
+        (test_folder / "safe1.py").write_text("print('hello')")
+        (test_folder / "safe2.py").write_text("def helper(): pass")
+
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+
+        # Mock decisions: both files benign
+        mock_agent.analyze_files_sync.side_effect = [
+            TriageDecision(decision="benign", reasoning="Safe file 1"),
+            TriageDecision(decision="benign", reasoning="Safe file 2"),
+        ]
+
+        run_triage(
+            input_path=str(test_dir),
+            llm_model="test-model",
+            api_key="test-key",
+            strategy="single",
+        )
+
+        results_dir = Path("triaged").resolve()
+
+        # Folder should be classified as benign when all files are benign
+        assert (results_dir / "benign" / "clean_folder").exists()
 
 
 class TestIntegrationScenarios:
