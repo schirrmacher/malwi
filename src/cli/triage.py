@@ -29,6 +29,9 @@ def triage_command(args):
         )
         sys.exit(1)
 
+    # Get base URL from args or environment variable
+    base_url = getattr(args, "llm_base_url", None) or os.environ.get("LLM_BASE_URL")
+
     info(f"Starting triage of {args.input} using {args.llm} model")
 
     try:
@@ -37,7 +40,7 @@ def triage_command(args):
             input_path=args.input,
             llm_model=args.llm,
             api_key=api_key,
-            base_url=getattr(args, "base_url", None),
+            base_url=base_url,
             output_dir=args.output,
             benign_folder=args.benign,
             suspicious_folder=args.suspicious,
@@ -67,8 +70,8 @@ def setup_triage_parser(subparsers):
     )
 
     parser.add_argument(
-        "--base-url",
-        help="Base URL for the LLM API (auto-derived from model if not specified)",
+        "--llm-base-url",
+        help="Base URL for the LLM API (auto-derived from model if not specified, can also be set via LLM_BASE_URL env var)",
     )
 
     parser.add_argument(
@@ -105,7 +108,7 @@ def setup_triage_parser(subparsers):
         "--strategy",
         choices=["concat", "single", "smart"],
         default="concat",
-        help="Triage strategy: 'concat' sends all files in a folder together (default), 'single' analyzes each file individually, 'smart' like concat but only saves extracted malicious code (no folder copying)",
+        help="Triage strategy: 'concat' sends all files in a folder together (default), 'single' analyzes each file individually, 'smart' extracts only malicious code parts into individual files for ML training",
     )
 
     parser.add_argument(

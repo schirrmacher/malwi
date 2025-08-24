@@ -135,15 +135,15 @@ class TestTriageCLIArguments:
         )
         assert args.llm == "custom-model-name"
 
-    def test_base_url_optional(self):
-        """Test that base-url is optional."""
+    def test_llm_base_url_optional(self):
+        """Test that llm-base-url is optional."""
         args = self.parser.parse_args(["triage", "/test/path"])
-        assert getattr(args, "base_url", None) is None
+        assert getattr(args, "llm_base_url", None) is None
 
         args = self.parser.parse_args(
-            ["triage", "/test/path", "--base-url", "https://custom.api.com/v1"]
+            ["triage", "/test/path", "--llm-base-url", "https://custom.api.com/v1"]
         )
-        assert args.base_url == "https://custom.api.com/v1"
+        assert args.llm_base_url == "https://custom.api.com/v1"
 
     def test_folder_name_customization(self):
         """Test custom folder names."""
@@ -237,7 +237,7 @@ class TestTriageCommand:
         args.input = str(self.test_input)
         args.llm = "mistral-large-2411"
         args.llm_api_key = None  # Not provided via CLI
-        args.base_url = None
+        args.llm_base_url = None
         args.output = "triaged"
         args.benign = "benign"
         args.suspicious = "suspicious"
@@ -250,6 +250,36 @@ class TestTriageCommand:
         # Verify FirstResponder was called with env var API key
         mock_first_responder.assert_called_once_with(
             "test-api-key", "mistral-large-2411", None
+        )
+
+    @patch.dict(os.environ, {"LLM_BASE_URL": "https://env-base-url.com/v1"})
+    @patch("common.triage.FirstResponder")
+    def test_base_url_from_environment(self, mock_first_responder):
+        """Test that LLM_BASE_URL is read from environment variable."""
+        mock_agent = Mock()
+        mock_first_responder.return_value = mock_agent
+        mock_agent.analyze_files_sync.return_value = TriageDecision(
+            decision="benign", reasoning="Test decision"
+        )
+
+        # Create mock args
+        args = Mock()
+        args.input = str(self.test_input)
+        args.llm = "mistral-large-2411"
+        args.llm_api_key = "test-key"
+        args.llm_base_url = None  # Not provided via CLI
+        args.output = "triaged"
+        args.benign = "benign"
+        args.suspicious = "suspicious"
+        args.malicious = "malicious"
+        args.strategy = "concat"
+        args.quiet = False
+
+        triage_command(args)
+
+        # Verify FirstResponder was called with environment base_url
+        mock_first_responder.assert_called_once_with(
+            "test-key", "mistral-large-2411", "https://env-base-url.com/v1"
         )
 
     @patch("common.triage.FirstResponder")
@@ -266,7 +296,7 @@ class TestTriageCommand:
             args.input = str(self.test_input)
             args.llm = "mistral-large-2411"
             args.llm_api_key = "cli-key"  # Provided via CLI
-            args.base_url = None
+            args.llm_base_url = None
             args.output = "triaged"
             args.benign = "benign"
             args.suspicious = "suspicious"
@@ -297,7 +327,7 @@ class TestTriageCommand:
         args.input = str(self.test_input)
         args.llm = "test-model"
         args.llm_api_key = "test-key"
-        args.base_url = "https://test.api.com/v1"
+        args.llm_base_url = "https://test.api.com/v1"
         args.output = "triaged"
         args.benign = "clean_files"
         args.suspicious = "questionable_files"
