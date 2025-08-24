@@ -2,6 +2,7 @@
 Triage functionality for analyzing files with LLM models and organizing them.
 """
 
+import asyncio
 import shutil
 from pathlib import Path
 
@@ -214,7 +215,7 @@ def _analyze_folder_concat(first_responder, child_dir, files_to_analyze):
 
     if concatenated_content:
         # Analyze folder with FirstResponder - gets single decision for entire folder
-        return first_responder.analyze_files_sync(concatenated_content)
+        return asyncio.run(first_responder.analyze_files_sync(concatenated_content))
     else:
         from cli.agents.first_responder import TriageDecision
 
@@ -261,7 +262,7 @@ def _analyze_folder_single(first_responder, child_dir, files_to_analyze):
                 info(f"    [{i}/{len(files_to_analyze)}] {rel_path}")
 
                 # Analyze single file
-                decision = first_responder.analyze_files_sync(file_content)
+                decision = asyncio.run(first_responder.analyze_files_sync(file_content))
                 decisions.append(decision)
 
                 # Categorize decision
@@ -335,7 +336,9 @@ def _analyze_folder_smart(first_responder, child_dir, files_to_analyze):
 
     if concatenated_content:
         # Analyze folder with FirstResponder using smart analysis
-        return first_responder.analyze_files_sync_smart(concatenated_content)
+        return asyncio.run(
+            first_responder.analyze_files_sync_smart(concatenated_content)
+        )
     else:
         from cli.agents.first_responder import TriageDecision
 

