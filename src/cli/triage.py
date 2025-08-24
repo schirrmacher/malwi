@@ -37,6 +37,7 @@ def triage_command(args):
             input_path=args.input,
             llm_model=args.llm,
             api_key=api_key,
+            base_url=getattr(args, "base_url", None),
             benign_folder=args.benign,
             suspicious_folder=args.suspicious,
             malicious_folder=args.malicious,
@@ -59,9 +60,13 @@ def setup_triage_parser(subparsers):
     # LLM configuration
     parser.add_argument(
         "--llm",
-        choices=["mistral-medium-2508", "mistral-large-2411"],
-        default="mistral-medium-2508",
-        help="LLM model to use for triage (default: mistral-medium-2508)",
+        default="mistral-large-2411",
+        help="LLM model to use for triage (default: mistral-large-2411)",
+    )
+
+    parser.add_argument(
+        "--base-url",
+        help="Base URL for the LLM API (auto-derived from model if not specified)",
     )
 
     parser.add_argument(

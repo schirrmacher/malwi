@@ -25,28 +25,32 @@ class FirstResponder:
     First Responder Agent that analyzes files using AutoGen AssistantAgent with Mistral.
     """
 
-    def __init__(self, api_key: str, model: str = "mistral-medium-2508"):
+    def __init__(
+        self, api_key: str, model: str = "mistral-large-2411", base_url: str = None
+    ):
         """
         Initialize the First Responder agent.
 
         Args:
-            api_key: Mistral API key
+            api_key: API key for the LLM service
             model: Model name to use for analysis
+            base_url: Base URL for the LLM API (auto-derived if None)
         """
         self.api_key = api_key
         self.model = model
+        self.base_url = self._derive_base_url(model, base_url)
 
         if not api_key:
             error("Valid API key required for triage analysis")
             self.agent = None
             return
 
-        # Configure Mistral for AutoGen
+        # Configure for AutoGen
         config_list = [
             {
                 "model": model,
                 "api_key": api_key,
-                "base_url": "https://api.mistral.ai/v1",
+                "base_url": self.base_url,
             }
         ]
 
@@ -78,6 +82,37 @@ Do not include any other text, explanations, or markdown formatting. Only JSON."
         except Exception as e:
             error(f"Failed to initialize AutoGen agent: {e}")
             self.agent = None
+
+    def _derive_base_url(self, model: str, base_url: str = None) -> str:
+        """
+        Derive the base URL for the LLM API based on the model name.
+
+        Args:
+            model: Model name
+            base_url: Explicit base URL (if provided)
+
+        Returns:
+            Base URL for the API
+        """
+        if base_url:
+            return base_url
+
+        # Smart derivation based on model name
+        model_lower = model.lower()
+
+        if "mistral" in model_lower:
+            return "https://api.mistral.ai/v1"
+        elif "openai" in model_lower or "gpt" in model_lower:
+            return "https://api.openai.com/v1"
+        elif "claude" in model_lower or "anthropic" in model_lower:
+            return "https://api.anthropic.com/v1"
+        elif "llama" in model_lower or "meta" in model_lower:
+            return "https://api.together.xyz/v1"
+        elif "gemini" in model_lower or "google" in model_lower:
+            return "https://generativelanguage.googleapis.com/v1"
+        else:
+            # Default to Mistral for unknown models
+            return "https://api.mistral.ai/v1"
 
     def analyze_files_sync(self, llm_content: str) -> TriageDecision:
         """

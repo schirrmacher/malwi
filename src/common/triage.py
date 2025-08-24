@@ -14,6 +14,7 @@ def run_triage(
     input_path: str,
     llm_model: str,
     api_key: str,
+    base_url: str = None,
     benign_folder: str = "benign",
     suspicious_folder: str = "suspicious",
     malicious_folder: str = "malicious",
@@ -27,6 +28,7 @@ def run_triage(
         input_path: Path to directory containing folders to triage
         llm_model: LLM model to use for analysis
         api_key: API key for the LLM service
+        base_url: Base URL for the LLM API (auto-derived if None)
         benign_folder: Name of folder for benign files
         suspicious_folder: Name of folder for suspicious files
         malicious_folder: Name of folder for malicious files
@@ -40,7 +42,7 @@ def run_triage(
         raise ValueError(f"Path must be a directory: {input_path}")
 
     # Initialize FirstResponder agent
-    first_responder = FirstResponder(api_key, llm_model)
+    first_responder = FirstResponder(api_key, llm_model, base_url)
 
     # Create output folders
     output_base = path / "triage_results"
