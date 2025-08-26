@@ -3376,8 +3376,17 @@ class ASTCompiler:
 
     def process_file(self, file_path: Path) -> List[MalwiObject]:
         """Processes a single file and returns its generated MalwiObjects."""
+        import sys
+
+        # Store original recursion limit
+        original_limit = sys.getrecursionlimit()
+
         try:
             source_code_bytes = file_path.read_bytes()
+
+            # Increase recursion limit significantly for complex mathematical files
+            # Some files like Galois polynomial resolvents can be extremely complex
+            sys.setrecursionlimit(15000)
 
             ast = self.bytes_to_treesitter_ast(
                 source_code_bytes=source_code_bytes,
@@ -3392,8 +3401,37 @@ class ASTCompiler:
                 )
                 return malwicode_objects
 
+        except RecursionError as e:
+            # Try once more with an even higher limit for extremely complex files
+            try:
+                logging.warning(
+                    f"Recursion limit exceeded for {file_path}, trying with higher limit"
+                )
+                sys.setrecursionlimit(25000)
+
+                ast = self.bytes_to_treesitter_ast(
+                    source_code_bytes=source_code_bytes,
+                    file_path=str(file_path),
+                )
+
+                if ast:
+                    malwicode_objects = self.treesitter_to_bytecode(
+                        root_node=ast,
+                        source_code_bytes=source_code_bytes,
+                        file_path=file_path,
+                    )
+                    return malwicode_objects
+            except RecursionError:
+                logging.error(
+                    f"File {file_path} too complex even with maximum recursion limit - processing failed"
+                )
+                return []
         except Exception as e:
             logging.error(f"Failed to process {file_path}: {e}")
+        finally:
+            # Always restore original recursion limit
+            sys.setrecursionlimit(original_limit)
+
         return []
 
 
