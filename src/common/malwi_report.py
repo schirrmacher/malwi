@@ -334,14 +334,12 @@ class MalwiReport:
 
             # Process each file's objects
             for obj in objects:
-                # Get code from object
-                obj_code = None
-                if obj.source_code:
-                    obj_code = obj.source_code
-                elif obj.byte_code:
-                    obj_code = obj.to_string(mapped=False, one_line=False)
-
-                if obj_code and obj_code != "<source not available>":
+                # Only show objects that have actual source code (not bytecode fallback)
+                if (
+                    obj.source_code
+                    and obj.source_code.strip()
+                    and obj.source_code != "<source not available>"
+                ):
                     # Format maliciousness score
                     if obj.maliciousness is not None:
                         score_text = f"Maliciousness: {obj.maliciousness:.3f}"
@@ -366,8 +364,8 @@ class MalwiReport:
                     output_parts.append(f"{comment_prefix} {'=' * 70}")
                     output_parts.append("")
 
-                    # Add the code
-                    output_parts.append(obj_code)
+                    # Add the source code
+                    output_parts.append(obj.source_code)
                     output_parts.append("")
 
                     # Add tokens if requested
