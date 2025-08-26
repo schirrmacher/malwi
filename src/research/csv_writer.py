@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from common.bytecode import CodeObject
+    from common.malwi_object import MalwiObject
 
 
 class CSVWriter:
@@ -32,8 +32,8 @@ class CSVWriter:
         if is_empty:
             self.writer.writerow(["tokens", "hash", "language", "filepath"])
 
-    def write_code_objects(self, code_objects: List["CodeObject"]) -> None:
-        """Write CodeObject data to CSV."""
+    def write_code_objects(self, code_objects: List["MalwiObject"]) -> None:
+        """Write MalwiObject data to CSV."""
         for obj in code_objects:
             self.writer.writerow(
                 [

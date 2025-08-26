@@ -34,90 +34,7 @@ from common.mapping import (
     SENSITIVE_PATHS,
 )
 from common.config import STRING_MAX_LENGTH
-
-# CodeObject has been merged into MalwiObject
-
-
-@dataclass
-class CodeObject:
-    """Simple data structure to hold code compilation results for MalwiObject creation."""
-
-    name: str
-    byte_code: List["Instruction"]
-    source_code: str
-    path: Path
-    location: Tuple[int, int]
-    language: str = "python"
-
-    def to_string(self, mapped: bool = True, one_line=True, for_hashing=False) -> str:
-        """Get bytecode representation as string."""
-        instructions = []
-
-        if Path(self.path).name in COMMON_TARGET_FILES.get(self.language, []):
-            instructions += [SpecialCases.TARGETED_FILE.value]
-
-        for instruction in self.byte_code:
-            instructions.append(
-                instruction.to_string(mapped=mapped, for_hashing=for_hashing)
-            )
-
-        return (" " if one_line else "\n").join(instructions)
-
-    def get_tokens(self, mapped: bool = True) -> List[str]:
-        """Get list of tokens from the bytecode instructions."""
-        tokens = []
-
-        # Add file targeting warning if applicable
-        if Path(self.path).name in COMMON_TARGET_FILES.get(self.language, []):
-            tokens.append(SpecialCases.TARGETED_FILE.value)
-
-        # Extract tokens from each instruction
-        for instruction in self.byte_code:
-            instruction_str = instruction.to_string(mapped=mapped, for_hashing=False)
-            # Split instruction into opcode and argument tokens
-            parts = instruction_str.split(" ", 1)
-            tokens.append(
-                parts[0].upper()
-            )  # Convert opcode to uppercase to match tokenizer vocabulary
-            if len(parts) > 1 and parts[1]:
-                tokens.append(parts[1])
-
-        return tokens
-
-    def to_hash(self) -> str:
-        """Generate SHA256 hash of the oneline_mapped string representation."""
-        token_string = self.to_string(mapped=True, for_hashing=True, one_line=True)
-        encoded_string = token_string.encode("utf-8", errors="replace")
-        sha256_hash = hashlib.sha256()
-        sha256_hash.update(encoded_string)
-        return sha256_hash.hexdigest()
-
-    @property
-    def embedding_count(self) -> int:
-        """Calculate the number of embeddings (tokens) this CodeObject would create."""
-        try:
-            # Import here to avoid circular dependencies
-            from common.predict_distilbert import get_thread_tokenizer
-
-            # Get the token string (same format used for prediction)
-            token_string = " ".join(self.get_tokens(mapped=True))
-
-            # Use the same tokenizer that DistilBERT uses
-            tokenizer = get_thread_tokenizer()
-
-            # Tokenize without padding to get actual token count
-            encoded = tokenizer(
-                token_string,
-                return_tensors="pt",
-                padding=False,
-                truncation=False,  # Don't truncate to see full size
-            )
-
-            # Return the number of tokens
-            return encoded["input_ids"].shape[1]
-        except (RuntimeError, ImportError, Exception):
-            # Tokenizer not available or other error - return 0
-            return 0
+from common.malwi_object import MalwiObject
 
 
 class OpCode(Enum):
@@ -565,17 +482,17 @@ class ASTCompiler:
         self.nonlocal_variables = set()
         # Track nesting depth: 0 = module level, 1+ = nested
         self._nesting_depth = 0
-        # Collection to store all CodeObjects (root, functions, classes)
+        # Collection to store all MalwiObjects (root, functions, classes)
         self.code_objects = []
         # Counter for generating unique reference names
         self._next_ref_id = 0
 
     def treesitter_ast_to_malwicode(
         self, root_node: Node, source_code_bytes: bytes, file_path: Path
-    ) -> List[CodeObject]:
+    ) -> List[MalwiObject]:
         """
-        Public method to initiate the compilation of an AST to multiple CodeObjects.
-        Returns a list with the root CodeObject first, followed by function and class CodeObjects.
+        Public method to initiate the compilation of an AST to multiple MalwiObjects.
+        Returns a list with the root MalwiObject first, followed by function and class MalwiObjects.
         """
         # Reset collections for each compilation
         self.code_objects = []
@@ -603,21 +520,22 @@ class ASTCompiler:
         # Add RETURN_CONST at the end instead of leaving it open
         bytecode.append(emit(OpCode.RETURN_CONST, None))
 
-        # Create root CodeObject
-        root_code_obj = CodeObject(
+        # Create root MalwiObject
+        root_code_obj = MalwiObject(
             name="<module>",
+            language=self.language_name,
+            file_path=str(file_path),
+            file_source_code=source_code,
             byte_code=bytecode,
             source_code=source_code,
-            path=file_path,
             location=location,
-            language=self.language_name,
         )
 
-        # Return root CodeObject first, followed by function/class CodeObjects
+        # Return root MalwiObject first, followed by function/class MalwiObjects
         return [root_code_obj] + self.code_objects
 
     def _generate_ref_name(self, base_name: str) -> str:
-        """Generate a unique reference name for a CodeObject."""
+        """Generate a unique reference name for a MalwiObject."""
         ref_name = f"{base_name}_ref_{self._next_ref_id}"
         self._next_ref_id += 1
         return ref_name
@@ -2147,18 +2065,21 @@ class ASTCompiler:
                 func_source = self._get_node_text(node, source_code_bytes)
                 location = (node.start_point[0] + 1, node.end_point[0] + 1)
 
-                # Create separate CodeObject and add to collection
-                func_code_obj = CodeObject(
-                    "lambda",
-                    func_body_bytecode,
-                    func_source,
-                    file_path,
-                    location,
-                    self.language_name,
+                # Create separate MalwiObject and add to collection
+                func_code_obj = MalwiObject(
+                    name="lambda",
+                    language=self.language_name,
+                    file_path=str(file_path),
+                    file_source_code=source_code_bytes.decode(
+                        "utf-8", errors="replace"
+                    ),
+                    byte_code=func_body_bytecode,
+                    source_code=func_source,
+                    location=location,
                 )
                 self.code_objects.append(func_code_obj)
 
-                # Use function name in bytecode instead of nested CodeObject
+                # Use function name in bytecode instead of nested MalwiObject
                 bytecode.append(emit(OpCode.MAKE_FUNCTION, "lambda"))
 
         elif node_type == "conditional_expression":
@@ -2442,18 +2363,21 @@ class ASTCompiler:
                         function_node.end_point[0] + 1,
                     )
 
-                    # Create separate CodeObject and add to collection
-                    func_code_obj = CodeObject(
-                        func_name,
-                        func_body_bytecode,
-                        func_source,
-                        file_path,
-                        location,
-                        self.language_name,
+                    # Create separate MalwiObject and add to collection
+                    func_code_obj = MalwiObject(
+                        name=func_name,
+                        language=self.language_name,
+                        file_path=str(file_path),
+                        file_source_code=source_code_bytes.decode(
+                            "utf-8", errors="replace"
+                        ),
+                        byte_code=func_body_bytecode,
+                        source_code=func_source,
+                        location=location,
                     )
                     self.code_objects.append(func_code_obj)
 
-                    # Load function name as reference instead of full CodeObject
+                    # Load function name as reference instead of full MalwiObject
                     bytecode.append(emit(OpCode.LOAD_CONST, func_name))
                     bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))
 
@@ -2525,21 +2449,24 @@ class ASTCompiler:
             func_source = self._get_node_text(node, source_code_bytes)
             location = (node.start_point[0] + 1, node.end_point[0] + 1)
 
-            # Only create separate CodeObject for top-level functions (nesting_depth == 0)
+            # Only create separate MalwiObject for top-level functions (nesting_depth == 0)
             if self._nesting_depth == 0:
-                # Create separate CodeObject and add to collection
-                func_code_obj = CodeObject(
-                    func_name,
-                    func_body_bytecode,
-                    func_source,
-                    file_path,
-                    location,
-                    self.language_name,
+                # Create separate MalwiObject and add to collection
+                func_code_obj = MalwiObject(
+                    name=func_name,
+                    language=self.language_name,
+                    file_path=str(file_path),
+                    file_source_code=source_code_bytes.decode(
+                        "utf-8", errors="replace"
+                    ),
+                    byte_code=func_body_bytecode,
+                    source_code=func_source,
+                    location=location,
                 )
                 self.code_objects.append(func_code_obj)
 
                 # Python-like structure: LOAD_CONST -> MAKE_FUNCTION -> STORE_NAME
-                # Load the function name as reference instead of full CodeObject
+                # Load the function name as reference instead of full MalwiObject
                 bytecode.append(emit(OpCode.LOAD_CONST, func_name))
 
                 # Use appropriate opcode based on function type with arg=0 (no defaults)
@@ -2589,16 +2516,19 @@ class ASTCompiler:
             class_source = self._get_node_text(node, source_code_bytes)
             location = (node.start_point[0] + 1, node.end_point[0] + 1)
 
-            # Only create separate CodeObject for top-level classes (nesting_depth == 0)
+            # Only create separate MalwiObject for top-level classes
             if self._nesting_depth == 0:
-                # Create separate CodeObject and add to collection
-                class_code_obj = CodeObject(
-                    class_name,
-                    class_body_bytecode,
-                    class_source,
-                    file_path,
-                    location,
-                    self.language_name,
+                # Create separate MalwiObject and add to collection
+                class_code_obj = MalwiObject(
+                    name=class_name,
+                    language=self.language_name,
+                    file_path=str(file_path),
+                    file_source_code=source_code_bytes.decode(
+                        "utf-8", errors="replace"
+                    ),
+                    byte_code=class_body_bytecode,
+                    source_code=class_source,
+                    location=location,
                 )
                 self.code_objects.append(class_code_obj)
 
@@ -2607,7 +2537,7 @@ class ASTCompiler:
                 bytecode.append(emit(OpCode.LOAD_BUILD_CLASS, None))
                 bytecode.append(
                     emit(OpCode.LOAD_CONST, class_name)
-                )  # Class name instead of full CodeObject
+                )  # Class name instead of full MalwiObject
                 bytecode.append(emit(OpCode.MAKE_FUNCTION, 0))  # No defaults
                 bytecode.append(emit(OpCode.LOAD_CONST, class_name))  # Class name
                 bytecode.append(emit(OpCode.CALL, 2))  # Call build class with 2 args
@@ -2892,8 +2822,8 @@ class ASTCompiler:
             )
             return None
 
-    def process_file(self, file_path: Path) -> List[CodeObject]:
-        """Processes a single file and returns its generated CodeObjects."""
+    def process_file(self, file_path: Path) -> List[MalwiObject]:
+        """Processes a single file and returns its generated MalwiObjects."""
         try:
             source_code_bytes = file_path.read_bytes()
 

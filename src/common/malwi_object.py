@@ -18,7 +18,8 @@ from common.mapping import (
     COMMON_TARGET_FILES,
 )
 from common.config import FILE_LARGE_THRESHOLD, FILE_PATHOLOGICAL_THRESHOLD
-from common.bytecode import ASTCompiler
+
+# Import moved to avoid circular dependency
 from common.predict_distilbert import (
     get_node_text_prediction,
 )
@@ -47,27 +48,20 @@ def disassemble_file_ast(
     current_file_errors: List[str] = []
 
     try:
+        # Import here to avoid circular dependency
+        from common.bytecode import ASTCompiler
+
         # Use the AST compiler with the detected language
         ast_compiler = ASTCompiler(language)
-        code_objects = ast_compiler.process_file(Path(file_path))
+        malwi_objects = ast_compiler.process_file(Path(file_path))
 
-        # Convert CodeObject instances to MalwiObject instances
-        for code_obj in code_objects:
+        # ASTCompiler now returns MalwiObject instances directly
+        for malwi_obj in malwi_objects:
             # Handle target filtering if specified
-            if target_object_name and code_obj.name != target_object_name:
+            if target_object_name and malwi_obj.name != target_object_name:
                 continue
 
-            malwi_obj = MalwiObject(
-                name=code_obj.name,
-                language=language,
-                file_path=file_path,
-                file_source_code=source_code,
-                # Use merged properties directly
-                byte_code=code_obj.byte_code,
-                source_code=code_obj.source_code,
-                location=code_obj.location,
-            )
-
+            # MalwiObject is already created by ASTCompiler, just add it
             all_objects.append(malwi_obj)
 
         if target_object_name and all_objects:
@@ -203,9 +197,6 @@ class MalwiObject:
         self, mapped: bool = True, one_line: bool = True, for_hashing: bool = False
     ) -> str:
         """Get bytecode representation as string."""
-        if not self.byte_code:
-            return "<no bytecode available>"
-
         instructions = []
 
         # Add file targeting warning if applicable
@@ -214,10 +205,12 @@ class MalwiObject:
         ):
             instructions.append(SpecialCases.TARGETED_FILE.value)
 
-        for instruction in self.byte_code:
-            instructions.append(
-                instruction.to_string(mapped=mapped, for_hashing=for_hashing)
-            )
+        # Process bytecode instructions if available
+        if self.byte_code:
+            for instruction in self.byte_code:
+                instructions.append(
+                    instruction.to_string(mapped=mapped, for_hashing=for_hashing)
+                )
 
         return (" " if one_line else "\n").join(instructions)
 
