@@ -40,7 +40,7 @@ class CSVWriter:
                     obj.to_string(one_line=True, mapped=True),
                     obj.to_hash(),
                     obj.language,
-                    obj.path,
+                    obj.file_path,
                 ]
             )
 

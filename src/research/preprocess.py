@@ -68,7 +68,7 @@ def _process_single_file_with_compiler(
                     "tokens": obj.to_string(one_line=True),
                     "hash": obj.to_hash(),
                     "language": obj.language,
-                    "filepath": str(obj.path),
+                    "filepath": str(obj.file_path),
                 }
                 serializable_objects.append(obj_data)
             except Exception as e:
