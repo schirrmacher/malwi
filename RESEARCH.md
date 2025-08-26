@@ -6,6 +6,16 @@ This document tracks the AI model training research progress for malwi, document
 
 ### August 2025 (Latest First)
 
+#### 2025-08-26: Insecure Protocol Detection Disabled
+- **Tag**: `56ad076b_f1/0.923`
+- **F1 Score**: 0.923 (+0.080)
+- **Change**: Disabled `is_insecure_protocol()` mapping function by commenting it out
+- **Files Modified**: 
+  - `src/common/bytecode.py`: Commented out is_insecure_protocol check (lines 397-399)
+  - Updated test expectations for JavaScript and Python mapped outputs
+- **Impact**: ✅ **Significant recovery** - F1 score improved from 0.843 to 0.923 (+0.080)
+- **Analysis**: Disabling the insecure protocol detection function resulted in substantial performance recovery. The `is_insecure_protocol()` function was too broad, detecting common words like "ftp", "telnet", "http" within strings even when they weren't actual protocol references. This overly aggressive pattern matching created noise in the token mappings and confused the model. The function needs refinement to only detect actual protocol usage rather than any string containing protocol names.
+
 #### 2025-08-26: Training Data Structure Deep Investigation  
 - **Commit**: `18df003c`
 - **Investigation**: Deep analysis of code chunking/windowing for AI model training
@@ -196,11 +206,11 @@ This document tracks the AI model training research progress for malwi, document
 
 ### 📊 Performance Trends
 - **Peak Performance**: 0.958 (2025-08-14) - String mapping optimization
-- **Previous Performance**: 0.953 (2025-08-19) - Dataset quality fix + special token optimization  
-- **Latest Performance**: 0.843 (2025-08-26, first epoch) - Security-focused mapping functions
+- **Previous Best**: 0.953 (2025-08-19) - Dataset quality fix + special token optimization  
+- **Latest Performance**: 0.923 (2025-08-26) - Disabled insecure protocol detection
 - **Performance Range**: 0.0 - 0.958
-- **Average Performance**: 0.801 (excluding failed experiments)
-- **Recent Change**: -0.11 F1 drop indicates security mappings may be counterproductive
+- **Average Performance**: 0.806 (excluding failed experiments)
+- **Recent Recovery**: +0.080 F1 improvement by disabling overly broad insecure protocol detection
 - **Volatility**: High - small changes can have major impact (±0.1 F1 score)
 
 ### 🔬 Critical Success Factors
@@ -233,6 +243,8 @@ This document tracks the AI model training research progress for malwi, document
 
 ### 🔍 Lessons from Performance Drops
 1. **Security mappings backfire** (0.843): Well-intentioned security detection functions (email, insecure protocols) caused significant performance regression
+   - **Recovery** (0.923): Disabling `is_insecure_protocol()` alone recovered +0.080 F1 score
+   - **Root cause**: Function was too broad, matching protocol names within any string context
 2. **Feature complexity risk**: More features ≠ better performance - new mappings may create noise or vocabulary confusion
 3. **Incremental testing critical**: Major feature additions should be tested individually before combining
 4. **Module splitting**: Loses contextual signal quality
