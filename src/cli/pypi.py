@@ -347,7 +347,7 @@ def pypi_command(args):
         elif args.format == "markdown":
             output = main_report.to_markdown()
         elif args.format == "tokens":
-            output = main_report.to_tokens_text()
+            output = main_report.to_code_text(include_tokens=True)
         elif args.format == "code":
             output = main_report.to_code_text()
         else:

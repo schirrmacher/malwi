@@ -408,11 +408,15 @@ class MalwiReport:
 
         return "\n".join(lines)
 
-    def to_code_text(self) -> str:
-        """Generate code output format: concatenated malicious code segments grouped by extension with path comments."""
-        # Group malicious objects by file extension
+    def to_code_text(self, include_tokens: bool = False) -> str:
+        """Generate code output format: concatenated code segments grouped by extension with path comments.
+
+        Args:
+            include_tokens: If True, also include token information for each object
+        """
+        # Group ALL objects by file extension (not just malicious ones)
         objects_by_extension = {}
-        for obj in self.malicious_objects:
+        for obj in self.all_objects:
             # Get file extension
             file_path = Path(obj.file_path)
             extension = file_path.suffix.lower()
@@ -451,10 +455,17 @@ class MalwiReport:
                     obj_code = obj.to_string(mapped=False, one_line=False)
 
                 if obj_code and obj_code != "<source not available>":
-                    # Add file path comment with embedding count info
+                    # Format maliciousness score
+                    if obj.maliciousness is not None:
+                        score_text = f"Maliciousness: {obj.maliciousness:.3f}"
+                    else:
+                        score_text = "Maliciousness: not analyzed"
+
+                    # Add file path comment with embedding count info and maliciousness score
                     output_parts.append(f"{comment_prefix} {'=' * 70}")
                     output_parts.append(f"{comment_prefix} File: {obj.file_path}")
                     output_parts.append(f"{comment_prefix} Object: {obj.name}")
+                    output_parts.append(f"{comment_prefix} {score_text}")
                     output_parts.append(
                         f"{comment_prefix} Embedding count: {obj.embedding_count} tokens"
                     )
@@ -471,6 +482,62 @@ class MalwiReport:
                     # Add the code
                     output_parts.append(obj_code)
                     output_parts.append("")
+
+                    # Add tokens if requested
+                    if include_tokens:
+                        output_parts.append(f"{comment_prefix} {'─' * 70}")
+                        output_parts.append(f"{comment_prefix} TOKENS")
+                        output_parts.append(f"{comment_prefix} {'─' * 70}")
+
+                        # Get malwicode tokens for tokenization (but don't display them)
+                        malwicode_tokens = obj.to_tokens(map_special_tokens=True)
+                        token_string = obj.to_token_string(map_special_tokens=True)
+
+                        # Try to get DistilBERT tokens
+                        try:
+                            from common.predict_distilbert import get_thread_tokenizer
+
+                            tokenizer = get_thread_tokenizer()
+                            distilbert_tokens = tokenizer.tokenize(token_string)
+                            output_parts.append(
+                                f"{comment_prefix} DistilBERT tokens ({len(distilbert_tokens)} tokens):"
+                            )
+
+                            # Format DistilBERT tokens with wrapping
+                            token_lines = []
+                            current_line = []
+                            current_length = 0
+
+                            for token in distilbert_tokens:
+                                token_with_sep = (
+                                    token + " | "
+                                    if token != distilbert_tokens[-1]
+                                    else token
+                                )
+                                if (
+                                    current_length + len(token_with_sep) > 100
+                                    and current_line
+                                ):
+                                    token_lines.append(" | ".join(current_line) + " |")
+                                    current_line = [token]
+                                    current_length = len(token)
+                                else:
+                                    current_line.append(token)
+                                    current_length += len(token_with_sep)
+
+                            if current_line:
+                                token_lines.append(" | ".join(current_line))
+
+                            for line in token_lines:
+                                output_parts.append(f"{comment_prefix} {line}")
+                        except Exception:
+                            output_parts.append(
+                                f"{comment_prefix} DistilBERT tokens: not available"
+                            )
+
+                        output_parts.append(f"{comment_prefix} {'─' * 70}")
+                        output_parts.append("")
+
                     output_parts.append("")
 
         return "\n".join(output_parts)

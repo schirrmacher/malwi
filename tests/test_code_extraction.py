@@ -318,29 +318,28 @@ class MaliciousClass:
             # Generate code format output
             code_output = report.to_code_text()
 
-            # If we have malicious objects, verify the output structure
-            if report.malicious_objects:
-                # Should have extension headers
-                assert "Files with extension: .py" in code_output
+            # Code format now shows ALL objects, not just malicious ones
+            # Should have extension headers
+            assert "Files with extension: .py" in code_output
 
-                # Should have file path comments
-                assert "# File:" in code_output
-                assert "# Object:" in code_output
+            # Should have file path comments
+            assert "# File:" in code_output
+            assert "# Object:" in code_output
 
-                # Should have embedding count information
-                assert "# Embedding count:" in code_output
-                assert "tokens" in code_output
+            # Should have maliciousness score
+            assert "# Maliciousness:" in code_output
 
-                # Check that function headers are included in the output if functions exist
-                for obj in report.malicious_objects:
-                    if "malicious_function" in obj.name:
-                        assert "def malicious_function():" in code_output
+            # Should have embedding count information
+            assert "# Embedding count:" in code_output
+            assert "tokens" in code_output
 
-                    if "MaliciousClass" in obj.name:
-                        assert "class MaliciousClass:" in code_output
-            else:
-                # If no malicious objects, output should be empty
-                assert len(code_output.strip()) == 0
+            # Check that function headers are included in the output if functions exist
+            for obj in report.all_objects:
+                if "malicious_function" in obj.name:
+                    assert "def malicious_function():" in code_output
+
+                if "MaliciousClass" in obj.name:
+                    assert "class MaliciousClass:" in code_output
 
     def test_empty_code_format_output(self):
         """Test code format output when no malicious objects are found."""
@@ -365,12 +364,11 @@ def safe_function():
             # Generate code format output
             code_output = report.to_code_text()
 
-            # Should be empty or minimal since no malicious objects
-            # The output should not contain the safe function if it's not detected as malicious
-            if not report.malicious_objects:
-                assert (
-                    len(code_output.strip()) == 0 or "safe_function" not in code_output
-                )
+            # Code format now shows ALL objects, not just malicious ones
+            # Should contain the safe function even if it's not malicious
+            assert "safe_function" in code_output
+            assert "# Maliciousness:" in code_output
+            assert "# File:" in code_output
 
     def test_source_code_population_method(self):
         """Test source code population from AST CodeObject on MalwiObject."""

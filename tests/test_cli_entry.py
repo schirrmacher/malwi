@@ -124,7 +124,9 @@ class TestCLIEntry:
         mock_report.to_markdown.return_value = "Markdown"
         mock_report.to_json.return_value = "JSON"
         mock_report.to_yaml.return_value = "YAML"
-        mock_report.to_tokens_text.return_value = "Tokens"
+        mock_report.to_code_text.return_value = (
+            "Code/Tokens"  # Used for both code and tokens formats
+        )
         mock_create.return_value = mock_report
 
         # Test each format
@@ -133,7 +135,8 @@ class TestCLIEntry:
             ("markdown", "Markdown"),
             ("json", "JSON"),
             ("yaml", "YAML"),
-            ("tokens", "Tokens"),
+            ("tokens", "Code/Tokens"),  # tokens format now uses to_code_text
+            ("code", "Code/Tokens"),  # code format also uses to_code_text
         ]:
             with patch.object(
                 sys,
@@ -420,7 +423,11 @@ class TestBatchMode:
             ("yaml", ".yaml", "to_yaml"),
             ("markdown", ".md", "to_markdown"),
             ("demo", ".txt", "to_demo_text"),
-            ("tokens", ".txt", "to_tokens_text"),
+            (
+                "tokens",
+                ".txt",
+                "to_code_text",
+            ),  # tokens format now uses to_code_text with include_tokens=True
         ]
 
         for fmt, expected_ext, method_name in format_extensions:
@@ -695,7 +702,11 @@ class TestPyPICommand:
             ("json", "to_json", '{"result": "test"}'),
             ("yaml", "to_yaml", "result: test"),
             ("markdown", "to_markdown", "# Test Result"),
-            ("tokens", "to_tokens_text", "tokens output"),
+            (
+                "tokens",
+                "to_code_text",
+                "tokens output",
+            ),  # tokens format now uses to_code_text
             ("code", "to_code_text", "code output"),
         ]
 

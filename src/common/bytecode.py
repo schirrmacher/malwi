@@ -1,10 +1,8 @@
 import logging
-import hashlib
 from enum import Enum, auto
 from pathlib import Path
 from tree_sitter import Node
-from typing import Optional, Any, List, Tuple
-from dataclasses import dataclass
+from typing import Optional, Any, List
 
 from tree_sitter import Parser, Language
 import tree_sitter_python as tspython
@@ -13,7 +11,6 @@ import tree_sitter_javascript as tsjavascript
 from common.mapping import (
     FUNCTION_MAPPING,
     IMPORT_MAPPING,
-    COMMON_TARGET_FILES,
     reduce_whitespace,
     remove_newlines,
     SpecialCases,
@@ -487,6 +484,36 @@ class ASTCompiler:
         # Counter for generating unique reference names
         self._next_ref_id = 0
 
+    def _extract_module_level_source(
+        self, source_code: str, code_objects: List[MalwiObject]
+    ) -> str:
+        """
+        Extract module-level source code by removing lines that are covered by code objects.
+        This is stateless and takes the source code and code objects as parameters.
+        """
+        if not code_objects:
+            return source_code.strip()
+
+        lines = source_code.split("\n")
+        covered_lines = set()
+
+        # Collect all lines covered by code objects
+        for code_obj in code_objects:
+            if hasattr(code_obj, "location") and code_obj.location:
+                start_line, end_line = code_obj.location
+                # Add all lines from start to end (inclusive)
+                for line_num in range(start_line, end_line + 1):
+                    if 1 <= line_num <= len(lines):
+                        covered_lines.add(line_num - 1)  # Convert to 0-based indexing
+
+        # Build result by including only non-empty uncovered lines
+        result_lines = []
+        for i, line in enumerate(lines):
+            if i not in covered_lines and line.strip():
+                result_lines.append(line)
+
+        return "\n".join(result_lines).strip()
+
     def treesitter_to_bytecode(
         self, root_node: Node, source_code_bytes: bytes, file_path: Path
     ) -> List[MalwiObject]:
@@ -520,6 +547,11 @@ class ASTCompiler:
         # Add RETURN_CONST at the end instead of leaving it open
         bytecode.append(emit(OpCode.RETURN_CONST, None))
 
+        # Extract module-level source (excluding function/class bodies)
+        module_level_source = self._extract_module_level_source(
+            source_code, self.code_objects
+        )
+
         # Create root MalwiObject
         root_code_obj = MalwiObject(
             name="<module>",
@@ -527,7 +559,7 @@ class ASTCompiler:
             file_path=str(file_path),
             file_source_code=source_code,
             byte_code=bytecode,
-            source_code=source_code,
+            source_code=module_level_source,
             location=location,
         )
 
@@ -3390,7 +3422,7 @@ class ASTCompiler:
                 )
                 return malwicode_objects
 
-        except RecursionError as e:
+        except RecursionError:
             # Try once more with an even higher limit for extremely complex files
             try:
                 logging.warning(

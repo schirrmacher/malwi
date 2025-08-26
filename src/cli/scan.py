@@ -101,7 +101,7 @@ def run_batch_scan(child_folder: Path, args) -> dict:
         elif args.format == "markdown":
             output = report.to_markdown()
         elif args.format == "tokens":
-            output = report.to_tokens_text()
+            output = report.to_code_text(include_tokens=True)
         elif args.format == "code":
             output = report.to_code_text()
         else:
@@ -293,7 +293,7 @@ def scan_command(args):
     elif args.format == "markdown":
         output = report.to_markdown()
     elif args.format == "tokens":
-        output = report.to_tokens_text()
+        output = report.to_code_text(include_tokens=True)
     elif args.format == "code":
         output = report.to_code_text()
     else:
