@@ -24,9 +24,6 @@ from common.mapping import (
     is_hex,
     is_valid_url,
     is_version,
-    is_email,
-    is_insecure_protocol,
-    is_insecure_url,
     is_file_path,
     contains_url,
     is_localhost,
@@ -384,19 +381,11 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_LOCALHOST.value}"
         elif is_valid_ip(argval):
             return f"{op_code.name} {SpecialCases.STRING_IP.value}"
-        elif is_insecure_url(argval):
-            # Check insecure URLs before general URLs (more specific)
-            return f"{op_code.name} {SpecialCases.STRING_INSECURE_URL.value}"
         elif is_valid_url(argval):
             return f"{op_code.name} {SpecialCases.STRING_URL.value}"
         elif contains_url(argval):
             # String contains a URL but isn't a URL itself
             return f"{op_code.name} {SpecialCases.STRING_CONTAINS_URL.value}"
-        elif is_email(argval):
-            return f"{op_code.name} {SpecialCases.STRING_EMAIL.value}"
-        elif is_insecure_protocol(argval):
-            # Check for insecure protocols in text
-            return f"{op_code.name} {SpecialCases.STRING_INSECURE_PROTOCOL.value}"
         elif is_version(argval):
             return f"{op_code.name} {SpecialCases.STRING_VERSION.value}"
         elif is_valid_encoding_name(argval):
