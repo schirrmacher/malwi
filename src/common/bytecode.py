@@ -487,7 +487,7 @@ class ASTCompiler:
         # Counter for generating unique reference names
         self._next_ref_id = 0
 
-    def treesitter_ast_to_malwicode(
+    def treesitter_to_bytecode(
         self, root_node: Node, source_code_bytes: bytes, file_path: Path
     ) -> List[MalwiObject]:
         """
@@ -3374,7 +3374,7 @@ class ASTCompiler:
             )
 
             if ast:
-                malwicode_objects = self.treesitter_ast_to_malwicode(
+                malwicode_objects = self.treesitter_to_bytecode(
                     root_node=ast,
                     source_code_bytes=source_code_bytes,
                     file_path=file_path,
