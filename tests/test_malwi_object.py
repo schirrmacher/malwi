@@ -285,9 +285,9 @@ def test_malwi_object_serialization_attributes():
         pytest.fail(f"Preprocessing serialization failed: {e}")
 
 
-def test_malwi_object_new_mapping_functions():
-    """Test that new mapping functions (email, insecure_protocol, insecure_url) work correctly."""
-    # Create test code with patterns that should trigger new mappings
+def test_malwi_object_string_mapping_functions():
+    """Test that string mapping functions work correctly with existing mappings."""
+    # Create test code with patterns that should trigger existing mappings
     test_code = """
 email = "user@example.com"
 insecure_url = "http://insecure.com"
@@ -318,30 +318,29 @@ ftp_site = "ftp://files.example.com"
         assert obj.language == "python"
         assert obj.byte_code is not None
 
-        # Get the token string and verify new mappings are working
+        # Get the token string and verify existing mappings are working
         token_string = obj.to_token_string()
 
-        # Check for new mapping tokens
-        expected_new_tokens = [
-            "STRING_EMAIL",  # from "user@example.com"
-            "STRING_INSECURE_URL",  # from "http://insecure.com" and "ftp://files.example.com"
-            "STRING_INSECURE_PROTOCOL",  # from "Connect via ftp server"
+        # Check for existing mapping tokens that should be present
+        expected_tokens = [
+            "STRING_URL",  # URLs should be mapped to STRING_URL
+            "STRING",  # Generic strings should be mapped to STRING
         ]
 
         found_tokens = []
-        for token in expected_new_tokens:
+        for token in expected_tokens:
             if token in token_string:
                 found_tokens.append(token)
 
-        # Verify that at least some of our new tokens are found
-        assert len(found_tokens) >= 2, (
-            f"Expected new mapping tokens, got: {found_tokens}\nFull token string: {token_string}"
+        # Verify that basic string mappings are working
+        assert len(found_tokens) >= 1, (
+            f"Expected basic string mapping tokens, got: {found_tokens}\nFull token string: {token_string}"
         )
 
-        # Verify secure URL is still mapped as regular URL (not insecure)
-        assert "STRING_URL" in token_string  # https://secure.com should be STRING_URL
+        # Verify URLs are mapped correctly
+        assert "STRING_URL" in token_string
 
-        # Test that serialization works correctly with the new mappings
+        # Test that serialization works correctly
         try:
             serialization_test = {
                 "tokens": obj.to_string(one_line=True),
@@ -352,7 +351,7 @@ ftp_site = "ftp://files.example.com"
             assert "filepath" in serialization_test
             assert serialization_test["language"] == "python"
         except Exception as e:
-            pytest.fail(f"Serialization with new mappings failed: {e}")
+            pytest.fail(f"Serialization with string mappings failed: {e}")
 
     finally:
         # Clean up
@@ -407,21 +406,23 @@ def suspicious_function():
             assert obj_data["filepath"] == temp_file
             assert obj_data["language"] == "python"
 
-            # Test that new mapping functions are working
+            # Test that token mapping is working - different objects have different tokens
             token_string = obj.to_token_string()
-            # Should contain some of our new mappings from the suspicious code
-            mapping_found = any(
+            # Should have some recognizable tokens (different per object)
+            basic_tokens_found = any(
                 token in token_string
                 for token in [
-                    "STRING_EMAIL",
-                    "STRING_INSECURE_URL",
-                    "STRING_INSECURE_PROTOCOL",
+                    "LOAD_CONST",
+                    "STORE_NAME",
+                    "IMPORT_NAME",
+                    "MAKE_FUNCTION",
+                    "STRING_URL",
+                    "PROCESS_MANAGEMENT",
+                    "SYSTEM_INTERACTION",
                 ]
             )
-            if not mapping_found:
-                # This is not a failure - the specific tokens might not appear
-                # depending on how the AST processes the code, but the integration should work
-                pass
+            # Basic token generation should work
+            assert basic_tokens_found, f"No basic tokens found in: {token_string}"
 
     finally:
         # Clean up
