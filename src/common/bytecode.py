@@ -123,121 +123,204 @@ class CodeObject:
 class OpCode(Enum):
     """
     Defines the set of all possible bytecode operations for Malwicode.
+
+    Operations are grouped by category:
+    - Load/Store operations
+    - Binary operations
+    - Comparison operations
+    - Logical operations
+    - Control flow operations
+    - Data structure operations
+    - Function/Class operations
+    - Import/Export operations
+    - Special operations
     """
 
-    LOAD_CONST = auto()
-    LOAD_NAME = auto()
-    LOAD_GLOBAL = auto()  # Explicitly for global variables
-    LOAD_PARAM = auto()
-    STORE_NAME = auto()
-    STORE_GLOBAL = auto()  # Explicitly for global variables
-    BINARY_ADD = auto()
-    BINARY_SUBTRACT = auto()
-    BINARY_MULTIPLY = auto()
-    BINARY_DIVIDE = auto()
-    BINARY_MODULO = auto()
-    BINARY_POWER = auto()
-    BINARY_FLOOR_DIVIDE = auto()
-    BINARY_AND = auto()
-    BINARY_OR = auto()
-    BINARY_XOR = auto()
-    BINARY_LSHIFT = auto()
-    BINARY_RSHIFT = auto()
-    BINARY_UNSIGNED_RSHIFT = auto()  # JavaScript >>> operator
-    BINARY_MATMUL = auto()  # Python @ operator
-    BINARY_NULLISH_COALESCING = auto()  # JavaScript ?? operator
-    COMPARE_OP = auto()
-    COMPARE_LESS = auto()
-    COMPARE_GREATER = auto()
-    COMPARE_EQUAL = auto()
-    COMPARE_NOT_EQUAL = auto()
-    COMPARE_LESS_EQUAL = auto()
-    COMPARE_GREATER_EQUAL = auto()
-    COMPARE_IN = auto()
-    COMPARE_NOT_IN = auto()
-    COMPARE_IS = auto()
-    COMPARE_IS_NOT = auto()
-    COMPARE_INSTANCEOF = auto()
-    LOGICAL_AND = auto()
-    LOGICAL_OR = auto()
-    LOGICAL_NOT = auto()
-    BINARY_OPERATION = auto()
-    CALL_FUNCTION = auto()
-    MAKE_FUNCTION = auto()
-    MAKE_CLASS = auto()
-    RETURN_VALUE = auto()
-    POP_JUMP_IF_FALSE = auto()
-    POP_JUMP_IF_TRUE = auto()
-    JUMP_FORWARD = auto()
-    GET_ITER = auto()
-    FOR_ITER = auto()
-    BUILD_LIST = auto()
-    BUILD_TUPLE = auto()
-    BUILD_SET = auto()
-    BUILD_MAP = auto()
-    BINARY_SUBSCR = auto()
-    STORE_SUBSCR = auto()  # For subscript assignment like obj[key] = value
-    LOAD_ATTR = auto()
-    STORE_ATTR = auto()  # For attribute assignment like obj.attr = value
-    UNARY_NEGATIVE = auto()
-    UNARY_NOT = auto()
-    UNARY_INVERT = auto()
-    UNARY_POSITIVE = auto()  # For unary plus operator
-    IMPORT_NAME = auto()
-    IMPORT_FROM = auto()
-    EXPORT_DEFAULT = auto()
-    EXPORT_NAMED = auto()
-    AWAIT_EXPRESSION = auto()
-    ASYNC_FUNCTION = auto()
-    GENERATOR_FUNCTION = auto()
-    WITH_CONTEXT = auto()
-    ENTER_CONTEXT = auto()
-    EXIT_CONTEXT = auto()
-    TYPEOF_OPERATOR = auto()
-    VOID_OPERATOR = auto()
-    DELETE_OPERATOR = auto()
-    # Critical missing opcodes for better Python bytecode representation
-    UNPACK_SEQUENCE = auto()  # For tuple/list unpacking: a, b = (1, 2)
-    BUILD_STRING = auto()  # For f-string building
-    FORMAT_VALUE = auto()  # For f-string value formatting
-    LIST_APPEND = auto()  # For list comprehension optimization
-    SET_ADD = auto()  # For set comprehension optimization
-    MAP_ADD = auto()  # For dict comprehension optimization
-    YIELD_VALUE = auto()  # For yield statements
-    DELETE_NAME = auto()  # For del variable (more specific than DELETE_OPERATOR)
-    DELETE_SUBSCR = auto()  # For del list[i] or del dict[key]
-    # Additional missing opcodes for better Python bytecode representation
-    COPY = auto()  # For internal stack copy operations
-    KW_NAMES = auto()  # For keyword argument names in function calls
-    POP_TOP = auto()  # For discarding top of stack value
-    PUSH_NULL = auto()  # For pushing NULL value to stack
+    # === Load/Store Operations ===
+    LOAD_CONST = auto()  # Load constant value onto stack
+    LOAD_NAME = auto()  # Load variable by name
+    LOAD_GLOBAL = auto()  # Load global variable
+    LOAD_PARAM = auto()  # Load function parameter
+    LOAD_ATTR = auto()  # Load attribute (obj.attr)
+    LOAD_FAST = auto()  # Load local variable (fast access)
+    LOAD_DEREF = auto()  # Load closure variable
+    LOAD_BUILD_CLASS = auto()  # Load __build_class__ function
+    STORE_NAME = auto()  # Store value in variable
+    STORE_GLOBAL = auto()  # Store value in global variable
+    STORE_ATTR = auto()  # Store attribute (obj.attr = value)
+    STORE_SUBSCR = auto()  # Store subscript (obj[key] = value)
+    STORE_FAST = auto()  # Store local variable (fast access)
+    STORE_DEREF = auto()  # Store closure variable
 
-    # High-priority missing opcodes based on analysis
-    RESUME = auto()  # For Python 3.11+ debugging/tracing support
-    RETURN_CONST = auto()  # For returning constant values
-    CALL = auto()  # New unified CALL opcode (Python 3.11+)
+    # === Binary Arithmetic Operations ===
+    BINARY_ADD = auto()  # Addition (+) - still used in some places
+
+    # === Binary Bitwise Operations ===
+    BINARY_UNSIGNED_RSHIFT = auto()  # Unsigned right shift (>>>) - JavaScript
+
+    # === Binary Special Operations ===
+    BINARY_NULLISH_COALESCING = auto()  # Nullish coalescing (??) - JavaScript
+    BINARY_SUBSCR = auto()  # Subscript access (obj[key])
+    BINARY_OP = auto()  # Generic binary operation with argument (Python 3.11+)
+    BINARY_OPERATION = auto()  # Generic binary operation placeholder
+
+    # === Comparison Operations ===
+    COMPARE_OP = auto()  # Generic comparison
+    COMPARE_LESS = auto()  # Less than (<)
+    COMPARE_GREATER = auto()  # Greater than (>)
+    COMPARE_EQUAL = auto()  # Equal (==, ===)
+    COMPARE_NOT_EQUAL = auto()  # Not equal (!=, !==)
+    COMPARE_LESS_EQUAL = auto()  # Less than or equal (<=)
+    COMPARE_GREATER_EQUAL = auto()  # Greater than or equal (>=)
+    COMPARE_IN = auto()  # Membership test (in)
+    COMPARE_NOT_IN = auto()  # Not in membership test (not in)
+    COMPARE_IS = auto()  # Identity test (is)
+    COMPARE_IS_NOT = auto()  # Not identity test (is not)
+    COMPARE_INSTANCEOF = auto()  # Instance check (instanceof) - JavaScript
+
+    # === Logical Operations ===
+    LOGICAL_AND = auto()  # Logical AND (and, &&)
+    LOGICAL_OR = auto()  # Logical OR (or, ||)
+    LOGICAL_NOT = auto()  # Logical NOT (not, !)
+
+    # === Unary Operations ===
+    UNARY_NEGATIVE = auto()  # Unary negation (-)
+    UNARY_POSITIVE = auto()  # Unary plus (+)
+    UNARY_INVERT = auto()  # Bitwise NOT (~)
+
+    # === Control Flow Operations ===
+    POP_JUMP_IF_FALSE = auto()  # Conditional jump if false
+    POP_JUMP_IF_TRUE = auto()  # Conditional jump if true
+    JUMP_FORWARD = auto()  # Unconditional forward jump
+    JUMP_BACKWARD = auto()  # Unconditional backward jump
+    FOR_ITER = auto()  # Iterator for loop
+    GET_ITER = auto()  # Get iterator from iterable
+    END_FOR = auto()  # End of for loop cleanup
+    RETURN_VALUE = auto()  # Return from function
+    RETURN_CONST = auto()  # Return constant value
+    YIELD_VALUE = auto()  # Yield value from generator
+
+    # === Data Structure Operations ===
+    BUILD_LIST = auto()  # Create list from stack items
+    BUILD_TUPLE = auto()  # Create tuple from stack items
+    BUILD_SET = auto()  # Create set from stack items
+    BUILD_MAP = auto()  # Create dictionary from stack items
+    BUILD_STRING = auto()  # Build string (f-strings)
+    LIST_APPEND = auto()  # Append to list (comprehensions)
+    SET_ADD = auto()  # Add to set (comprehensions)
+    MAP_ADD = auto()  # Add key-value to map (dict comprehensions)
+    UNPACK_SEQUENCE = auto()  # Unpack sequence (a, b = x)
+
+    # === Function/Class Operations ===
+    CALL = auto()  # Call function (Python 3.11+)
+    MAKE_FUNCTION = auto()  # Create function object
+    MAKE_CLASS = auto()  # Create class object
+    ASYNC_FUNCTION = auto()  # Create async function
+    GENERATOR_FUNCTION = auto()  # Create generator function
+    KW_NAMES = auto()  # Keyword argument names
+    FORMAT_VALUE = auto()  # Format value (f-strings)
+
+    # === Import/Export Operations ===
+    IMPORT_NAME = auto()  # Import module
+    IMPORT_FROM = auto()  # Import from module
+    EXPORT_DEFAULT = auto()  # Export default - JavaScript
+    EXPORT_NAMED = auto()  # Export named - JavaScript
+
+    # === Stack Manipulation Operations ===
+    POP_TOP = auto()  # Remove top of stack
+    COPY = auto()  # Copy stack item
+    PUSH_NULL = auto()  # Push null onto stack
+
+    # === Exception Handling Operations ===
+    PUSH_EXC_INFO = auto()  # Push exception info
+    POP_EXCEPT = auto()  # Pop exception block
+    RERAISE = auto()  # Re-raise exception
+    CHECK_EXC_MATCH = auto()  # Check exception match
+
+    # === Context Manager Operations ===
+    BEFORE_WITH = auto()  # Setup with statement
+    WITH_EXCEPT_START = auto()  # With statement exception handling
+
+    # === JavaScript-specific Operations ===
+    TYPEOF_OPERATOR = auto()  # typeof operator - JavaScript
+    VOID_OPERATOR = auto()  # void operator - JavaScript
+    DELETE_OPERATOR = auto()  # delete operator - JavaScript
+    AWAIT_EXPRESSION = auto()  # await expression
+
+    # === Delete Operations ===
+    DELETE_NAME = auto()  # Delete variable (del x)
+    DELETE_SUBSCR = auto()  # Delete subscript (del obj[key])
+
+    # === Other Operations ===
     NOP = auto()  # No operation
-    BINARY_OP = auto()  # Generic binary operation with arg
-    JUMP_BACKWARD = auto()  # For loop optimization
-    LIST_EXTEND = auto()  # For efficient list building
-    END_FOR = auto()  # For loop cleanup
-    SWAP = auto()  # For stack manipulation
-    STORE_FAST = auto()  # For fast local variable storage
-    LOAD_FAST = auto()  # For fast local variable loading
-    LOAD_FAST_AND_CLEAR = auto()  # For comprehensions
-    RERAISE = auto()  # For exception re-raising
-    BUILD_SLICE = auto()  # For slice objects
-    STORE_SLICE = auto()  # For slice assignment
-    BINARY_SLICE = auto()  # For slicing operations
-    STORE_DEREF = auto()  # For nonlocal variable storage
-    LOAD_DEREF = auto()  # For nonlocal variable loading
-    UNPACK_EX = auto()  # For extended unpacking
-    PUSH_EXC_INFO = auto()  # For exception handling
-    POP_EXCEPT = auto()  # For exception cleanup
-    CHECK_EXC_MATCH = auto()  # For exception matching
-    LOAD_BUILD_CLASS = auto()  # For class building
-    BEFORE_WITH = auto()  # For context manager setup
-    WITH_EXCEPT_START = auto()  # For context manager exceptions
+    RESUME = auto()  # Resume execution (Python 3.11+)
+
+
+# ============================================================================
+# Operator Mappings
+# ============================================================================
+# These mappings define how source code operators are translated to opcodes.
+# Python 3.11+ uses unified BINARY_OP with numeric arguments for efficiency.
+# JavaScript-specific operators are mapped to their own opcodes.
+# ============================================================================
+
+# Binary operator mappings - maps operator symbols to OpCode and optional argument
+BINARY_OPERATOR_MAPPING = {
+    # === Arithmetic Operators ===
+    # Python 3.11+ uses BINARY_OP with numeric arguments for arithmetic
+    "+": (OpCode.BINARY_OP, 0),  # BINARY_OP 0 = add
+    "-": (OpCode.BINARY_OP, 2),  # BINARY_OP 2 = subtract
+    "*": (OpCode.BINARY_OP, 5),  # BINARY_OP 5 = multiply
+    "/": (OpCode.BINARY_OP, 11),  # BINARY_OP 11 = true_divide
+    "%": (OpCode.BINARY_OP, 6),  # BINARY_OP 6 = remainder
+    "**": (OpCode.BINARY_OP, 8),  # BINARY_OP 8 = power
+    "//": (OpCode.BINARY_OP, 12),  # BINARY_OP 12 = floor_divide
+    "@": (OpCode.BINARY_OP, 3),  # BINARY_OP 3 = matmul
+    # === Bitwise Operators ===
+    "&": (OpCode.BINARY_OP, 1),  # BINARY_OP 1 = and
+    "|": (OpCode.BINARY_OP, 4),  # BINARY_OP 4 = or
+    "^": (OpCode.BINARY_OP, 7),  # BINARY_OP 7 = xor
+    "<<": (OpCode.BINARY_OP, 9),  # BINARY_OP 9 = lshift
+    ">>": (OpCode.BINARY_OP, 10),  # BINARY_OP 10 = rshift
+    # === JavaScript-specific Binary Operators ===
+    ">>>": OpCode.BINARY_UNSIGNED_RSHIFT,  # JavaScript unsigned right shift
+    "??": OpCode.BINARY_NULLISH_COALESCING,  # JavaScript nullish coalescing
+    # === Comparison Operators ===
+    "<": OpCode.COMPARE_LESS,
+    ">": OpCode.COMPARE_GREATER,
+    "==": OpCode.COMPARE_EQUAL,
+    "===": OpCode.COMPARE_EQUAL,  # JavaScript strict equality
+    "!=": OpCode.COMPARE_NOT_EQUAL,
+    "!==": OpCode.COMPARE_NOT_EQUAL,  # JavaScript strict inequality
+    "<=": OpCode.COMPARE_LESS_EQUAL,
+    ">=": OpCode.COMPARE_GREATER_EQUAL,
+    "in": OpCode.COMPARE_IN,
+    "not in": OpCode.COMPARE_NOT_IN,
+    "is": OpCode.COMPARE_IS,
+    "is not": OpCode.COMPARE_IS_NOT,
+    "instanceof": OpCode.COMPARE_INSTANCEOF,  # JavaScript
+    # === Logical Operators ===
+    "and": OpCode.LOGICAL_AND,  # Python
+    "or": OpCode.LOGICAL_OR,  # Python
+    "&&": OpCode.LOGICAL_AND,  # JavaScript
+    "||": OpCode.LOGICAL_OR,  # JavaScript
+}
+
+# Unary operator mappings - maps unary operator symbols to OpCode
+UNARY_OPERATOR_MAPPING = {
+    # === Arithmetic Unary Operators ===
+    "-": OpCode.UNARY_NEGATIVE,  # Unary negation
+    "+": OpCode.UNARY_POSITIVE,  # Unary plus
+    # === Bitwise Unary Operators ===
+    "~": OpCode.UNARY_INVERT,  # Bitwise NOT
+    # === Logical Unary Operators ===
+    "not": OpCode.LOGICAL_NOT,  # Python logical NOT
+    "!": OpCode.LOGICAL_NOT,  # JavaScript logical NOT
+    # === JavaScript-specific Unary Operators ===
+    "typeof": OpCode.TYPEOF_OPERATOR,  # JavaScript typeof
+    "void": OpCode.VOID_OPERATOR,  # JavaScript void
+    "delete": OpCode.DELETE_OPERATOR,  # JavaScript delete
+}
 
 
 class Instruction:
@@ -266,7 +349,7 @@ class Instruction:
         detection model.
 
         Args:
-            op_code: The operation code (e.g., LOAD_CONST, STORE_NAME, CALL_FUNCTION)
+            op_code: The operation code (e.g., LOAD_CONST, STORE_NAME, CALL)
             arg: The argument value to be mapped (string, number, identifier, etc.)
             language: Programming language context ("python" or "javascript")
             for_hashing: If True, removes variable parts to create stable hashes
@@ -278,7 +361,7 @@ class Instruction:
             - "LOAD_CONST STRING_LEN_M_ENT_HIGH" (for long strings)
             - "STORE_NAME requests" (for known function names)
             - "LOAD_CONST BOOLEAN" (for boolean values)
-            - "CALL_FUNCTION 2" (for function calls with arg count)
+            - "CALL 2" (for function calls with arg count)
 
         Mapping Strategy:
         1. **Data Type Normalization**: Converts literals (bool, int, float) to type tokens
@@ -357,7 +440,7 @@ class Instruction:
             and argval in function_mapping
         ):
             return f"{op_code.name} {function_mapping.get(argval)}"
-        elif op_code in [OpCode.CALL_FUNCTION]:
+        elif op_code in [OpCode.CALL]:
             return f"{op_code.name} {argval}"
         elif op_code in [OpCode.POP_TOP]:
             # POP_TOP discards top of stack, no argument needed
@@ -787,61 +870,9 @@ class ASTCompiler:
         bytecode = []
         node_type = node.type
 
-        # Python 3.11+ uses unified BINARY_OP with numeric arguments
-        binary_operator_mapping = {
-            # Arithmetic operators - Python 3.11+ BINARY_OP codes
-            "+": (OpCode.BINARY_OP, 0),  # BINARY_OP 0 = add
-            "-": (OpCode.BINARY_OP, 2),  # BINARY_OP 2 = subtract
-            "*": (OpCode.BINARY_OP, 5),  # BINARY_OP 5 = multiply
-            "/": (OpCode.BINARY_OP, 11),  # BINARY_OP 11 = true_divide
-            "%": (OpCode.BINARY_OP, 6),  # BINARY_OP 6 = remainder
-            "**": (OpCode.BINARY_OP, 8),  # BINARY_OP 8 = power
-            "//": (OpCode.BINARY_OP, 12),  # BINARY_OP 12 = floor_divide
-            # Bitwise operators
-            "&": (OpCode.BINARY_OP, 1),  # BINARY_OP 1 = and
-            "|": (OpCode.BINARY_OP, 4),  # BINARY_OP 4 = or
-            "^": (OpCode.BINARY_OP, 7),  # BINARY_OP 7 = xor
-            "<<": (OpCode.BINARY_OP, 9),  # BINARY_OP 9 = lshift
-            ">>": (OpCode.BINARY_OP, 10),  # BINARY_OP 10 = rshift
-            "@": (OpCode.BINARY_OP, 3),  # BINARY_OP 3 = matmul
-            # JavaScript/fallback operators (keep old approach)
-            ">>>": OpCode.BINARY_UNSIGNED_RSHIFT,  # JavaScript unsigned right shift
-            "??": OpCode.BINARY_NULLISH_COALESCING,  # JavaScript nullish coalescing
-            # Comparison operators
-            "<": OpCode.COMPARE_LESS,
-            ">": OpCode.COMPARE_GREATER,
-            "==": OpCode.COMPARE_EQUAL,
-            "===": OpCode.COMPARE_EQUAL,  # JavaScript strict equality
-            "!=": OpCode.COMPARE_NOT_EQUAL,
-            "!==": OpCode.COMPARE_NOT_EQUAL,  # JavaScript strict inequality
-            "<=": OpCode.COMPARE_LESS_EQUAL,
-            ">=": OpCode.COMPARE_GREATER_EQUAL,
-            "in": OpCode.COMPARE_IN,
-            "not in": OpCode.COMPARE_NOT_IN,
-            "is": OpCode.COMPARE_IS,
-            "is not": OpCode.COMPARE_IS_NOT,
-            "instanceof": OpCode.COMPARE_INSTANCEOF,
-            # Logical operators
-            "and": OpCode.LOGICAL_AND,
-            "or": OpCode.LOGICAL_OR,
-            "&&": OpCode.LOGICAL_AND,  # JavaScript
-            "||": OpCode.LOGICAL_OR,  # JavaScript
-        }
-
-        unary_operator_mapping = {
-            # Arithmetic unary operators
-            "-": OpCode.UNARY_NEGATIVE,
-            "+": OpCode.UNARY_POSITIVE,  # Unary plus
-            # Bitwise unary operators
-            "~": OpCode.UNARY_INVERT,
-            # Logical unary operators
-            "not": OpCode.LOGICAL_NOT,
-            "!": OpCode.LOGICAL_NOT,  # JavaScript
-            # JavaScript-specific unary operators
-            "typeof": OpCode.TYPEOF_OPERATOR,  # JavaScript typeof
-            "void": OpCode.VOID_OPERATOR,  # JavaScript void
-            "delete": OpCode.DELETE_OPERATOR,  # JavaScript delete
-        }
+        # Use global operator mappings
+        binary_operator_mapping = BINARY_OPERATOR_MAPPING
+        unary_operator_mapping = UNARY_OPERATOR_MAPPING
 
         # --- Handle Literals and Identifiers ---
         if node_type in ["integer", "float", "number"]:
@@ -1197,7 +1228,7 @@ class ASTCompiler:
             elif has_starargs:
                 bytecode.append(
                     emit(OpCode.BINARY_OPERATION, None)
-                )  # CALL_FUNCTION_VAR
+                )  # CALL with variable arguments
             else:
                 # Use CALL opcode for Python 3.11+ compatibility
                 bytecode.append(emit(OpCode.CALL, arg_count))
@@ -1216,7 +1247,7 @@ class ASTCompiler:
                 if "++" in op_text:
                     bytecode.append(emit(OpCode.BINARY_ADD, None))
                 else:  # "--"
-                    bytecode.append(emit(OpCode.BINARY_SUBTRACT, None))
+                    bytecode.append(emit(OpCode.BINARY_OP, 2))  # BINARY_OP 2 = subtract
                 # Store back
                 var_name = self._get_node_text(argument_node, source_code_bytes)
                 bytecode.append(self._emit_store(var_name))
