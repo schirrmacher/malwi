@@ -295,119 +295,6 @@ class MalwiReport:
 
         return txt
 
-    def to_tokens_text(self) -> str:
-        """Generate tokens output format with visualization of malwicode -> DistilBERT token splitting."""
-        lines = []
-
-        # Group malicious objects by file path to maintain organization
-        files_with_objects = {}
-        for obj in self.malicious_objects:  # Only show malicious objects
-            if obj.file_path not in files_with_objects:
-                files_with_objects[obj.file_path] = []
-            files_with_objects[obj.file_path].append(obj)
-
-        # Handle case when no malicious objects found
-        if not files_with_objects:
-            lines.append("=" * 80)
-            lines.append("📊 TOKENS OUTPUT")
-            lines.append("=" * 80)
-            lines.append("")
-            lines.append("✅ No malicious objects found - nothing to display")
-            lines.append("")
-            return "\n".join(lines)
-
-        # Sort files for consistent output
-        for file_path in sorted(files_with_objects.keys()):
-            objects_in_file = files_with_objects[file_path]
-
-            for obj in objects_in_file:
-                # Add malwicode tokens
-                malwicode_tokens = obj.to_tokens(map_special_tokens=True)
-                token_string = obj.to_token_string(map_special_tokens=True)
-
-                # Get DistilBERT tokens and counts
-                try:
-                    from common.predict_distilbert import get_thread_tokenizer
-
-                    tokenizer = get_thread_tokenizer()
-                    distilbert_tokens = tokenizer.tokenize(token_string)
-                    distilbert_count = len(distilbert_tokens)
-                    embedding_count = obj.embedding_count
-                except Exception:
-                    distilbert_tokens = None
-                    distilbert_count = 0
-                    embedding_count = obj.embedding_count
-
-                # Add header with file path, object name, and counts
-                lines.append("=" * 80)
-                lines.append(f"📁 File: {file_path}")
-
-                # Add object name with location info if available
-                object_line = f"🏷️  Object: {obj.name}"
-                if obj.location:
-                    start_line, end_line = obj.location
-                    object_line += f" 📍 Lines {start_line}-{end_line}"
-                lines.append(object_line)
-
-                lines.append(
-                    f"📊 Tokens: {len(malwicode_tokens)} malwicode → {distilbert_count} distilbert → {embedding_count} embeddings"
-                )
-                if obj.maliciousness is not None:
-                    lines.append(f"🎯 Maliciousness: {obj.maliciousness:.4f}")
-                lines.append("=" * 80)
-                lines.append("")
-
-                # Add source code - prefer CodeObject's specific source over full file source
-                lines.append("📝 SOURCE CODE:")
-                lines.append("─" * 40)
-
-                # Try to get the specific source code for this object
-                source_to_display = None
-                if obj.source_code:
-                    source_to_display = obj.source_code
-                elif hasattr(obj, "file_source_code"):
-                    source_to_display = obj.file_source_code
-
-                if source_to_display:
-                    # Add line numbers to source code for better readability
-                    source_lines = source_to_display.split("\n")
-                    # Get starting line number if we have location info
-                    start_line_num = 1
-                    if obj.location:
-                        start_line_num = obj.location[0]
-
-                    for i, line in enumerate(source_lines, start_line_num):
-                        lines.append(f"  {i:4d} | {line}")
-                else:
-                    lines.append("  [Source code not available]")
-                lines.append("")
-
-                # Add DistilBERT tokens if available
-                if distilbert_tokens is not None:
-                    lines.append("🔗 TOKENS:")
-                    lines.append("─" * 40)
-
-                    # Format DistilBERT tokens in rows of 10 for better readability
-                    distilbert_per_row = 10
-                    for i in range(0, len(distilbert_tokens), distilbert_per_row):
-                        row_tokens = distilbert_tokens[i : i + distilbert_per_row]
-                        lines.append("  " + " • ".join(row_tokens))
-
-                else:
-                    lines.append("🔗 TOKENS:")
-                    lines.append("─" * 40)
-                    lines.append("  (Tokenizer not available - models not initialized)")
-
-                # Add extra spacing between objects
-                lines.append("")
-                lines.append("")
-
-        # Remove trailing empty lines
-        while lines and lines[-1] == "":
-            lines.pop()
-
-        return "\n".join(lines)
-
     def to_code_text(self, include_tokens: bool = False) -> str:
         """Generate code output format: concatenated code segments grouped by extension with path comments.
 
@@ -489,8 +376,6 @@ class MalwiReport:
                         output_parts.append(f"{comment_prefix} TOKENS")
                         output_parts.append(f"{comment_prefix} {'─' * 70}")
 
-                        # Get malwicode tokens for tokenization (but don't display them)
-                        malwicode_tokens = obj.to_tokens(map_special_tokens=True)
                         token_string = obj.to_token_string(map_special_tokens=True)
 
                         # Try to get DistilBERT tokens
