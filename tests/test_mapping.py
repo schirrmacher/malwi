@@ -10,6 +10,9 @@ from common.mapping import (
     is_code,
     is_sql,
     is_version,
+    is_email,
+    is_insecure_protocol,
+    is_insecure_url,
 )
 
 
@@ -377,3 +380,186 @@ def test_is_version():
     # Test version with epochs (PEP 440)
     assert is_version("1!1.0.0")  # Epoch version
     assert is_version("2!2.1.3")  # Another epoch version
+
+
+def test_is_email():
+    # Test valid email addresses
+    assert is_email("user@example.com")
+    assert is_email("test.email@domain.org")
+    assert is_email("user+tag@example.co.uk")
+    assert is_email("user_name@sub.domain.net")
+    assert is_email("123@example.com")  # Numeric username
+    assert is_email("user@123domain.com")  # Numeric in domain
+    assert is_email("a@b.co")  # Minimal valid email
+    assert is_email("user-name@example-domain.com")  # Hyphens
+    assert is_email("user%tag@example.com")  # Percent encoding
+
+    # Test valid emails with different TLDs
+    assert is_email("user@example.info")
+    assert is_email("user@example.museum")  # Longer TLD
+    assert is_email("user@example.travel")
+
+    # Test invalid email addresses
+    assert not is_email("user@")  # Missing domain
+    assert not is_email("@example.com")  # Missing username
+    assert not is_email("user@domain")  # Missing TLD
+    assert not is_email("user.domain.com")  # Missing @
+    assert not is_email("user@@domain.com")  # Double @
+    assert not is_email("user@domain..com")  # Double dot
+    assert not is_email("user@domain.c")  # TLD too short
+    assert not is_email("user @domain.com")  # Space in username
+    assert not is_email("user@domain .com")  # Space in domain
+    assert not is_email("")  # Empty string
+    assert not is_email("   ")  # Only whitespace
+    assert not is_email("plaintext")  # No email structure
+
+    # Test edge cases
+    assert not is_email(None)  # None input
+    assert not is_email(123)  # Non-string input
+    assert not is_email([])  # List input
+
+    # Test emails with whitespace (should be trimmed)
+    assert is_email(" user@example.com ")  # Leading/trailing whitespace
+    assert is_email("\tuser@example.com\n")  # Tab and newline
+
+
+def test_is_insecure_protocol():
+    # Test insecure protocols in URLs
+    assert is_insecure_protocol("http://example.com")
+    assert is_insecure_protocol("HTTP://EXAMPLE.COM")  # Case insensitive
+    assert is_insecure_protocol("http://example.com/path?param=value")
+    assert is_insecure_protocol("ftp://files.example.com")
+    assert is_insecure_protocol("FTP://FILES.EXAMPLE.COM")
+    assert is_insecure_protocol("ftp://user:pass@server.com/path")
+
+    # Test insecure protocols as standalone words
+    assert is_insecure_protocol("http")
+    assert is_insecure_protocol("ftp")
+    assert is_insecure_protocol("telnet")
+    assert is_insecure_protocol("ldap")
+    assert is_insecure_protocol("smtp")
+    assert is_insecure_protocol("pop")
+    assert is_insecure_protocol("pop3")
+    assert is_insecure_protocol("imap")
+    assert is_insecure_protocol("nntp")
+    assert is_insecure_protocol("rsh")
+    assert is_insecure_protocol("rlogin")
+    assert is_insecure_protocol("tftp")
+    assert is_insecure_protocol("gopher")
+
+    # Test insecure protocols in text context
+    assert is_insecure_protocol("Use http for testing")
+    assert is_insecure_protocol("Connect via ftp server")
+    assert is_insecure_protocol("telnet connection established")
+    assert is_insecure_protocol("smtp server configuration")
+
+    # Test secure protocols (should be False)
+    assert not is_insecure_protocol("https://example.com")
+    assert not is_insecure_protocol("https")  # Secure variant
+    assert not is_insecure_protocol("ftps://files.example.com")
+    assert not is_insecure_protocol("ftps")
+    assert not is_insecure_protocol("sftp://files.example.com")
+    assert not is_insecure_protocol("sftp")
+    assert not is_insecure_protocol("ssh://server.example.com")
+    assert not is_insecure_protocol("ssh")
+    assert not is_insecure_protocol("ldaps://directory.example.com")
+    assert not is_insecure_protocol("ldaps")
+    assert not is_insecure_protocol("smtps")
+    assert not is_insecure_protocol("imaps")
+    assert not is_insecure_protocol("pops")
+
+    # Test non-protocol strings
+    assert not is_insecure_protocol("example.com")  # Domain only
+    assert not is_insecure_protocol("www.example.com")  # Domain only
+    assert not is_insecure_protocol("file.txt")  # Filename
+    assert not is_insecure_protocol("plaintext")  # Plain text
+    assert not is_insecure_protocol("")  # Empty string
+    assert not is_insecure_protocol("   ")  # Only whitespace
+
+    # Test edge cases
+    assert not is_insecure_protocol(None)  # None input
+    assert not is_insecure_protocol(123)  # Non-string input
+    assert not is_insecure_protocol([])  # List input
+
+    # Test strings with whitespace (should be trimmed)
+    assert is_insecure_protocol(" http://example.com ")
+    assert is_insecure_protocol("\tftp\n")
+
+    # Test word boundary matching (avoid false positives)
+    assert not is_insecure_protocol(
+        "https://example.com"
+    )  # 'http' in 'https' should not match
+    assert not is_insecure_protocol("webhook")  # 'http' in 'webhook' should not match
+    assert not is_insecure_protocol("therapy")  # 'http' substring should not match
+
+    # Test case where insecure protocol appears in text
+    assert is_insecure_protocol(
+        "This http connection is insecure"
+    )  # Should match 'http' as word
+    assert is_insecure_protocol("Using ftp protocol")  # Should match 'ftp' as word
+
+
+def test_is_insecure_url():
+    # Test insecure URLs (should be True)
+    assert is_insecure_url("http://example.com")
+    assert is_insecure_url("HTTP://EXAMPLE.COM")  # Case insensitive
+    assert is_insecure_url("http://example.com/path?param=value")
+    assert is_insecure_url("ftp://files.example.com")
+    assert is_insecure_url("FTP://FILES.EXAMPLE.COM")
+    assert is_insecure_url("ftp://user:pass@server.com/path")
+    assert is_insecure_url("telnet://server.com:23")
+    assert is_insecure_url("ldap://directory.example.com")
+    assert is_insecure_url("smtp://mail.example.com:587")
+    assert is_insecure_url("pop://mail.example.com:110")
+    assert is_insecure_url("pop3://mail.example.com")
+    assert is_insecure_url("imap://mail.example.com:143")
+    assert is_insecure_url("nntp://news.example.com")
+    assert is_insecure_url("rsh://server.example.com")
+    assert is_insecure_url("rlogin://server.example.com")
+    assert is_insecure_url("tftp://server.example.com")
+    assert is_insecure_url("gopher://gopher.example.com")
+
+    # Test secure URLs (should be False)
+    assert not is_insecure_url("https://example.com")
+    assert not is_insecure_url("ftps://files.example.com")
+    assert not is_insecure_url("sftp://files.example.com")
+    assert not is_insecure_url("ssh://server.example.com")
+    assert not is_insecure_url("ldaps://directory.example.com")
+    assert not is_insecure_url("smtps://mail.example.com")
+    assert not is_insecure_url("imaps://mail.example.com")
+    assert not is_insecure_url("pops://mail.example.com")
+
+    # Test protocol names without URL structure (should be False)
+    assert not is_insecure_url("http")  # Just protocol name
+    assert not is_insecure_url("ftp")  # Just protocol name
+    assert not is_insecure_url("telnet")  # Just protocol name
+
+    # Test text containing protocol names but not URLs (should be False)
+    assert not is_insecure_url("Use http for testing")  # Text mentioning protocol
+    assert not is_insecure_url("Connect via ftp server")  # Text mentioning protocol
+    assert not is_insecure_url(
+        "telnet connection established"
+    )  # Text mentioning protocol
+
+    # Test non-URL strings (should be False)
+    assert not is_insecure_url("example.com")  # Domain only
+    assert not is_insecure_url("www.example.com")  # Domain only
+    assert not is_insecure_url("file.txt")  # Filename
+    assert not is_insecure_url("plaintext")  # Plain text
+    assert not is_insecure_url("")  # Empty string
+    assert not is_insecure_url("   ")  # Only whitespace
+
+    # Test edge cases
+    assert not is_insecure_url(None)  # None input
+    assert not is_insecure_url(123)  # Non-string input
+    assert not is_insecure_url([])  # List input
+
+    # Test URLs with whitespace (should be trimmed)
+    assert is_insecure_url(" http://example.com ")
+    assert is_insecure_url("\tftp://files.com\n")
+
+    # Test URLs within text (should match if URL starts with insecure protocol)
+    assert not is_insecure_url(
+        "Visit http://example.com for more info"
+    )  # URL not at start
+    assert is_insecure_url("http://example.com is insecure")  # URL at start
