@@ -9,6 +9,7 @@ from common.mapping import (
     is_bash_code,
     is_code,
     is_sql,
+    is_version,
 )
 
 
@@ -315,3 +316,64 @@ def test_is_sql():
     assert not is_sql(None)
     assert not is_sql(123)
     assert not is_sql([])
+
+
+def test_is_version():
+    # Test simple numbers (should be False - require at least one dot)
+    assert not is_version("1")
+    assert not is_version("12")
+    assert not is_version("0")
+    assert not is_version("999")
+
+    # Test basic valid versions
+    assert is_version("1.0")
+    assert is_version("1.2.3")
+    assert is_version("2.0.1")
+    assert is_version("10.15.7")  # macOS-style version
+    assert is_version("2023.1")  # Year-based version
+
+    # Test pre-release and build versions (PEP 440)
+    assert is_version("1.0.0a1")  # Alpha
+    assert is_version("1.0.0b2")  # Beta
+    assert is_version("1.0.0rc1")  # Release candidate
+    assert is_version("2.0.1a1")  # Alpha with patch version
+    assert is_version("1.0.0-alpha")  # Alternative alpha format
+    assert is_version("1.0.0+build")  # Build version
+
+    # Test versions with 'v' prefix
+    assert is_version("v1.0")
+    assert is_version("v2.1.3")
+
+    # Test development versions
+    assert is_version("1.0.dev0")
+    assert is_version("1.2.3.dev456")
+
+    # Test post-release versions
+    assert is_version("1.0.post1")
+    assert is_version("1.2.3.post2")
+
+    # Test invalid formats (should be False)
+    assert not is_version("1.")  # Trailing dot only
+    assert not is_version(".1")  # Leading dot only
+    assert not is_version("..1")  # Multiple leading dots
+    assert not is_version("1..")
+    assert not is_version("abc")  # Non-numeric string without dots
+    assert not is_version("1.2.3.")  # Trailing dot after version
+    assert not is_version("")  # Empty string
+    assert not is_version("just.text")  # Text that looks like version but isn't
+
+    # Test edge cases
+    assert not is_version(None)  # None input
+    assert not is_version(123)  # Non-string input
+    assert not is_version([])  # List input
+
+    # Test complex valid versions (PEP 440 allows these)
+    assert is_version("1.2.3.4")  # Four components
+    assert is_version("1.0.0.0.1")  # Five components
+    assert is_version("20.04.1")  # Ubuntu-style version
+    assert is_version("3.8.10")  # Python-style version
+    assert is_version("1.a.2")  # PEP 440 allows letters in versions
+
+    # Test version with epochs (PEP 440)
+    assert is_version("1!1.0.0")  # Epoch version
+    assert is_version("2!2.1.3")  # Another epoch version

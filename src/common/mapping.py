@@ -213,6 +213,7 @@ def is_valid_ip(content: str) -> bool:
 def is_version(version_string):
     """
     Checks if a given string is a valid version string according to PEP 440.
+    Requires at least one dot to distinguish from simple numbers.
 
     Args:
         version_string (str): The string to check.
@@ -220,6 +221,10 @@ def is_version(version_string):
     Returns:
         bool: True if the string is a valid version, False otherwise.
     """
+    # Require at least one dot to distinguish from simple numbers like "1"
+    if not isinstance(version_string, str) or "." not in version_string:
+        return False
+
     try:
         # Attempt to parse the string as a Version object.
         # If it's not a valid version, InvalidVersion will be raised.
