@@ -394,9 +394,9 @@ class Instruction:
             return f"{op_code.name} {SpecialCases.STRING_CONTAINS_URL.value}"
         elif is_email(argval):
             return f"{op_code.name} {SpecialCases.STRING_EMAIL.value}"
-        # elif is_insecure_protocol(argval):
-        #     # Check for insecure protocols in text
-        #     return f"{op_code.name} {SpecialCases.STRING_INSECURE_PROTOCOL.value}"
+        elif is_insecure_protocol(argval):
+            # Check for insecure protocols in text
+            return f"{op_code.name} {SpecialCases.STRING_INSECURE_PROTOCOL.value}"
         elif is_version(argval):
             return f"{op_code.name} {SpecialCases.STRING_VERSION.value}"
         elif is_valid_encoding_name(argval):
